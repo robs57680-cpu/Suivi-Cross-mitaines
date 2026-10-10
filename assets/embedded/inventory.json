@@ -1,0 +1,42 @@
+[
+  {
+    "file": "image_01.jpg",
+    "mime": "image/jpeg",
+    "bytes": 51802
+  },
+  {
+    "file": "image_02.webp",
+    "mime": "image/webp",
+    "bytes": 10722
+  },
+  {
+    "file": "image_03.jpg",
+    "mime": "image/jpeg",
+    "bytes": 50591
+  },
+  {
+    "file": "image_04.webp",
+    "mime": "image/webp",
+    "bytes": 11368
+  },
+  {
+    "file": "image_05.webp",
+    "mime": "image/webp",
+    "bytes": 29322
+  },
+  {
+    "file": "image_06.webp",
+    "mime": "image/webp",
+    "bytes": 14578
+  },
+  {
+    "file": "image_07.jpg",
+    "mime": "image/jpeg",
+    "bytes": 84851
+  },
+  {
+    "file": "image_08.jpg",
+    "mime": "image/jpeg",
+    "bytes": 44554
+  }
+]
