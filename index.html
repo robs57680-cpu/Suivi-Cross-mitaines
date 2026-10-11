@@ -557,7 +557,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-11.1';
+const APP_VERSION='2026-10-11.2';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -2447,36 +2447,10 @@ const kettleArt=sx=>{
 };
 const AV_BETA_PNG='assets/embedded/image_05.webp';
 const alphaArt=()=>'<image href="assets/embedded/image_06.webp" x="-85" y="-36" width="170" height="72"/>';
-/* Bracelet Alpha : accessoire vectoriel indépendant, dessiné comme une bande souple qui épouse le poignet.
-   Il reste un calque distinct pour que l'inventaire et le mode coach puissent le prévisualiser instantanément. */
-let wristN=0;
-const wristWear=hw=>{
-  const id='walpha'+(++wristN), w=hw*2;
-  const h=Math.max(5.1,hw*.35), edge=Math.max(1.4,hw*.12);
-  return '<defs>'+
-    '<linearGradient id="'+id+'body" x1="0" y1="0" x2="0" y2="1">'+
-      '<stop offset="0" stop-color="#54D9FF"/><stop offset=".24" stop-color="#17B8F5"/><stop offset=".72" stop-color="#079CE2"/><stop offset="1" stop-color="#0878BA"/>'+
-    '</linearGradient>'+
-    '<linearGradient id="'+id+'edge" x1="0" y1="0" x2="0" y2="1">'+
-      '<stop offset="0" stop-color="#E2FAFF" stop-opacity=".72"/><stop offset=".45" stop-color="#FFFFFF" stop-opacity=".04"/><stop offset="1" stop-color="#004E86" stop-opacity=".5"/>'+
-    '</linearGradient>'+
-    '<linearGradient id="'+id+'side" x1="0" y1="0" x2="1" y2="0">'+
-      '<stop stop-color="#006BA7" stop-opacity=".75"/><stop offset=".16" stop-color="#FFFFFF" stop-opacity=".05"/><stop offset=".84" stop-color="#FFFFFF" stop-opacity=".03"/><stop offset="1" stop-color="#005D94" stop-opacity=".72"/>'+
-    '</linearGradient>'+
-    '<filter id="'+id+'shadow" x="-20%" y="-35%" width="140%" height="180%"><feGaussianBlur stdDeviation=".65"/></filter>'+ 
-    '</defs>'+ 
-    /* ombre très fine sous la bande */
-    '<path d="M'+(-hw+2)+' '+(-h*.34)+' Q0 '+(-h*.95)+' '+(hw-2)+' '+(-h*.34)+' L'+(hw-1)+' '+(h*.28)+' Q0 '+(h*1.02)+' '+(-hw+1)+' '+(h*.28)+' Z" fill="#004B78" opacity=".48" transform="translate(0 1.5)" filter="url(#'+id+'shadow)"/>'+ 
-    /* bande bombée, légèrement cintrée comme du silicone autour du poignet */
-    '<path d="M'+(-hw+edge)+' '+(-h*.48)+' Q0 '+(-h*1.08)+' '+(hw-edge)+' '+(-h*.48)+' Q'+(hw+1)+' 0 '+(hw-edge)+' '+(h*.43)+' Q0 '+(h*1.04)+' '+(-hw+edge)+' '+(h*.43)+' Q'+(-hw-1)+' 0 '+(-hw+edge)+' '+(-h*.48)+' Z" fill="url(#'+id+'body)" stroke="#087EB9" stroke-width=".7"/>'+ 
-    '<path d="M'+(-hw+edge)+' '+(-h*.43)+' Q0 '+(-h*.94)+' '+(hw-edge)+' '+(-h*.43)+'" fill="none" stroke="#E7FBFF" stroke-opacity=".75" stroke-width=".85" stroke-linecap="round"/>'+ 
-    '<path d="M'+(-hw+edge)+' '+(h*.34)+' Q0 '+(h*.88)+' '+(hw-edge)+' '+(h*.34)+'" fill="none" stroke="#005C96" stroke-opacity=".55" stroke-width=".85" stroke-linecap="round"/>'+ 
-    '<path d="M'+(-hw+1.2)+' '+(-h*.37)+' Q0 '+(-h*.9)+' '+(hw-1.2)+' '+(-h*.37)+' L'+(hw-1.2)+' '+(h*.3)+' Q0 '+(h*.8)+' '+(-hw+1.2)+' '+(h*.3)+' Z" fill="url(#'+id+'edge)"/>'+ 
-    '<path d="M'+(-hw+1.5)+' '+(-h*.2)+' Q0 '+(-h*.57)+' '+(hw-1.5)+' '+(-h*.2)+'" fill="none" stroke="url(#'+id+'side)" stroke-width="1.1"/>'+ 
-    /* lettres compactes et légèrement inclinées, comme imprimées sur la bande */
-    '<text x="0" y="'+(h*.24)+'" text-anchor="middle" font-family="Arial Black,Arial,sans-serif" font-size="'+Math.max(5.4,hw*.34)+'" font-weight="900" font-style="italic" letter-spacing="-.12" fill="#FFFFFF" stroke="#FFFFFF" stroke-width=".12" paint-order="stroke">ALPHA</text>';
-};
-const AV_WRIST={h:{x:82,y:502,hw:19.5,r:8},f:{x:104,y:503,hw:15.5,r:8}};
+/* Bracelet Alpha : calque découpé dans l'illustration de référence (bande + fine bande de peau, fond transparent), posé sur le poignet libre.
+   Fichiers : assets/embedded/bracelet_alpha_h.webp (homme) et bracelet_alpha_f.webp (femme). x, y, w, h = position et taille dans l'espace de l'avatar (480x968). */
+const AV_ALPHA={h:{x:352.82,y:467.84,w:39.01,h:43.99},f:{x:332.8,y:472.06,w:31.98,h:39.78}};
+const alphaWear=sx=>{const L=AV_ALPHA[sx];return '<image href="assets/embedded/bracelet_alpha_'+sx+'.webp" x="'+L.x+'" y="'+L.y+'" width="'+L.w+'" height="'+L.h+'"/>';};
 const betaEmb=()=>'<image href="'+AV_BETA_PNG+'" x="-50" y="-34" width="100" height="83" preserveAspectRatio="xMidYMid meet"/>';
 const starEmb=()=>'<polygon points="0,-20 6,-6 21,-5 9,5 13,20 0,12 -13,20 -9,5 -21,-5 -6,-6" fill="#14161A"/>';
 /* objets : t-shirt et pantalon = couleur (c) + bande (c2) ; pantalon long = recolore aussi les jambes ; les autres = dessin SVG */
@@ -2561,7 +2535,7 @@ const AV_ITEMS=[
  {id:'shorts_blue',slot:'pants',name:'Short bleu',c:'#1F55D6'},
  {id:'long_slate',slot:'pants',name:'Pantalon long gris',c:'#5A626C',long:true},
  {id:'long_black',slot:'pants',name:'Legging noir',c:'#22252B',long:true},
- {id:'wrist_alpha',slot:'wrist',name:'Bracelet Alpha',art:alphaArt},
+ {id:'wrist_alpha',slot:'wrist',name:'Bracelet Alpha',art:alphaArt,layer:alphaWear},
  {id:'theme_halloween',slot:'theme',name:'Thème Halloween',art:pumpkinIco},
  {id:'kettlebell',slot:'hand',name:'Kettlebell',art:kettleArt}
 ];
@@ -2695,7 +2669,7 @@ function avOverlay(sx,eq){
   const hd=AV_BY[eq.hand];
   if(hd)g+='<g transform="translate('+AV_HAND[sx].x+' '+AV_HAND[sx].y+')">'+hd.art(sx)+'</g>';
   const wr=AV_BY[eq.wrist];
-  if(wr){const W=AV_WRIST[sx];g+='<g transform="translate('+W.x+' '+W.y+') rotate('+W.r+')">'+wristWear(W.hw)+'</g>';}
+  if(wr&&wr.layer)g+=wr.layer(sx);
   const H=AV_HEAD[sx];
   for(const sl of ['hat','crown']){
     const it=AV_BY[eq[sl]];if(!it)continue;
