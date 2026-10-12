@@ -603,6 +603,28 @@ html[data-hal] .top{border-bottom-color:#E8710A}
 .rv-act{margin-top:10px;min-height:40px;padding:8px 16px;border:1.5px solid var(--rv-a);border-radius:12px;background:transparent;color:var(--rv-a);font-weight:700;font-size:13px;cursor:pointer}
 @media (prefers-reduced-motion:no-preference){.rv-body{transition:grid-template-rows .22s ease}.rv-chev{transition:transform .22s ease}}
 
+
+/* didacticiel */
+#hdr-right{display:flex;align-items:center;gap:8px}
+.help-btn{flex:none;width:32px;height:32px;border-radius:50%;border:2px solid var(--edge);background:var(--surface);color:var(--ink);font:700 17px var(--f-display);cursor:pointer;display:grid;place-items:center;padding:0;line-height:1}
+.tour{position:fixed;inset:0;z-index:90;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.tour svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.tour .arr{fill:none;stroke:var(--accent);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+.tour .arr.line{stroke-dasharray:1;stroke-dashoffset:1}
+.tour .arr.head{opacity:0}
+.tour.go .arr.line{transition:stroke-dashoffset .6s ease .3s;stroke-dashoffset:0}
+.tour.go .arr.head{transition:opacity .15s ease .85s;opacity:1}
+.tour .ring{fill:none;stroke:#fff;stroke-width:2;stroke-dasharray:6 5;opacity:.85}
+.tour .bub{position:absolute;box-sizing:border-box;background:var(--surface);color:var(--ink);border:2px solid var(--accent);border-radius:6px;padding:14px 16px 12px;box-shadow:0 12px 34px #000a;opacity:0;transform:translateY(10px);transition:opacity .35s ease,transform .35s ease;outline:none;cursor:pointer}
+.tour.go .bub{opacity:1;transform:none}
+.tour .bub .eb{font:700 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:0 0 4px}
+.tour .bub h3{font-family:var(--f-display);font-size:22px;letter-spacing:.03em;text-transform:uppercase;margin:0 0 6px;line-height:1.1}
+.tour .bub p.tx{margin:0;font-size:15px;line-height:1.45}
+.tour .bub .ft{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px}
+.tour .bub .nx{font-weight:700;font-size:14px;color:var(--accent)}
+.tour .bub .sk{background:none;border:0;color:var(--muted);font-size:13px;text-decoration:underline;cursor:pointer;padding:6px 0}
+.tour .dots{display:flex;gap:5px}.tour .dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}.tour .dots i.on{background:var(--accent)}
+@media (prefers-reduced-motion:reduce){.tour .bub,.tour.go .bub{transition:none;transform:none}.tour .arr.line{stroke-dashoffset:0;transition:none!important}.tour .arr.head{opacity:1;transition:none!important}}
 </style>
 </head>
 <body>
@@ -1547,17 +1569,18 @@ function render(){
   pending=false;S._aw=null;S._ob=null;applyTheme();
   {const tp=document.querySelector('.top');if(tp)document.documentElement.style.setProperty('--toph',tp.offsetHeight+'px');}
   if(!S.uid){
-    $('#tabs').replaceChildren();$('#hdr-right').replaceChildren();
+    $('#tabs').replaceChildren();$('#hdr-right').replaceChildren(S.authReady&&S.db?helpBtn():null);
     if(!S.authReady)main.replaceChildren(...updateBanner(),h('p',{class:'muted'},'Chargement…'));
     else if(!S.db)main.replaceChildren(...banners());
-    else main.replaceChildren(...updateBanner(),loginView());
+    else{main.replaceChildren(...updateBanner(),loginView());setTimeout(maybeTour,900);}
+    if(tourEl)setTimeout(tourLayout,60);
     return;
   }
   if(S.uid&&ready()&&S.logs[S.uid]&&S.prof.sex&&S.logs[S.uid].sex!==S.prof.sex&&S.sexSync!==S.prof.sex){S.sexSync=S.prof.sex;saveLog({sex:S.prof.sex});}
   const p=selPeriod();
-  $('#hdr-right').replaceChildren(h('span',{class:'chip '+(periodState(p)==='live'?'live':'done'),style:'max-width:46vw;overflow:hidden;text-overflow:ellipsis;display:block'},p.virtual?'Saison en cours':(p.name||seasonLabel(p))));
+  $('#hdr-right').replaceChildren(h('span',{class:'chip '+(periodState(p)==='live'?'live':'done'),style:'max-width:40vw;overflow:hidden;text-overflow:ellipsis;display:block'},p.virtual?'Saison en cours':(p.name||seasonLabel(p))),helpBtn());
   const tabs=[['feed','Fil'],['today','Séance'],['board','Classement']];
-  const tabEls=tabs.map(([k,l])=>h('button',{class:'tab','aria-current':S.tab===k?'page':null,onclick:()=>go(k)},l));
+  const tabEls=tabs.map(([k,l])=>h('button',{class:'tab','data-tour':'tab-'+k,'aria-current':S.tab===k?'page':null,onclick:()=>go(k)},l));
   if(S.owner){
     const activeExtra=S.tab==='profile'||S.tab==='coach'||S.tab==='prefs'||S.tab==='stats';
     const menu=h('div',{class:'tab-menu',hidden:true,role:'menu'},
@@ -1574,7 +1597,7 @@ function render(){
   document.querySelectorAll('.bubs.rxfloat').forEach(x=>x.remove());
   const rxLayer=rxReceived();if(rxLayer)document.body.append(rxLayer);
   {const tb=document.querySelector('.tabs');if(tb)document.documentElement.style.setProperty('--tabh',tb.offsetHeight+'px');}
-  setTimeout(maybeCeremony,400);setTimeout(maybeFreeze,600);setTimeout(maybeRewardPopup,450);setTimeout(maybeAvatarUnlockPopup,750);setTimeout(maybeAnnouncement,900);
+  setTimeout(maybeCeremony,400);setTimeout(maybeFreeze,600);setTimeout(maybeRewardPopup,450);setTimeout(maybeAvatarUnlockPopup,750);setTimeout(maybeAnnouncement,900);setTimeout(maybeTour,1600);if(tourEl)setTimeout(tourLayout,60);
 }
 
 function banners(){
@@ -2532,7 +2555,7 @@ function viewToday(){
     const per=periodFor(date);
     el.append(h('h2',{class:'wtitle'},w.title),h('p',{class:'eyebrow'},'Séance à '+basePts(w,per)+' pts'+(metconOf(w)?' + points du metcon selon ton niveau':'')),h('p',{class:'hint'},'À faire n’importe quel jour de la semaine, du '+fmtShort(mondayOf(date))+' au '+fmtShort(addDays(mondayOf(date),6))+'.'));
     (w.parts||[]).forEach(p=>el.append(partCard(p,w,date)));
-    el.append(entrySection(w,date));
+    {const es=entrySection(w,date);es.setAttribute('data-tour','entry');el.append(es);}
   }
   el.append(upcomingList(t,date),recentList(t,date));
   return el;
@@ -3004,7 +3027,7 @@ function viewBoard(){
   const tg=(gsel!=='all'&&gname(gsel))?gsel:scopeOf(S.uid,p);
   el.append(h('div',{},h('h2',{class:'h2'},'Trophées'+(scopeName(tg,p)?' · '+scopeName(tg,p):'')),gl.length?h('p',{class:'muted'},'Les trophées se jouent à l’intérieur de chaque groupe.'+(snapOf(p)?' Groupes figés à la fin de la saison.':'')):null,h('p',{class:'muted'},st==='done'?'Décernés à la fin de la saison.':st==='soon'?'La saison n’a pas commencé.':'Provisoires, ils sont attribués à la date de fin ('+(p.virtual?'à définir par le coach':fmtShort(p.end))+').')));
   el.append(h('div',{class:'trophies'},TROPHIES.map(t=>{const ws=winners(t,board,tg);return trophyCard(t,ws,p,ws.some(r=>r.uid===S.uid));})));
-  el.append(h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{S.boardDetail=true;render();window.scrollTo(0,0);}},'Voir mon groupe et le détail')));
+  el.append(h('div',{class:'row'},h('button',{class:'btn primary','data-tour':'board-detail',onclick:()=>{S.boardDetail=true;render();window.scrollTo(0,0);}},'Voir mon groupe et le détail')));
   return el;
 }
 
@@ -3687,7 +3710,8 @@ function viewProfile(){
   const me=board.rows[rank]||{total:0,sessions:0,perfAvg:0,streak:0,items:[]};
   const pseudo=(S.logs[S.uid]&&S.logs[S.uid].pseudo)||'';
   el.append(bannerEl(S.uid,[h('div',{class:'feed-head'},avatarCircle(S.uid,true,()=>openAvatar()),h('div',{class:'feed-meta'},h('p',{class:'eyebrow'},'Clique ici pour personnaliser ta bannière'),h('h1',{class:'day'},pseudo||'Mon profil',badgeMini(S.uid,40)),bannerTitle(S.uid)))],true));
-  el.append(avatarCard());
+  {const b0=el.lastElementChild;if(b0)b0.setAttribute('data-tour','profhead');}
+  {const ac=avatarCard();ac.setAttribute('data-tour','avatar');el.append(ac);}
   const xp=Number(me.weighted)||0, rewards=(p.rewards||[]), nextReward=rewards.filter(r=>Number(r.xp)>xp).sort((a,b)=>Number(a.xp)-Number(b.xp))[0];
   if(nextReward){
     const needed=Math.max(0,Number(nextReward.xp)-xp);
@@ -3711,7 +3735,7 @@ function viewProfile(){
     h('div',{class:'flames'},
       flameBox('fire',me.flameCur||0,'Série en cours','Record : '+(me.flameBest||0)),
       flameBox('plat',me.flameTopCur||0,'Temps au top','Record : '+(me.flameTopBest||0)))));
-  el.append(goalCard(p));
+  {const gc=goalCard(p);gc.setAttribute('data-tour','goal');el.append(gc);}
   /* dernières séances */
   const items=me.items.slice().reverse().slice(0,8);
   el.append(h('section',{class:'card'},h('h2',{class:'h2'},'Mes dernières séances'),
@@ -4717,13 +4741,24 @@ function loginView(){
   const pw=h('input',{id:'auth-pw',type:'password',autocomplete:'current-password',placeholder:'6 caractères minimum'});
   const msg=h('p',{class:'hint',role:'alert'});
   const attempt=async(fn)=>{msg.textContent='';try{await fn();}catch(e){msg.textContent=authErr(e);}};
+  /* « Créer mon compte » sans e-mail ou sans mot de passe : on explique, flèches à l'appui, ce qu'il reste à remplir */
+  const createAcc=()=>{
+    const e=email.value.trim(),p=pw.value;
+    if(e&&p){attempt(()=>createUserWithEmailAndPassword(auth,e,p));return;}
+    msg.textContent='Pour créer ton compte : écris ton e-mail, choisis un mot de passe, puis clique à nouveau sur « Créer mon compte ».';
+    const steps=[];
+    if(!e)steps.push(TOUR_STEPS.loginEmail);
+    if(!p)steps.push(TOUR_STEPS.loginPw);
+    steps.push(TOUR_STEPS.loginCreate);
+    startTour(steps,{onEnd:()=>{(!e?email:pw).focus();}});
+  };
   return h('div',{class:'stack'},
-    h('div',{},h('p',{class:'eyebrow'},'Groupe de crossfit'),h('h1',{class:'day'},'Connexion')),
+    h('div',{},h('p',{class:'eyebrow'},'Groupe de crossfit'),h('h1',{class:'day'},'Connexion'),h('p',{class:'muted'},'Box Score : le classement de ton groupe de crossfit. Fais les séances du coach, note ton résultat, gagne des points.')),
     h('form',{class:'card',onsubmit:e=>{e.preventDefault();attempt(()=>signInWithEmailAndPassword(auth,email.value.trim(),pw.value));}},
       field('E-mail',email),field('Mot de passe',pw),msg,
       h('div',{class:'row'},
-        h('button',{class:'btn primary',type:'submit'},'Se connecter'),
-        h('button',{class:'btn',type:'button',onclick:()=>attempt(()=>createUserWithEmailAndPassword(auth,email.value.trim(),pw.value))},'Créer mon compte')),
+        h('button',{class:'btn primary',id:'auth-login',type:'submit'},'Se connecter'),
+        h('button',{class:'btn',id:'auth-create',type:'button',onclick:createAcc},'Créer mon compte')),
       h('div',{class:'row'},
         h('button',{class:'link',type:'button',onclick:()=>attempt(async()=>{
           if(!email.value.trim()){msg.textContent='Écris ton e-mail ci-dessus, puis clique à nouveau.';return;}
@@ -4731,6 +4766,145 @@ function loginView(){
         h('button',{class:'link',type:'button',onclick:()=>attempt(()=>signInWithPopup(auth,new GoogleAuthProvider()))},'Continuer avec Google'))),
     h('p',{class:'ver'},'Version '+APP_VERSION));
 }
+
+
+/* ---------- didacticiel : flèches qui se dessinent, texte par-dessus la page, un clic = une étape ---------- */
+const TOUR_STEPS={
+  loginEmail:{sel:'#auth-email',title:'Ton e-mail',text:'Commence par écrire ton adresse e-mail ici.'},
+  loginPw:{sel:'#auth-pw',title:'Ton mot de passe',text:'Choisis un mot de passe de 6 caractères minimum.'},
+  loginCreate:{sel:'#auth-create',title:'Première fois ?',text:'Une fois l’e-mail et le mot de passe remplis, clique sur « Créer mon compte » : l’appli s’ouvre toute seule. Déjà inscrit ? Utilise « Se connecter ».'}
+};
+const TOURS={
+  login:()=>[
+    {title:'Bienvenue sur Box Score',text:'Le classement de ton groupe de crossfit. Le coach publie des séances, tu les fais quand tu veux dans la semaine, tu notes ton résultat et tu gagnes des points.'},
+    {title:'Ton niveau, ta performance',text:'Sur chaque metcon, tu choisis le niveau qui te correspond (Débutant, Intermédiaire ou Rx). Les points récompensent ta performance à ton niveau : tout le monde peut viser le haut du classement.'},
+    {title:'Plus qu’un classement',text:'Des trophées en fin de saison, des flammes pour la régularité, un avatar à habiller et un fil pour s’encourager avec des emojis.'},
+    TOUR_STEPS.loginEmail,TOUR_STEPS.loginPw,TOUR_STEPS.loginCreate,
+    {sel:'#tour-help',title:'Besoin d’un rappel ?',text:'Ce bouton « ? » te remet ce guide quand tu veux.'}],
+  feed:()=>[
+    {sel:'main .day',title:'Le fil d’actualité',text:'Ici apparaissent les séances validées par les athlètes du groupe, de la plus récente à la plus ancienne.'},
+    {sel:'.feed-card',title:'Une séance publiée',text:'Le pseudo, le titre de la séance et les résultats. Touche un pseudo pour ouvrir le profil de l’athlète.'},
+    {sel:'.rxrow',title:'Encourage tes partenaires',text:'Un emoji pour féliciter : ça fait toujours plaisir.'},
+    {sel:'[data-tour=tab-today]',title:'Passe à l’action',text:'L’onglet Séance : c’est là que tu vois la séance du jour et que tu entres ton résultat.'},
+    {sel:'#tour-help',title:'Besoin d’un rappel ?',text:'Ce bouton « ? » te remet le guide de l’onglet où tu te trouves, quand tu veux.'}],
+  today:()=>[
+    {sel:'main .day',title:'La séance du jour',text:'La date de la séance. Tu peux la faire n’importe quel jour de la semaine.'},
+    {sel:'main .wtitle',title:'Titre et points',text:'Le titre de la séance et les points de base qu’elle rapporte. Le metcon ajoute des points selon ton niveau.'},
+    {sel:'.pbody',title:'Les parties de la séance',text:'Force, renforcement, metcon… Chaque partie détaille ce qu’il faut faire. Le metcon est celle qui rapporte des points au classement.'},
+    {sel:'[data-tour=entry]',title:'Enregistre ton résultat',text:'Une fois la séance terminée, choisis ton niveau, entre tes charges et ton score ici, puis valide : tes points arrivent dans le classement.'},
+    {sel:'[data-tour=tab-board]',title:'Et ensuite ?',text:'Tes points apparaissent dans l’onglet Classement.'}],
+  board:()=>[
+    {sel:'main .day',title:'Le classement',text:'Les points de tous les athlètes sur la saison. Ta ligne est mise en avant.'},
+    {sel:'#period-select',title:'Les saisons',text:'Change de saison ici pour revoir les anciens classements.'},
+    {sel:'.lb',title:'Qui est devant ?',text:'Rang, pseudo, nombre de séances et de metcons, et total de points. Touche un pseudo pour voir son profil.'},
+    {sel:'.trophies',title:'Les trophées',text:'Chaque trophée récompense un type de performance ou de régularité. Ils sont décernés à la fin de la saison.'},
+    {sel:'[data-tour=board-detail]',title:'Le détail',text:'Pour voir ton groupe et le classement plus en détail.'}],
+  profile:()=>[
+    {sel:'[data-tour=profhead]',title:'Ton profil',text:'Ton pseudo et ta bannière. Touche ici pour la personnaliser.'},
+    {sel:'[data-tour=avatar]',title:'Ton avatar',text:'Des objets se débloquent au fil de tes séances. Touche l’avatar pour l’agrandir et l’habiller.'},
+    {sel:'.stats',title:'Tes chiffres',text:'Points, rang, séances, points par metcon et série maximale.'},
+    {sel:'.flames',title:'Tes flammes',text:'La série en cours compte tes séances d’affilée. « Temps au top » compte tes metcons d’affilée à 90 % des points ou plus. Touche le « ? » de la carte pour le détail.'},
+    {sel:'[data-tour=goal]',title:'Ton objectif de séances',text:'Choisis combien de séances par semaine tu vises. Si tu tiens ton objectif, tu gagnes le trophée et tu gardes ta flamme.'},
+    {sel:'#pseudo-edit',title:'Tes informations',text:'Ton pseudo apparaît dans le classement. Tu peux le modifier ici.'}]
+};
+let tourEl=null;
+const tourKey=t=>'bs-tour-'+(t==='login'?'login':(S.uid||'anon')+'-'+t);
+const tourSeen=t=>{try{return localStorage.getItem(tourKey(t))==='1';}catch(e){return true;}}; /* stockage indisponible : on n'insiste pas */
+const tourMark=t=>{try{localStorage.setItem(tourKey(t),'1');}catch(e){}};
+const tourBusy=()=>!!document.querySelector('.ov,.cer,.tm,.avfs,.ann,.reward-pop,#tm-ov');
+const curTourId=()=>!S.uid?((S.authReady&&S.db)?'login':null):((S.viewUser||S.boardDetail)?null:(TOURS[S.tab]?S.tab:null));
+function helpBtn(){return h('button',{class:'help-btn',id:'tour-help',type:'button','aria-label':'Afficher le guide de cet écran',title:'Guide de cet écran',onclick:()=>{const t=curTourId();if(t)startTour(TOURS[t]());}},'?');}
+function maybeTour(){
+  if(tourEl)return;
+  const t=curTourId();
+  if(!t||tourSeen(t))return;
+  if(S.uid&&(!ready()||needPseudo()))return;
+  if(tourBusy())return;
+  tourMark(t);
+  startTour(TOURS[t]());
+}
+function stopTour(){
+  if(!tourEl)return;
+  const T=tourEl;tourEl=null;
+  document.removeEventListener('keydown',T._key,true);window.removeEventListener('resize',T._lay);window.removeEventListener('scroll',T._lay,true);
+  T.remove();
+  if(T._onEnd){try{T._onEnd();}catch(e){}}
+}
+const tourFind=st=>{if(!st.sel)return null;try{return document.querySelector(st.sel);}catch(e){return null;}};
+function startTour(steps,opts){
+  stopTour();
+  const list=steps.filter(st=>!st.sel||tourFind(st));
+  if(!list.length)return;
+  const T=h('div',{class:'tour',role:'dialog','aria-modal':'true','aria-label':'Guide'});
+  T._steps=list;T._i=-1;T._onEnd=opts&&opts.onEnd;
+  T._lay=()=>{clearTimeout(T._lt);T._lt=setTimeout(tourLayout,30);};
+  T._key=e=>{
+    if(e.key==='Escape'){e.preventDefault();stopTour();}
+    else if(e.key==='Enter'||e.key===' '||e.key==='ArrowRight'){e.preventDefault();e.stopPropagation();tourNext();}
+  };
+  T.addEventListener('click',tourNext);
+  document.body.append(T);tourEl=T;
+  document.addEventListener('keydown',T._key,true);window.addEventListener('resize',T._lay);window.addEventListener('scroll',T._lay,true);
+  tourNext();
+}
+function tourNext(){
+  const T=tourEl;if(!T)return;
+  let j=T._i+1;
+  while(j<T._steps.length&&T._steps[j].sel&&!tourFind(T._steps[j]))j++;
+  if(j>=T._steps.length){stopTour();return;}
+  T._i=j;
+  const st=T._steps[j],el=tourFind(st);
+  if(el&&!el.closest('.tabs,.top')){try{el.scrollIntoView({block:'center',behavior:'instant'});}catch(e){el.scrollIntoView();}}
+  tourLayout(true);
+}
+function tourLayout(fresh){
+  const T=tourEl;if(!T||T._i<0)return;
+  if(fresh===true)T._fresh=Date.now();else if(Date.now()-(T._fresh||0)<500)return;
+  const st=T._steps[T._i],n=T._steps.length,vw=window.innerWidth,vh=window.innerHeight;
+  const el=tourFind(st);let r=null;
+  if(el){const b=el.getBoundingClientRect();const x1=Math.max(b.left,0),y1=Math.max(b.top,0),x2=Math.min(b.right,vw),y2=Math.min(b.bottom,vh);if(x2>x1&&y2>y1)r={l:x1-6,t:y1-6,r:x2+6,b:y2+6};}
+  const last=T._i>=n-1;
+  const bub=h('div',{class:'bub',tabindex:'-1'},
+    h('p',{class:'eb'},'Étape '+(T._i+1)+' sur '+n),h('h3',{},st.title),h('p',{class:'tx'},st.text),
+    h('div',{class:'ft'},h('div',{class:'dots','aria-hidden':'true'},steps2dots(n,T._i)),
+      h('span',{class:'nx'},last?'Compris !':'Touche pour continuer ›')),
+    h('div',{style:'text-align:right'},last?null:h('button',{class:'sk',type:'button',onclick:e=>{e.stopPropagation();stopTour();}},'Passer le guide')));
+  const bw=Math.min(340,vw-32);bub.style.width=bw+'px';
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  T.replaceChildren(svg,bub);
+  const dim=r?'<mask id="tmk"><rect width="100%" height="100%" fill="#fff"/><rect x="'+r.l+'" y="'+r.t+'" width="'+(r.r-r.l)+'" height="'+(r.b-r.t)+'" rx="8" fill="#000"/></mask>':'';
+  let html='<defs>'+dim+'</defs><rect width="100%" height="100%" fill="rgba(8,9,11,.8)"'+(r?' mask="url(#tmk)"':'')+'/>';
+  if(r)html+='<rect class="ring" x="'+r.l+'" y="'+r.t+'" width="'+(r.r-r.l)+'" height="'+(r.b-r.t)+'" rx="8"/>';
+  const bh=bub.offsetHeight;let bx=(vw-bw)/2,by=(vh-bh)/2,arrow=null;
+  if(r){
+    const cx=(r.l+r.r)/2,need=bh+60,below=vh-r.b,above=r.t;
+    bx=Math.max(16,Math.min(vw-bw-16,cx-bw/2));
+    if(below>=need||above>=need){
+      const down=below>=need&&(below>=above||above<need);
+      by=down?r.b+56:r.t-56-bh;
+      const sx=Math.max(bx+24,Math.min(bx+bw-24,cx)),sy=down?by:by+bh;
+      const ex=Math.max(r.l+10,Math.min(r.r-10,cx)),ey=down?r.b+4:r.t-4;
+      arrow={sx,sy,ex,ey};
+    }else{
+      by=below>=above?Math.min(vh-bh-12,r.b+12):Math.max(12,r.t-bh-12);
+      if(by<r.b&&by+bh>r.t)by=below>=above?vh-bh-12:12;
+    }
+  }
+  by=Math.max(12,Math.min(vh-bh-12,by));
+  bub.style.left=bx+'px';bub.style.top=by+'px';
+  if(arrow){
+    const {sx,sy,ex,ey}=arrow,mx=(sx+ex)/2+(ex>=sx?-1:1)*Math.min(60,Math.abs(ey-sy)/2),my=(sy+ey)/2;
+    const ang=Math.atan2(ey-my,ex-mx),L=15,a1=ang+Math.PI-0.5,a2=ang+Math.PI+0.5;
+    html+='<path class="arr line" pathLength="1" d="M'+sx+' '+sy+' Q'+mx+' '+my+' '+ex+' '+ey+'"/>'
+      +'<path class="arr head" d="M'+(ex+L*Math.cos(a1))+' '+(ey+L*Math.sin(a1))+' L'+ex+' '+ey+' L'+(ex+L*Math.cos(a2))+' '+(ey+L*Math.sin(a2))+'"/>';
+  }
+  svg.innerHTML=html;
+  T.classList.remove('go');
+  if(fresh===true||!T._shown){void T.offsetWidth;requestAnimationFrame(()=>{if(tourEl===T)T.classList.add('go');});T._shown=true;}
+  else T.classList.add('go');
+  if(fresh===true){try{bub.focus({preventScroll:true});}catch(e){}}
+}
+function steps2dots(n,i){return Array.from({length:n},(_,k)=>h('i',{class:k===i?'on':''}));}
 
 /* ---------- démarrage ---------- */
 function init(){
