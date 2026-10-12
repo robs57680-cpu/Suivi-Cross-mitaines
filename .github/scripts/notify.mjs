@@ -1,4 +1,4 @@
-/* Envoie les notifications push de Box Score (nouvelle séance, réaction reçue).
+/* Envoie les notifications push de Box Score (nouvelle séance, message du coach, réaction reçue).
    Lancé toutes les 15 minutes par .github/workflows/notify.yml. L'état (dernier passage, notifications déjà envoyées)
    est gardé dans Firestore : config/pushState. */
 import admin from 'firebase-admin';
@@ -25,16 +25,24 @@ const { lastRun, sent = [] } = st.data();
 const since = new Date(new Date(lastRun).getTime() - OVERLAP_MS).toISOString();
 const done = new Set(sent);
 
-const [wSnap, rSnap] = await Promise.all([
+const [wSnap, rSnap, aSnap] = await Promise.all([
   db.collection('wods').where('publishedAt', '>', since).get(),
-  db.collection('reactions').where('at', '>', since).get()
+  db.collection('reactions').where('at', '>', since).get(),
+  db.doc('config/announcement').get()
 ]);
 const newWods = wSnap.docs.map(d => ({ ...d.data(), id: d.id, key: 'w:' + d.id + ':' + d.data().publishedAt })).filter(x => !done.has(x.key));
 const newRx = rSnap.docs.map(d => ({ ...d.data(), id: d.id, key: 'r:' + d.id + ':' + d.data().at })).filter(x => !done.has(x.key) && x.to && x.from !== x.to);
-console.log(`Nouvelles séances : ${newWods.length} · nouvelles réactions : ${newRx.length}`);
+/* message du coach : document unique config/announcement. Notifié une seule fois par id, seulement si le coach a laissé « notify:true »
+   (une simple correction du message est enregistrée avec notify:false), si le message est actif et publié depuis moins de 24 h. */
+const ANN_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const ann = aSnap.exists ? aSnap.data() : null;
+const newAnn = (ann && ann.id && ann.active !== false && ann.notify === true && String(ann.text || '').trim()
+  && Date.now() - new Date(ann.at).getTime() < ANN_MAX_AGE_MS)
+  ? [{ ...ann, key: 'a:' + ann.id }].filter(x => !done.has(x.key)) : [];
+console.log(`Nouvelles séances : ${newWods.length} · nouveau message du coach : ${newAnn.length} · nouvelles réactions : ${newRx.length}`);
 
-const saveState = () => stRef.set({ lastRun: now.toISOString(), sent: [...sent, ...newWods.map(x => x.key), ...newRx.map(x => x.key)].slice(-KEEP) });
-if (!newWods.length && !newRx.length) { await saveState(); process.exit(0); }
+const saveState = () => stRef.set({ lastRun: now.toISOString(), sent: [...sent, ...newWods.map(x => x.key), ...newAnn.map(x => x.key), ...newRx.map(x => x.key)].slice(-KEEP) });
+if (!newWods.length && !newAnn.length && !newRx.length) { await saveState(); process.exit(0); }
 
 const subs = (await db.collection('pushSubs').get()).docs.map(d => ({ ...d.data(), id: d.id }));
 const coach = await db.doc('config/coach').get();
@@ -48,6 +56,10 @@ if (newWods.length) {
     ? `Nouvelle séance : « ${cut(newWods[0].title, 60)} ». Elle t'attend !`
     : `${newWods.length} nouvelles séances t'attendent !`;
   for (const uid of new Set(subs.map(s => s.uid))) if (uid !== coachUid) add(uid, { tag: 'wod', body, go: 'today' });
+}
+if (newAnn.length) {
+  const a = newAnn[0];
+  for (const uid of new Set(subs.map(s => s.uid))) if (uid !== coachUid) add(uid, { tag: 'ann', title: cut(a.title, 60) || 'Message du coach', body: cut(a.text, 140), go: 'feed' });
 }
 if (newRx.length) {
   const wods = Object.fromEntries((await db.collection('wods').get()).docs.map(d => [d.id, d.data()]));
