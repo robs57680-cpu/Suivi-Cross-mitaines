@@ -625,6 +625,23 @@ html[data-hal] .top{border-bottom-color:#E8710A}
 .tour .bub .sk{background:none;border:0;color:var(--muted);font-size:13px;text-decoration:underline;cursor:pointer;padding:6px 0}
 .tour .dots{display:flex;gap:5px}.tour .dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}.tour .dots i.on{background:var(--accent)}
 @media (prefers-reduced-motion:reduce){.tour .bub,.tour.go .bub{transition:none;transform:none}.tour .arr.line{stroke-dashoffset:0;transition:none!important}.tour .arr.head{opacity:1;transition:none!important}}
+
+/* menu déroulant (trois traits) */
+.tab-burger{flex:0 0 58px;display:grid;place-items:center;position:relative;padding-inline:0}
+.tab-burger svg,.dr-item svg{width:26px;height:26px;flex:none}
+.tab-burger .ibdot{top:8px;right:12px}
+.drawer-bg{position:fixed;inset:0;z-index:26;background:rgba(8,9,11,.55);opacity:0;transition:opacity .25s ease}
+.drawer-bg.open{opacity:1}
+.drawer{position:absolute;top:0;right:0;bottom:0;width:min(300px,84vw);box-sizing:border-box;background:var(--surface);color:var(--ink);border-left:2px solid var(--edge);padding:calc(14px + env(safe-area-inset-top,0px)) 12px calc(14px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:4px;overflow:auto;transform:translateX(100%);transition:transform .25s ease;box-shadow:-12px 0 30px #0006}
+.drawer-bg.open .drawer{transform:none}
+.drawer-bg.inst,.drawer-bg.inst .drawer{transition:none}
+.drawer .dh{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:0 4px}
+.drawer .dh b{font-family:var(--f-display);font-size:22px;letter-spacing:.08em;text-transform:uppercase}
+.drawer .dx{background:none;border:0;color:var(--ink);font-size:22px;cursor:pointer;padding:4px 8px}
+.dr-item{position:relative;display:flex;align-items:center;gap:14px;padding:14px 12px;border:0;border-radius:6px;background:none;color:var(--ink);font:600 17px var(--f-body,inherit);text-align:left;cursor:pointer;width:100%}
+.dr-item:hover,.dr-item[aria-current]{background:var(--surface2)}
+.dr-item .ibdot{top:11px;left:31px;right:auto}
+@media (prefers-reduced-motion:reduce){.drawer-bg,.drawer{transition:none}}
 </style>
 </head>
 <body>
@@ -1564,7 +1581,7 @@ const typing=()=>{const a=document.activeElement;return a&&main.contains(a)&&/^(
 function scheduleRender(){if(typing()){pending=true;return;}render();}
 document.addEventListener('focusout',()=>{if(!pending)return;setTimeout(()=>{if(!typing()){pending=false;render();}},0);});
 
-function go(tab){if(tab==='coach'&&S.tab==='coach')S.coach.view=null;S.profView=null;S.viewUser=null;S.tip=null;S.tab=tab;S.boardDetail=false;S.confirm=null;if(S.entry&&S.entry.coach)S.entry=null;render();window.scrollTo(0,0);}
+function go(tab){closeDrawer(true);if(tab==='coach'&&S.tab==='coach')S.coach.view=null;S.profView=null;S.viewUser=null;S.tip=null;S.tab=tab;S.boardDetail=false;S.confirm=null;if(S.entry&&S.entry.coach)S.entry=null;render();window.scrollTo(0,0);}
 function render(){
   pending=false;S._aw=null;S._ob=null;applyTheme();
   {const tp=document.querySelector('.top');if(tp)document.documentElement.style.setProperty('--toph',tp.offsetHeight+'px');}
@@ -1581,18 +1598,15 @@ function render(){
   $('#hdr-right').replaceChildren(h('span',{class:'chip '+(periodState(p)==='live'?'live':'done'),style:'max-width:40vw;overflow:hidden;text-overflow:ellipsis;display:block'},p.virtual?'Saison en cours':(p.name||seasonLabel(p))),helpBtn());
   const tabs=[['feed','Fil'],['today','Séance'],['board','Classement']];
   const tabEls=tabs.map(([k,l])=>h('button',{class:'tab','data-tour':'tab-'+k,'aria-current':S.tab===k?'page':null,onclick:()=>go(k)},l));
-  if(S.owner){
-    const activeExtra=S.tab==='profile'||S.tab==='coach'||S.tab==='prefs'||S.tab==='stats';
-    const menu=h('div',{class:'tab-menu',hidden:true,role:'menu'},
-      ...[['profile','Profil'],['coach','Coach']].map(([k,l])=>h('button',{class:'tab-option','aria-current':(S.tab===k||(k==='coach'&&(S.tab==='prefs'||S.tab==='stats')))?'page':null,role:'menuitem',onclick:()=>go(k)},l)));
-    const toggle=h('button',{class:'tab','aria-current':activeExtra?'page':null,'aria-haspopup':'menu','aria-expanded':'false',onclick:e=>{const open=menu.hidden;menu.hidden=!open;e.currentTarget.setAttribute('aria-expanded',String(open));}},'Profil ▾');
-    tabEls.push(h('div',{class:'tab-dropdown'},toggle,menu));
-  }else{
-    tabEls.push(h('button',{class:'tab','aria-current':S.tab==='profile'?'page':null,onclick:()=>go('profile')},'Profil'));
+  {
+    const activeExtra=['profile','coach','prefs','stats','share'].includes(S.tab);
+    const bb=h('button',{class:'tab tab-burger','data-tour':'tab-menu','aria-current':activeExtra?'page':null,'aria-haspopup':'dialog','aria-expanded':drawerEl?'true':'false','aria-label':'Menu',title:'Menu',onclick:()=>{drawerEl?closeDrawer():openDrawer();}});
+    bb.innerHTML=ICO_MENU;if(menuDot())bb.append(h('span',{class:'ibdot','aria-hidden':'true'}));
+    tabEls.push(bb);
   }
-  $('#tabs').classList.toggle('coach-tabs',!!S.owner);
+  $('#tabs').classList.remove('coach-tabs');
   $('#tabs').replaceChildren(...tabEls);
-  const view={feed:viewFeed,today:viewToday,board:viewBoard,profile:viewProfile,coach:viewCoach,stats:viewStats,prefs:viewPrefs}[S.tab]||viewFeed;
+  const view={feed:viewFeed,today:viewToday,board:viewBoard,profile:viewProfile,coach:viewCoach,stats:viewStats,prefs:viewPrefs,share:viewShare}[S.tab]||viewFeed;
   main.replaceChildren(...banners(),view());
   document.querySelectorAll('.bubs.rxfloat').forEach(x=>x.remove());
   const rxLayer=rxReceived();if(rxLayer)document.body.append(rxLayer);
@@ -2222,7 +2236,7 @@ function partCard(p,w,date){
     h('div',{class:'lines'},lines.map(metcon?metLine:renderLine)),
     (metcon&&p.word)?h('div',{class:'cword'},h('span',{class:'flabel'},'Mot du coach'),h('p',{},p.word)):null,
     metcon?levelsBlock(p):null,
-    (metcon&&w&&timerOk(date))?h('div',{class:'row'},h('button',{class:'btn primary',type:'button',onclick:()=>openTimer(w,date,p)},'Démarrer le metcon')):null);
+    (metcon&&w&&timerOk(date))?h('div',{class:'row'},h('button',{class:'btn primary',type:'button','data-tour':'start-metcon',onclick:()=>openTimer(w,date,p)},'Démarrer le metcon')):null);
   return h('article',{class:'part'+(metcon?' metcon':'')},h('div',{class:'plabel'},p.label),body);
 }
 function defaultDate(){
@@ -2509,7 +2523,7 @@ function rivalryCard(){
 function viewFeed(){
   if(S.viewUser)return viewAthlete(S.viewUser);
   const el=h('div',{class:'stack'});
-  el.append(h('div',{class:'row',style:'justify-content:space-between;flex-wrap:nowrap;align-items:flex-start'},h('div',{style:'min-width:0'},h('p',{class:'eyebrow'},'La communauté Box Score'),h('h1',{class:'day'},'Fil d’actualité')),feedIcons()));
+  el.append(h('div',{class:'row',style:'justify-content:space-between;flex-wrap:nowrap;align-items:flex-start'},h('div',{style:'min-width:0'},h('p',{class:'eyebrow'},'La communauté Box Score'),h('h1',{class:'day'},'Fil d’actualité'))));
   if(!ready()){el.append(h('p',{class:'muted'},'Chargement…'));return el;}
   {const rv=rivalryCard();if(rv)el.append(rv);}
   const posts=[];
@@ -4768,6 +4782,72 @@ function loginView(){
 }
 
 
+
+/* ---------- menu déroulant (bandeau latéral) ---------- */
+const SVGA='viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
+const ICO_MENU='<svg '+SVGA+' stroke-width="2.2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>';
+const ICO_USER='<svg '+SVGA+'><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>';
+const ICO_PHONE='<svg '+SVGA+'><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M10.5 18.5h3"/></svg>';
+const ICO_COACH='<svg '+SVGA+'><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 2.5h6V6H9z"/><path d="M8.5 11h7M8.5 15h5"/></svg>';
+let drawerEl=null;
+const notifDotOn=()=>pushConfigured()&&pushSupported()&&Notification.permission==='default';
+function menuDot(){const a=annActive();return !!((a&&!annIsSeen(a))||notifDotOn());}
+function drawerItems(){
+  const a=annActive(),out=[];
+  out.push({id:'profile',label:'Profil',ico:ICO_USER,cur:S.tab==='profile'&&!S.profView,fn:()=>{S.profView=null;go('profile');}});
+  if(S.owner)out.push({id:'coach',label:'Coach',ico:ICO_COACH,cur:['coach','prefs','stats'].includes(S.tab),fn:()=>go('coach')});
+  out.push({id:'notif',label:'Notifications',ico:ICO_BELL,dot:notifDotOn(),cur:S.tab==='profile'&&S.profView==='notifs',fn:()=>{go('profile');S.profView='notifs';render();window.scrollTo(0,0);}});
+  if(a)out.push({id:'mail',label:'Message du coach',ico:ICO_MAIL,dot:!annIsSeen(a),fn:()=>openAnnouncement(a,{review:true})});
+  out.push({id:'share',label:'Partager l’appli',ico:ICO_PHONE,cur:S.tab==='share',fn:()=>go('share')});
+  return out;
+}
+function closeDrawer(instant){
+  const D=drawerEl;if(!D)return;
+  drawerEl=null;document.removeEventListener('keydown',D._esc,true);
+  const bb=document.querySelector('.tab-burger');if(bb)bb.setAttribute('aria-expanded','false');
+  if(instant===true){D.remove();return;}
+  D.classList.remove('open');setTimeout(()=>D.remove(),260);
+}
+function openDrawer(instant){
+  if(drawerEl)return;
+  const D=h('div',{class:'drawer-bg'+(instant===true?' inst':''),onclick:e=>{if(e.target===D)closeDrawer();}});
+  const items=drawerItems().map(it=>{
+    const b=h('button',{class:'dr-item',type:'button','data-tour':'dm-'+it.id,'aria-current':it.cur?'page':null,onclick:()=>{closeDrawer(true);it.fn();}});
+    b.innerHTML=it.ico;b.append(h('span',{},it.label));
+    if(it.dot)b.append(h('span',{class:'ibdot','aria-hidden':'true'}));
+    return b;});
+  D.append(h('aside',{class:'drawer',id:'drawer',role:'dialog','aria-label':'Menu'},
+    h('div',{class:'dh'},h('b',{},'Menu'),h('button',{class:'dx',type:'button','aria-label':'Fermer le menu',onclick:()=>closeDrawer()},'✕')),...items));
+  D._esc=e=>{if(e.key==='Escape'&&!tourEl){e.preventDefault();closeDrawer();}};
+  document.addEventListener('keydown',D._esc,true);
+  document.body.append(D);drawerEl=D;
+  const bb=document.querySelector('.tab-burger');if(bb)bb.setAttribute('aria-expanded','true');
+  if(instant===true)D.classList.add('open');else{void D.offsetWidth;requestAnimationFrame(()=>D.classList.add('open'));}
+  const f=D.querySelector('.dr-item');if(f&&instant!==true)f.focus({preventScroll:true});
+}
+/* ---------- partager l'appli ---------- */
+const appUrl=()=>location.href.split(/[?#]/)[0].replace(/index\.html$/,'');
+function viewShare(){
+  const url=appUrl();
+  const inp=h('input',{id:'share-url',type:'text',readonly:true,value:url,'aria-label':'Lien de l’appli',onfocus:e=>e.target.select()});
+  const copy=async()=>{
+    try{await navigator.clipboard.writeText(url);}
+    catch(e){
+      let ok=false;try{inp.focus();inp.select();inp.setSelectionRange(0,99999);ok=document.execCommand('copy');}catch(x){}
+      if(!ok){toast('Copie impossible : touche le lien, sélectionne-le et copie-le.',true);return;}
+    }
+    toast('Lien copié');
+  };
+  const btns=[h('button',{class:'btn primary',type:'button',id:'share-copy',onclick:copy},'Copier le lien')];
+  if(navigator.share)btns.push(h('button',{class:'btn',type:'button',id:'share-native',onclick:()=>{navigator.share({title:'Box Score',text:'Rejoins le classement de notre groupe de crossfit sur Box Score.',url}).catch(()=>{});}},'Envoyer par…'));
+  return h('div',{class:'stack'},
+    h('div',{},h('p',{class:'eyebrow'},'Faire connaître Box Score'),h('h1',{class:'day'},'Partager l’appli')),
+    h('section',{class:'card'},
+      h('p',{class:'muted'},'Copie ce lien et envoie-le par message à quelqu’un de ton groupe. Il crée son compte avec un e-mail et un mot de passe, et le guide l’accompagne pas à pas.'),
+      field('Lien de l’appli',inp),
+      h('div',{class:'row'},...btns)));
+}
+
 /* ---------- didacticiel : flèches qui se dessinent, texte par-dessus la page, un clic = une étape ---------- */
 const TOUR_STEPS={
   loginEmail:{sel:'#auth-email',title:'Ton e-mail',text:'Commence par écrire ton adresse e-mail ici.'},
@@ -4785,12 +4865,21 @@ const TOURS={
     {sel:'main .day',title:'Le fil d’actualité',text:'Ici apparaissent les séances validées par les athlètes du groupe, de la plus récente à la plus ancienne.'},
     {sel:'.feed-card',title:'Une séance publiée',text:'Le pseudo, le titre de la séance et les résultats. Touche un pseudo pour ouvrir le profil de l’athlète.'},
     {sel:'.rxrow',title:'Encourage tes partenaires',text:'Un emoji pour féliciter : ça fait toujours plaisir.'},
-    {sel:'[data-tour=tab-today]',title:'Passe à l’action',text:'L’onglet Séance : c’est là que tu vois la séance du jour et que tu entres ton résultat.'},
+    {sel:'[data-tour=tab-menu]',title:'Nouveau : le menu',text:'Touche ces trois traits : un bandeau se déplie sur le côté. Il regroupe ton profil, tes notifications, le message du coach et le partage de l’appli.'},
+    {needs:'drawer',sel:'#drawer',title:'Le bandeau déplié',text:'Chaque entrée a son petit dessin. On les passe en revue une par une.'},
+    {needs:'drawer',sel:'[data-tour=dm-profile]',title:'Profil : le bonhomme',text:'Tes points, ton rang, ton avatar, tes informations et ton objectif de séances.'},
+    {needs:'drawer',sel:'[data-tour=dm-coach]',title:'Coach',text:'Réservé au coach : publier les séances et les messages.'},
+    {needs:'drawer',sel:'[data-tour=dm-notif]',title:'Notifications : la cloche',text:'Active les notifications pour être prévenu d’une nouvelle séance, d’un message du coach ou d’une réaction. Un point rouge signale qu’elles ne sont pas encore activées.'},
+    {needs:'drawer',sel:'[data-tour=dm-mail]',title:'Message du coach : l’enveloppe',text:'Relis le dernier message du coach. Le point rouge indique un message pas encore lu.'},
+    {needs:'drawer',sel:'[data-tour=dm-share]',title:'Partager l’appli : le téléphone',text:'Ouvre une page avec le lien de l’appli : tu le copies et tu l’envoies à quelqu’un.'},
+    {title:'Mettre l’appli sur l’écran d’accueil : iPhone',text:'Ouvre l’appli dans Safari, touche le bouton Partager (le carré avec une flèche vers le haut), fais défiler et choisis « Sur l’écran d’accueil », puis « Ajouter ». Sur iPhone, les notifications ne marchent que depuis cette icône.'},
+    {title:'Mettre l’appli sur l’écran d’accueil : Android',text:'Ouvre l’appli dans Chrome, touche les trois points en haut à droite, puis « Ajouter à l’écran d’accueil » (ou « Installer l’application ») et confirme. L’icône apparaît comme une appli classique.'},
     {sel:'#tour-help',title:'Besoin d’un rappel ?',text:'Ce bouton « ? » te remet le guide de l’onglet où tu te trouves, quand tu veux.'}],
   today:()=>[
     {sel:'main .day',title:'La séance du jour',text:'La date de la séance. Tu peux la faire n’importe quel jour de la semaine.'},
     {sel:'main .wtitle',title:'Titre et points',text:'Le titre de la séance et les points de base qu’elle rapporte. Le metcon ajoute des points selon ton niveau.'},
     {sel:'.pbody',title:'Les parties de la séance',text:'Force, renforcement, metcon… Chaque partie détaille ce qu’il faut faire. Le metcon est celle qui rapporte des points au classement.'},
+    {sel:'[data-tour=start-metcon]',title:'Démarrer le metcon',text:'Lance le minuteur en plein écran : 10 secondes de préparation, puis le chrono qui monte (For Time, avec le time cap), le compte à rebours et le bouton TOUR (AMRAP) ou un bip chaque minute (EMOM). À l’arrêt, tu peux corriger ton résultat : il est prérempli dans le formulaire.'},
     {sel:'[data-tour=entry]',title:'Enregistre ton résultat',text:'Une fois la séance terminée, choisis ton niveau, entre tes charges et ton score ici, puis valide : tes points arrivent dans le classement.'},
     {sel:'[data-tour=tab-board]',title:'Et ensuite ?',text:'Tes points apparaissent dans l’onglet Classement.'}],
   board:()=>[
@@ -4808,7 +4897,8 @@ const TOURS={
     {sel:'#pseudo-edit',title:'Tes informations',text:'Ton pseudo apparaît dans le classement. Tu peux le modifier ici.'}]
 };
 let tourEl=null;
-const tourKey=t=>'bs-tour-'+(t==='login'?'login':(S.uid||'anon')+'-'+t);
+const TOUR_VER={feed:'-v2',today:'-v2'}; /* un guide enrichi est remontré une fois */
+const tourKey=t=>'bs-tour-'+(t==='login'?'login':(S.uid||'anon')+'-'+t)+(TOUR_VER[t]||'');
 const tourSeen=t=>{try{return localStorage.getItem(tourKey(t))==='1';}catch(e){return true;}}; /* stockage indisponible : on n'insiste pas */
 const tourMark=t=>{try{localStorage.setItem(tourKey(t),'1');}catch(e){}};
 const tourBusy=()=>!!document.querySelector('.ov,.cer,.tm,.avfs,.ann,.reward-pop,#tm-ov');
@@ -4825,7 +4915,7 @@ function maybeTour(){
 }
 function stopTour(){
   if(!tourEl)return;
-  const T=tourEl;tourEl=null;
+  const T=tourEl;tourEl=null;closeDrawer(true);
   document.removeEventListener('keydown',T._key,true);window.removeEventListener('resize',T._lay);window.removeEventListener('scroll',T._lay,true);
   T.remove();
   if(T._onEnd){try{T._onEnd();}catch(e){}}
@@ -4833,7 +4923,7 @@ function stopTour(){
 const tourFind=st=>{if(!st.sel)return null;try{return document.querySelector(st.sel);}catch(e){return null;}};
 function startTour(steps,opts){
   stopTour();
-  const list=steps.filter(st=>!st.sel||tourFind(st));
+  const list=steps.filter(st=>!st.sel||st.needs||tourFind(st));
   if(!list.length)return;
   const T=h('div',{class:'tour',role:'dialog','aria-modal':'true','aria-label':'Guide'});
   T._steps=list;T._i=-1;T._onEnd=opts&&opts.onEnd;
@@ -4850,11 +4940,15 @@ function startTour(steps,opts){
 function tourNext(){
   const T=tourEl;if(!T)return;
   let j=T._i+1;
-  while(j<T._steps.length&&T._steps[j].sel&&!tourFind(T._steps[j]))j++;
+  for(;j<T._steps.length;j++){
+    const c=T._steps[j];
+    if(c.needs==='drawer'){if(!drawerEl)openDrawer(true);}else if(drawerEl)closeDrawer(true);
+    if(!c.sel||tourFind(c))break;
+  }
   if(j>=T._steps.length){stopTour();return;}
   T._i=j;
   const st=T._steps[j],el=tourFind(st);
-  if(el&&!el.closest('.tabs,.top')){try{el.scrollIntoView({block:'center',behavior:'instant'});}catch(e){el.scrollIntoView();}}
+  if(el&&!el.closest('.tabs,.top,.drawer')){try{el.scrollIntoView({block:'center',behavior:'instant'});}catch(e){el.scrollIntoView();}}
   tourLayout(true);
 }
 function tourLayout(fresh){
