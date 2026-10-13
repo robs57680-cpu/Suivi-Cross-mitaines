@@ -25,13 +25,25 @@ const { lastRun, sent = [] } = st.data();
 const since = new Date(new Date(lastRun).getTime() - OVERLAP_MS).toISOString();
 const done = new Set(sent);
 
-const [wSnap, rSnap, aSnap] = await Promise.all([
+const [wSnap, rSnap, aSnap, lSnap] = await Promise.all([
   db.collection('wods').where('publishedAt', '>', since).get(),
   db.collection('reactions').where('at', '>', since).get(),
-  db.doc('config/announcement').get()
+  db.doc('config/announcement').get(),
+  db.collection('logs').get()
 ]);
 const newWods = wSnap.docs.map(d => ({ ...d.data(), id: d.id, key: 'w:' + d.id + ':' + d.data().publishedAt })).filter(x => !done.has(x.key));
 const newRx = rSnap.docs.map(d => ({ ...d.data(), id: d.id, key: 'r:' + d.id + ':' + d.data().at })).filter(x => !done.has(x.key) && x.to && x.from !== x.to);
+/* séances validées par les athlètes (apparues dans le fil) : logs/{uid}.entries[date].at. Une séance n'est notifiée qu'une fois (clé uid + date),
+   même si l'athlète la modifie ensuite. Les REDO ne sont pas dans entries. */
+const newSess = [];
+for (const d of lSnap.docs) {
+  const lg = d.data(), entries = lg.entries || {};
+  for (const [date, e] of Object.entries(entries)) {
+    if (!e || !e.at || e.at <= since) continue;
+    const key = 's:' + d.id + ':' + date;
+    if (!done.has(key)) newSess.push({ uid: d.id, pseudo: lg.pseudo, date, key });
+  }
+}
 /* message du coach : document unique config/announcement. Notifié une seule fois par id, seulement si le coach a laissé « notify:true »
    (une simple correction du message est enregistrée avec notify:false), si le message est actif et publié depuis moins de 24 h. */
 const ANN_MAX_AGE_MS = 24 * 60 * 60 * 1000;
@@ -39,10 +51,10 @@ const ann = aSnap.exists ? aSnap.data() : null;
 const newAnn = (ann && ann.id && ann.active !== false && ann.notify === true && String(ann.text || '').trim()
   && Date.now() - new Date(ann.at).getTime() < ANN_MAX_AGE_MS)
   ? [{ ...ann, key: 'a:' + ann.id }].filter(x => !done.has(x.key)) : [];
-console.log(`Nouvelles séances : ${newWods.length} · nouveau message du coach : ${newAnn.length} · nouvelles réactions : ${newRx.length}`);
+console.log(`Nouvelles séances : ${newWods.length} · nouveau message du coach : ${newAnn.length} · nouvelles réactions : ${newRx.length} · nouvelles séances validées : ${newSess.length}`);
 
-const saveState = () => stRef.set({ lastRun: now.toISOString(), sent: [...sent, ...newWods.map(x => x.key), ...newAnn.map(x => x.key), ...newRx.map(x => x.key)].slice(-KEEP) });
-if (!newWods.length && !newAnn.length && !newRx.length) { await saveState(); process.exit(0); }
+const saveState = () => stRef.set({ lastRun: now.toISOString(), sent: [...sent, ...newWods.map(x => x.key), ...newAnn.map(x => x.key), ...newRx.map(x => x.key), ...newSess.map(x => x.key)].slice(-KEEP) });
+if (!newWods.length && !newAnn.length && !newRx.length && !newSess.length) { await saveState(); process.exit(0); }
 
 const subs = (await db.collection('pushSubs').get()).docs.map(d => ({ ...d.data(), id: d.id }));
 const coach = await db.doc('config/coach').get();
@@ -70,6 +82,20 @@ if (newRx.length) {
       ? `${cut(l[0].pseudo || 'Un athlète', 24)} a réagi ${l[0].emoji || ''} à ta séance « ${cut((wods[l[0].date] || {}).title || 'séance', 60)} »`
       : `${l.length} nouvelles réactions sur tes séances`;
     add(uid, { tag: 'reaction', body, go: 'feed' });
+  }
+}
+
+if (newSess.length) {
+  const wods = Object.fromEntries((await db.collection('wods').get()).docs.map(d => [d.id, d.data()]));
+  for (const uid of new Set(subs.map(s => s.uid))) {
+    const l = newSess.filter(x => x.uid !== uid); /* pas de notification pour sa propre séance */
+    if (!l.length) continue;
+    const names = [...new Set(l.map(x => cut(x.pseudo || 'Un athlète', 24)))];
+    const body = l.length === 1
+      ? `${names[0]} a validé « ${cut((wods[l[0].date] || {}).title || 'sa séance', 60)} »`
+      : names.length === 1 ? `${names[0]} a validé ${l.length} séances`
+      : `${names[0]} et ${names.length - 1} autre${names.length > 2 ? 's' : ''} ont validé leur séance`;
+    add(uid, { tag: 'session', body, go: 'feed' });
   }
 }
 
