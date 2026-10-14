@@ -205,6 +205,8 @@ textarea{resize:vertical}
 .t-mhaltero{--pc:var(--plate-white);--pi:#14161A;box-shadow:inset 0 0 0 1px rgba(0,0,0,.4),inset 0 0 0 4px rgba(0,0,0,.08)}
 .t-objectif{--pc:#7B3FC4}
 .t-bdeb{--pc:#6CC24A;--pi:#14161A}
+.t-gsolo{--pc:#FF7F50;--pi:#14161A}
+.t-gduo{--pc:#5C6BC0}
 .t-binter{--pc:#2AA6E0;--pi:#14161A}
 .t-ratio{--pc:#C2185B}
 .levels{display:grid;gap:8px}
@@ -943,24 +945,32 @@ function perfPoints(m,score,lvl,cap){
 const hasScore=e=>!!e&&((e.score!==undefined&&e.score!==null)||(!!e.cap&&e.capScore!==undefined&&e.capScore!==null));
 const perfOf=(m,e)=>(m&&e)?Math.round(perfPoints(m,e.cap?capValue(m,e):e.score,e.level||0,!!e.cap)*adjF(e)*100)/100:0;
 /* ---------- REDO : règles ----------
-   Un REDO rapporte la moitié des points de score de la nouvelle tentative, seulement si :
-   - le metcon l'autorise (case « REDO » du coach, m.redo !== false) ;
-   - le REDO égale ou bat le premier résultat : niveau (avec niveau personnalisé) ET score au moins égaux.
-   Sinon il est enregistré et compte pour l'objectif de séances, mais rapporte 0 point. Premier résultat sans score : aucune condition. */
+   Un REDO rapporte 1, 2 ou 3 points (avant pondération de niveau), à condition que le metcon l'autorise (case « REDO » du coach, m.redo !== false)
+   et que le REDO ait un score :
+   - 3 points : il améliore le premier résultat (plus de points de metcon à niveau égal, ou niveau plus haut sans marquer moins de points) ;
+   - 2 points : il l'égale (même niveau, même nombre de points de metcon que la première fois) ;
+   - 1 point : il fait moins bien (moins de points, ou niveau plus bas).
+   Il compte aussi pour l'objectif de séances. Premier résultat sans score : tout REDO avec un score vaut 3 points. */
 function scoreKey(m,e){
   if(!hasScore(e))return null;
   if(e.cap)return [0,capValue(m,e)];
   return [1,m.format==='FT'?-e.score:e.score];
 }
-function redoBeatsFirst(m,first,x){
-  const a=scoreKey(m,first);if(!a)return true;
-  const b=scoreKey(m,x);if(!b)return false;
-  if(lvVal(x)<lvVal(first)-1e-9)return false;
-  return b[0]>a[0]||(b[0]===a[0]&&b[1]>=a[1]-1e-9);
+const REDO_PTS=[1,2,3]; /* moins bien, égal, mieux */
+function redoGrade(m,first,x){
+  if(!m||!x||!hasScore(x))return 0;
+  if(!first||!hasScore(first))return 3;
+  const pa=perfOf(m,first),pb=perfOf(m,x),dl=lvVal(x)-lvVal(first);
+  if(dl<-1e-9)return 1;
+  if(dl>1e-9)return pb>=pa-1e-9?3:1;
+  if(pb>pa+1e-9)return 3;
+  return Math.abs(pb-pa)<=1e-9?2:1;
 }
+function redoBeatsFirst(m,first,x){return redoGrade(m,first,x)>=2;}
 function redoPts(m,first,x){
   if(!m||m.redo===false||!first||!x)return 0;
-  return redoBeatsFirst(m,first,x)?perfOf(m,x)/2:0;
+  const g=redoGrade(m,first,x);
+  return g?REDO_PTS[g-1]:0;
 }
 function redoObj(st,r){
   const o={level:st.level};if(st.adj)o.adj=st.adj;
@@ -1167,6 +1177,17 @@ function computeBoard(period){
     }
     const goal=lg.goals?Number(lg.goals[period.id]):0;
     r.goal=goal>0?goal:0;
+    /* trophées Solo / Duo gagnant : on ne garde que les meilleures séances, à raison de « objectif » séances par semaine de la saison
+       (objectif 1 sur 7 semaines = 7 meilleures séances), pondérées par le niveau moyen comme le GOAT. Faire plus de séances que prévu n'est jamais pénalisé. */
+    {
+      const byDate={};
+      for(const it of r.items){const d=it.w.date;byDate[d]=(byDate[d]||0)+(it.pts.base||0)+((it.pts.perf||0)*r.mult);}
+      const vals=Object.values(byDate).sort((a,b)=>b-a);
+      const nW=Object.keys(weeks).filter(k=>k<=t).length;
+      r.goalK=r.goal*nW;
+      r.goalN=Math.min(r.goalK,vals.length);
+      r.goalPts=Math.round(vals.slice(0,r.goalK).reduce((a,b)=>a+b,0)*10)/10;
+    }
     const currentWeek=mondayOf(t),currentDays=weeks[currentWeek]||[];
     /* Le trophée reste actif uniquement tant que l'objectif de la semaine en cours est atteint. */
     r.goalMet=r.goal>0&&currentDays.length>0&&currentDays.filter(d=>lg.entries&&lg.entries[d]).length+redoWk(currentWeek)>=Math.min(r.goal,currentDays.length);
@@ -1183,6 +1204,12 @@ const catTrophy=(id,name,focus,label)=>({id,name,
   elig:r=>r.cat[focus].n>=2});
 const multTxt=r=>'x'+fmt2(r.mult);
 /* trophée par ligue : tous les athlètes dont le niveau moyen est le plus proche de ce niveau (de Deb- à Deb+, de Int- à Int+) se disputent les points bruts */
+ /* trophée par rythme : athlètes qui ont choisi g séance(s) par semaine comme objectif ; seules leurs meilleures séances comptent (g par semaine de la saison) */
+const goalTrophy=(id,name,g,label)=>({id,name,
+  desc:'Pour les athlètes qui ont choisi '+label+' par semaine comme objectif. On ne compte que leurs meilleures séances, à raison de '+g+' par semaine de la saison (sur 7 semaines : '+(7*g)+' séances), même s’ils en font plus : faire plus que prévu n’est jamais pénalisé. Points de séance + points des metcons pondérés par le niveau moyen, comme Le GOAT.',
+  key:r=>[r.goalPts],
+  show:r=>fmtN(r.goalPts)+' pts sur '+r.goalN+' séance'+(r.goalN>1?'s':''),
+  elig:r=>r.goal===g&&r.goalK>0});
 const leagueTrophy=(id,name,lv,label)=>({id,name,
   desc:'Le plus de points bruts parmi les athlètes de la ligue '+label+' (niveau moyen choisi sur les metcons, de '+LV_ABBR[lv]+'- à '+LV_ABBR[lv]+'+). À points égaux, le niveau moyen le plus haut passe devant.',
   key:r=>[r.total,Math.round(r.lvlAvg*100)/100],
@@ -1202,6 +1229,8 @@ const TROPHIES=[
  catTrophy('mcardio','Metcon cardio','cardio','cardio'),
  catTrophy('mgym','Metcon gym','gym','gym'),
  catTrophy('mhaltero','Metcon haltéro','haltero','haltéro'),
+ goalTrophy('gduo','Duo gagnant',2,'2 séances'),
+ goalTrophy('gsolo','Solo gagnant',1,'1 séance'),
  leagueTrophy('bdeb','Meilleur débutant',0,'Débutant'),
  leagueTrophy('binter','Meilleur intermédiaire',1,'Intermédiaire'),
  {id:'objectif',name:'Objectif tenu',desc:'Avoir tenu son nombre de séances par semaine, chaque semaine de la saison.',custom:b=>b.rows.filter(r=>r.goalMet),show:r=>r.goal+' séance'+(r.goal>1?'s':'')+' par semaine'}
@@ -1659,7 +1688,7 @@ const lvPill=r=>r.lvlN?h('span',{class:'chip lv',title:'Niveau moyen choisi sur 
    Il est calculé (jamais stocké) : il est remis à la fin de la saison aux gagnants du trophée. */
 const BADGES={goat:['#1F55D6','#FFFFFF'],lagoat:['#E0489A','#FFFFFF'],points:['#0E8A8A','#FFFFFF'],regulier:['#1E9B4A','#FFFFFF'],serie:['#D8321A','#FFFFFF'],
   top:['#2B3A67','#FFFFFF'],perf:['#F4C400','#14161A'],fort:['#1B1D20','#FFFFFF'],lafort:['#C2368F','#FFFFFF'],ratio:['#B5651D','#FFFFFF'],mcardio:['#F07A18','#FFFFFF'],
-  mgym:['#8B929A','#14161A'],mhaltero:['#F3F3F1','#14161A'],objectif:['#7B3FC4','#FFFFFF'],bdeb:['#6CC24A','#14161A'],binter:['#2AA6E0','#FFFFFF']};
+  mgym:['#8B929A','#14161A'],mhaltero:['#F3F3F1','#14161A'],objectif:['#7B3FC4','#FFFFFF'],bdeb:['#6CC24A','#14161A'],binter:['#2AA6E0','#FFFFFF'],gsolo:['#FF7F50','#14161A'],gduo:['#5C6BC0','#FFFFFF']};
 const GOAT='<g transform="translate(-4.8 -5.1) scale(1.15)"><g stroke="#1A1A1A" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">'+
   '<path d="M26 20C19 14 14 9 16 2C24 4 30 11 30 19Z" fill="#D9C28F"/><path d="M38 20C45 14 50 9 48 2C40 4 34 11 34 19Z" fill="#D9C28F"/>'+
   '<path d="M22 25L6 24C3 28 7 32 12 32L23 32Z" fill="#F4E9D0"/><path d="M42 25L58 24C61 28 57 32 52 32L41 32Z" fill="#F4E9D0"/>'+
@@ -1680,6 +1709,8 @@ const ICONS={goat:GOAT,lagoat:GOAT,
   mcardio:'<path d="M32 56C4 38 6 12 21 12C27 12 31 16 32 21C33 16 37 12 43 12C58 12 60 38 32 56Z" fill="currentColor"/><path d="M10 33H24L28 25L35 42L39 33H54" fill="none" stroke="%BG%" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>',
   mgym:'<g fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"><path d="M8 5H56M20 5V28M44 5V28"/><circle cx="20" cy="40" r="11"/><circle cx="44" cy="40" r="11"/></g>',
   mhaltero:'<path d="M2 32H62" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><g fill="currentColor"><rect x="10" y="10" width="7" height="44" rx="2"/><rect x="19" y="17" width="6" height="30" rx="2"/><rect x="47" y="10" width="7" height="44" rx="2"/><rect x="39" y="17" width="6" height="30" rx="2"/></g>',
+  gsolo:'<circle cx="32" cy="21" r="11" fill="currentColor"/><path d="M12 56C12 38 52 38 52 56Z" fill="currentColor"/>',
+  gduo:'<g fill="currentColor"><circle cx="21" cy="22" r="9"/><path d="M4 54C4 38 38 38 38 54Z"/><circle cx="43" cy="22" r="9"/><path d="M26 54C26 38 60 38 60 54Z" opacity=".75"/></g>',
   bdeb:'<path d="M10 44L32 22L54 44" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>',
   binter:'<g fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 32L32 12L54 32"/><path d="M10 52L32 32L54 52"/></g>',
   objectif:'<path d="M14 6V60" stroke="currentColor" stroke-width="5" stroke-linecap="round"/><path d="M14 10H54L43 23L54 36H14Z" fill="currentColor"/>'};
@@ -2381,8 +2412,8 @@ function computeRivalry(uid){
     msgs.push({kind:'pass',ic:'target',pri:1,s:ratio+0.01*ahead.indexOf(R),uid:R.uid,h:'Tu peux dépasser '+R.pseudo,text,sub});
   }
   /* 1 bis. REDO pour passer devant un adversaire proche.
-     Un REDO se fait sur un metcon déjà validé un jour précédent : il rapporte la moitié des points de score et remplace l'éventuel REDO précédent
-     (gain possible = max des paliers / 2 - points du REDO actuel). Il n'ajoute pas de séance : à égalité de points, le départage reste celui des séances puis du pseudo. */
+     Un REDO se fait sur un metcon déjà validé un jour précédent : il rapporte 1, 2 ou 3 points et remplace l'éventuel REDO précédent
+     (gain possible = 3 - points du REDO actuel). Il n'ajoute pas de séance : à égalité de points, le départage reste celui des séances puis du pseudo. */
   {
     const lgU=S.logs[uid]||{},enU=lgU.entries||{},rdU=lgU.redos||{},redoable=[];
     if(!lockedDate(t))for(const w of wods){
@@ -2391,7 +2422,7 @@ function computeRivalry(uid){
       if((e.at?dfmt(new Date(e.at)):w.date)>=t)continue;
       if(m.redo===false)continue;
       const mp=B(w).mp;if(!(mp>0))continue;
-      const old=rdU[w.date],oldPts=old?redoPts(m,e,old):0,gain=rd(mp/2-oldPts);
+      const old=rdU[w.date],oldPts=old?redoPts(m,e,old):0,gain=rd(3-oldPts);
       if(gain>RV_E)redoable.push({w,m,e,gain,oldPts});
     }
     /* pas de REDO tant qu'il reste une séance de la semaine à faire : valider un WOD rapporte plus qu'un REDO */
@@ -2404,12 +2435,12 @@ function computeRivalry(uid){
       for(const x of redoable)if(ok(x.gain)&&(!best||x.gain>best.gain))best=x;
       if(!best)continue;
       const ratio=Math.max(0,d)/best.gain;if(ratio>0.8)continue;
-      const wr='« '+trunc(best.w.title,26)+' »',byD=rd(Math.max(0,d)+best.oldPts),minNew=hasScore(best.e)?rd(perfOf(best.m,best.e)/2):0,need=Math.max(byD,minNew);
+      const wr='« '+trunc(best.w.title,26)+' »',byD=rd(Math.max(0,d)+best.oldPts),minNew=0,need=Math.max(byD,minNew);
       const word=(!fav&&d>RV_E&&byD>=minNew-RV_E)?'plus de ':'au moins ';
       const text=d<=RV_E
         ?'Vous êtes à égalité de points'+(R.sessions===sU?' et de séances':'')+' : '+(best.oldPts>0?'améliore ton REDO de ':'un REDO de ')+wr+' te fait passer devant '+R.pseudo+'.'
-        :'Refais '+wr+' en REDO : '+word+fmtN(need)+' pts de REDO (la moitié des points du metcon, soit '+fmtN(need*2)+' pts de score) te font passer devant '+R.pseudo+'.';
-      const sub=(hasScore(best.e)?'Pour compter, ton REDO doit égaler ou battre ton premier résultat ('+lvlLab(best.m,best.e)+' · '+scoreText(best.m,best.e.score,best.e)+'). ':'')+(best.oldPts>0?'Il remplace ton REDO actuel ('+fmtN(best.oldPts)+' pts). ':'')+R.pseudo+' peut aussi marquer des points : le classement peut encore bouger.';
+        :'Refais '+wr+' en REDO : '+word+fmtN(need)+' pts de REDO (1 point si tu fais moins bien que ton premier résultat, 2 si tu l’égales en points, 3 si tu l’améliores) te font passer devant '+R.pseudo+'.';
+      const sub=(hasScore(best.e)?'Ton premier résultat à battre : '+lvlLab(best.m,best.e)+' · '+scoreText(best.m,best.e.score,best.e)+'. ':'')+(best.oldPts>0?'Il remplace ton REDO actuel ('+fmtN(best.oldPts)+' pts). ':'')+R.pseudo+' peut aussi marquer des points : le classement peut encore bouger.';
       passed.add(R.uid);
       msgs.push({kind:'redo',ic:'redo',pri:1,s:1+ratio+0.01*ahead.indexOf(R),uid:R.uid,h:'Un REDO pour passer devant '+R.pseudo,text,sub,act:{label:'Faire le REDO',date:best.w.date}});
     }
@@ -2800,7 +2831,7 @@ function redoBlock(w,date){
           ?h('button',{class:'btn sm danger',onclick:()=>{const r=Object.assign({},S.logs[S.uid].redos);delete r[date];S.confirm=null;saveLog({redos:r},'REDO retiré');}},'Confirmer le retrait')
           :h('button',{class:'btn sm danger',onclick:()=>{S.confirm='redo-'+date;render();}},'Retirer mon REDO')));
   }else{
-    el.append(h('p',{class:'hint'},'Refais ce metcon aujourd’hui pour gagner la moitié de ses points de score, à condition d’égaler ou de battre ton premier résultat (niveau et score). Le REDO compte dans ta semaine pour ton objectif.'),
+    el.append(h('p',{class:'hint'},'Refais ce metcon aujourd’hui : 1 point si tu fais moins bien que ton premier résultat, 2 si tu marques autant de points, 3 si tu t’améliores. Le REDO compte dans ta semaine pour ton objectif.'),
       h('div',{class:'row'},h('button',{class:'btn',disabled:needPseudo(),onclick:()=>openRedo(w,date)},'Faire un REDO')));
   }
   return el;
@@ -2824,13 +2855,13 @@ function redoForm(w,date){
     const r=readScore(m,S.redo);
     if(r.v!==undefined){
       const x=redoObj(S.redo,r);
-      if(redoBeatsFirst(m,first,x))pts=perfOf(m,x)/2;
-      else why=' Aucun point : ton REDO doit égaler ou battre ton premier résultat (niveau et score).';
+      const g=redoGrade(m,first,x);pts=g?REDO_PTS[g-1]:0;
+      why=g===3?' Tu t’améliores !':g===2?' Tu égales ton premier résultat.':g===1?' Moins bien que ton premier résultat.':'';
     }
-    preview.textContent=(per?'':'Hors saison, ne compte pas au classement. ')+'REDO : '+fmtN(pts)+' pts (la moitié des points du metcon).'+why;
+    preview.textContent=(per?'':'Hors saison, ne compte pas au classement. ')+'REDO : '+fmtN(pts)+' pt'+(pts>1?'s':'')+' (1 si moins bien, 2 si égal, 3 si mieux).'+why;
   };
   const form=h('form',{class:'card',onsubmit:e=>{e.preventDefault();submitRedo(w);}},h('h2',{class:'h2'},'REDO · '+w.title),
-    hasScore(first)?h('p',{class:'hint'},'Pour rapporter des points, ton REDO doit égaler ou battre ton premier résultat : '+lvlLab(m,first)+' · '+scoreText(m,first.score,first)+'.'):null,
+    hasScore(first)?h('p',{class:'hint'},'À comparer avec ton premier résultat : '+lvlLab(m,first)+' · '+scoreText(m,first.score,first)+'. Même niveau et autant de points de metcon = égal ; plus de points, ou un niveau plus haut sans marquer moins = mieux ; un niveau plus bas ou moins de points = moins bien.'):null,
     levelField(m,S.redo,m.label+' · Ton niveau'),...scoreFields(m,S.redo,upd,'redo'));
   upd();
   form.append(preview,h('div',{class:'row'},h('button',{class:'btn primary',type:'submit'},'Valider le REDO'),h('button',{class:'btn',type:'button',onclick:()=>{S.redo=null;render();}},'Annuler')));
@@ -2849,7 +2880,7 @@ function submitRedo(w){
   if(r.cap){rd.cap=true;rd.capScore=v;if(r.rounds!==undefined)rd.rounds=r.rounds;rd.reps=r.reps;}
   else{rd.score=v;if(r.rounds!==undefined){rd.rounds=r.rounds;rd.reps=r.reps;}}
   S.redo=null;
-  saveLog({redos:Object.assign({},cur.redos||{},{[date]:rd})},redoBeatsFirst(m,(cur.entries||{})[date],rd)?'REDO enregistré':'REDO enregistré, mais sans point : il doit égaler ou battre ton premier résultat');
+  saveLog({redos:Object.assign({},cur.redos||{},{[date]:rd})},'REDO enregistré : +'+redoPts(m,(cur.entries||{})[date],rd)+' pt'+(redoPts(m,(cur.entries||{})[date],rd)>1?'s':''));
   render();
 }
 function lastLevel(uid){
@@ -3705,10 +3736,10 @@ function goalCard(p){
   const editable=p.virtual||todayStr()<=addDays(p.start,6);
   const card=h('section',{class:'card'},h('h2',{class:'h2'},'Objectif de séances'));
   if(editable){
-    const s=sel([['','Choisir']].concat([1,2,3,4,5,6,7].map(n=>[String(n),n+' séance'+(n>1?'s':'')+' par semaine'])),cur?String(cur):'',()=>{},{id:'goal-select'});
-  card.append(h('p',{class:'muted'},'Choisis combien de séances tu veux faire chaque semaine pendant la '+(p.virtual?'saison':seasonLabel(p).toLowerCase())+'. Si tu tiens ton objectif toutes les semaines, tu gagnes le trophée, et tu gardes ta flamme même si tu ne fais pas toutes les séances proposées. Le choix se fait la première semaine de la saison.'),
+    const s=sel([['','Choisir']].concat([1,2,3].map(n=>[String(n),n+' séance'+(n>1?'s':'')+' par semaine'])),cur?String(cur):'',()=>{},{id:'goal-select'});
+  card.append(h('p',{class:'muted'},'Choisis combien de séances tu veux faire chaque semaine pendant la '+(p.virtual?'saison':seasonLabel(p).toLowerCase())+'. Si tu tiens ton objectif toutes les semaines, tu gagnes le trophée, et tu gardes ta flamme même si tu ne fais pas toutes les séances proposées. Si tu choisis 1 ou 2 séances, tu concours aussi au trophée Solo gagnant ou Duo gagnant : seules tes meilleures séances comptent (1 ou 2 par semaine de la saison), donc en faire plus que prévu ne te pénalise pas. Le choix se fait la première semaine de la saison.'),
       field('Mon objectif',s),
-      h('div',{class:'row'},h('button',{class:'btn primary',type:'button',onclick:()=>{const n=parseInt(s.value,10);if(!(n>=1&&n<=7)){toast('Choisis un nombre de séances',true);return;}saveLog({goals:Object.assign({},lg.goals||{},{[p.id]:n})},'Objectif enregistré');}},'Enregistrer mon objectif')));
+      h('div',{class:'row'},h('button',{class:'btn primary',type:'button',onclick:()=>{const n=parseInt(s.value,10);if(!(n>=1&&n<=3)){toast('Choisis un nombre de séances',true);return;}saveLog({goals:Object.assign({},lg.goals||{},{[p.id]:n})},'Objectif enregistré');}},'Enregistrer mon objectif')));
   }else{
     card.append(h('p',{class:'muted'},cur?'Ton objectif de la '+seasonLabel(p).toLowerCase()+' : '+cur+' séance'+(cur>1?'s':'')+' par semaine. Il est verrouillé.':'Les objectifs se choisissent la première semaine de la saison.'));
   }
@@ -4439,7 +4470,7 @@ function wodEditor(){
       if(p.format==='FT')box.append(h('label',{class:'chk'},h('input',{type:'checkbox',id:'p'+i+'-lr',checked:!!p.lineRounds,onchange:e=>{p.lineRounds=e.target.checked;render();}}),h('span',{},'Chaque ligne = 1 tour')),
         h('p',{class:'hint'},'Chaque ligne d’exercice compte pour un tour (ex. demi Murph = 5 tours). Paliers time cap : « 4+60 » = 4 lignes terminées + 60 reps équivalentes sur la ligne suivante (600 m avec {10=1}).'));
       box.append(h('label',{class:'chk'},h('input',{type:'checkbox',id:'p'+i+'-redo',checked:p.redo!==false,onchange:e=>{p.redo=e.target.checked;}}),h('span',{},'Le REDO rapporte des points sur ce metcon')),
-        h('p',{class:'hint'},'À décocher pour un metcon court ou volontairement léger (gestion, récupération) qu’on ne veut pas voir refaire pour entasser des points : le REDO n’est alors plus proposé. Coché : un REDO rapporte la moitié des points de score, seulement s’il égale ou bat le premier résultat (niveau et score).'));
+        h('p',{class:'hint'},'À décocher pour un metcon court ou volontairement léger (gestion, récupération) qu’on ne veut pas voir refaire pour entasser des points : le REDO n’est alors plus proposé. Coché : un REDO rapporte 1 point s’il est moins bon que le premier résultat, 2 s’il marque autant de points, 3 s’il l’améliore (niveau et points de metcon).'));
       {const words=S.prof.words||[];
         const wta=h('textarea',{id:'p'+i+'-word',rows:'2',maxlength:'200',placeholder:'Ex : Reste régulier sur les premiers tours !',value:p.word||'',oninput:e=>{p.word=e.target.value;}});
         box.append(field('Mot du coach (affiché près du metcon et pendant les 10 s de préparation)',wta),
