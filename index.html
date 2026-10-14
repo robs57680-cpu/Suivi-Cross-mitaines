@@ -105,6 +105,7 @@ textarea{resize:vertical}
 .tro-h .h2{display:block}
 .tro-h .chev{font-size:18px;transition:transform .2s}
 .tro-h[aria-expanded="true"] .chev{transform:rotate(180deg)}
+.btn-block{width:100%;min-height:52px}
 .pbody.has-sw{position:relative;padding-right:66px;min-height:66px}
 .pbody.has-sw>.sw{position:absolute;top:0;right:0}
 .sw{flex:none;border:0;background:none;padding:0;width:58px;height:65px;color:var(--ink);cursor:pointer;display:block;-webkit-tap-highlight-color:transparent}
@@ -2746,7 +2747,7 @@ function partCard(p,w,date){
     h('div',{class:'lines'},lines.map(metcon?metLine:renderLine)),
     (metcon&&p.word)?h('div',{class:'cword'},h('span',{class:'flabel'},'Mot du coach'),h('p',{},p.word)):null,
     metcon?levelsBlock(p):null,
-    (metcon&&w&&timerOk(date))?h('div',{class:'row'},h('button',{class:'btn primary',type:'button','data-tour':'start-metcon',onclick:()=>openTimer(w,date,p)},'Démarrer le metcon')):null);
+    (metcon&&w&&timerOk(date))?h('div',{class:'row'},h('button',{class:'btn primary btn-block',type:'button','data-tour':'start-metcon',onclick:()=>openTimer(w,date,p)},'Démarrer le metcon')):null);
   return h('article',{class:'part'+(metcon?' metcon':'')},h('div',{class:'plabel'},p.label),body);
 }
 function defaultDate(){
