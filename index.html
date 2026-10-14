@@ -338,6 +338,50 @@ textarea{resize:vertical}
 .tm-passages ul{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:2px;max-height:22vh;overflow:auto;font-family:var(--f-mono);font-size:13px}
 .tm-passages li{display:grid;grid-template-columns:1fr auto 70px;gap:8px}
 .tm-passages .sub{text-align:right;color:var(--panel-muted)}
+/* échauffement guidé */
+.wu-card .wu-acts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.wu-big{min-height:56px;font-size:14px}
+.wu-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.wu-li{width:100%;display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:10px;align-items:center;text-align:left;background:var(--surface2);border:1px solid var(--line);border-radius:4px;padding:10px 12px;cursor:pointer;min-height:48px}
+.wu-li .n{font-family:var(--f-display);font-size:20px;color:var(--accent)}
+.wu-li .t{font-weight:700;overflow-wrap:anywhere}
+.wu-li .o{font-family:var(--f-mono);font-size:12px;color:var(--muted);white-space:nowrap}
+.tm.wu .tm-mid{align-content:start;justify-items:stretch;overflow:auto;padding-bottom:8px;min-height:0}
+.tm.wu .tm-mid.wu-end{align-content:center;justify-items:center}
+.wu-seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;width:100%}
+.wu-seg i{height:8px;border-radius:2px;background:rgba(255,255,255,.18)}
+.wu-seg i.on{background:var(--panel-accent)}
+.wu-seg i.cur{background:var(--panel-ink)}
+.wu-name{font-family:var(--f-display);font-weight:400;font-size:clamp(34px,10vw,56px);line-height:1.05;text-transform:uppercase;text-wrap:balance;overflow-wrap:anywhere}
+.tm .wu-time{font-size:clamp(84px,28vw,170px)}
+.wu-obj{font-family:var(--f-display);font-size:clamp(64px,20vw,120px);line-height:1;color:var(--panel-accent);letter-spacing:.02em}
+.wu-obj small{display:block;font-family:var(--f-body);font-size:15px;color:var(--panel-muted);letter-spacing:0;font-weight:600;margin-top:4px}
+.tm .wu-bar{width:100%;height:8px;background:rgba(255,255,255,.18);border:0}
+.tm .wu-bar i{background:var(--panel-accent)}
+.wu-note{font-weight:600;color:var(--panel-ink)}
+.wu-desc{color:var(--panel-muted);font-size:15px}
+.wu-steps{text-align:left;margin:0 auto;padding-left:24px;display:grid;gap:8px;font-size:18px;line-height:1.35;max-width:46ch;width:100%}
+.wu-main{min-height:68px;font-size:17px}
+.wu-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tm.wu .tm-bot .btn{min-height:52px}
+.tm.wu .tm-bot .btn.sm{min-height:40px}
+.wu-check{width:96px;height:96px;border-radius:50%;background:var(--panel-accent);color:var(--panel);display:grid;place-items:center;font-family:var(--f-display);font-size:64px;line-height:1}
+.wu-anim{animation:wuin .28s ease-out}
+@keyframes wuin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.wu-anim{animation:none}}
+/* gestion coach */
+.wu-page{position:fixed;inset:0;z-index:44;background:var(--bg);color:var(--ink);overflow:auto;padding:calc(12px + env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px))}
+.wu-page .in{max-width:720px;margin:0 auto;display:grid;gap:14px}
+.wu-eh{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;align-items:center}
+.wu-eh .n{font-family:var(--f-display);font-size:26px;color:var(--accent)}
+.wu-et{display:grid;min-width:0}
+.wu-et b{overflow-wrap:anywhere}
+.wu-ea{display:flex;flex-wrap:wrap;gap:8px}
+.wu-f{display:grid;gap:12px;border-top:1px solid var(--line);padding-top:12px}
+.wu-f input[type=text],.wu-f input[type=number],.wu-f textarea{width:100%}
+.wu-save{position:sticky;bottom:0;padding:10px 0 calc(6px + env(safe-area-inset-bottom,0px));background:linear-gradient(transparent,var(--bg) 30%)}
+.wu-save .btn{width:100%}
+
 .mbtn{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;text-align:left;background:var(--surface);border:2px solid var(--edge);border-radius:4px;padding:16px;cursor:pointer;min-height:68px}
 .mbtn b{display:block;font-family:var(--f-display);font-weight:400;font-size:22px;letter-spacing:.04em;text-transform:uppercase}
 .mbtn span{color:var(--muted);font-size:13px}
@@ -671,7 +715,7 @@ let auth=null;
 /* Petite couche qui expose Firestore sous la forme utilisée par l'appli */
 function makeDb(fdb){
   const wrapDoc=r=>({id:r.id,set:d=>setDoc(r,d),delete:()=>deleteDoc(r),
-    onSnapshot:(n,e)=>onSnapshot(r,s=>n({exists:s.exists(),data:()=>s.data()}),e)});
+    onSnapshot:(n,e)=>onSnapshot(r,s=>n({exists:s.exists(),data:()=>s.data(),fromCache:!!(s.metadata&&s.metadata.fromCache)}),e)});
   return {
     doc:p=>wrapDoc(doc(fdb,p)),
     collection:p=>({
@@ -683,7 +727,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-12.27';
+const APP_VERSION='2026-10-14.28';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -824,7 +868,7 @@ const BODY_BACK=[['eps','<ellipse cx="64" cy="54" rx="13" ry="11"/>'],['eps','<e
 /* ---------- état ---------- */
 const S={viewUser:null,tip:null,profView:null,tab:'feed',boardDetail:false,sort:'goat',redo:null,league:null,statRange:'season',loaded:{periods:false,wods:false,logs:false},periods:{},wods:{},logs:{},prof:{prs:{},sex:''},
   db:null,uid:null,authReady:false,coachUid:null,coachLoaded:false,meName:'',owner:false,viewDate:null,periodId:null,entry:null,confirm:null,error:null,newVersion:null,
-  coach:{wod:null,editing:false,period:null,resDate:null},groups:{list:[],of:{}},comments:{},reactions:{},cerRefresh:null,boardGroup:undefined};
+  coach:{wod:null,editing:false,period:null,resDate:null},groups:{list:[],of:{}},comments:{},reactions:{},cerRefresh:null,boardGroup:undefined,wu:{cfg:null,loaded:false,list:false}};
 const ready=()=>S.loaded.periods&&S.loaded.wods&&S.loaded.logs;
 
 /* ---------- saisons, points, classement ---------- */
@@ -1997,6 +2041,318 @@ function openEntryWith(w,date,patch){
   setTimeout(()=>{const f=document.getElementById('entry-form');if(f)f.scrollIntoView({behavior:'smooth',block:'start'});},60);
   toast('Résultat du minuteur ajouté. Choisis ton niveau puis valide la séance.');
 }
+/* ---------- échauffement guidé ----------
+   Configuration partagée : un seul document Firestore config/warmup { version, items:[…], updatedAt }.
+   Chaque exercice : { id, name, desc, steps[], mode:'time'|'reps', target, perSide, note }.
+   Lecture : tous les connectés. Écriture : coach uniquement (règles Firestore + interface). */
+const WU_MAX=30;
+const WU_DEFAULT=[
+ {id:'wu-jumping-jack',name:'Jumping Jack',desc:'Saut écarté classique : bras et jambes s’ouvrent et se ferment ensemble.',
+  steps:['Pieds joints, bras le long du corps.','Saute en écartant les pieds plus large que les épaules et lève les bras au-dessus de la tête.','Reviens pieds joints, bras le long du corps.','Reste léger sur l’avant des pieds, rythme régulier, respiration fluide.'],mode:'time',target:30,perSide:false,note:''},
+ {id:'wu-seal-jacks',name:'Seal Jacks',desc:'Jumping jack où les bras restent à l’horizontale et se referment en tapant dans les mains devant la poitrine.',
+  steps:['Pieds joints, bras tendus devant toi à hauteur d’épaules.','Saute en écartant les pieds et ouvre les bras en croix, paumes vers l’avant.','Saute pour revenir pieds joints et referme les bras en tapant dans les mains devant la poitrine.','Garde les bras à hauteur d’épaules et le buste droit.'],mode:'time',target:30,perSide:false,note:''},
+ {id:'wu-power-jacks',name:'Power Jacks',desc:'Jumping jack avec réception en squat, jambes écartées et mains vers le sol.',
+  steps:['Pieds joints, bras le long du corps.','Saute en écartant les pieds et réceptionne-toi en squat, hanches en arrière, genoux dans l’axe des pieds.','Descends les mains vers le sol, dos plat et poitrine ouverte.','Remonte en sautant pour revenir pieds joints et recommence.'],mode:'time',target:30,perSide:false,note:''},
+ {id:'wu-open-up-shoulders',name:'Open Up Shoulders',desc:'Mobilité des épaules dans plusieurs axes : rotations vers l’avant, vers l’arrière et vers le haut.',
+  steps:['Debout, pieds à largeur de hanches, abdos serrés, côtes basses.','Bras tendus, fais de grands cercles vers l’avant, puis vers l’arrière.','Enchaîne dans d’autres axes : bras levés vers le haut, ouverture en croix.','Augmente l’amplitude progressivement, sans cambrer le bas du dos.'],mode:'time',target:30,perSide:false,note:'Change d’axe ou de sens régulièrement.'},
+ {id:'wu-leg-swings',name:'Leg Swings',desc:'Balancés de jambe pour mobiliser les hanches et réveiller les ischios.',
+  steps:['Tiens-toi à un support ou garde l’équilibre, buste droit.','Balance la jambe d’avant en arrière, de façon contrôlée, avec une amplitude qui augmente progressivement.','Termine par des balancés latéraux, devant le corps.','Change de jambe à la moitié du temps.'],mode:'time',target:30,perSide:false,note:'Change de jambe à la moitié du temps.'},
+ {id:'wu-inch-worms',name:'Inch Worms',desc:'Marche des mains jusqu’en planche, puis ramène les pieds vers les mains.',
+  steps:['Debout, penche-toi et pose les mains au sol, genoux légèrement fléchis si besoin.','Avance les mains jusqu’à la position de planche, corps aligné et gainé.','Rapproche les pieds des mains à petits pas, jambes les plus tendues possible.','Redresse-toi et recommence.'],mode:'reps',target:6,perSide:false,note:''},
+ {id:'wu-worlds-greatest-stretch',name:'World’s Greatest Stretch',desc:'Grande fente avec rotation du buste pour ouvrir hanches, adducteurs et haut du dos.',
+  steps:['Pars en planche haute.','Avance un pied à l’extérieur de la main du même côté, dans une grande fente.','Descends le coude du côté de la jambe avant vers l’intérieur du pied.','Ouvre le buste et monte le bras vers le ciel, regard vers la main.','Reviens en planche et change de côté.'],mode:'reps',target:5,perSide:true,note:'Les répétitions se comptent par côté.'},
+ {id:'wu-push-up-downward-dog',name:'Push Up / Downward Dog',desc:'Une pompe, puis chien tête en bas pour étirer l’arrière du corps.',
+  steps:['Position de planche haute, mains sous les épaules, corps gainé.','Descends en pompe, poitrine proche du sol, coudes à environ 45°.','Remonte en poussant, puis envoie les fesses vers le haut.','Pousse les talons vers le sol et la poitrine vers les cuisses (chien tête en bas).','Reviens en planche et enchaîne.'],mode:'reps',target:8,perSide:false,note:''},
+ {id:'wu-boot-strappers',name:'Boot Strappers',desc:'Squat profond, mains sous les orteils, puis extension des jambes pour étirer les ischios.',
+  steps:['Debout, pieds à largeur d’épaules.','Plie les genoux, descends en squat profond et glisse les mains sous les orteils.','Garde les mains sous les orteils et tends les jambes en montant les fesses : étirement des ischios.','Redescends en squat, puis redresse-toi en relâchant les orteils.'],mode:'reps',target:10,perSide:false,note:''},
+ {id:'wu-squat-twist-reach',name:'Squat Twist / Reach',desc:'Squat avec rotation du buste : une main attrape la cheville, l’autre bras monte vers le ciel.',
+  steps:['Descends en squat, pieds un peu plus larges que les épaules.','Attrape la cheville avec la main opposée, l’épaule calée contre le genou.','Tourne le buste et lève l’autre bras tendu vers le ciel, regard vers la main.','Reviens au centre et change de côté.'],mode:'time',target:30,perSide:false,note:'Alterne un côté, puis l’autre.'}
+];
+function wuClean(x,i){
+  x=x||{};
+  const mode=x.mode==='reps'?'reps':'time';
+  let t=Math.round(Number(x.target));if(!(t>=1))t=mode==='time'?30:10;
+  t=Math.min(t,mode==='time'?3600:500);
+  return {id:String(x.id||'wu-'+i).slice(0,40),name:String(x.name||'Exercice').slice(0,60),desc:String(x.desc||'').slice(0,300),
+    steps:Array.isArray(x.steps)?x.steps.map(s=>String(s).slice(0,200)).filter(s=>s.trim()).slice(0,12):[],
+    mode,target:t,perSide:mode==='reps'&&!!x.perSide,note:String(x.note||'').slice(0,160)};
+}
+const wuItems=()=>{const l=S.wu&&S.wu.cfg&&Array.isArray(S.wu.cfg.items)?S.wu.cfg.items:WU_DEFAULT;return l.slice(0,WU_MAX).map(wuClean);};
+const wuObj=x=>x.mode==='time'?x.target+' s':x.target+' rép.'+(x.perSide?'/côté':'');
+const wuObjFull=x=>x.mode==='time'?x.target+' secondes':x.target+' répétition'+(x.target>1?'s':'')+(x.perSide?' par côté ('+x.target*2+' au total)':'');
+const wuMMSS=s=>Math.floor(s/60)+':'+pad(s%60);
+function wuArmed(btn,txt,fn){let t=null;const orig=btn.textContent;return ()=>{if(t){clearTimeout(t);t=null;btn.textContent=orig;fn();return;}btn.textContent=txt;t=setTimeout(()=>{t=null;btn.textContent=orig;},3000);};}
+/* première utilisation : le coach crée la configuration, une seule fois (jamais si elle existe déjà) */
+function wuMaybeSeed(){
+  const w=S.wu;
+  if(!S.owner||!S.db||!w||!w.loaded||w.err||w.cfg||w.fromCache||w.seeding)return;
+  w.seeding=true;
+  S.db.doc('config/warmup').set({version:1,items:WU_DEFAULT,updatedAt:new Date().toISOString()}).catch(()=>{w.seeding=false;});
+}
+
+/* carte « Échauffement » de l'onglet Séance */
+function warmupCard(){
+  const items=wuItems();
+  const sec=items.filter(x=>x.mode==='time').reduce((a,x)=>a+x.target,0);
+  const card=h('section',{class:'card wu-card',id:'wu-card'},
+    h('div',{class:'row',style:'justify-content:space-between;flex-wrap:nowrap'},h('h2',{class:'h2',style:'flex:1'},'Échauffement'),h('span',{class:'chip'},items.length+' exercice'+(items.length>1?'s':''))),
+    h('p',{class:'muted'},'Échauffement général'+(sec?' · environ '+Math.max(1,Math.round(sec/60))+' min chronométrées':'')+'. Lance le mode guidé (timer) ou avance à ton rythme en mode libre.'),
+    h('div',{class:'wu-acts'},
+      h('button',{class:'btn primary wu-big',type:'button',id:'wu-start',onclick:()=>openWarmup('guided',0)},'Lancer l’échauffement'),
+      h('button',{class:'btn wu-big',type:'button',id:'wu-free',onclick:()=>openWarmup('manual',0)},'Mode libre')),
+    h('div',{class:'row'},
+      h('button',{class:'btn sm',type:'button',id:'wu-toggle','aria-expanded':S.wu.list?'true':'false',onclick:()=>{S.wu.list=!S.wu.list;render();}},S.wu.list?'Masquer les exercices':'Voir les exercices'),
+      S.owner?h('button',{class:'btn sm',type:'button',id:'wu-manage',onclick:openWarmupEdit},'Gérer l’échauffement'):null));
+  if(S.wu.list)card.append(h('ol',{class:'wu-list'},items.map((x,i)=>h('li',{},
+    h('button',{class:'wu-li',type:'button',onclick:()=>openWarmup('manual',i)},h('span',{class:'n'},i+1),h('span',{class:'t'},x.name),h('span',{class:'o'},wuObj(x)))))));
+  return card;
+}
+
+/* écran plein format : mode libre (clic) ou mode guidé (timer) */
+function openWarmup(mode,start){
+  if(document.getElementById('tm-ov'))return;
+  const items=wuItems(),n=items.length;
+  if(!n){toast('Aucun exercice dans l’échauffement.',true);return;}
+  /* phase : run (compte à rebours en cours) · wait (répétitions ou mode libre, action manuelle) · paused · done · closed */
+  const st={mode,idx:Math.min(Math.max(0,start||0),n-1),phase:mode==='guided'?'run':'wait',endAt:0,rem:0,tid:null,gen:0,muted:tmMuted(),ac:null,wake:null,vid:null,lastK:-1,done:0,shown:-1};
+  try{st.ac=new (window.AudioContext||window.webkitAudioContext)();if(st.ac.resume)st.ac.resume();}catch(e){}
+  const beep=(f,ms)=>{
+    if(!st.muted&&st.ac){try{const o=st.ac.createOscillator(),g=st.ac.createGain();o.type='sine';o.frequency.value=f;g.gain.value=.25;o.connect(g);g.connect(st.ac.destination);o.start();o.stop(st.ac.currentTime+ms/1000);}catch(e){}}
+    try{if(navigator.vibrate)navigator.vibrate(ms>300?[200,80,200]:ms>150?120:40);}catch(e){}
+  };
+  const lock=async()=>{
+    try{if(navigator.wakeLock&&!st.wake){st.wake=await navigator.wakeLock.request('screen');st.wake.addEventListener('release',()=>{st.wake=null;});}}catch(e){}
+    if(!st.wake&&!st.vid){
+      try{
+        const v=document.createElement('video');
+        v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline','');v.setAttribute('muted','');v.muted=true;v.loop=true;
+        v.style.cssText='position:fixed;left:0;top:0;width:2px;height:2px;opacity:.02;pointer-events:none';
+        v.src=NOSLEEP_MP4;document.body.append(v);st.vid=v;
+        const pr=v.play();if(pr&&pr.catch)pr.catch(()=>{});
+      }catch(e){}
+    }
+  };
+  const release=()=>{try{if(st.wake)st.wake.release();}catch(e){}st.wake=null;if(st.vid){try{st.vid.pause();st.vid.remove();}catch(e){}st.vid=null;}};
+  const cur=()=>items[st.idx];
+  const clearT=()=>{clearTimeout(st.tid);st.tid=null;st.gen++;};
+  const ov=h('div',{class:'tm wu',id:'tm-ov',role:'dialog','aria-modal':'true','aria-label':'Échauffement'});
+  let timeEl=null,barEl=null;
+
+  /* Un seul minuteur à la fois : st.tid. Il ne sert qu'à réveiller l'écran à la prochaine seconde ou à la fin
+     de l'exercice ; le temps restant est toujours recalculé à partir de st.endAt (heure réelle). */
+  function schedule(){
+    clearTimeout(st.tid);st.tid=null;
+    if(st.phase!=='run')return;
+    const g=st.gen,left=st.endAt-Date.now();
+    const delay=left<=0?0:left-(Math.ceil(left/1000)-1)*1000+15;
+    st.tid=setTimeout(()=>{if(g===st.gen&&st.phase==='run')sync();},delay);
+  }
+  /* recale l'état sur l'heure réelle : enchaîne tous les exercices chronométrés écoulés (retour d'arrière-plan compris) */
+  function sync(){
+    if(st.phase!=='run')return;
+    const now=Date.now();let moved=false;
+    while(st.phase==='run'&&now>=st.endAt){
+      st.done=Math.max(st.done,st.idx+1);
+      if(st.idx>=n-1){finish(true);return;}
+      st.idx++;moved=true;st.lastK=-1;
+      if(items[st.idx].mode==='time')st.endAt+=items[st.idx].target*1000;
+      else st.phase='wait';
+    }
+    if(moved){beep(880,200);draw();}else upd();
+    schedule();
+  }
+  function startItem(){
+    clearT();st.lastK=-1;
+    const x=cur();
+    if(st.mode==='guided'&&x.mode==='time'){
+      if(st.phase==='paused')st.rem=x.target*1000;
+      else{st.phase='run';st.endAt=Date.now()+x.target*1000;}
+    }else st.phase='wait';
+    draw();schedule();
+  }
+  function next(){
+    st.done=Math.max(st.done,st.idx+1);
+    if(st.idx>=n-1){finish(true);return;}
+    st.idx++;startItem();
+  }
+  function prev(){if(st.idx>0){st.idx--;startItem();}}
+  function pause(){if(st.phase!=='run')return;st.rem=Math.max(0,st.endAt-Date.now());st.phase='paused';clearT();draw();}
+  function resume(){if(st.phase!=='paused')return;st.endAt=Date.now()+st.rem;st.phase='run';lock();draw();schedule();}
+  function finish(full){clearT();st.phase='done';if(full)st.done=n;beep(880,full?700:200);release();drawDone();}
+  function restart(){st.idx=0;st.done=0;st.shown=-1;st.phase=st.mode==='guided'?'run':'wait';lock();startItem();}
+  function toGuided(){st.mode='guided';st.phase='wait';lock();startItem();}
+  const onVis=()=>{
+    if(document.hidden||st.phase==='closed')return;
+    if(st.phase!=='done')lock();
+    try{if(st.ac&&st.ac.state==='suspended'&&st.ac.resume)st.ac.resume();}catch(e){}
+    if(st.phase==='run')sync();
+  };
+  function close(){
+    st.phase='closed';clearT();
+    document.removeEventListener('visibilitychange',onVis);window.removeEventListener('pageshow',onVis);window.removeEventListener('focus',onVis);
+    release();try{if(st.ac&&st.ac.close)st.ac.close();}catch(e){}
+    ov.remove();
+  }
+
+  const top=()=>{
+    const mute=h('button',{type:'button',class:'btn sm'},st.muted?'Son coupé':'Son activé');
+    mute.addEventListener('click',()=>{st.muted=!st.muted;setTmMuted(st.muted);mute.textContent=st.muted?'Son coupé':'Son activé';});
+    const q=h('button',{type:'button',class:'btn sm','aria-label':'Quitter l’échauffement'},'✕');
+    q.addEventListener('click',st.phase==='done'?close:wuArmed(q,'Quitter ?',close));
+    return h('div',{class:'tm-top'},h('span',{class:'chip'+(st.mode==='guided'?' live':'')},st.mode==='guided'?'Mode guidé':'Mode libre'),h('div',{class:'row'},mute,q));
+  };
+  /* mise à jour légère (temps restant, barre, bips des 3 dernières secondes) : ne reconstruit pas l'écran */
+  function upd(){
+    if(!timeEl)return;
+    const x=cur();
+    const left=st.phase==='run'?Math.max(0,st.endAt-Date.now()):st.rem;
+    const k=Math.ceil(left/1000);
+    timeEl.textContent=wuMMSS(k);
+    barEl.style.width=Math.max(0,Math.min(100,100*(1-left/(x.target*1000))))+'%';
+    ov.classList.toggle('alert',st.phase==='run'&&k>0&&k<=3);
+    if(st.phase==='run'&&k!==st.lastK){st.lastK=k;if(k>0&&k<=3&&!document.hidden)beep(660,120);}
+  }
+  function draw(){
+    if(st.phase==='done'||st.phase==='closed')return;
+    const x=cur(),timed=st.mode==='guided'&&x.mode==='time',paused=st.phase==='paused',last=st.idx>=n-1;
+    ov.className='tm wu'+(paused?' prep':'');
+    const anim=st.shown!==st.idx;st.shown=st.idx;
+    timeEl=null;barEl=null;
+    const mid=h('div',{class:'tm-mid'+(anim?' wu-anim':'')},
+      h('p',{class:'eyebrow tm-eb','aria-live':'polite'},'Exercice '+(st.idx+1)+' / '+n),
+      h('div',{class:'wu-seg',role:'img','aria-label':'Progression : exercice '+(st.idx+1)+' sur '+n},items.map((_,i)=>h('i',{class:i<st.idx?'on':i===st.idx?'cur':''}))),
+      h('h1',{class:'wu-name'},x.name));
+    if(timed){
+      timeEl=h('div',{class:'tm-time wu-time'},'');barEl=h('i',{});
+      mid.append(timeEl,h('div',{class:'bar wu-bar'},barEl));
+      if(paused)mid.append(h('p',{class:'tm-sub'},'En pause'));
+    }else{
+      mid.append(h('div',{class:'wu-obj'},x.mode==='time'?String(x.target):String(x.target),
+        h('small',{},x.mode==='time'?'secondes · sans chrono en mode libre':x.perSide?'répétitions par côté ('+x.target*2+' au total)':'répétitions')));
+      if(st.mode==='guided')mid.append(h('p',{class:'tm-sub'},'Touche « '+(last?'Terminer l’échauffement':'Exercice suivant')+' » quand tu as fini.'));
+    }
+    if(x.note)mid.append(h('p',{class:'wu-note'},x.note));
+    if(x.desc)mid.append(h('p',{class:'wu-desc'},x.desc));
+    if(x.steps.length)mid.append(h('ol',{class:'wu-steps'},x.steps.map(s=>h('li',{},s))));
+    const prevB=h('button',{class:'btn',type:'button',disabled:st.idx===0,onclick:prev},'← Précédent');
+    const endB=h('button',{class:'btn',type:'button'},'Terminer l’échauffement');
+    endB.addEventListener('click',wuArmed(endB,'Terminer ?',()=>finish(false)));
+    let bot;
+    if(timed){
+      bot=[h('button',{class:'btn primary wu-main',type:'button',id:'wu-pause',onclick:paused?resume:pause},paused?'Reprendre':'Pause'),
+        h('div',{class:'wu-two'},prevB,h('button',{class:'btn',type:'button',id:'wu-next',onclick:next},last?'Terminer':'Suivant →')),
+        last?null:endB];
+    }else{
+      bot=[h('button',{class:'btn primary wu-main',type:'button',id:'wu-next',onclick:next},last?'Terminer l’échauffement':'Exercice suivant'),
+        h('div',{class:'wu-two'},prevB,last?h('span',{}):endB)];
+      if(st.mode==='manual')bot.push(h('button',{class:'btn sm',type:'button',id:'wu-toguided',onclick:toGuided},'Lancer le mode guidé à partir d’ici'));
+    }
+    ov.replaceChildren(top(),mid,h('div',{class:'tm-bot'},bot));
+    upd();
+  }
+  function drawDone(){
+    ov.className='tm wu';timeEl=null;barEl=null;
+    const full=st.done>=n;
+    ov.replaceChildren(top(),
+      h('div',{class:'tm-mid wu-end wu-anim'},
+        h('div',{class:'wu-check','aria-hidden':'true'},'✓'),
+        h('p',{class:'eyebrow tm-eb'},full?'Échauffement complet':st.done+' / '+n+' exercices'),
+        h('h1',{class:'wu-name'},full?'Bien joué !':'Échauffement terminé'),
+        h('p',{class:'tm-sub'},full?'Les '+n+' exercices sont faits. Tu es prêt(e) pour la séance.':'Tu as fait '+st.done+' exercice'+(st.done>1?'s':'')+' sur '+n+'. Tu peux relancer l’échauffement quand tu veux.')),
+      h('div',{class:'tm-bot'},h('button',{class:'btn primary wu-main',type:'button',id:'wu-restart',onclick:restart},'Recommencer l’échauffement'),h('button',{class:'btn wu-main',type:'button',onclick:close},'Fermer')));
+  }
+  document.body.append(ov);
+  document.addEventListener('visibilitychange',onVis);window.addEventListener('pageshow',onVis);window.addEventListener('focus',onVis);
+  lock();
+  startItem();
+  if(mode==='guided')beep(880,150);
+}
+
+/* gestion de l'échauffement par le coach */
+function openWarmupEdit(){
+  if(!S.owner||document.getElementById('wu-edit'))return;
+  if(!S.wu.loaded){toast('Chargement de l’échauffement… réessaie dans un instant.',true);return;}
+  if(S.wu.err){toast('Lecture impossible : publie d’abord les règles Firestore de l’échauffement.',true);return;}
+  const mk=x=>Object.assign({},x,{stepsText:x.steps.join('\n')});
+  const d={items:wuItems().map(mk),open:null,del:null,dirty:false,saved:false,reset:false,busy:false};
+  const ov=h('div',{class:'wu-page',id:'wu-edit',role:'dialog','aria-modal':'true','aria-label':'Gérer l’échauffement'});
+  const mark=()=>{d.dirty=true;d.saved=false;};
+  const close=()=>ov.remove();
+  const inp=(x,k,attrs)=>h('input',Object.assign({type:'text',value:x[k]||'',oninput:e=>{x[k]=e.target.value;mark();}},attrs||{}));
+  const tarea=(x,k,attrs)=>h('textarea',Object.assign({value:x[k]||'',oninput:e=>{x[k]=e.target.value;mark();}},attrs||{}));
+  const move=(i,dir)=>{const j=i+dir;if(j<0||j>=d.items.length)return;const t=d.items[i];d.items[i]=d.items[j];d.items[j]=t;mark();paint();};
+  function form(x){
+    const num=h('input',{type:'number',inputmode:'numeric',min:'1',max:x.mode==='time'?'3600':'500',step:'1',value:String(x.target),oninput:e=>{x.target=parseInt(e.target.value,10)||0;mark();}});
+    const f=h('div',{class:'wu-f'},
+      field('Nom',inp(x,'name',{maxlength:'60',placeholder:'Ex : Jumping Jack'})),
+      field('Description courte',tarea(x,'desc',{rows:'2',maxlength:'300'})),
+      field('Consignes d’exécution (une par ligne)',tarea(x,'stepsText',{rows:'6',maxlength:'1500'}),'Chaque ligne devient une étape numérotée.'),
+      h('div',{class:'field'},h('span',{class:'flabel'},'Mode de réalisation'),
+        h('div',{class:'seg',style:'grid-template-columns:repeat(2,minmax(0,1fr))',role:'group','aria-label':'Mode de réalisation'},
+          [['reps','Répétitions'],['time','Durée']].map(([m,l])=>h('button',{type:'button',class:'btn','aria-pressed':x.mode===m?'true':'false',onclick:()=>{if(x.mode!==m){x.mode=m;if(m==='time')x.perSide=false;mark();paint();}}},l)))),
+      field(x.mode==='time'?'Durée (secondes)':'Nombre de répétitions',num));
+    if(x.mode==='reps')f.append(h('label',{class:'chk'},h('input',{type:'checkbox',checked:!!x.perSide,onchange:e=>{x.perSide=e.target.checked;mark();paint();}}),h('span',{},'Mouvement alterné : ce nombre est « par côté » (le total est doublé)')));
+    f.append(field('Précision de comptage (facultatif)',inp(x,'note',{maxlength:'160',placeholder:'Ex : compte chaque côté séparément'}),'S’affiche sous l’objectif. Pour un exercice chronométré alterné, indique quand changer de côté.'));
+    return f;
+  }
+  function row(x,i){
+    const open=d.open===x.id,asking=d.del===x.id;
+    const c=h('section',{class:'card wu-e'},
+      h('div',{class:'wu-eh'},h('span',{class:'n'},i+1),h('div',{class:'wu-et'},h('b',{},x.name||'Nouvel exercice'),h('span',{class:'hint'},wuObjFull(x)))),
+      asking?h('p',{class:'hint',role:'alert'},'Supprimer « '+(x.name||'cet exercice')+' » ? La suppression sera définitive après « Enregistrer ».'):null,
+      h('div',{class:'wu-ea'},
+        h('button',{class:'btn sm',type:'button','aria-label':'Monter '+(x.name||''),disabled:i===0,onclick:()=>move(i,-1)},'↑'),
+        h('button',{class:'btn sm',type:'button','aria-label':'Descendre '+(x.name||''),disabled:i===d.items.length-1,onclick:()=>move(i,1)},'↓'),
+        h('button',{class:'btn sm',type:'button','aria-expanded':open?'true':'false',onclick:()=>{d.open=open?null:x.id;d.del=null;paint();}},open?'Fermer':'Modifier'),
+        asking?[h('button',{class:'btn sm danger',type:'button',onclick:()=>{d.items.splice(i,1);d.del=null;if(d.open===x.id)d.open=null;mark();paint();}},'Confirmer la suppression'),
+                h('button',{class:'btn sm',type:'button',onclick:()=>{d.del=null;paint();}},'Annuler')]
+              :h('button',{class:'btn sm danger',type:'button',onclick:()=>{d.del=x.id;paint();}},'Supprimer')));
+    if(open)c.append(form(x));
+    return c;
+  }
+  async function save(){
+    if(d.busy)return;
+    if(!d.items.length){toast('Garde au moins un exercice.',true);return;}
+    const out=[];
+    for(let i=0;i<d.items.length;i++){
+      const x=d.items[i],name=String(x.name||'').trim();
+      if(!name){d.open=x.id;paint();toast('L’exercice '+(i+1)+' n’a pas de nom.',true);return;}
+      const t=Math.round(Number(x.target)),max=x.mode==='time'?3600:500;
+      if(!(t>=1&&t<=max)){d.open=x.id;paint();toast('« '+name+' » : indique '+(x.mode==='time'?'une durée en secondes':'un nombre de répétitions')+' entre 1 et '+max+'.',true);return;}
+      out.push({id:x.id,name:name.slice(0,60),desc:String(x.desc||'').trim().slice(0,300),
+        steps:String(x.stepsText||'').split('\n').map(s=>s.trim()).filter(Boolean).slice(0,12).map(s=>s.slice(0,200)),
+        mode:x.mode==='reps'?'reps':'time',target:t,perSide:x.mode==='reps'&&!!x.perSide,note:String(x.note||'').trim().slice(0,160)});
+    }
+    d.busy=true;
+    try{await S.db.doc('config/warmup').set({version:1,items:out,updatedAt:new Date().toISOString()});d.dirty=false;d.saved=true;d.open=null;d.del=null;toast('Échauffement enregistré');}
+    catch(e){toast(errMsg(e),true);}
+    d.busy=false;paint();
+  }
+  function build(){
+    const q=h('button',{class:'btn sm',type:'button','aria-label':'Fermer la gestion de l’échauffement'},'✕');
+    let a=false,tm=null;
+    q.addEventListener('click',()=>{if(!d.dirty||a){close();return;}a=true;q.textContent='Abandonner ?';tm=setTimeout(()=>{a=false;q.textContent='✕';},3000);});
+    const w=h('div',{class:'in'},
+      h('div',{class:'row',style:'justify-content:space-between;flex-wrap:nowrap;align-items:flex-start'},h('div',{style:'min-width:0'},h('p',{class:'eyebrow'},'Espace coach'),h('h1',{class:'day'},'Échauffement')),q),
+      h('p',{class:'muted'},'Tous les athlètes voient la même version. Modifie, réordonne, ajoute ou supprime des exercices, puis appuie sur « Enregistrer ».'));
+    if(d.saved)w.append(h('div',{class:'banner',role:'status'},h('p',{},'✓ Modifications enregistrées. Les athlètes voient maintenant cette version.')));
+    if(d.dirty)w.append(h('p',{class:'hint',role:'status'},'Modifications non enregistrées.'));
+    d.items.forEach((x,i)=>w.append(row(x,i)));
+    w.append(h('div',{class:'row'},
+      h('button',{class:'btn',type:'button',id:'wu-add',disabled:d.items.length>=WU_MAX,onclick:()=>{
+        const x={id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),name:'',desc:'',steps:[],stepsText:'',mode:'time',target:30,perSide:false,note:''};
+        d.items.push(x);d.open=x.id;mark();paint();setTimeout(()=>{ov.scrollTop=ov.scrollHeight;},30);}},'+ Ajouter un exercice'),
+      d.reset
+        ?[h('button',{class:'btn danger',type:'button',onclick:()=>{d.items=WU_DEFAULT.map(wuClean).map(mk);d.open=null;d.del=null;d.reset=false;mark();paint();}},'Confirmer : revenir aux 10 exercices d’origine'),h('button',{class:'btn',type:'button',onclick:()=>{d.reset=false;paint();}},'Annuler')]
+        :h('button',{class:'btn sm',type:'button',onclick:()=>{d.reset=true;paint();}},'Valeurs d’origine')));
+    w.append(h('div',{class:'wu-save'},h('button',{class:'btn primary wu-main',type:'button',id:'wu-save',disabled:d.busy,onclick:save},d.busy?'Enregistrement…':'Enregistrer')));
+    return w;
+  }
+  function paint(){const y=ov.scrollTop;ov.replaceChildren(build());ov.scrollTop=y;}
+  document.body.append(ov);
+  paint();
+}
+
 function openTimer(w,date,m){
   if(document.getElementById('tm-ov'))return;
   const fmt=m.format||'FT',dur=metDuration(m),size=fmt==='AMRAP'?roundSizeFor(m):0;
@@ -2621,6 +2977,7 @@ function viewToday(){
   const el=h('div',{class:'stack'});
   el.append(h('div',{},h('p',{class:'eyebrow'},date===t?'Aujourd’hui':date<t?'Séance passée':'Séance à venir'),h('h1',{class:'day'},cap(fmtDate(date)))));
   if(S.viewDate&&S.viewDate!==defaultDate())el.append(h('div',{class:'row'},h('button',{class:'btn sm',onclick:()=>{S.viewDate=null;S.entry=null;S.redo=null;render();}},'Revenir à la séance du jour')));
+  el.append(warmupCard());
   if(!ready()){el.append(h('p',{class:'muted'},'Chargement…'));return el;}
   if(!w){
     el.append(h('div',{class:'empty'},h('p',{},'Aucune séance publiée pour ce jour.'),
@@ -5086,18 +5443,20 @@ function init(){
   onAuthStateChanged(auth,user=>{
     unsubs.forEach(u=>u());unsubs=[];
     S.loaded={periods:false,wods:false,logs:false};S.periods={};S.wods={};S.logs={};S.prof={prs:{},sex:''};
-    S.sexSync=null;S.coachUid=null;S.coachLoaded=false;S.owner=false;S.error=null;S.entry=null;S.redo=null;S.viewDate=null;S.confirm=null;S.cerAuto=false;S._annDone=false;S.ann=null;S.annLoaded=false;S._aw=null;S.groups={list:[],of:{},snap:{}};S._freezing=false;S.boardGroup=undefined;S.comments={};S.reactions={};
+    S.sexSync=null;S.coachUid=null;S.coachLoaded=false;S.owner=false;S.error=null;S.entry=null;S.redo=null;S.viewDate=null;S.confirm=null;S.cerAuto=false;S._annDone=false;S.ann=null;S.annLoaded=false;S._aw=null;S.groups={list:[],of:{},snap:{}};S._freezing=false;S.boardGroup=undefined;S.comments={};S.reactions={};S.wu={cfg:null,loaded:false,list:false};
     S.coach={wod:null,editing:false,period:null,resDate:null};S.profView=null;S.viewUser=null;S.tip=null;S.tab=user?takeInitialTab():'feed';S.authReady=true;
     if(!user){S.uid=null;render();return;}
     S.uid=user.uid;setTimeout(pushSync,2500);S.meName=user.displayName||(user.email||'').split('@')[0]||'';
     const fail=e=>{S.error=(e&&e.code==='permission-denied')?'Accès refusé par la base de données. Publie les règles de sécurité (voir README).':'Lecture des données impossible pour le moment.';scheduleRender();};
     const watch=(path,key)=>unsubs.push(S.db.collection(path).onSnapshot(sn=>{S[key]=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));S.loaded[key]=true;scheduleRender();},fail));
     watch('periods','periods');watch('wods','wods');watch('logs','logs');
-    unsubs.push(S.db.doc('config/coach').onSnapshot(sn=>{S.coachUid=sn.exists?(sn.data().uid||null):null;S.coachLoaded=true;S.owner=!!S.coachUid&&S.coachUid===S.uid;scheduleRender();},fail));
+    unsubs.push(S.db.doc('config/coach').onSnapshot(sn=>{S.coachUid=sn.exists?(sn.data().uid||null):null;S.coachLoaded=true;S.owner=!!S.coachUid&&S.coachUid===S.uid;wuMaybeSeed();scheduleRender();},fail));
     /* les groupes ne bloquent jamais l'appli : si les règles ne sont pas encore publiées, on ignore l'erreur */
     unsubs.push(S.db.doc('config/groups').onSnapshot(sn=>{const d=sn.exists?sn.data():null;S.groups={list:(d&&Array.isArray(d.list))?d.list:[],of:(d&&d.of&&typeof d.of==='object')?d.of:{},snap:(d&&d.snap&&typeof d.snap==='object')?d.snap:{},loaded:true};S._freezing=false;scheduleRender();},()=>{}));
     /* message du coach : si les règles ne sont pas publiées, on ignore l'erreur */
     unsubs.push(S.db.doc('config/announcement').onSnapshot(sn=>{S.ann=sn.exists?sn.data():null;S.annLoaded=true;scheduleRender();},()=>{S.annLoaded=true;scheduleRender();}));
+    /* échauffement guidé : si les règles ne sont pas publiées, l'appli utilise la version intégrée et ne tente aucune écriture */
+    unsubs.push(S.db.doc('config/warmup').onSnapshot(sn=>{const d=sn.exists?sn.data():null;S.wu.cfg=(d&&Array.isArray(d.items))?d:null;S.wu.loaded=true;S.wu.err=false;S.wu.fromCache=!!sn.fromCache;wuMaybeSeed();scheduleRender();},()=>{S.wu.loaded=true;S.wu.err=true;scheduleRender();}));
     /* messages de la remise des trophées : si les règles ne sont pas publiées, on ignore l'erreur */
     unsubs.push(S.db.collection('comments').onSnapshot(sn=>{S.comments=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));if(S.cerRefresh)S.cerRefresh();},()=>{}));
     /* réactions emoji : si les règles ne sont pas publiées, on ignore l'erreur */
