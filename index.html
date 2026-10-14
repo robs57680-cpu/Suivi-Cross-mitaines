@@ -2118,8 +2118,7 @@ function warmupCard(){
       h('button',{class:'btn primary wu-big',type:'button',id:'wu-start',onclick:()=>openWarmup('guided',0)},'Lancer l’échauffement'),
       h('button',{class:'btn wu-big',type:'button',id:'wu-free',onclick:()=>openWarmup('manual',0)},'Mode libre')),
     h('div',{class:'row'},
-      h('button',{class:'btn sm',type:'button',id:'wu-toggle','aria-expanded':S.wu.list?'true':'false',onclick:()=>{S.wu.list=!S.wu.list;render();}},S.wu.list?'Masquer les exercices':'Voir les exercices'),
-      S.owner?h('button',{class:'btn sm',type:'button',id:'wu-manage',onclick:openWarmupEdit},'Gérer l’échauffement'):null));
+      h('button',{class:'btn sm',type:'button',id:'wu-toggle','aria-expanded':S.wu.list?'true':'false',onclick:()=>{S.wu.list=!S.wu.list;render();}},S.wu.list?'Masquer les exercices':'Voir les exercices')));
   if(S.wu.list)card.append(h('ol',{class:'wu-list'},items.map((x,i)=>h('li',{},
     h('button',{class:'wu-li',type:'button',onclick:()=>openWarmup('manual',i)},h('span',{class:'n'},i+1),h('span',{class:'t'},x.name),h('span',{class:'o'},wuObj(x)))))));
   return card;
@@ -4632,8 +4631,9 @@ function coachMenu(){
     ['results','Gérer les résultats',pl_(nA,'athlète')],
     ['seasons','Gérer les saisons',pl_(plist().length,'saison')],
     ['avatar','Objets secrets',pl_(AV_ITEMS.length,'objet')+' d’avatar à débloquer'],
+    ['warmup','Gérer l’échauffement',pl_(wuItems().length,'exercice')],
     ['message','Message aux athlètes',annActive()?'Un message est en ligne':'Aucun message en ligne']];
-  return h('div',{class:'stack'},items.map(([k,t,sub])=>h('button',{class:'mbtn',type:'button',id:'cm-'+k,onclick:()=>{S.coach.view=k;render();window.scrollTo(0,0);}},h('div',{},h('b',{},t),h('span',{},sub)),h('i',{},'›'))));
+  return h('div',{class:'stack'},items.map(([k,t,sub])=>h('button',{class:'mbtn',type:'button',id:'cm-'+k,onclick:()=>{if(k==='warmup'){openWarmupEdit();return;}S.coach.view=k;render();window.scrollTo(0,0);}},h('div',{},h('b',{},t),h('span',{},sub)),h('i',{},'›'))));
 }
 
 /* ---------- coach ---------- */
