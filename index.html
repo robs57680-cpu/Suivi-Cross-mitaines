@@ -105,7 +105,9 @@ textarea{resize:vertical}
 .tro-h .h2{display:block}
 .tro-h .chev{font-size:18px;transition:transform .2s}
 .tro-h[aria-expanded="true"] .chev{transform:rotate(180deg)}
-.sw{margin-left:auto;flex:none;border:0;background:none;padding:0;width:64px;height:72px;color:var(--ink);cursor:pointer;display:block;-webkit-tap-highlight-color:transparent}
+.pbody.has-sw{position:relative;padding-right:66px;min-height:66px}
+.pbody.has-sw>.sw{position:absolute;top:0;right:0}
+.sw{flex:none;border:0;background:none;padding:0;width:58px;height:65px;color:var(--ink);cursor:pointer;display:block;-webkit-tap-highlight-color:transparent}
 .sw svg{width:100%;height:100%;display:block}
 .sw .sw-face{fill:var(--surface2);stroke:currentColor;stroke-width:4}
 .sw .sw-t{font-family:var(--f-mono);font-weight:700;fill:var(--ink)}
@@ -2732,13 +2734,14 @@ function swBtn(k){
 function partCard(p,w,date){
   const metcon=p.kind==='metcon';
   const lines=(p.content||'').split('\n').map(s=>s.trim()).filter(Boolean);
-  const body=h('div',{class:'pbody'},
+  const hasSw=p.kind==='force'||p.kind==='renfo';
+  const body=h('div',{class:'pbody'+(hasSw?' has-sw':'')},
+    hasSw?swBtn(swKey(p,date)):null,
     h('div',{class:'phead'},h('h3',{},p.name||KIND[p.kind]||'Partie'),
       h('span',{class:'chip'+(metcon?' live':'')},metcon?'Metcon · points au classement':(KIND[p.kind]||'Autre')),
       metcon&&p.focus&&FOCUS[p.focus]?h('span',{class:'chip'},FOCUS[p.focus]):null,
       metcon&&p.redo===false?h('span',{class:'chip miss'},'Pas de REDO'):null,
-      p.kind==='force'&&p.movement?h('span',{class:'chip'},p.movement):null,
-      (p.kind==='force'||p.kind==='renfo')?swBtn(swKey(p,date)):null),
+      p.kind==='force'&&p.movement?h('span',{class:'chip'},p.movement):null),
     metcon?h('div',{class:'fmt'},[FORMAT[p.format]||'',p.detail,p.lineRounds?'Chaque ligne = 1 tour':(p.repsRound?'1 tour = '+p.repsRound+' reps':'')].filter(Boolean).join(' · ')):null,
     h('div',{class:'lines'},lines.map(metcon?metLine:renderLine)),
     (metcon&&p.word)?h('div',{class:'cword'},h('span',{class:'flabel'},'Mot du coach'),h('p',{},p.word)):null,
