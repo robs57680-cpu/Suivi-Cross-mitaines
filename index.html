@@ -101,6 +101,15 @@ textarea{resize:vertical}
 .pbody{display:grid;gap:8px;min-width:0}
 .phead{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .phead h3{font-weight:700;font-size:17px}
+.tro-h{width:100%;display:flex;align-items:center;gap:10px;background:none;border:0;padding:0;color:inherit;font:inherit;text-align:left;cursor:pointer;min-height:44px}
+.tro-h .h2{display:block}
+.tro-h .chev{font-size:18px;transition:transform .2s}
+.tro-h[aria-expanded="true"] .chev{transform:rotate(180deg)}
+.sw{margin-left:auto;flex:none;border:0;background:none;padding:0;width:64px;height:72px;color:var(--ink);cursor:pointer;display:block;-webkit-tap-highlight-color:transparent}
+.sw svg{width:100%;height:100%;display:block}
+.sw .sw-face{fill:var(--surface2);stroke:currentColor;stroke-width:4}
+.sw .sw-t{font-family:var(--f-mono);font-weight:700;fill:var(--ink)}
+.sw.run{color:var(--accent)}
 .fmt{font-family:var(--f-mono);font-weight:600;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
 .line{overflow-wrap:anywhere}
 .lines{display:grid;gap:6px}
@@ -340,6 +349,18 @@ textarea{resize:vertical}
 .tm-passages .sub{text-align:right;color:var(--panel-muted)}
 /* échauffement guidé */
 .wu-card .wu-acts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.wu-card .wu-full{width:100%}
+.wu-card .wu-intro{margin:0}
+.rl-bar{display:flex;gap:6px}
+.rl-bar i{flex:1;height:6px;border-radius:3px;background:var(--line)}
+.rl-bar i.on{background:var(--accent)}
+.rl-num{font-family:var(--f-mono);font-size:13px;letter-spacing:.08em;color:var(--muted);margin:0}
+.rl-t{font-family:var(--f-display);font-weight:400;font-size:clamp(30px,8vw,44px);line-height:1.05;margin:0;text-transform:uppercase;text-wrap:balance}
+.rl-body{display:grid;gap:12px;font-size:17px;line-height:1.5}
+.rl-body p{margin:0}
+.rl-body ul{margin:0;padding-left:20px;display:grid;gap:8px}
+.rl-acts{display:grid;gap:10px}
+.rl-acts .btn{width:100%;min-height:54px}
 .wu-big{min-height:56px;font-size:14px}
 .wu-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .wu-li{width:100%;display:grid;grid-template-columns:30px minmax(0,1fr) auto;gap:10px;align-items:center;text-align:left;background:var(--surface2);border:1px solid var(--line);border-radius:4px;padding:10px 12px;cursor:pointer;min-height:48px}
@@ -1118,12 +1139,20 @@ function flameAll(lg){
   }
   return {cur,best};
 }
+/* les metcons comptent dans l'ordre où l'athlète les a réellement faits (e.at = jour de validation), pas dans l'ordre des dates de séance :
+   un metcon rattrapé plus tard passe donc après ceux déjà faits. Sans horodatage (anciennes entrées), on retombe sur la date de la séance. */
 function topRun(lg,wods){
   const lvMax=lv=>((lv&&lv.tiers)||[]).reduce((a,x)=>Math.max(a,x.p),0);
-  let tc=0,tb=0;
+  const doneAt=(w,e)=>{const t=e&&e.at?Date.parse(e.at):NaN;return isNaN(t)?Date.parse(w.date+'T12:00:00'):t;};
+  const list=[];
   for(const w of wods){
     const m=metconOf(w),e=lg.entries&&lg.entries[w.date];
     if(!m||!hasScore(e))continue;
+    list.push({w,m,e,t:doneAt(w,e)});
+  }
+  list.sort((a,b)=>a.t-b.t||(a.w.date<b.w.date?-1:a.w.date>b.w.date?1:0));
+  let tc=0,tb=0;
+  for(const {m,e} of list){
     const lvl=e.level||0,mx=lvMax(levelsOf(m)[lvl]||levelsOf(m)[0]);
     if(!(mx>0))continue;
     if(perfOf(m,e)>=0.9*mx-1e-9){tc++;tb=Math.max(tb,tc);}else tc=0;
@@ -1678,7 +1707,7 @@ const typing=()=>{const a=document.activeElement;return a&&main.contains(a)&&/^(
 function scheduleRender(){if(typing()){pending=true;return;}render();}
 document.addEventListener('focusout',()=>{if(!pending)return;setTimeout(()=>{if(!typing()){pending=false;render();}},0);});
 
-function go(tab){closeDrawer(true);if(tab==='coach'&&S.tab==='coach')S.coach.view=null;S.profView=null;S.viewUser=null;S.tip=null;S.tab=tab;S.boardDetail=false;S.confirm=null;if(S.entry&&S.entry.coach)S.entry=null;render();window.scrollTo(0,0);}
+function go(tab){closeDrawer(true);if(tab==='coach'&&S.tab==='coach')S.coach.view=null;S.profView=null;S.viewUser=null;S.tip=null;S.trophOpen='';S.trophSeason='';S.tab=tab;S.boardDetail=false;S.confirm=null;if(S.entry&&S.entry.coach)S.entry=null;render();window.scrollTo(0,0);}
 function render(){
   pending=false;S._aw=null;S._ob=null;applyTheme();
   {const tp=document.querySelector('.top');if(tp)document.documentElement.style.setProperty('--toph',tp.offsetHeight+'px');}
@@ -1696,14 +1725,14 @@ function render(){
   const tabs=[['feed','Fil'],['today','Séance'],['board','Classement']];
   const tabEls=tabs.map(([k,l])=>h('button',{class:'tab','data-tour':'tab-'+k,'aria-current':S.tab===k?'page':null,onclick:()=>go(k)},l));
   {
-    const activeExtra=['profile','coach','prefs','stats','share'].includes(S.tab);
+    const activeExtra=['profile','coach','prefs','stats','share','rules'].includes(S.tab);
     const bb=h('button',{class:'tab tab-burger','data-tour':'tab-menu','aria-current':activeExtra?'page':null,'aria-haspopup':'dialog','aria-expanded':drawerEl?'true':'false','aria-label':'Menu',title:'Menu',onclick:()=>{drawerEl?closeDrawer():openDrawer();}});
     bb.innerHTML=ICO_MENU;if(menuDot())bb.append(h('span',{class:'ibdot','aria-hidden':'true'}));
     tabEls.push(bb);
   }
   $('#tabs').classList.remove('coach-tabs');
   $('#tabs').replaceChildren(...tabEls);
-  const view={feed:viewFeed,today:viewToday,board:viewBoard,profile:viewProfile,coach:viewCoach,stats:viewStats,prefs:viewPrefs,share:viewShare}[S.tab]||viewFeed;
+  const view={feed:viewFeed,today:viewToday,board:viewBoard,profile:viewProfile,coach:viewCoach,stats:viewStats,prefs:viewPrefs,share:viewShare,rules:viewRules}[S.tab]||viewFeed;
   main.replaceChildren(...banners(),view());
   document.querySelectorAll('.bubs.rxfloat').forEach(x=>x.remove());
   const rxLayer=rxReceived();if(rxLayer)document.body.append(rxLayer);
@@ -2112,13 +2141,17 @@ function warmupCard(){
   const items=wuItems();
   const sec=items.filter(x=>x.mode==='time').reduce((a,x)=>a+x.target,0);
   const card=h('section',{class:'card wu-card',id:'wu-card'},
-    h('div',{class:'row',style:'justify-content:space-between;flex-wrap:nowrap'},h('h2',{class:'h2',style:'flex:1'},'Échauffement'),h('span',{class:'chip'},items.length+' exercice'+(items.length>1?'s':''))),
-    h('p',{class:'muted'},'Échauffement général'+(sec?' · environ '+Math.max(1,Math.round(sec/60))+' min chronométrées':'')+'. Lance le mode guidé (timer) ou avance à ton rythme en mode libre.'),
+    h('div',{class:'row',style:'justify-content:space-between;flex-wrap:nowrap'},h('h2',{class:'h2',style:'flex:1'},'Échauffement'),h('span',{class:'chip'},items.length+' exercice'+(items.length>1?'s':'')),
+      h('button',{type:'button',class:'qbtn',id:'wu-info','aria-label':'Informations sur l’échauffement','aria-expanded':S.tip==='warmup'?'true':'false',onclick:()=>toggleTip('warmup')},'?')),
+    S.tip==='warmup'?h('div',{class:'tip',role:'dialog'},
+      h('div',{},h('b',{},'Le contenu'),h('div',{class:'sub'},'Échauffement général'+(sec?' · environ '+Math.max(1,Math.round(sec/60))+' min chronométrées':'')+'.')),
+      h('div',{},h('b',{},'Mode guidé'),h('div',{class:'sub'},'Le timer t’accompagne et enchaîne les exercices, avec compte à rebours et bips.')),
+      h('div',{},h('b',{},'Mode libre'),h('div',{class:'sub'},'Tu avances à ton rythme, d’un exercice au suivant, sans chrono.'))):null,
+    h('p',{class:'wu-intro'},'Un échauffement avant d’attaquer la séance est très fortement conseillé. Celui qui est proposé ici est complet, mais chacun est libre de réaliser l’échauffement qu’il souhaite.'),
     h('div',{class:'wu-acts'},
-      h('button',{class:'btn primary wu-big',type:'button',id:'wu-start',onclick:()=>openWarmup('guided',0)},'Lancer l’échauffement'),
-      h('button',{class:'btn wu-big',type:'button',id:'wu-free',onclick:()=>openWarmup('manual',0)},'Mode libre')),
-    h('div',{class:'row'},
-      h('button',{class:'btn sm',type:'button',id:'wu-toggle','aria-expanded':S.wu.list?'true':'false',onclick:()=>{S.wu.list=!S.wu.list;render();}},S.wu.list?'Masquer les exercices':'Voir les exercices')));
+      h('button',{class:'btn wu-big',type:'button',id:'wu-free',onclick:()=>openWarmup('manual',0)},'Mode libre'),
+      h('button',{class:'btn wu-big',type:'button',id:'wu-toggle','aria-expanded':S.wu.list?'true':'false',onclick:()=>{S.wu.list=!S.wu.list;render();}},S.wu.list?'Masquer les exercices':'Voir les exercices')),
+    h('button',{class:'btn primary wu-big wu-full',type:'button',id:'wu-start',onclick:()=>openWarmup('guided',0)},'Lancer l’échauffement'));
   if(S.wu.list)card.append(h('ol',{class:'wu-list'},items.map((x,i)=>h('li',{},
     h('button',{class:'wu-li',type:'button',onclick:()=>openWarmup('manual',i)},h('span',{class:'n'},i+1),h('span',{class:'t'},x.name),h('span',{class:'o'},wuObj(x)))))));
   return card;
@@ -2654,13 +2687,44 @@ function customDetail(m){
 }
 function levelsBlock(m){
   const lv=activeLevels(m).slice().reverse(); /* Rx, Intermédiaire, Débutant */
-  const open=lv.find(x=>S.tip==='lv-'+m.label+x[1]),cOpen=S.tip==='lv-'+m.label+'custom';
+  const open=lv.find(x=>S.tip==='lv-'+m.label+x[1]),cOpen=m.customLvl!==false&&S.tip==='lv-'+m.label+'custom';
   return h('div',{class:'levels'},
     h('div',{class:'flabel'},'Niveaux de pratique · touche un niveau pour le détail'),
     h('div',{class:'seg'},lv.map(([l,i])=>h('button',{type:'button',class:'btn sm tipbtn','aria-pressed':S.tip==='lv-'+m.label+i?'true':'false',onclick:()=>toggleTip('lv-'+m.label+i)},levelName(m,i))),
-      h('button',{type:'button',class:'btn sm tipbtn',style:'grid-column:1/-1','aria-pressed':cOpen?'true':'false',onclick:()=>toggleTip('lv-'+m.label+'custom')},'Niveau personnalisé')),
+      m.customLvl!==false?h('button',{type:'button',class:'btn sm tipbtn',style:'grid-column:1/-1','aria-pressed':cOpen?'true':'false',onclick:()=>toggleTip('lv-'+m.label+'custom')},'Niveau personnalisé'):null),
     open?h('div',{class:'tip',role:'dialog'},levelDetail(m,open[0],open[1])):null,
     cOpen?h('div',{class:'tip',role:'dialog'},customDetail(m)):null);
+}
+/* chronomètre des parties force / renfo : 1er appui = lance, 2e = arrête, appui suivant = repart de 0.
+   L'état vit hors du DOM (la page se redessine souvent) et se calcule avec l'heure réelle : il continue même écran éteint. */
+const SW={};let swTimer=null;
+const swKey=(p,date)=>(date||'')+'|'+(p.label||'')+'|'+p.kind;
+const swMs=k=>{const x=SW[k];return x?(x.run?x.acc+(Date.now()-x.t0):x.acc):0;};
+const swFmt=ms=>{const t=Math.floor(ms/1000),m=Math.floor(t/60),z=n=>String(n).padStart(2,'0');return m>=60?Math.floor(m/60)+'h'+z(m%60):m+':'+z(t%60);};
+function swPaint(b,k){
+  const x=SW[k],txt=swFmt(swMs(k)),t=b.querySelector('.sw-t');
+  t.textContent=txt;t.setAttribute('font-size',txt.length>4?'14':'18');
+  b.classList.toggle('run',!!(x&&x.run));
+  b.setAttribute('aria-label','Chronomètre '+txt+' : '+(x&&x.run?'appuie pour arrêter':'appuie pour '+(x&&x.acc>0?'repartir de zéro':'lancer')));
+}
+function swTick(){
+  if(swTimer)return;
+  swTimer=setInterval(()=>{
+    if(!Object.values(SW).some(x=>x.run)){clearInterval(swTimer);swTimer=null;return;}
+    document.querySelectorAll('.sw').forEach(b=>{const k=b.getAttribute('data-sw');if(SW[k]&&SW[k].run)swPaint(b,k);});
+  },250);
+}
+function swBtn(k){
+  const b=h('button',{type:'button',class:'sw','data-sw':k,onclick:()=>{
+    const x=SW[k]||(SW[k]={run:false,acc:0,t0:0});
+    if(x.run){x.acc+=Date.now()-x.t0;x.run=false;}
+    else{x.acc=0;x.t0=Date.now();x.run=true;swTick();}
+    swPaint(b,k);
+  }});
+  b.innerHTML='<svg viewBox="0 0 64 72" aria-hidden="true"><rect x="26" y="2" width="12" height="8" rx="2" fill="currentColor"/><path d="M47 15l5-5" stroke="currentColor" stroke-width="4" stroke-linecap="round" fill="none"/><circle class="sw-face" cx="32" cy="43" r="25"/><text class="sw-t" x="32" y="49" text-anchor="middle" font-size="18">0:00</text></svg>';
+  swPaint(b,k);
+  if(SW[k]&&SW[k].run)swTick();
+  return b;
 }
 function partCard(p,w,date){
   const metcon=p.kind==='metcon';
@@ -2670,7 +2734,8 @@ function partCard(p,w,date){
       h('span',{class:'chip'+(metcon?' live':'')},metcon?'Metcon · points au classement':(KIND[p.kind]||'Autre')),
       metcon&&p.focus&&FOCUS[p.focus]?h('span',{class:'chip'},FOCUS[p.focus]):null,
       metcon&&p.redo===false?h('span',{class:'chip miss'},'Pas de REDO'):null,
-      p.kind==='force'&&p.movement?h('span',{class:'chip'},p.movement):null),
+      p.kind==='force'&&p.movement?h('span',{class:'chip'},p.movement):null,
+      (p.kind==='force'||p.kind==='renfo')?swBtn(swKey(p,date)):null),
     metcon?h('div',{class:'fmt'},[FORMAT[p.format]||'',p.detail,p.lineRounds?'Chaque ligne = 1 tour':(p.repsRound?'1 tour = '+p.repsRound+' reps':'')].filter(Boolean).join(' · ')):null,
     h('div',{class:'lines'},lines.map(metcon?metLine:renderLine)),
     (metcon&&p.word)?h('div',{class:'cword'},h('span',{class:'flabel'},'Mot du coach'),h('p',{},p.word)):null,
@@ -3114,11 +3179,11 @@ function adjPicker(m,st){
   return field('Choix du niveau personnalisé',sel(opts,String(a),v=>{const n=parseInt(v,10)||0;st.adj=n;if(n>0)st.level=2;else if(n<0)st.level=lo;render();},{id:'adj-select','aria-label':'Niveau personnalisé'}),hint);
 }
 function levelField(m,st,label){
-  const cust=!!st.custom||!!st.adj,lvl=levelsOf(m)[st.level]||{};
+  const cust=!!st.custom||!!st.adj,lvl=levelsOf(m)[st.level]||{},canCust=m.customLvl!==false||cust;
   const box=h('div',{class:'field'},h('span',{class:'flabel'},label),
     h('div',{class:'seg',role:'group','aria-label':'Niveau de pratique'},
       activeLevels(m).map(([lv,i])=>h('button',{type:'button',class:'btn sm','aria-pressed':(!cust&&st.level===i)?'true':'false',onclick:()=>{st.level=i;st.adj=0;st.custom=false;render();}},dispLvl(lv.name||('Niveau '+(i+1))))),
-      h('button',{type:'button',class:'btn sm',id:'lvl-custom',style:'grid-column:1/-1','aria-pressed':cust?'true':'false',onclick:()=>{st.custom=true;render();}},'Niveau personnalisé')));
+      canCust?h('button',{type:'button',class:'btn sm',id:'lvl-custom',style:'grid-column:1/-1','aria-pressed':cust?'true':'false',onclick:()=>{st.custom=true;render();}},'Niveau personnalisé'):null));
   if(cust)box.append(adjPicker(m,st));
   else if(loadsText(lvl))box.append(h('span',{class:'hint'},(S.prof.sex?'Ta charge : ':'')+loadsText(lvl)));
   return box;
@@ -3449,18 +3514,7 @@ function viewAthlete(uid){
       h('div',{class:'pts'},fmtN(last.pts.total),h('small',{},'pts')));})()
     :h('p',{class:'muted'},'Aucune séance validée pour l’instant.')));
   {const rs=reactSection(uid,me);if(rs)el.append(rs);}
-  const earned=[];
-  for(const per of (plist().length?plist():[ALL])){
-    const b=computeBoard(per),stt=periodState(per);
-    for(const t of TROPHIES){const mine=winners(t,b,scopeOf(uid,per)).find(r=>r.uid===uid);if(mine)earned.push({per,t,stt,mine});}
-  }
-  el.append(h('section',{class:'card'},h('h2',{class:'h2'},'Récompenses'),
-    earned.length?h('div',{class:'trophies'},earned.map(x=>h('div',{class:'trophy'},
-      trophyIcon(x.t.id,true,x.stt==='done'?x.per:null),
-      h('div',{},h('div',{class:'ttop'},h('div',{class:'tn'},x.t.name),h('span',{class:'stamp'},seasonLabel(x.per))),
-        h('div',{class:'td'},x.stt==='done'?'Décerné':'En tête pour l’instant, provisoire'),
-        h('div',{class:'tw'},x.t.show(x.mine))))))
-    :h('p',{class:'muted'},'Aucune récompense pour l’instant.')));
+  el.append(trophiesSection(uid,'Récompenses','Aucune récompense pour l’instant.'));
   return el;
 }
 function viewBoard(){
@@ -4162,6 +4216,40 @@ function flameEl(kind,n){
 function flameBox(kind,n,title,rec){
   return h('div',{class:'fbox'},h('div',{class:'fstage'},flameEl(kind,n)),h('div',{class:'nm'},title),h('div',{class:'ver'},rec));
 }
+/* trophées d'un athlète : bandeau replié par défaut, filtrable par saison ; seuls les trophées décernés (saison terminée) sont listés.
+   Les trophées provisoires de la saison en cours restent visibles dans le classement uniquement. */
+function trophiesSection(uid,title,emptyTxt){
+  const earned=[];
+  for(const per of (plist().length?plist():[ALL])){
+    if(periodState(per)!=='done')continue;
+    const b=computeBoard(per);
+    for(const t of TROPHIES){const mine=winners(t,b,scopeOf(uid,per)).find(r=>r.uid===uid);if(mine)earned.push({per,t,mine});}
+  }
+  const open=S.trophOpen===uid,seasons=[];
+  earned.forEach(x=>{if(!seasons.includes(x.per))seasons.push(x.per);});
+  seasons.reverse(); /* plist est chronologique : saison la plus récente en premier */
+  const pick=seasons.some(q=>q.id===S.trophSeason)?S.trophSeason:'';
+  const card=h('section',{class:'card'},
+    h('button',{type:'button',class:'tro-h',id:'tro-toggle','aria-expanded':open?'true':'false','aria-controls':'tro-body',onclick:()=>{S.trophOpen=open?'':uid;S.trophSeason='';render();}},
+      h('span',{class:'h2',style:'flex:1;margin:0'},title),h('span',{class:'chip'},String(earned.length)),h('span',{class:'chev','aria-hidden':'true'},'▾')));
+  if(open){
+    const body=h('div',{class:'stack',id:'tro-body'});
+    if(!earned.length)body.append(h('p',{class:'muted'},emptyTxt));
+    else{
+      if(seasons.length>1)body.append(field('Saison',sel([['','Toutes les saisons']].concat(seasons.map(q=>[q.id,seasonLabel(q)+(q.name?' · '+q.name:'')])),pick,v=>{S.trophSeason=v;render();},{id:'tro-season'})));
+      seasons.filter(q=>!pick||q.id===pick).forEach(per=>{
+        body.append(h('div',{class:'stack'},h('p',{class:'flabel'},seasonLabel(per)),
+          h('div',{class:'trophies'},earned.filter(x=>x.per===per).map(x=>h('div',{class:'trophy'+(uid===S.uid?' mine':'')},
+            trophyIcon(x.t.id,true,per),
+            h('div',{},h('div',{class:'ttop'},h('div',{class:'tn'},x.t.name),h('span',{class:'stamp'},seasonLabel(per))),
+              h('div',{class:'td'},'Décerné'),
+              h('div',{class:'tw'},x.t.show(x.mine))))))));
+      });
+    }
+    card.append(body);
+  }
+  return card;
+}
 function viewProfile(){
   const el=h('div',{class:'stack'});
   if(!S.uid){el.append(h('h1',{class:'day'},'Mon profil'),h('div',{class:'empty'},h('p',{},'Ton profil est privé. Connecte-toi pour le voir.')));return el;}
@@ -4191,7 +4279,7 @@ function viewProfile(){
       h('button',{type:'button',class:'qbtn','aria-label':'Informations sur les flammes','aria-expanded':S.tip==='flames'?'true':'false',onclick:()=>toggleTip('flames')},'?')),
     S.tip==='flames'?h('div',{class:'tip',role:'dialog'},
       h('div',{},h('b',{},'Série en cours'),h('div',{class:'sub'},'Séances d’affilée, faites pendant la bonne semaine, toutes saisons confondues. Objectif de séances respecté = flamme conservée.')),
-      h('div',{},h('b',{},'Temps au top'),h('div',{class:'sub'},'Metcons d’affilée à 90 % des points ou plus, toutes saisons confondues : la flamme ne se réinitialise pas au changement de saison.'))):null,
+      h('div',{},h('b',{},'Temps au top'),h('div',{class:'sub'},'Metcons d’affilée à 90 % des points ou plus, dans l’ordre où tu les as réalisés (pas celui des dates de séance), toutes saisons confondues : la flamme ne se réinitialise pas au changement de saison.'))):null,
     h('div',{class:'flames'},
       flameBox('fire',me.flameCur||0,'Série en cours','Record : '+(me.flameBest||0)),
       flameBox('plat',me.flameTopCur||0,'Temps au top','Record : '+(me.flameTopBest||0)))));
@@ -4204,19 +4292,8 @@ function viewProfile(){
         m&&hasScore(it.e)?h('div',{class:'sub'},lvlLab(m,it.e)+' · '+scoreText(m,it.e.score,it.e)):null),
       h('div',{class:'pts'},fmtN(it.pts.total),h('small',{},'pts')),delBtn(it));}))
     :h('p',{class:'muted'},'Tes séances validées apparaîtront ici.')));
-  /* trophées gagnés */
-  const earned=[];
-  for(const per of (plist().length?plist():[ALL])){
-    const b=computeBoard(per);const stt=periodState(per);
-    for(const t of TROPHIES){const ws=winners(t,b,scopeOf(S.uid,per));const mine=ws.find(r=>r.uid===S.uid);if(mine)earned.push({per,t,stt,ws,mine});}
-  }
-  el.append(h('section',{class:'card'},h('h2',{class:'h2'},'Mes trophées'),
-    earned.length?h('div',{class:'trophies'},earned.map(x=>h('div',{class:'trophy mine'},
-      trophyIcon(x.t.id,true,x.stt==='done'?x.per:null),
-      h('div',{},h('div',{class:'ttop'},h('div',{class:'tn'},x.t.name),h('span',{class:'stamp'},seasonLabel(x.per))),
-        h('div',{class:'td'},x.stt==='done'?'Décerné':'En tête pour l’instant, provisoire'),
-        h('div',{class:'tw'},x.t.show(x.mine))))))
-    :h('p',{class:'muted'},'Aucun trophée pour l’instant. Ils se jouent à la fin de chaque saison.')));
+  /* trophées gagnés (bandeau replié, décernés uniquement) */
+  el.append(trophiesSection(S.uid,'Mes trophées','Aucun trophée pour l’instant. Ils sont décernés à la fin de chaque saison.'));
   /* informations personnelles */
   const lgMe=S.logs[S.uid]||{};
   const pin=h('input',{id:'pseudo-edit',type:'text',maxlength:'24',value:pseudo});
@@ -4452,6 +4529,7 @@ function prepMuscles(d){
 function statWods(){
   const t=todayStr(),all=Object.values(S.wods);
   if(S.statRange==='all')return all;
+  if(S.statRange==='last3')return all.filter(w=>w.date<=t).sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:0).slice(0,3);
   if(S.statRange==='4w'){const from=addDays(mondayOf(t),-21),to=addDays(mondayOf(t),6);return all.filter(w=>w.date>=from&&w.date<=to);}
   const p=selPeriod();return all.filter(w=>inP(w.date,p));
 }
@@ -4464,7 +4542,14 @@ function viewStats(){
   ws.forEach(w=>{const sc=wodMuscles(w.parts);MUSCLES.forEach(([k])=>{tot[k]+=sc[k];if(sc[k]>0)cnt[k]++;});});
   const sum=Object.values(tot).reduce((a,b)=>a+b,0),avg=sum/MUSCLES.length,max=Math.max(0,...Object.values(tot));
   el.append(backCoach(),h('div',{},h('p',{class:'eyebrow'},'Espace coach'),h('h1',{class:'day'},'Statistiques coach')),
-    field('Période',sel([['season',p.virtual?'Toutes les séances de la saison':seasonLabel(p)+' · '+p.name],['4w','4 dernières semaines'],['all','Toutes les séances publiées']],S.statRange,v=>{S.statRange=v;render();},{id:'stat-range'})));
+    field('Période',sel([['season',p.virtual?'Toutes les séances de la saison':seasonLabel(p)+' · '+p.name],['last3','3 derniers WODs'],['4w','4 dernières semaines'],['all','Toutes les séances publiées']],S.statRange,v=>{S.statRange=v;render();},{id:'stat-range'})));
+  if(S.statRange==='last3'&&ws.length){
+    const top=w=>{const sc=wodMuscles(w.parts);return MUSCLES.filter(([k])=>sc[k]>0).sort((a,b)=>sc[b[0]]-sc[a[0]]).slice(0,4).map(m=>m[1]).join(', ');};
+    el.append(h('section',{class:'card'},h('h2',{class:'h2'},'WODs pris en compte'),
+      h('ul',{class:'list'},ws.map(w=>h('li',{},h('div',{class:'l'},h('div',{class:'nm'},cap(fmtShort(w.date))+' · '+w.title),
+        top(w)?h('div',{class:'sub'},'Surtout : '+top(w)):h('div',{class:'sub'},'Aucun mouvement reconnu'))))),
+      h('p',{class:'hint'},'Les 3 dernières séances publiées jusqu’à aujourd’hui.')));
+  }
   if(!ws.length||sum===0){el.append(h('div',{class:'empty'},h('p',{},ws.length?'Aucun mouvement reconnu dans les séances de cette période.':'Aucune séance publiée sur cette période.')));return el;}
   const stat=k=>{const r=tot[k]/avg;return r<0.5?'under':r>1.6?'over':'ok';};
   const COL={under:'var(--plate-blue)',ok:'var(--plate-green)',over:'var(--plate-red)'};
@@ -4671,7 +4756,7 @@ function wodToDraft(w){
         capTiers:(l.capTiers&&l.capTiers.length)?l.capTiers.map(t=>({t:capInput(cm,tierCum(p,t.t)),p:String(t.p)})):blankCapTiers()}));
       while(lv.length<3)lv.push({mode:lv.length<2?'off':'custom',touched:false,name:LEVEL_NAMES[lv.length],loadF:'',loadH:'',note:'',tiers:blankTiers(),capTiers:blankCapTiers()});
       const sk=l=>JSON.stringify([l.loadF,l.loadH,l.note,l.tiers,l.capTiers]);lv.forEach((l,k)=>{if(k<2&&l.mode==='custom'&&sk(l)===sk(lv[2]))l.mode='same';});
-      return {kind:p.kind||'autre',name:p.name||'',content:p.content||'',movement:p.movement||'',format:fmt,detail:p.detail||'',repsRound:p.repsRound?String(p.repsRound):'',word:p.word||'',lineRounds:!!p.lineRounds,redo:p.redo!==false,dur:p.dur?String(p.dur):'',focus:FOCUS[p.focus]?p.focus:'',levels:lv,syncTiers:(()=>{const k=l=>JSON.stringify([l.tiers,l.capTiers]);return lv.every((l,j)=>j===2||l.mode==='off'||k(l)===k(lv[2]));})()};
+      return {kind:p.kind||'autre',name:p.name||'',content:p.content||'',movement:p.movement||'',format:fmt,detail:p.detail||'',repsRound:p.repsRound?String(p.repsRound):'',word:p.word||'',lineRounds:!!p.lineRounds,redo:p.redo!==false,customLvl:p.customLvl!==false,dur:p.dur?String(p.dur):'',focus:FOCUS[p.focus]?p.focus:'',levels:lv,syncTiers:(()=>{const k=l=>JSON.stringify([l.tiers,l.capTiers]);return lv.every((l,j)=>j===2||l.mode==='off'||k(l)===k(lv[2]));})()};
     })};
 }
 function draftToWod(d){
@@ -4686,6 +4771,7 @@ function draftToWod(d){
       if(String(p.dur||'').trim()!==''){const dn=parseNum(p.dur);if(dn===null||dn<=0)throw new Error('Durée / time cap illisible ('+o.label+').');o.dur=dn;}
       if(String(p.word||'').trim())o.word=p.word.trim();
       if(p.redo===false)o.redo=false;
+      if(p.customLvl===false)o.customLvl=false;
       if(p.format==='FT'&&p.lineRounds)o.lineRounds=true;
       o.format=p.format;o.detail=p.detail.trim();o.focus=p.focus;o.capV=2; /* capV 2 : paliers time cap en reps cumulées */
       if(String(p.repsRound||'').trim()!==''){const n=parseNum(p.repsRound);if(n===null||n<=0||n%1)throw new Error('Reps par tour illisibles ('+o.label+').');o.repsRound=n;}
@@ -4858,6 +4944,8 @@ function wodEditor(){
         h('p',{class:'hint'},'Chaque ligne d’exercice compte pour un tour (ex. demi Murph = 5 tours). Paliers time cap : « 4+60 » = 4 lignes terminées + 60 reps équivalentes sur la ligne suivante (600 m avec {10=1}).'));
       box.append(h('label',{class:'chk'},h('input',{type:'checkbox',id:'p'+i+'-redo',checked:p.redo!==false,onchange:e=>{p.redo=e.target.checked;}}),h('span',{},'Le REDO rapporte des points sur ce metcon')),
         h('p',{class:'hint'},'À décocher pour un metcon court ou volontairement léger (gestion, récupération) qu’on ne veut pas voir refaire pour entasser des points : le REDO n’est alors plus proposé. Coché : un REDO rapporte 1 point s’il est moins bon que le premier résultat, 2 s’il marque autant de points, 3 s’il l’améliore (niveau et points de metcon).'));
+      box.append(h('label',{class:'chk'},h('input',{type:'checkbox',id:'p'+i+'-custlvl',checked:p.customLvl!==false,onchange:e=>{p.customLvl=e.target.checked;}}),h('span',{},'Autoriser le niveau personnalisé sur ce metcon')),
+        h('p',{class:'hint'},'Coché : les athlètes peuvent choisir un niveau personnalisé (Rx +10 %, etc.). Décoché : seuls les niveaux prévus (Débutant, Intermédiaire, Rx) sont proposés, et le bouton « Niveau personnalisé » disparaît pour ce metcon. Les résultats déjà saisis avec un niveau personnalisé sont conservés.'));
       {const words=S.prof.words||[];
         const wta=h('textarea',{id:'p'+i+'-word',rows:'2',maxlength:'200',placeholder:'Ex : Reste régulier sur les premiers tours !',value:p.word||'',oninput:e=>{p.word=e.target.value;}});
         box.append(field('Mot du coach (affiché près du metcon et pendant les 10 s de préparation)',wta),
@@ -5236,15 +5324,65 @@ const ICO_MENU='<svg '+SVGA+' stroke-width="2.2"><path d="M4 7h16M4 12h16M4 17h1
 const ICO_USER='<svg '+SVGA+'><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>';
 const ICO_PHONE='<svg '+SVGA+'><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M10.5 18.5h3"/></svg>';
 const ICO_COACH='<svg '+SVGA+'><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 2.5h6V6H9z"/><path d="M8.5 11h7M8.5 15h5"/></svg>';
+const ICO_RULES='<svg '+SVGA+'><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9.5 14l2 2 3.5-4"/></svg>';
+/* ---------- règlement : un point à la fois, « suivant » = lu et accepté ---------- */
+const RULES_VER='1'; /* à changer pour faire réapparaître le point rouge après une modification du règlement */
+const rulesKey=()=>'bs-rules-'+S.uid;
+const rulesSeen=()=>{try{return localStorage.getItem(rulesKey())===RULES_VER;}catch(e){return true;}}; /* stockage indisponible : pas de point rouge permanent */
+const rulesMark=()=>{try{localStorage.setItem(rulesKey(),RULES_VER);}catch(e){}};
+const RULES=[
+ {t:'Esprit de la compétition',p:['Box Score est une compétition amicale entre participants d’un même box. Elle sert à se motiver, à progresser et à s’amuser ensemble, pas à gagner à tout prix. Chacun s’engage à jouer le jeu avec honnêteté.']},
+ {t:'Exécution des répétitions',p:[
+  '**Une répétition ne compte que si elle est réalisée correctement.** Pour que ton résultat soit valable, chaque mouvement doit respecter le standard demandé : amplitude complète, position de départ et d’arrivée, etc. Un résultat obtenu avec des répétitions incomplètes n’est pas valable.',
+  'Avant la séance, et au moindre doute, **clique sur le nom de l’exercice** pour consulter les consignes : ce qui est attendu et ce qui ne compte pas. Tous les participants sont invités à le faire.']},
+ {t:'Fair-play et confiance',p:['**La triche ne peut pas être contrôlée.** Les résultats sont saisis par les participants eux-mêmes, et personne n’est en mesure de vérifier chaque séance. Cette compétition repose donc entièrement sur la confiance entre participants. En saisissant un résultat, tu certifies sur l’honneur que :'],
+  b:['tu as réalisé la séance telle qu’elle a été publiée ;','tu as respecté les standards des mouvements ;','tu as choisi le niveau que tu as réellement fait ;','tu as respecté le time cap et saisi ton vrai temps ou ton vrai score.'],
+  after:['Tricher ne trompe personne d’autre que soi-même, et gâche le plaisir de tous.']},
+ {t:'Participation',b:['Certains classements demandent des informations dans ton profil : le sexe pour LA GOAT, le poids de corps pour « Poids / puissance »…','Le coach organise la compétition, publie les séances et gère les saisons.']},
+ {t:'Saisons et séances',b:['La compétition est organisée en saisons.','Une séance peut être réalisée n’importe quel jour de la semaine, du lundi au dimanche. Une séance faite en dehors de la bonne semaine ne compte pas.','Chaque athlète saisit lui-même son résultat dans l’appli.']},
+ {t:'Niveaux',p:['Pour chaque metcon, tu choisis le niveau auquel tu l’as réalisé : Débutant, Intermédiaire, Rx ou personnalisé. Choisis le niveau que tu as réellement fait, charges et mouvements compris. Un niveau plus élevé valorise davantage tes points de metcon dans certains classements.']},
+ {t:'Points',b:['Chaque séance rapporte des points de séance, auxquels s’ajoutent les points de ton ou tes metcons.','Les points de metcon dépendent de ta performance, selon des paliers fixés par le coach.','Les paliers sont fixés dès la création du metcon mais peuvent évoluer légèrement en fonction des résultats observés pour que la compétition reste cohérente et attractive.','Si le time cap t’arrête, ton score est le nombre de répétitions réalisées, converti en points selon les paliers prévus pour ce cas.','**REDO :** si le coach l’autorise sur le metcon, tu peux refaire la séance. Un REDO rapporte 3 points s’il améliore ton premier résultat, 2 points s’il l’égale et 1 point s’il fait moins bien. Il compte aussi pour ton objectif de séances.']},
+ {t:'Erreurs et décisions du coach',b:['En cas d’erreur de saisie, préviens le coach : il peut corriger ou supprimer un résultat.','Le coach peut retirer un résultat manifestement irréaliste.']}
+];
+const rlText=t=>t.split('**').map((x,i)=>i%2?h('b',{},x):x);
+function viewRules(){
+  const n=RULES.length,i=Math.min(Math.max(S.rulesI||0,0),n);
+  const bar=h('div',{class:'rl-bar',role:'img','aria-label':i>=n?'Règlement accepté':'Point '+(i+1)+' sur '+n},RULES.map((_,k)=>h('i',{class:k<i||k===i&&i<n?'on':''})));
+  const head=h('div',{},h('p',{class:'eyebrow'},'Compétition'),h('h1',{class:'day'},'Règlement'));
+  if(i>=n){
+    return h('div',{class:'stack'},head,bar,
+      h('section',{class:'card'},
+        h('h2',{class:'rl-t'},'Règlement accepté'),
+        h('div',{class:'rl-body'},h('p',{},'Tu as lu et accepté les '+n+' points du règlement. Bonne compétition !')),
+        h('div',{class:'rl-acts'},
+          h('button',{class:'btn primary',type:'button',id:'rules-go',onclick:()=>go('today')},'Aller à la séance'),
+          h('button',{class:'btn',type:'button',id:'rules-again',onclick:()=>{S.rulesI=0;render();window.scrollTo(0,0);}},'Relire le règlement'))));
+  }
+  const r=RULES[i];
+  const body=h('div',{class:'rl-body'});
+  (r.p||[]).forEach(x=>body.append(h('p',{},...rlText(x))));
+  if(r.b)body.append(h('ul',{},r.b.map(x=>h('li',{},...rlText(x)))));
+  (r.after||[]).forEach(x=>body.append(h('p',{},...rlText(x))));
+  const acts=h('div',{class:'rl-acts'},
+    h('button',{class:'btn primary',type:'button',id:'rules-next',onclick:()=>{S.rulesI=i+1;render();window.scrollTo(0,0);}},i===n-1?'J’ai lu et j’accepte le règlement':'J’ai lu et j’accepte, point suivant'));
+  if(i>0)acts.append(h('button',{class:'btn',type:'button',id:'rules-prev',onclick:()=>{S.rulesI=i-1;render();window.scrollTo(0,0);}},'Revenir au point précédent'));
+  return h('div',{class:'stack'},head,bar,
+    h('section',{class:'card'},
+      h('p',{class:'rl-num'},'POINT '+(i+1)+' SUR '+n),
+      h('h2',{class:'rl-t'},r.t),body,
+      h('p',{class:'hint'},'Passer au point suivant signifie que tu as lu et accepté ce qui est écrit.'),
+      acts));
+}
 let drawerEl=null;
 const notifDotOn=()=>pushConfigured()&&pushSupported()&&Notification.permission==='default';
-function menuDot(){const a=annActive();return !!((a&&!annIsSeen(a))||notifDotOn());}
+function menuDot(){const a=annActive();return !!((a&&!annIsSeen(a))||notifDotOn()||!rulesSeen());}
 function drawerItems(){
   const a=annActive(),out=[];
   out.push({id:'profile',label:'Profil',ico:ICO_USER,cur:S.tab==='profile'&&!S.profView,fn:()=>{S.profView=null;go('profile');}});
   if(S.owner)out.push({id:'coach',label:'Coach',ico:ICO_COACH,cur:['coach','prefs','stats'].includes(S.tab),fn:()=>go('coach')});
   out.push({id:'notif',label:'Notifications',ico:ICO_BELL,dot:notifDotOn(),cur:S.tab==='profile'&&S.profView==='notifs',fn:()=>{go('profile');S.profView='notifs';render();window.scrollTo(0,0);}});
   if(a)out.push({id:'mail',label:'Message du coach',ico:ICO_MAIL,dot:!annIsSeen(a),fn:()=>openAnnouncement(a,{review:true})});
+  out.push({id:'rules',label:'Règlement',ico:ICO_RULES,dot:!rulesSeen(),cur:S.tab==='rules',fn:()=>{rulesMark();S.rulesI=0;go('rules');}});
   out.push({id:'share',label:'Partager l’appli',ico:ICO_PHONE,cur:S.tab==='share',fn:()=>go('share')});
   return out;
 }
@@ -5318,6 +5456,7 @@ const TOURS={
     {needs:'drawer',sel:'[data-tour=dm-coach]',title:'Coach',text:'Réservé au coach : publier les séances et les messages.'},
     {needs:'drawer',sel:'[data-tour=dm-notif]',title:'Notifications : la cloche',text:'Active les notifications pour être prévenu d’une nouvelle séance, d’un message du coach ou d’une réaction. Un point rouge signale qu’elles ne sont pas encore activées.'},
     {needs:'drawer',sel:'[data-tour=dm-mail]',title:'Message du coach : l’enveloppe',text:'Relis le dernier message du coach. Le point rouge indique un message pas encore lu.'},
+    {needs:'drawer',sel:'[data-tour=dm-rules]',title:'Règlement : le livre',text:'Les règles de la compétition, à lire un point à la fois. Le point rouge disparaît dès que tu as ouvert le règlement.'},
     {needs:'drawer',sel:'[data-tour=dm-share]',title:'Partager l’appli : le téléphone',text:'Ouvre une page avec le lien de l’appli : tu le copies et tu l’envoies à quelqu’un.'},
     {title:'Mettre l’appli sur l’écran d’accueil : iPhone',text:'Ouvre l’appli dans Safari, touche le bouton Partager (le carré avec une flèche vers le haut), fais défiler et choisis « Sur l’écran d’accueil », puis « Ajouter ». Sur iPhone, les notifications ne marchent que depuis cette icône.'},
     {title:'Mettre l’appli sur l’écran d’accueil : Android',text:'Ouvre l’appli dans Chrome, touche les trois points en haut à droite, puis « Ajouter à l’écran d’accueil » (ou « Installer l’application ») et confirme. L’icône apparaît comme une appli classique.'},
