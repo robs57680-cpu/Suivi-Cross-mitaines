@@ -204,6 +204,8 @@ textarea{resize:vertical}
 .t-mgym{--pc:#8B929A;--pi:#14161A}
 .t-mhaltero{--pc:var(--plate-white);--pi:#14161A;box-shadow:inset 0 0 0 1px rgba(0,0,0,.4),inset 0 0 0 4px rgba(0,0,0,.08)}
 .t-objectif{--pc:#7B3FC4}
+.t-bdeb{--pc:#6CC24A;--pi:#14161A}
+.t-binter{--pc:#2AA6E0;--pi:#14161A}
 .t-ratio{--pc:#C2185B}
 .levels{display:grid;gap:8px}
 .lvl{border:1.5px solid var(--line);border-radius:4px;padding:10px;display:grid;gap:6px;background:var(--surface2)}
@@ -395,6 +397,9 @@ input[type=checkbox]{width:24px;height:24px;padding:0;accent-color:var(--accent)
 .cword p{font-weight:600;overflow-wrap:anywhere;white-space:pre-wrap}
 .tm-word{max-width:42ch;border:2px solid #FFB703;border-radius:6px;padding:10px 14px;display:grid;gap:4px;margin-top:6px}
 .tm-word p{font-size:20px;font-weight:600;color:var(--panel-ink);white-space:pre-wrap;overflow-wrap:anywhere}
+.rxwrap{position:relative;padding-right:72px;min-height:48px}
+.rxwrap .rxb{min-width:44px;padding:0 4px}
+.feed-pts{position:absolute;right:6px;bottom:0;transform:rotate(-14deg);transform-origin:100% 100%;font-family:var(--f-display);font-size:30px;line-height:1;letter-spacing:.02em;color:#fff;-webkit-text-stroke:5px #14161A;paint-order:stroke fill;text-shadow:0 2px 6px rgba(0,0,0,.35);pointer-events:none;white-space:nowrap}
 .rxrow{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
 .rxb{min-width:48px;min-height:44px;border:2px solid var(--line);border-radius:4px;background:var(--surface2);font-size:22px;cursor:pointer;padding:0 8px}
 .rxb small{font:600 11px var(--f-mono);margin-left:4px;color:var(--muted)}
@@ -1066,6 +1071,12 @@ function topRun(lg,wods){
   }
   return {cur:tc,best:tb};
 }
+/* classement : points, puis niveau moyen (à points égaux, le niveau le plus haut passe devant) ; à points ET niveau égaux, ex æquo (même rang) */
+const tot2=r=>Math.round((r.total||0)*100),lv2=r=>Math.round((r.lvlAvg||0)*100);
+const tied=(a,b)=>tot2(a)===tot2(b)&&lv2(a)===lv2(b);
+const rowCmp=(a,b)=>tot2(b)-tot2(a)||lv2(b)-lv2(a)||a.pseudo.localeCompare(b.pseudo);
+function posList(list){const out=[];list.forEach((r,i)=>out.push(i>0&&tied(list[i-1],r)?out[i-1]:i+1));return out;}
+const posOf=(list,r)=>{const i=list.indexOf(r);return i<0?0:posList(list)[i];};
 function computeBoard(period){
   const allWods=Object.values(S.wods).sort((a,b)=>a.date<b.date?-1:1);
   const wods=Object.values(S.wods).filter(w=>inP(w.date,period)).sort((a,b)=>a.date<b.date?-1:1);
@@ -1159,7 +1170,7 @@ function computeBoard(period){
     r.goalMet=r.goal>0&&currentDays.length>0&&currentDays.filter(d=>lg.entries&&lg.entries[d]).length+redoWk(currentWeek)>=Math.min(r.goal,currentDays.length);
     return r;
   });
-  rows.sort((a,b)=>b.total-a.total||b.sessions-a.sessions||a.pseudo.localeCompare(b.pseudo));
+  rows.sort(rowCmp);
   return {rows,wods,metconCount,catCount,weekKeys,period};
 }
 const cmpKey=(a,b)=>{for(let i=0;i<a.length;i++){if(a[i]!==b[i])return a[i]-b[i];}return 0;};
@@ -1169,6 +1180,12 @@ const catTrophy=(id,name,focus,label)=>({id,name,
   show:r=>fmtN(r.cat[focus].sum/r.cat[focus].n)+' pts par metcon',
   elig:r=>r.cat[focus].n>=2});
 const multTxt=r=>'x'+fmt2(r.mult);
+/* trophée par ligue : tous les athlètes dont le niveau moyen est le plus proche de ce niveau (de Deb- à Deb+, de Int- à Int+) se disputent les points bruts */
+const leagueTrophy=(id,name,lv,label)=>({id,name,
+  desc:'Le plus de points bruts parmi les athlètes de la ligue '+label+' (niveau moyen choisi sur les metcons, de '+LV_ABBR[lv]+'- à '+LV_ABBR[lv]+'+). À points égaux, le niveau moyen le plus haut passe devant.',
+  key:r=>[r.total,Math.round(r.lvlAvg*100)/100],
+  show:r=>fmtN(r.total)+' pts · niveau '+lvTag(r.lvlAvg),
+  elig:r=>r.lvlN>0&&lvNear(r.lvlAvg)===lv});
 const TROPHIES=[
  {id:'goat',name:'Le GOAT',desc:'Points de séance + points des metcons multipliés par le niveau moyen choisi sur les metcons divisé par 2 (Débutant = 2, Intermédiaire = 2,5, Rx = 3 ; niveau moyen 2,6 = x1,3). Seuls les points des metcons sont pondérés, pas ceux de la séance.',key:r=>[r.weighted,r.total],show:r=>fmtN(r.weighted)+' pts pondérés · '+multTxt(r)},
  {id:'lagoat',name:'LA GOAT',desc:'Même calcul que Le GOAT (points pondérés par le niveau moyen), réservé aux athlètes femmes. Le sexe se renseigne dans le profil.',key:r=>[r.weighted,r.total],show:r=>fmtN(r.weighted)+' pts pondérés · '+multTxt(r),elig:r=>r.sex==='F'},
@@ -1183,6 +1200,8 @@ const TROPHIES=[
  catTrophy('mcardio','Metcon cardio','cardio','cardio'),
  catTrophy('mgym','Metcon gym','gym','gym'),
  catTrophy('mhaltero','Metcon haltéro','haltero','haltéro'),
+ leagueTrophy('bdeb','Meilleur débutant',0,'Débutant'),
+ leagueTrophy('binter','Meilleur intermédiaire',1,'Intermédiaire'),
  {id:'objectif',name:'Objectif tenu',desc:'Avoir tenu son nombre de séances par semaine, chaque semaine de la saison.',custom:b=>b.rows.filter(r=>r.goalMet),show:r=>r.goal+' séance'+(r.goal>1?'s':'')+' par semaine'}
 ];
 function winners(t,board,gid){
@@ -1638,7 +1657,7 @@ const lvPill=r=>r.lvlN?h('span',{class:'chip lv',title:'Niveau moyen choisi sur 
    Il est calculé (jamais stocké) : il est remis à la fin de la saison aux gagnants du trophée. */
 const BADGES={goat:['#1F55D6','#FFFFFF'],lagoat:['#E0489A','#FFFFFF'],points:['#0E8A8A','#FFFFFF'],regulier:['#1E9B4A','#FFFFFF'],serie:['#D8321A','#FFFFFF'],
   top:['#2B3A67','#FFFFFF'],perf:['#F4C400','#14161A'],fort:['#1B1D20','#FFFFFF'],lafort:['#C2368F','#FFFFFF'],ratio:['#B5651D','#FFFFFF'],mcardio:['#F07A18','#FFFFFF'],
-  mgym:['#8B929A','#14161A'],mhaltero:['#F3F3F1','#14161A'],objectif:['#7B3FC4','#FFFFFF']};
+  mgym:['#8B929A','#14161A'],mhaltero:['#F3F3F1','#14161A'],objectif:['#7B3FC4','#FFFFFF'],bdeb:['#6CC24A','#14161A'],binter:['#2AA6E0','#FFFFFF']};
 const GOAT='<g transform="translate(-4.8 -5.1) scale(1.15)"><g stroke="#1A1A1A" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">'+
   '<path d="M26 20C19 14 14 9 16 2C24 4 30 11 30 19Z" fill="#D9C28F"/><path d="M38 20C45 14 50 9 48 2C40 4 34 11 34 19Z" fill="#D9C28F"/>'+
   '<path d="M22 25L6 24C3 28 7 32 12 32L23 32Z" fill="#F4E9D0"/><path d="M42 25L58 24C61 28 57 32 52 32L41 32Z" fill="#F4E9D0"/>'+
@@ -1659,6 +1678,8 @@ const ICONS={goat:GOAT,lagoat:GOAT,
   mcardio:'<path d="M32 56C4 38 6 12 21 12C27 12 31 16 32 21C33 16 37 12 43 12C58 12 60 38 32 56Z" fill="currentColor"/><path d="M10 33H24L28 25L35 42L39 33H54" fill="none" stroke="%BG%" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>',
   mgym:'<g fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"><path d="M8 5H56M20 5V28M44 5V28"/><circle cx="20" cy="40" r="11"/><circle cx="44" cy="40" r="11"/></g>',
   mhaltero:'<path d="M2 32H62" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><g fill="currentColor"><rect x="10" y="10" width="7" height="44" rx="2"/><rect x="19" y="17" width="6" height="30" rx="2"/><rect x="47" y="10" width="7" height="44" rx="2"/><rect x="39" y="17" width="6" height="30" rx="2"/></g>',
+  bdeb:'<path d="M10 44L32 22L54 44" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>',
+  binter:'<g fill="none" stroke="currentColor" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 32L32 12L54 32"/><path d="M10 52L32 32L54 52"/></g>',
   objectif:'<path d="M14 6V60" stroke="currentColor" stroke-width="5" stroke-linecap="round"/><path d="M14 10H54L43 23L54 36H14Z" fill="currentColor"/>'};
 let badgeN=0;
 function badgeHTML(tid,label,size){
@@ -2291,7 +2312,7 @@ function computeRivalry(uid){
   const me=board.rows.find(r=>r.uid===uid);
   if(!me)return null;
   const ranked=board.rows.filter(r=>inScope(r.uid,gid,per)&&(r.sessions>0||r.uid===uid));
-  const idx=ranked.indexOf(me),rank=idx+1,nRank=ranked.filter(r=>r.sessions>0).length;
+  const idx=ranked.indexOf(me),rank=idx<0?0:posList(ranked)[idx],nRank=ranked.filter(r=>r.sessions>0).length;
   const ord=n=>n+(n===1?'er':'e');
   /* pronoms : « elle » pour une athlète (sexe renseigné dans son profil), « il » sinon */
   const fem=u=>!!(S.logs[u]&&S.logs[u].sex==='F');
@@ -2520,6 +2541,12 @@ function rivalryCard(){
   if(open)rvSet('seen',R.sig);
   return el;
 }
+/* points remportés sur la séance, en blanc et en diagonale à côté des emojis */
+function feedPts(w,e){
+  let t=0;try{t=wodPoints(w,e,periodFor(w.date)||ALL).total;}catch(x){return null;}
+  if(!(t>0))return null;
+  return h('span',{class:'feed-pts','aria-label':fmtN(t)+' points remportés sur cette séance'},'+'+fmtN(t));
+}
 function viewFeed(){
   if(S.viewUser)return viewAthlete(S.viewUser);
   const el=h('div',{class:'stack'});
@@ -2548,7 +2575,7 @@ function viewFeed(){
       const n=Object.values(S.reactions).filter(r=>r&&r.to===uid&&r.date===date&&r.emoji===em).length;
       return h('button',{type:'button',class:'rxb','aria-pressed':mine===em?'true':'false','aria-label':RXN[em],onclick:()=>reactTo(uid,date,em)},em,n?h('small',{},n):null);
     }));
-    el.append(h('section',{class:'card feed-card'},head,h('div',{class:'feed-wod-head'},h('h2',{class:'wtitle',style:'font-size:24px;margin:0'},w.title),h('span',{class:'sub feed-wod-date'},'Réalisée le '+cap(fmtShort(dfmt(new Date(e.at)))))),results.length?h('div',{class:'feed-result'},results):h('p',{class:'muted'},'Résultat détaillé non renseigné.'),e.message?h('p',{class:'feed-message',style:'white-space:pre-wrap;overflow-wrap:anywhere;margin:0'},e.message):null,rx));
+    el.append(h('section',{class:'card feed-card'},head,h('div',{class:'feed-wod-head'},h('h2',{class:'wtitle',style:'font-size:24px;margin:0'},w.title),h('span',{class:'sub feed-wod-date'},'Réalisée le '+cap(fmtShort(dfmt(new Date(e.at)))))),results.length?h('div',{class:'feed-result'},results):h('p',{class:'muted'},'Résultat détaillé non renseigné.'),e.message?h('p',{class:'feed-message',style:'white-space:pre-wrap;overflow-wrap:anywhere;margin:0'},e.message):null,h('div',{class:'rxwrap'},rx,feedPts(w,e))));
   });
   if(posts.length>visiblePosts.length){
     el.append(h('div',{class:'row',style:'justify-content:center'},
@@ -2991,7 +3018,7 @@ function viewAthlete(uid){
   const ranked=board.rows.filter(r=>r.sessions>0).length;
   el.append(h('div',{class:'stats'},
     h('div',{class:'stat'},h('b',{},fmtN(me.total)),h('span',{},'points bruts')),h('div',{class:'stat'},h('b',{},fmtN(me.weighted||0)),h('span',{},'XP pondérée')),
-    h('div',{class:'stat'},h('b',{},me.sessions>0?(rank+1):'–'),h('span',{},'rang sur '+ranked)),
+    h('div',{class:'stat'},h('b',{},me.sessions>0?posOf(board.rows,me):'–'),h('span',{},'rang sur '+ranked)),
     h('div',{class:'stat'},h('b',{},me.sessions),h('span',{},'séances')),
     h('div',{class:'stat'},h('b',{},fmtN(me.perfAvg)),h('span',{},'pts par metcon')),
     h('div',{class:'stat'},h('b',{},me.flameBest||0),h('span',{},'série max'))));
@@ -3034,10 +3061,10 @@ function viewBoard(){
   const rows=(gsel==='all'||!gname(gsel))?board.rows:board.rows.filter(r=>scopeOf(r.uid,p)===gsel);
   if(gl.length)head.append(h('div',{style:'flex:1;min-width:160px'},sel([['all','Tous les groupes']].concat(gl.map(x=>[x.id,x.name])),gname(gsel)?gsel:'all',v=>{S.boardGroup=v;render();},{id:'board-group','aria-label':'Groupe'})));
   if(!rows.length)el.append(h('div',{class:'empty'},h('p',{},board.rows.length?'Personne dans ce groupe pour l’instant.':'Le classement se remplit dès qu’un athlète valide sa première séance.')));
-  else el.append(h('ol',{class:'lb'},rows.map((r,i)=>h('li',{class:(i===0&&r.total>0?'first ':'')+(r.uid===S.uid?'me':'')},
-    h('div',{class:'rank'+(i<3&&r.total>0?' r'+(i+1):'')},i+1),
+  else{const ps=posList(rows);el.append(h('ol',{class:'lb'},rows.map((r,i)=>h('li',{class:(ps[i]===1&&r.total>0?'first ':'')+(r.uid===S.uid?'me':'')},
+    h('div',{class:'rank'+(ps[i]<=3&&r.total>0?' r'+ps[i]:'')},ps[i]),
     h('div',{},h('div',{class:'nm'},nameBtn(r),badgeMini(r.uid),lvPill(r)),h('div',{class:'sub'},r.sessions+' séance'+(r.sessions>1?'s':'')+' · '+r.perfN+' metcon'+(r.perfN>1?'s':'')+(r.redoN?' · '+r.redoN+' REDO':'')+grpTxt(r.uid))),
-    h('div',{class:'pts'},fmtN(r.total),h('small',{},'pts'))))));
+    h('div',{class:'pts'},fmtN(r.total),h('small',{},'pts'))))));}
   const tg=(gsel!=='all'&&gname(gsel))?gsel:scopeOf(S.uid,p);
   el.append(h('div',{},h('h2',{class:'h2'},'Trophées'+(scopeName(tg,p)?' · '+scopeName(tg,p):'')),gl.length?h('p',{class:'muted'},'Les trophées se jouent à l’intérieur de chaque groupe.'+(snapOf(p)?' Groupes figés à la fin de la saison.':'')):null,h('p',{class:'muted'},st==='done'?'Décernés à la fin de la saison.':st==='soon'?'La saison n’a pas commencé.':'Provisoires, ils sont attribués à la date de fin ('+(p.virtual?'à définir par le coach':fmtShort(p.end))+').')));
   el.append(h('div',{class:'trophies'},TROPHIES.map(t=>{const ws=winners(t,board,tg);return trophyCard(t,ws,p,ws.some(r=>r.uid===S.uid));})));
@@ -3056,10 +3083,10 @@ function groupSection(board){
   return h('section',{class:'card'},h('h2',{class:'h2'},'Par ligue'),
     h('p',{class:'muted'},'Tous les athlètes, quel que soit leur niveau, avec leurs points de la saison. Tu peux filtrer par ligue (niveau moyen choisi sur les metcons).'),
     field('Afficher',sel(opts,cur,v=>{S.league=v;render();},{id:'league-select'})),
-    list.length?h('ol',{class:'lb'},list.map((r,i)=>h('li',{class:r.uid===S.uid?'me':''},
-      h('div',{class:'rank'+(i<3?' r'+(i+1):'')},i+1),
+    list.length?h('ol',{class:'lb'},(()=>{const ps=posList(list);return list.map((r,i)=>h('li',{class:r.uid===S.uid?'me':''},
+      h('div',{class:'rank'+(ps[i]<=3?' r'+ps[i]:'')},ps[i]),
       h('div',{},h('div',{class:'nm'},nameBtn(r),badgeMini(r.uid),lvPill(r)),h('div',{class:'sub'},r.sessions+' séance'+(r.sessions>1?'s':'')+(r.redoN?' · '+r.redoN+' REDO':''))),
-      h('div',{class:'pts'},fmtN(r.total),h('small',{},'pts'))))):h('p',{class:'muted'},'Personne dans cette ligue pour l’instant.'));
+      h('div',{class:'pts'},fmtN(r.total),h('small',{},'pts'))));})()):h('p',{class:'muted'},'Personne dans cette ligue pour l’instant.'));
 }
 function viewBoardDetail(){
   const el=h('div',{class:'stack'});
@@ -3735,7 +3762,7 @@ function viewProfile(){
   }
   el.append(h('div',{class:'stats'},
     h('div',{class:'stat'},h('b',{},fmtN(me.total)),h('span',{},'points')),
-    h('div',{class:'stat'},h('b',{},rank>=0&&me.sessions>0?(rank+1):'–'),h('span',{},'rang sur '+board.rows.filter(r=>r.sessions>0).length)),
+    h('div',{class:'stat'},h('b',{},rank>=0&&me.sessions>0?posOf(board.rows,me):'–'),h('span',{},'rang sur '+board.rows.filter(r=>r.sessions>0).length)),
     h('div',{class:'stat'},h('b',{},me.sessions),h('span',{},'séances')),
     h('div',{class:'stat'},h('b',{},fmtN(me.perfAvg)),h('span',{},'pts par metcon')),
     h('div',{class:'stat'},h('b',{},me.flameBest||0),h('span',{},'série max'))));
