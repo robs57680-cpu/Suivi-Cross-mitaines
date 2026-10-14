@@ -352,7 +352,7 @@ textarea{resize:vertical}
 .wu-seg i{height:8px;border-radius:2px;background:rgba(255,255,255,.18)}
 .wu-seg i.on{background:var(--panel-accent)}
 .wu-seg i.cur{background:var(--panel-ink)}
-.wu-name{font-family:var(--f-display);font-weight:400;font-size:clamp(34px,10vw,56px);line-height:1.05;text-transform:uppercase;text-wrap:balance;overflow-wrap:anywhere}
+.wu-name{font-family:var(--f-display);font-weight:400;font-size:clamp(46px,14vw,88px);line-height:1.02;text-transform:uppercase;text-wrap:balance;overflow-wrap:anywhere}
 .tm .wu-time{font-size:clamp(84px,28vw,170px)}
 .wu-obj{font-family:var(--f-display);font-size:clamp(64px,20vw,120px);line-height:1;color:var(--panel-accent);letter-spacing:.02em}
 .wu-obj small{display:block;font-family:var(--f-body);font-size:15px;color:var(--panel-muted);letter-spacing:0;font-weight:600;margin-top:4px}
@@ -360,6 +360,9 @@ textarea{resize:vertical}
 .tm .wu-bar i{background:var(--panel-accent)}
 .wu-note{font-weight:600;color:var(--panel-ink)}
 .wu-desc{color:var(--panel-muted);font-size:15px}
+.wu-info-b{justify-self:center;min-height:44px;padding:0 20px}
+.wu-info{display:grid;gap:12px;justify-items:center;width:100%}
+.wu-img{display:block;width:100%;max-width:520px;max-height:46vh;object-fit:contain;border-radius:6px;background:#fff}
 .wu-steps{text-align:left;margin:0 auto;padding-left:24px;display:grid;gap:8px;font-size:18px;line-height:1.35;max-width:46ch;width:100%}
 .wu-main{min-height:68px;font-size:17px}
 .wu-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -2046,6 +2049,20 @@ function openEntryWith(w,date,patch){
    Chaque exercice : { id, name, desc, steps[], mode:'time'|'reps', target, perSide, note }.
    Lecture : tous les connectés. Écriture : coach uniquement (règles Firestore + interface). */
 const WU_MAX=30;
+/* images des exercices (dossier assets/embedded) ; liées par l'id de l'exercice, donc valables même si la config Firestore existe déjà */
+const WU_IMG={
+ 'wu-jumping-jack':'assets/embedded/echauffement_01_jumping-jack.png',
+ 'wu-seal-jacks':'assets/embedded/echauffement_02_seal-jacks.png',
+ 'wu-power-jacks':'assets/embedded/echauffement_03_power-jacks.png',
+ 'wu-open-up-shoulders':'assets/embedded/echauffement_04_open-up-shoulders.png',
+ 'wu-leg-swings':'assets/embedded/echauffement_05_leg-swings.png',
+ 'wu-inch-worms':'assets/embedded/echauffement_06_inch-worms.png',
+ 'wu-worlds-greatest-stretch':'assets/embedded/echauffement_07_worlds-greatest-stretch.png',
+ 'wu-push-up-downward-dog':'assets/embedded/echauffement_08_push-up-downward-dog.png',
+ 'wu-boot-strappers':'assets/embedded/echauffement_09_boot-strappers.png',
+ 'wu-squat-twist-reach':'assets/embedded/echauffement_10_squat-twist.png'
+};
+const wuImg=x=>WU_IMG[x.id]||'';
 const WU_DEFAULT=[
  {id:'wu-jumping-jack',name:'Jumping Jack',desc:'Saut écarté classique : bras et jambes s’ouvrent et se ferment ensemble.',
   steps:['Pieds joints, bras le long du corps.','Saute en écartant les pieds plus large que les épaules et lève les bras au-dessus de la tête.','Reviens pieds joints, bras le long du corps.','Reste léger sur l’avant des pieds, rythme régulier, respiration fluide.'],mode:'time',target:30,perSide:false,note:''},
@@ -2114,7 +2131,7 @@ function openWarmup(mode,start){
   const items=wuItems(),n=items.length;
   if(!n){toast('Aucun exercice dans l’échauffement.',true);return;}
   /* phase : run (compte à rebours en cours) · wait (répétitions ou mode libre, action manuelle) · paused · done · closed */
-  const st={mode,idx:Math.min(Math.max(0,start||0),n-1),phase:mode==='guided'?'run':'wait',endAt:0,rem:0,tid:null,gen:0,muted:tmMuted(),ac:null,wake:null,vid:null,lastK:-1,done:0,shown:-1};
+  const st={mode,idx:Math.min(Math.max(0,start||0),n-1),phase:mode==='guided'?'run':'wait',endAt:0,rem:0,tid:null,gen:0,muted:tmMuted(),ac:null,wake:null,vid:null,lastK:-1,done:0,shown:-1,infoIdx:-1};
   try{st.ac=new (window.AudioContext||window.webkitAudioContext)();if(st.ac.resume)st.ac.resume();}catch(e){}
   const beep=(f,ms)=>{
     if(!st.muted&&st.ac){try{const o=st.ac.createOscillator(),g=st.ac.createGain();o.type='sine';o.frequency.value=f;g.gain.value=.25;o.connect(g);g.connect(st.ac.destination);o.start();o.stop(st.ac.currentTime+ms/1000);}catch(e){}}
@@ -2232,8 +2249,21 @@ function openWarmup(mode,start){
       if(st.mode==='guided')mid.append(h('p',{class:'tm-sub'},'Touche « '+(last?'Terminer l’échauffement':'Exercice suivant')+' » quand tu as fini.'));
     }
     if(x.note)mid.append(h('p',{class:'wu-note'},x.note));
-    if(x.desc)mid.append(h('p',{class:'wu-desc'},x.desc));
-    if(x.steps.length)mid.append(h('ol',{class:'wu-steps'},x.steps.map(s=>h('li',{},s))));
+    const img=wuImg(x),hasInfo=!!(img||x.desc||x.steps.length);
+    if(hasInfo){
+      const open=st.infoIdx===st.idx;
+      mid.append(h('button',{class:'btn wu-info-b',type:'button',id:'wu-info-btn','aria-expanded':open?'true':'false','aria-controls':'wu-info',onclick:()=>{
+        st.infoIdx=open?-1:st.idx;draw();
+        if(!open)setTimeout(()=>{const e=document.getElementById('wu-info');if(e&&e.scrollIntoView)e.scrollIntoView({block:'nearest',behavior:'smooth'});},40);
+      }},open?'Masquer les infos':'Voir les infos'));
+      if(open){
+        const box=h('div',{class:'wu-info',id:'wu-info'});
+        if(img)box.append(h('img',{class:'wu-img',src:img,alt:'Illustration : '+x.name,loading:'lazy',onerror:function(){this.remove();}}));
+        if(x.desc)box.append(h('p',{class:'wu-desc'},x.desc));
+        if(x.steps.length)box.append(h('ol',{class:'wu-steps'},x.steps.map(s=>h('li',{},s))));
+        mid.append(box);
+      }
+    }
     const prevB=h('button',{class:'btn',type:'button',disabled:st.idx===0,onclick:prev},'← Précédent');
     const endB=h('button',{class:'btn',type:'button'},'Terminer l’échauffement');
     endB.addEventListener('click',wuArmed(endB,'Terminer ?',()=>finish(false)));
