@@ -106,6 +106,7 @@ textarea{resize:vertical}
 .tro-h .chev{font-size:18px;transition:transform .2s}
 .tro-h[aria-expanded="true"] .chev{transform:rotate(180deg)}
 .btn-block{width:100%;min-height:52px}
+.rw-cat{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:14px;margin-top:6px}
 .pbody.has-sw{position:relative;padding-right:66px;min-height:66px}
 .pbody.has-sw>.sw{position:absolute;top:0;right:0}
 .sw{flex:none;border:0;background:none;padding:0;width:58px;height:65px;color:var(--ink);cursor:pointer;display:block;-webkit-tap-highlight-color:transparent}
@@ -4135,50 +4136,89 @@ function bannerSection(){
   const sec=h('section',{class:'card'},h('h2',{class:'h2'},'Ma bannière'),
     h('p',{class:'muted'},'Clique sur ta bannière dans le profil pour revenir à ce menu. Choisis ici les éléments que tu as débloqués.'),
     bannerEl(S.uid,[bannerRow(S.uid,true,()=>openAvatar())],false,'lg'));
-  sec.append(h('h3',{class:'h2'},'Titre'));
-  const titles=unlocked.filter(r=>r.type==='title');
-  if(!titles.length)sec.append(h('p',{class:'muted'},'Aucun titre débloqué pour le moment. Les titres peuvent être attribués en récompense de saison.'));
-  titles.forEach(r=>{
-    const on=(sv.title||'')===r.id;
-    const name=h('div',{class:'row',style:'align-items:center;gap:6px;flex:1;min-width:0'},h('div',{class:'nm'},r.name));
-    if(r.id==='rat-laboratoire'||r.name==='Rat de laboratoire'){
-      name.append(h('button',{type:'button',class:'qbtn','aria-label':'Explication du titre Rat de laboratoire','aria-expanded':S.tip==='banner-rat'?'true':'false',onclick:()=>toggleTip('banner-rat')},'?'));
-    }
-    sec.append(h('div',{class:'row',style:'justify-content:space-between;flex-wrap:wrap;gap:8px'},name,h('div',{class:'row',style:'gap:6px;flex-wrap:nowrap'},on?h('button',{class:'btn sm',type:'button',disabled:!!needPseudo(),onclick:()=>saveLog({banner:Object.assign({},sv,{title:''})},'Titre déséquipé')},'Déséquiper'):h('button',{class:'btn sm primary',type:'button',disabled:!!needPseudo(),onclick:()=>saveLog({banner:Object.assign({},sv,{title:r.id})},'Titre de bannière enregistré')},'Utiliser'))));
-    if((r.id==='rat-laboratoire'||r.name==='Rat de laboratoire')&&S.tip==='banner-rat')sec.append(h('div',{class:'tip',role:'dialog'},h('b',{},'Rat de laboratoire'),h('p',{},'Les cobayes présents dès le premier WOD')));
-  });
-  sec.append(h('h3',{class:'h2'},'Cadre'));
-  const frames=unlocked.filter(r=>r.type==='frame');
-  if(!frames.length)sec.append(h('p',{class:'muted'},'Aucun cadre débloqué pour le moment.'));
-  frames.forEach(r=>{const on=(sv.frame||'')===r.id;sec.append(h('div',{class:'row',style:'justify-content:space-between;flex-wrap:wrap;gap:8px'},h('div',{class:'nm'},r.name),on?h('button',{class:'btn sm',type:'button',disabled:!!needPseudo(),onclick:()=>saveLog({banner:Object.assign({},sv,{frame:''})},'Cadre déséquipé')},'Déséquiper'):h('button',{class:'btn sm primary',type:'button',disabled:!!needPseudo(),onclick:()=>saveLog({banner:Object.assign({},sv,{frame:r.id})},'Cadre de bannière enregistré')},'Utiliser')));});
-  sec.append(h('h3',{class:'h2'},'Cadre d’avatar'));
-  sec.append(h('p',{class:'muted'},'S’affiche autour de ton avatar dans le fil.'));
-  const avfs=unlocked.filter(r=>r.type==='avframe');
-  if(!avfs.length)sec.append(h('p',{class:'muted'},'Aucun cadre d’avatar débloqué pour le moment.'));
-  avfs.forEach(r=>{const on=(sv.avframe||'')===r.id;sec.append(h('div',{class:'row',style:'justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center'},
-    h('div',{class:'row',style:'gap:10px;flex-wrap:nowrap;align-items:center;min-width:0'},h('img',{class:'avf-thumb',src:avfSrc(r),alt:''}),h('div',{class:'nm'},r.name)),
-    on?h('button',{class:'btn sm',type:'button',disabled:!!needPseudo(),onclick:()=>saveLog({banner:Object.assign({},sv,{avframe:''})},'Cadre d’avatar déséquipé')},'Déséquiper'):h('button',{class:'btn sm primary',type:'button',disabled:!!needPseudo(),onclick:()=>saveLog({banner:Object.assign({},sv,{avframe:r.id})},'Cadre d’avatar enregistré')},'Utiliser')));});
+  /* récompenses rangées par catégorie : Fond, Titre, Cadre, Cadre d'avatar. Dans chaque catégorie : ce que l'athlète a débloqué, puis (coach seulement) les aperçus. */
+  const mkCat=(title,count,hint)=>{
+    const box=h('div',{class:'rw-cat'},h('div',{class:'row',style:'justify-content:space-between;align-items:center;flex-wrap:nowrap'},h('h3',{class:'h2',style:'margin:0'},title),h('span',{class:'chip'},count+' débloqué'+(count>1?'s':''))));
+    if(hint)box.append(h('p',{class:'muted'},hint));
+    sec.append(box);return box;
+  };
+  /* aperçus coach : récompenses de saison pas encore débloquées + visuels spéciaux (même sans récompense créée) */
+  const testable=[];
   if(S.owner){
-    const testable=[];
     for(const [pid,per] of Object.entries(S.periods||{}))for(const r of (per.rewards||[]))if(['title','frame','bg','avframe'].includes(r.type)&&!owned.has(pid+':'+r.id))testable.push({id:r.id,type:r.type,name:r.name||'Récompense',per:pid,asset:r.asset});
-    if(testable.length){
-      sec.append(h('h3',{class:'h2'},'Tester les récompenses'));
-      sec.append(h('p',{class:'muted'},'Les éléments grisés sont des aperçus coach : ils ne sont pas débloqués et disparaissent après 1 minute.'));
-      testable.forEach(r=>{
-        if(r.type==='bg'&&!BN.bg[r.id])BN.bg[r.id]={name:r.name,cls:bgRewardClass(r)};
-        if(r.type==='frame'&&!BN.frame[r.id])BN.frame[r.id]={name:r.name,cls:'reward-frame'};
-        if(r.type==='title'&&!BN.title[r.id])BN.title[r.id]={text:r.name};
-        if(r.type==='avframe'&&!BN.avframe[r.id])BN.avframe[r.id]={name:r.name,src:avfSrc(r)};
-        sec.append(h('div',{class:'row',style:'justify-content:space-between;flex-wrap:wrap;gap:8px;opacity:.58;border:1px dashed var(--line);padding:8px;margin:6px 0'},h('div',{class:'row',style:'gap:10px;flex-wrap:nowrap;align-items:center'},r.type==='avframe'?h('img',{class:'avf-thumb',src:avfSrc(r),alt:''}):null,h('div',{},h('div',{class:'nm'},r.name),h('span',{class:'chip miss'},'Aperçu non débloqué'),r.type==='avframe'?h('div',{class:'hint'},'Visible dans le fil, sur tes séances publiées.'):null)),h('button',{class:'btn sm',type:'button',onclick:()=>{const banner={};if(r.type==='avframe')banner.avframe=r.id;if(r.type==='bg')banner.bg=r.id;if(r.type==='frame')banner.frame=r.id;if(r.type==='title')banner.title=r.id;const until=Date.now()+60000;S._bannerPreview={banner,until};render();toast('Aperçu actif pendant 1 minute.');window.setTimeout(()=>{if(S._bannerPreview&&S._bannerPreview.until===until){S._bannerPreview=null;render();toast('Aperçu terminé : récompense non débloquée.');}},60000);}},'Tester 1 min')));
-      });
+    for(const [k,v] of Object.entries(BG_ASSETS)){
+      if(testable.some(r=>r.type==='bg'&&r.asset===k))continue;
+      testable.push({id:'preview-'+k,type:'bg',name:'Fond '+v.name+' (visuel)',asset:k,special:true});
     }
+    testable.forEach(r=>{
+      if(r.type==='bg'&&!BN.bg[r.id])BN.bg[r.id]={name:r.name,cls:r.special?BG_ASSETS[r.asset].cls:bgRewardClass(r)};
+      if(r.type==='frame'&&!BN.frame[r.id])BN.frame[r.id]={name:r.name,cls:'reward-frame'};
+      if(r.type==='title'&&!BN.title[r.id])BN.title[r.id]={text:r.name};
+      if(r.type==='avframe'&&!BN.avframe[r.id])BN.avframe[r.id]={name:r.name,src:avfSrc(r)};
+    });
   }
-  sec.append(h('h3',{class:'h2'},'Fond'));
-  Object.entries(BN.bg).forEach(([id,b])=>{
-    const available=id==='base'||unlocked.some(r=>r.type==='bg'&&r.id===id),on=(sv.bg||'base')===id;
-    if(!available)return;
-    sec.append(h('div',{class:'row',style:'justify-content:space-between;flex-wrap:wrap;gap:8px'},h('div',{style:'min-width:0'},h('div',{class:'nm'},b.name),h('span',{class:'chip '+(on?'ok':'')},on?'Actif':id==='base'?'Par défaut':'Débloqué')),on&&id!=='base'?h('button',{class:'btn sm',type:'button',disabled:!!needPseudo(),onclick:()=>saveLog({banner:Object.assign({},sv,{bg:'base'})},'Fond déséquipé')},'Déséquiper'):h('button',{class:'btn sm'+(on?'':' primary'),type:'button',disabled:on||!!needPseudo(),onclick:()=>saveLog({banner:Object.assign({},sv,{bg:id})},'Bannière enregistrée')},on?'Fond par défaut':'Utiliser')));
-  });
+  const previews=(box,type)=>{
+    const list=testable.filter(r=>r.type===type);if(!list.length)return;
+    box.append(h('p',{class:'flabel'},'Aperçus coach · non débloqués, 1 minute'));
+    list.forEach(r=>{
+      box.append(h('div',{class:'row',style:'justify-content:space-between;flex-wrap:wrap;gap:8px;opacity:.58;border:1px dashed var(--line);padding:8px;margin:6px 0'},
+        h('div',{class:'row',style:'gap:10px;flex-wrap:nowrap;align-items:center'},r.type==='avframe'?h('img',{class:'avf-thumb',src:avfSrc(r),alt:''}):null,
+          h('div',{},h('div',{class:'nm'},r.name),h('span',{class:'chip miss'},'Aperçu non débloqué'),r.type==='avframe'?h('div',{class:'hint'},'Visible dans le fil, sur tes séances publiées.'):null)),
+        h('button',{class:'btn sm',type:'button',onclick:()=>{
+          const banner={};if(r.type==='avframe')banner.avframe=r.id;if(r.type==='bg')banner.bg=r.id;if(r.type==='frame')banner.frame=r.id;if(r.type==='title')banner.title=r.id;
+          const until=Date.now()+60000;S._bannerPreview={banner,until};render();window.scrollTo(0,0);toast('Aperçu actif pendant 1 minute.');
+          window.setTimeout(()=>{if(S._bannerPreview&&S._bannerPreview.until===until){S._bannerPreview=null;render();toast('Aperçu terminé : récompense non débloquée.');}},60000);
+        }},'Tester 1 min')));
+    });
+  };
+
+  /* Fond */
+  {
+    const box=mkCat('Fond',unlocked.filter(r=>r.type==='bg').length,'');
+    Object.entries(BN.bg).forEach(([id,b])=>{
+      const available=id==='base'||unlocked.some(r=>r.type==='bg'&&r.id===id),on=(sv.bg||'base')===id;
+      if(!available)return;
+      box.append(h('div',{class:'row',style:'justify-content:space-between;flex-wrap:wrap;gap:8px'},h('div',{style:'min-width:0'},h('div',{class:'nm'},b.name),h('span',{class:'chip '+(on?'ok':'')},on?'Actif':id==='base'?'Par défaut':'Débloqué')),on&&id!=='base'?h('button',{class:'btn sm',type:'button',disabled:!!needPseudo(),onclick:()=>saveLog({banner:Object.assign({},sv,{bg:'base'})},'Fond déséquipé')},'Déséquiper'):h('button',{class:'btn sm'+(on?'':' primary'),type:'button',disabled:on||!!needPseudo(),onclick:()=>saveLog({banner:Object.assign({},sv,{bg:id})},'Bannière enregistrée')},on?'Fond par défaut':'Utiliser')));
+    });
+    previews(box,'bg');
+  }
+
+  /* Titre */
+  {
+    const titles=unlocked.filter(r=>r.type==='title');
+    const box=mkCat('Titre',titles.length,'');
+    if(!titles.length)box.append(h('p',{class:'muted'},'Aucun titre débloqué pour le moment. Les titres peuvent être attribués en récompense de saison.'));
+    titles.forEach(r=>{
+      const on=(sv.title||'')===r.id;
+      const name=h('div',{class:'row',style:'align-items:center;gap:6px;flex:1;min-width:0'},h('div',{class:'nm'},r.name));
+      if(r.id==='rat-laboratoire'||r.name==='Rat de laboratoire'){
+        name.append(h('button',{type:'button',class:'qbtn','aria-label':'Explication du titre Rat de laboratoire','aria-expanded':S.tip==='banner-rat'?'true':'false',onclick:()=>toggleTip('banner-rat')},'?'));
+      }
+      box.append(h('div',{class:'row',style:'justify-content:space-between;flex-wrap:wrap;gap:8px'},name,h('div',{class:'row',style:'gap:6px;flex-wrap:nowrap'},on?h('button',{class:'btn sm',type:'button',disabled:!!needPseudo(),onclick:()=>saveLog({banner:Object.assign({},sv,{title:''})},'Titre déséquipé')},'Déséquiper'):h('button',{class:'btn sm primary',type:'button',disabled:!!needPseudo(),onclick:()=>saveLog({banner:Object.assign({},sv,{title:r.id})},'Titre de bannière enregistré')},'Utiliser'))));
+      if((r.id==='rat-laboratoire'||r.name==='Rat de laboratoire')&&S.tip==='banner-rat')box.append(h('div',{class:'tip',role:'dialog'},h('b',{},'Rat de laboratoire'),h('p',{},'Les cobayes présents dès le premier WOD')));
+    });
+    previews(box,'title');
+  }
+
+  /* Cadre */
+  {
+    const frames=unlocked.filter(r=>r.type==='frame');
+    const box=mkCat('Cadre',frames.length,'');
+    if(!frames.length)box.append(h('p',{class:'muted'},'Aucun cadre débloqué pour le moment.'));
+    frames.forEach(r=>{const on=(sv.frame||'')===r.id;box.append(h('div',{class:'row',style:'justify-content:space-between;flex-wrap:wrap;gap:8px'},h('div',{class:'nm'},r.name),on?h('button',{class:'btn sm',type:'button',disabled:!!needPseudo(),onclick:()=>saveLog({banner:Object.assign({},sv,{frame:''})},'Cadre déséquipé')},'Déséquiper'):h('button',{class:'btn sm primary',type:'button',disabled:!!needPseudo(),onclick:()=>saveLog({banner:Object.assign({},sv,{frame:r.id})},'Cadre de bannière enregistré')},'Utiliser')));});
+    previews(box,'frame');
+  }
+
+  /* Cadre d'avatar */
+  {
+    const avfs=unlocked.filter(r=>r.type==='avframe');
+    const box=mkCat('Cadre d’avatar',avfs.length,'S’affiche autour de ton avatar dans le fil.');
+    if(!avfs.length)box.append(h('p',{class:'muted'},'Aucun cadre d’avatar débloqué pour le moment.'));
+    avfs.forEach(r=>{const on=(sv.avframe||'')===r.id;box.append(h('div',{class:'row',style:'justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center'},
+      h('div',{class:'row',style:'gap:10px;flex-wrap:nowrap;align-items:center;min-width:0'},h('img',{class:'avf-thumb',src:avfSrc(r),alt:''}),h('div',{class:'nm'},r.name)),
+      on?h('button',{class:'btn sm',type:'button',disabled:!!needPseudo(),onclick:()=>saveLog({banner:Object.assign({},sv,{avframe:''})},'Cadre d’avatar déséquipé')},'Déséquiper'):h('button',{class:'btn sm primary',type:'button',disabled:!!needPseudo(),onclick:()=>saveLog({banner:Object.assign({},sv,{avframe:r.id})},'Cadre d’avatar enregistré')},'Utiliser')));});
+    previews(box,'avframe');
+  }
   return sec;
 }
 
