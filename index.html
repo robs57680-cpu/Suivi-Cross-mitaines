@@ -577,6 +577,9 @@ html[data-hal] .top{border-bottom-color:#E8710A}
 .bn-bg-base{background:linear-gradient(115deg,var(--panel) 0 72%,var(--accent) 72% 75%,var(--panel) 75% 78%,var(--accent) 78% 80%,var(--panel) 80%)}
 .bn-bg-alpha{background-image:url('/TEST-des-versions-cross-mitaines/assets/embedded/banniere-box-score-Alpha.png');background-size:cover;background-position:center;background-repeat:no-repeat;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.75)}
 .bn-bg-alpha .nm,.bn-bg-alpha .link,.bn-bg-alpha h1,.bn-bg-alpha .sub,.bn-bg-alpha .eyebrow{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.75)}
+/* fond Halloween : dégradé sombre à gauche pour garder le pseudo lisible ; background-position règle la partie de l'affiche visible */
+.bn-bg-halloween{background-image:linear-gradient(90deg,rgba(0,0,0,.62),rgba(0,0,0,.22) 65%,rgba(0,0,0,0)),url('assets/embedded/banniere-box-score-halloween.webp');background-size:cover;background-position:center 40%;background-repeat:no-repeat;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.75)}
+.bn-bg-halloween .nm,.bn-bg-halloween .link,.bn-bg-halloween h1,.bn-bg-halloween .sub,.bn-bg-halloween .eyebrow{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8)}
 .bn .nm,.bn .link,.bn h1{color:var(--panel-ink)}
 .bn .sub,.bn .eyebrow{color:var(--panel-muted)}
 .bn h1.day{font-size:34px}
@@ -4078,7 +4081,12 @@ const BN={bg:{base:{name:'Box Score',cls:'bn-bg-base'}},frame:{},title:{},avfram
    Pour en ajouter : déposer l'image dans assets/embedded/ puis ajouter une ligne ici (id: {name, src}). */
 const AVF={gold:{name:'Cadre doré',src:'assets/embedded/cadre-avatar-dore.webp'}};
 const avfSrc=r=>(AVF[r.asset]||AVF.gold).src;
-const bgRewardClass=r=>r.asset==='alpha'?'bn-bg-alpha':'bn-bg-base reward-bg';
+/* fonds de bannière à image (dossier assets/embedded). Pour en ajouter : déposer l'image, ajouter une ligne ici et le CSS .bn-bg-<id> */
+const BG_ASSETS={
+  alpha:{name:'Box Score Alpha',cls:'bn-bg-alpha',src:'assets/embedded/banniere-box-score-Alpha.png'},
+  halloween:{name:'Halloween',cls:'bn-bg-halloween',src:'assets/embedded/banniere-box-score-halloween.webp'}
+};
+const bgRewardClass=r=>(BG_ASSETS[r.asset]||{}).cls||'bn-bg-base reward-bg';
 const BN_DEFAULT={bg:'base',frame:'',title:'',avframe:''};
 function bannerOf(uid){
   for(const per of plist())for(const r of (per.rewards||[])){
@@ -5107,10 +5115,10 @@ function rewardEditor(d){
   const items=AV_ITEMS.filter(x=>!avOff(x));
   const typeName={title:'Titre',frame:'Encadré de bannière',bg:'Fond de bannière',avatar:'Cosmétique avatar',avframe:'Cadre d’avatar (fil)'};
   const editor=r=>h('div',{class:'reward-edit'},
-    field('Type',sel([['title','Titre'],['frame','Encadré de bannière'],['bg','Fond de bannière'],['avatar','Cosmétique avatar'],['avframe','Cadre d’avatar (fil)']],r.type,v=>{r.type=v;if(v==='avframe'&&!AVF[r.asset])r.asset='gold';if(v==='avatar'&&!r.asset)r.asset=items[0]?.id||'';if(v==='bg'&&!['alpha','base'].includes(r.asset))r.asset='base';render();})),
+    field('Type',sel([['title','Titre'],['frame','Encadré de bannière'],['bg','Fond de bannière'],['avatar','Cosmétique avatar'],['avframe','Cadre d’avatar (fil)']],r.type,v=>{r.type=v;if(v==='avframe'&&!AVF[r.asset])r.asset='gold';if(v==='avatar'&&!r.asset)r.asset=items[0]?.id||'';if(v==='bg'&&r.asset!=='base'&&!BG_ASSETS[r.asset])r.asset='base';render();})),
     field('XP requis',h('input',{type:'number',min:'0',step:'1',value:r.xp,oninput:e=>r.xp=e.target.value,placeholder:'100'})),
     field('Nom de la récompense',h('input',{class:'wide',value:r.name||'',oninput:e=>r.name=e.target.value,placeholder:'Ex. Athlète Alpha'}),null),
-    r.type==='avatar'?field('Cosmétique',sel(items.map(x=>[x.id,x.name]),r.asset,v=>{r.asset=v;},{class:'wide'})):r.type==='avframe'?field('Visuel du cadre',sel(Object.entries(AVF).map(([k,v])=>[k,v.name]),AVF[r.asset]?r.asset:'gold',v=>{r.asset=v;},{class:'wide'}),'Affiché autour de l’avatar dans le fil. L’athlète le choisit dans « Ma bannière ».'):r.type==='bg'?field('Visuel du fond',sel([['base','Box Score classique'],['alpha','Box Score Alpha']],r.asset||'base',v=>{r.asset=v;},{class:'wide'}),'Le fond Alpha sera disponible uniquement après avoir remporté cette récompense.'):null,
+    r.type==='avatar'?field('Cosmétique',sel(items.map(x=>[x.id,x.name]),r.asset,v=>{r.asset=v;},{class:'wide'})):r.type==='avframe'?field('Visuel du cadre',sel(Object.entries(AVF).map(([k,v])=>[k,v.name]),AVF[r.asset]?r.asset:'gold',v=>{r.asset=v;},{class:'wide'}),'Affiché autour de l’avatar dans le fil. L’athlète le choisit dans « Ma bannière ».'):r.type==='bg'?field('Visuel du fond',sel([['base','Box Score classique']].concat(Object.entries(BG_ASSETS).map(([k,v])=>[k,v.name])),r.asset||'base',v=>{r.asset=v;},{class:'wide'}),'Les fonds spéciaux (Alpha, Halloween) sont disponibles uniquement après avoir remporté cette récompense.'):null,
     field('URL de l’image (facultatif)',h('input',{class:'wide',type:'url',value:r.image||'',oninput:e=>r.image=e.target.value,placeholder:'https://…'}),null));
   const rows=d.rewards.filter(r=>r.id!=='rat-laboratoire').map((r)=>h('div',{class:'reward-edit'},
     h('div',{class:'wide'},h('b',{},r.name||'Récompense sans nom'),h('div',{class:'sub'},(typeName[r.type]||'Récompense')+' · '+(Number(r.xp)||0)+' XP requis')),
@@ -5132,6 +5140,7 @@ function rewardImage(r){
   const art=h('div',{class:'reward-art'},r.image?h('img',{src:r.image,alt:r.name||'Récompense'}):r.type==='avatar'?'🏋️':r.type==='title'?'★':r.type==='frame'?'▣':'◆');
   if(r.type==='avatar'&&!r.image&&AV_BY[r.asset]&&AV_BY[r.asset].img){const ic=avIcon(AV_BY[r.asset]);ic.style.cssText='width:100%;height:100%';art.replaceChildren(ic);}
   if(r.type==='avframe'&&!r.image){art.replaceChildren(h('img',{src:avfSrc(r),alt:r.name||'Cadre d’avatar'}));}
+  if(r.type==='bg'&&!r.image&&BG_ASSETS[r.asset]){art.replaceChildren(h('img',{src:BG_ASSETS[r.asset].src,alt:r.name||'Fond de bannière',style:'width:100%;height:100%;object-fit:cover;border-radius:4px'}));}
   return art;
 }
 function maybeRewardPopup(){
