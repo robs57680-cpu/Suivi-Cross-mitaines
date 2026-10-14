@@ -397,8 +397,10 @@ input[type=checkbox]{width:24px;height:24px;padding:0;accent-color:var(--accent)
 .cword p{font-weight:600;overflow-wrap:anywhere;white-space:pre-wrap}
 .tm-word{max-width:42ch;border:2px solid #FFB703;border-radius:6px;padding:10px 14px;display:grid;gap:4px;margin-top:6px}
 .tm-word p{font-size:20px;font-weight:600;color:var(--panel-ink);white-space:pre-wrap;overflow-wrap:anywhere}
-.rxwrap{position:relative;padding-right:72px;min-height:48px}
-.rxwrap .rxb{min-width:44px;padding:0 4px}
+.rxwrap{position:relative;padding-right:62px;min-height:48px}
+.rxwrap .rxrow{flex-wrap:nowrap;gap:4px}
+.rxwrap .rxb{flex:1 1 0;min-width:0;max-width:48px;padding:0}
+.rxwrap .rxb small{margin-left:2px}
 .feed-pts{position:absolute;right:6px;bottom:0;transform:rotate(-14deg);transform-origin:100% 100%;font-family:var(--f-display);font-size:30px;line-height:1;letter-spacing:.02em;color:#fff;-webkit-text-stroke:5px #14161A;paint-order:stroke fill;text-shadow:0 2px 6px rgba(0,0,0,.35);pointer-events:none;white-space:nowrap}
 .rxrow{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
 .rxb{min-width:48px;min-height:44px;border:2px solid var(--line);border-radius:4px;background:var(--surface2);font-size:22px;cursor:pointer;padding:0 8px}
