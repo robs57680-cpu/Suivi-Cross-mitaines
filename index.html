@@ -5411,7 +5411,7 @@ const ICO_PHONE='<svg '+SVGA+'><rect x="7" y="2" width="10" height="20" rx="2.5"
 const ICO_COACH='<svg '+SVGA+'><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 2.5h6V6H9z"/><path d="M8.5 11h7M8.5 15h5"/></svg>';
 const ICO_RULES='<svg '+SVGA+'><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9.5 14l2 2 3.5-4"/></svg>';
 /* ---------- règlement : un point à la fois, « suivant » = lu et accepté ---------- */
-const RULES_VER='2'; /* à changer pour faire réapparaître le point rouge après une modification du règlement */
+const RULES_VER='3'; /* à changer pour faire réapparaître le point rouge après une modification du règlement */
 const rulesKey=()=>'bs-rules-'+S.uid;
 const rulesSeen=()=>{try{return localStorage.getItem(rulesKey())===RULES_VER;}catch(e){return true;}}; /* stockage indisponible : pas de point rouge permanent */
 const rulesMark=()=>{try{localStorage.setItem(rulesKey(),RULES_VER);}catch(e){}};
@@ -5429,7 +5429,7 @@ const RULES=[
   '**Pendant la saison :** on cherche à s’améliorer sur les mouvements de ces metcons tests, sans oublier la variété typique du CrossFit.',
   '**Avant-dernière semaine :** on refait les metcons tests pour voir si on a progressé.',
   '**Dernière semaine :** semaine de deload (allégée, pour récupérer).',
-  'Une séance peut être réalisée n’importe quel jour de la semaine, du lundi au dimanche. Une séance faite en dehors de la bonne semaine ne compte pas.','Chaque athlète saisit lui-même son résultat dans l’appli.']},
+  'Une séance peut être réalisée n’importe quel jour de la semaine, du lundi au dimanche. Une séance rattrapée après sa semaine rapporte ses points, mais ne compte pas pour les flammes.','Chaque athlète saisit lui-même son résultat dans l’appli.']},
  {t:'Niveaux',p:['Pour chaque metcon, tu choisis le niveau auquel tu l’as réalisé : Débutant, Intermédiaire, Rx ou personnalisé. Choisis le niveau que tu as réellement fait, charges et mouvements compris. Un niveau plus élevé valorise davantage tes points de metcon dans certains classements.']},
  {t:'Points',b:['Chaque séance rapporte des points de séance, auxquels s’ajoutent les points de ton ou tes metcons.','Les points de metcon dépendent de ta performance, selon des paliers fixés par le coach.','Les paliers sont fixés dès la création du metcon mais peuvent évoluer légèrement en fonction des résultats observés pour que la compétition reste cohérente et attractive.','Si le time cap t’arrête, ton score est le nombre de répétitions réalisées, converti en points selon les paliers prévus pour ce cas.','**REDO :** si le coach l’autorise sur le metcon, tu peux refaire la séance. Un REDO rapporte 3 points s’il améliore ton premier résultat, 2 points s’il l’égale et 1 point s’il fait moins bien. Il compte aussi pour ton objectif de séances.']},
  {t:'Erreurs et décisions du coach',b:['Un participant peut modifier lui-même ses résultats dans l’onglet Séance : inutile de contacter le coach.','Le coach peut retirer un résultat manifestement irréaliste.']}
