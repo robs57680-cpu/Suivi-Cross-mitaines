@@ -855,7 +855,7 @@ const GLOSS=[
 ['Push-up',['push-up','pompe'],'Pompe au sol.',['La poitrine touche le sol','Corps gainé, bras verrouillés en haut'],['Poitrine qui ne touche pas le sol','Ventre ou hanches qui touchent avant la poitrine','Bras non verrouillés en haut']],
 ['Ring Dip',['ring dip','dip'],'Dips sur anneaux.',['Épaules sous les coudes en bas','Bras verrouillés en haut'],['Épaules qui ne descendent pas sous les coudes','Bras non verrouillés en haut']],
 ['Corde à sauter',['double under','single under','corde a sauter','cordes a sauter','saut de corde','sauts de corde','jump rope'],'Corde à sauter. Double under : deux passages de corde sous les pieds par saut ; single under : un seul passage.',['Double under : deux passages de corde à chaque saut','Single under : un passage par saut','Seules les répétitions réussies comptent'],['Double under : un simple passage ne compte pas','Corde qui s’arrête : on reprend, sans compter']],
-['Wall Ball',['wall ball','wallball'],'Squat avec une balle, lancée sur une cible au mur.',['Pli de la hanche sous le sommet des genoux','La balle touche la cible ou au-dessus'],['Balle sous la cible','Profondeur insuffisante']],
+['Wall Ball',['wall ball','wallball'],'Squat avec une balle, lancée sur une cible au mur. Hauteur à atteindre : 3 m pour les hommes, 2,70 m pour les femmes.',['Pli de la hanche sous le sommet des genoux','La balle touche la cible ou au-dessus'],['Balle sous la cible','Profondeur insuffisante']],
 ['Kettlebell Swing',['kettlebell swing','kb swing','russian swing','american swing'],'Balancé de kettlebell. Russian : jusqu’à hauteur des yeux ; American : au-dessus de la tête, bras tendus.',['Hanches et genoux tendus en haut','Kettlebell à la hauteur demandée'],['Hauteur non atteinte','Extension de hanches incomplète']],
 ['Rope Climb',['rope climb','corde a grimper'],'Montée à la corde.',['Toucher la marque ou le haut de la corde','Redescendre sous contrôle'],['Marque non touchée','Se laisser tomber de la corde']],
 ['Lunge',['lunge','walking lunge','fente'],'Fente alternée, en marchant ou sur place.',['Le genou arrière touche le sol','Hanches et genoux tendus entre deux fentes'],['Genou arrière qui ne touche pas le sol','Extension incomplète en haut']],
@@ -922,8 +922,13 @@ const LEVEL_DIV=2; /* multiplicateur du GOAT = niveau moyen / 2 (niveau 2,6 = x1
 /* valeur de chaque niveau pour la moyenne et la pondération : Débutant 2, Intermédiaire 2,5, Rx 3 */
 const LV_VAL=[2,2.5,3];
 const LV_ABBR=['DEB','INT','RX'];
-/* valeur de niveau d'un résultat : niveau choisi + paliers de 0,2 par tranche de 10 % de charge (Rx +10 % = 3,2 ; Débutant −10 % = 1,8 ; −50 % = 1) */
-const lvVal=e=>Math.max(1,Math.min(3.6,LV_VAL[Math.max(0,Math.min(2,e.level||0))]+(Number(e.adj)||0)/50));
+/* niveau personnalisé en kilos : +5 / +10 kg sur la charge Rx, −5 / −10 kg sur celle du niveau le plus bas. 5 kg = 0,25 de niveau, 10 kg = 0,5.
+   Résultat enregistré dans e.kg. Les anciens résultats (e.adj, en %) sont convertis à la lecture : +10 % → +5 kg, +20/30 % → +10 kg, −10 % → −5 kg, −20 % et moins → −10 kg. */
+const kgOf=e=>{if(!e)return 0;if(e.kg!==undefined&&e.kg!==null&&e.kg!=='')return Number(e.kg)||0;const a=Number(e.adj)||0;return !a?0:a>0?(a<15?5:10):(a>-15?-5:-10);};
+const isCust=e=>kgOf(e)!==0;
+const LV_MIN=1.5,LV_MAX=3.5,KG_STEP=5,KG_LV=0.25; /* 5 kg = 0,25 de niveau */
+/* valeur de niveau d'un résultat : niveau choisi + 0,25 par tranche de 5 kg (Rx +10 kg = 3,5 ; Débutant −10 kg = 1,5) */
+const lvVal=e=>Math.max(LV_MIN,Math.min(LV_MAX,LV_VAL[Math.max(0,Math.min(2,e.level||0))]+kgOf(e)/KG_STEP*KG_LV));
 /* niveau le plus proche d'une moyenne (à égalité, le plus haut) */
 function lvNear(avg){let b=0;for(let i=1;i<3;i++)if(Math.abs(avg-LV_VAL[i])<=Math.abs(avg-LV_VAL[b])+1e-9)b=i;return b;}
 /* niveau affiché : le plus proche, avec + ou - s'il n'est pas exact (2,6 = INT+, 2,9 = RX-, 2 = DEB) */
@@ -931,10 +936,8 @@ const lvTag=avg=>{const i=lvNear(avg),d=avg-LV_VAL[i];return LV_ABBR[i]+(Math.ab
 const dispLvl=n=>norm(n)==='scaled'?'Débutant':n;
 const levelName=(m,i)=>{const lv=levelsOf(m)[i||0];return dispLvl((lv&&lv.name)||('Niveau '+((i||0)+1)));};
 const lowLvl=m=>{const a=activeLevels(m);return a.length?a[0][1]:0;};
-/* niveau personnalisé : adj = % de charge en plus (Rx, +10/20/30) ou en moins (niveau le plus bas, -10 à -50) ; les points de metcon varient du même pourcentage */
-const adjF=e=>1; /* le niveau personnalisé ne change plus les points, seulement le niveau du joueur */
-const adjMul=e=>1+Math.max(-50,Math.min(30,Number(e&&e.adj)||0))/100;
-const adjTxt=e=>(e&&e.adj)?' '+(e.adj>0?'+':'−')+Math.abs(e.adj)+' %':'';
+const adjF=e=>1; /* le niveau personnalisé ne change pas les points, seulement le niveau du joueur */
+const adjTxt=e=>{const k=kgOf(e);return k?' '+(k>0?'+':'−')+Math.abs(k)+' kg':'';};
 const lvlLab=(m,e)=>levelName(m,e.level)+adjTxt(e);
 
 /* ---------- time cap d'un For Time : tours + reps ----------
@@ -1048,7 +1051,7 @@ function redoPts(m,first,x){
   return g?REDO_PTS[g-1]:0;
 }
 function redoObj(st,r){
-  const o={level:st.level};if(st.adj)o.adj=st.adj;
+  const o={level:st.level};if(kgOf(st))o.kg=kgOf(st);
   if(r.cap){o.cap=true;o.capScore=r.v;if(r.rounds!==undefined)o.rounds=r.rounds;o.reps=r.reps;}
   else{o.score=r.v;if(r.rounds!==undefined){o.rounds=r.rounds;o.reps=r.reps;}}
   return o;
@@ -2656,7 +2659,7 @@ function levelRecord(m,i){
   }
   let best=null;
   const consider=(e,lg,uid)=>{
-    if(!hasScore(e)||(e.level||0)!==i||e.adj)return;
+    if(!hasScore(e)||(e.level||0)!==i||isCust(e))return;
     const c=!!e.cap,v=c?capValue(m,e):e.score,k=c?[0,v]:[1,ft?-v:v];
     if(!best||k[0]>best.k[0]||(k[0]===best.k[0]&&k[1]>best.k[1]))best={k,e,who:lg.pseudo||'Athlète',uid};
   };
@@ -2685,11 +2688,11 @@ function levelDetail(m,lv,i){
 }
 function customDetail(m){
   const lo=lowLvl(m),rows=[];
-  const mk=(base,a)=>{const lv=levelsOf(m)[base]||{},f=1+a/100,ld=loadsText({loadF:scaleKg(lv.loadF,f),loadH:scaleKg(lv.loadH,f)});
-    return h('div',{class:'lvl-head'},h('span',{class:'nm'},levelName(m,base)+' '+(a>0?'+':'−')+Math.abs(a)+' %'),h('span',{class:'lvl-load'},'niveau '+fmtN(Math.max(1,LV_VAL[base]+a/50))+(ld?' · '+ld:'')));};
-  [10,20,30].forEach(a=>rows.push(mk(2,a)));
-  if(lo!==2)[10,20,30,40,50].forEach(a=>rows.push(mk(lo,-a)));
-  return [h('div',{class:'sub'},'Ajuste la charge d’un niveau : ton niveau monte ou descend de 0,2 par tranche de 10 % (Rx +10 % = 3,2 ; Débutant −10 % = 1,8). Tes points ne changent pas.'),
+  const mk=(base,kg)=>{const lv=levelsOf(m)[base]||{},ld=loadsText({loadF:addKg(lv.loadF,kg),loadH:addKg(lv.loadH,kg)});
+    return h('div',{class:'lvl-head'},h('span',{class:'nm'},levelName(m,base)+' '+(kg>0?'+':'−')+Math.abs(kg)+' kg'),h('span',{class:'lvl-load'},'niveau '+fmtN(Math.max(LV_MIN,Math.min(LV_MAX,LV_VAL[base]+kg/KG_STEP*KG_LV)))+(ld?' · '+ld:'')));};
+  [5,10].forEach(k=>rows.push(mk(2,k)));
+  if(lo!==2)[5,10].forEach(k=>rows.push(mk(lo,-k)));
+  return [h('div',{class:'sub'},'Ajoute ou retire des kilos à la charge d’un niveau : ton niveau monte ou descend de 0,25 par tranche de 5 kg (Rx +10 kg = 3,5 ; Débutant −10 kg = 1,5). Tes points ne changent pas.'),
     ...rows,S.prof.sex?null:h('p',{class:'sub'},'Renseigne ton sexe dans ton profil pour voir directement ta charge.')];
 }
 function levelsBlock(m){
@@ -3176,21 +3179,22 @@ function capGuide(pl){
   return intro+'Indique les tours COMPLETS terminés, puis les reps faites dans le tour en cours (tous mouvements confondus, dans l’ordre). Exemple : '+n+' tours + 4 reps'+(pl.sizes?' = tours '+pl.nums.slice(0,n).join('-')+' terminés + 4 reps du tour suivant.':'.');
 }
 const scaleKg=(t,f)=>String(t||'').replace(/(\d+(?:[.,]\d+)?)(\s*(?:kg|lb)s?)/gi,(x,n,u)=>fmtN(Math.round(parseNum(n)*f*2)/2)+u);
-function customLoad(m,st){const lv=levelsOf(m)[st.level]||{},f=adjMul(st);return {loadF:scaleKg(lv.loadF,f),loadH:scaleKg(lv.loadH,f)};}
+const addKg=(t,kg)=>String(t||'').replace(/(\d+(?:[.,]\d+)?)(\s*kgs?)/gi,(x,n,u)=>fmtN(Math.max(0,Math.round((parseNum(n)+kg)*2)/2))+u);
+function customLoad(m,st){const lv=levelsOf(m)[st.level]||{},k=kgOf(st);return {loadF:addKg(lv.loadF,k),loadH:addKg(lv.loadH,k)};}
 function adjPicker(m,st){
   const lo=lowLvl(m),opts=[['0','Choisir…']];
-  [10,20,30].forEach(n=>opts.push([String(n),levelName(m,2)+' +'+n+' %']));
-  if(lo!==2)[10,20,30,40,50].forEach(n=>opts.push([String(-n),levelName(m,lo)+' −'+n+' %']));
-  const a=Number(st.adj)||0;
-  let hint='Charge du niveau Rx augmentée (+10, 20 ou 30 %) ou charge du niveau le plus bas réduite. Tes points ne changent pas : seul ton niveau est ajusté (par paliers de 0,2 par tranche de 10 %).';
+  [5,10].forEach(n=>opts.push([String(n),levelName(m,2)+' +'+n+' kg']));
+  if(lo!==2)[5,10].forEach(n=>opts.push([String(-n),levelName(m,lo)+' −'+n+' kg']));
+  const a=kgOf(st);
+  let hint='Ajoute 5 ou 10 kg à la charge du niveau Rx, ou retire 5 ou 10 kg à celle du niveau le plus bas. Chaque tranche de 5 kg change ton niveau de 0,25 (10 kg = 0,5). Tes points ne changent pas : seul ton niveau est ajusté.';
   if(a){const ld=loadsText(customLoad(m,st));hint='Ton niveau compte pour '+fmtN(lvVal(st))+'.'+(ld?' '+(S.prof.sex?'Ta charge recalculée : ':'Charge recalculée : ')+ld+'.':' Pas de charge indiquée pour ce niveau.')+' Tes points ne changent pas.';}
-  return field('Choix du niveau personnalisé',sel(opts,String(a),v=>{const n=parseInt(v,10)||0;st.adj=n;if(n>0)st.level=2;else if(n<0)st.level=lo;render();},{id:'adj-select','aria-label':'Niveau personnalisé'}),hint);
+  return field('Choix du niveau personnalisé',sel(opts,String(a),v=>{const n=parseInt(v,10)||0;st.kg=n;if(n>0)st.level=2;else if(n<0)st.level=lo;render();},{id:'adj-select','aria-label':'Niveau personnalisé'}),hint);
 }
 function levelField(m,st,label){
-  const cust=!!st.custom||!!st.adj,lvl=levelsOf(m)[st.level]||{},canCust=m.customLvl!==false||cust;
+  const cust=!!st.custom||!!kgOf(st),lvl=levelsOf(m)[st.level]||{},canCust=m.customLvl!==false||cust;
   const box=h('div',{class:'field'},h('span',{class:'flabel'},label),
     h('div',{class:'seg',role:'group','aria-label':'Niveau de pratique'},
-      activeLevels(m).map(([lv,i])=>h('button',{type:'button',class:'btn sm','aria-pressed':(!cust&&st.level===i)?'true':'false',onclick:()=>{st.level=i;st.adj=0;st.custom=false;render();}},dispLvl(lv.name||('Niveau '+(i+1))))),
+      activeLevels(m).map(([lv,i])=>h('button',{type:'button',class:'btn sm','aria-pressed':(!cust&&st.level===i)?'true':'false',onclick:()=>{st.level=i;st.kg=0;st.custom=false;render();}},dispLvl(lv.name||('Niveau '+(i+1))))),
       canCust?h('button',{type:'button',class:'btn sm',id:'lvl-custom',style:'grid-column:1/-1','aria-pressed':cust?'true':'false',onclick:()=>{st.custom=true;render();}},'Niveau personnalisé'):null));
   if(cust)box.append(adjPicker(m,st));
   else if(loadsText(lvl))box.append(h('span',{class:'hint'},(S.prof.sex?'Ta charge : ':'')+loadsText(lvl)));
@@ -3301,7 +3305,7 @@ function openRedo(w,date){
   if(m.redo===false&&!rd){toast('Le REDO est désactivé sur ce metcon.',true);return;}
   S.entry=null;
   const src=rd||mine||{};
-  S.redo={date,score:'',rounds:'',reps:'',level:okLvl(m,src.level!==undefined?src.level:lowLvl(m)),adj:src.adj||0,custom:!!src.adj};
+  S.redo={date,score:'',rounds:'',reps:'',level:okLvl(m,src.level!==undefined?src.level:lowLvl(m)),kg:kgOf(src),custom:!!kgOf(src)};
   fillState(m,S.redo,rd);
   render();
 }
@@ -3329,13 +3333,13 @@ function redoForm(w,date){
 function submitRedo(w){
   if(lockedDate(S.redo.date)||lockedDate(todayStr())){toast(LOCKMSG,true);return;}
   const m=metconOf(w),ft=m.format==='FT';
-  if(S.redo.custom&&!S.redo.adj){toast('Choisis ton niveau personnalisé (par exemple Rx +10 %).',true);return;}
+  if(S.redo.custom&&!kgOf(S.redo)){toast('Choisis ton niveau personnalisé (par exemple Rx +10 kg).',true);return;}
   const r=readScore(m,S.redo);
   if(r.empty||r.bad||r.over||r.many){toast(r.empty?'Indique ton résultat.':scoreErr(m,r),true);return;}
   const v=r.v;
   const date=S.redo.date,cur=S.logs[S.uid]||{},old=(cur.redos||{})[date];
   const rd={on:(old&&old.on)||todayStr(),level:S.redo.level,at:new Date().toISOString()};
-  if(S.redo.adj)rd.adj=S.redo.adj;
+  if(kgOf(S.redo))rd.kg=kgOf(S.redo);
   if(r.cap){rd.cap=true;rd.capScore=v;if(r.rounds!==undefined)rd.rounds=r.rounds;rd.reps=r.reps;}
   else{rd.score=v;if(r.rounds!==undefined){rd.rounds=r.rounds;rd.reps=r.reps;}}
   S.redo=null;
@@ -3352,7 +3356,7 @@ function openEntry(w,date,uid,coach){
   if(!coach&&lockedDate(date)){toast(LOCKMSG,true);return;}
   uid=uid||S.uid;
   const mine=S.logs[uid]&&S.logs[uid].entries&&S.logs[uid].entries[date];const m=metconOf(w);
-  S.entry={date,uid,coach:!!coach,score:'',rounds:'',reps:'',message:(mine&&mine.message)||'',level:m?okLvl(m,mine&&mine.level!==undefined?mine.level:lowLvl(m)):0,adj:(mine&&mine.adj)||0,custom:!!(mine&&mine.adj),loads:{},prs:{}};
+  S.entry={date,uid,coach:!!coach,score:'',rounds:'',reps:'',message:(mine&&mine.message)||'',level:m?okLvl(m,mine&&mine.level!==undefined?mine.level:lowLvl(m)):0,kg:kgOf(mine),custom:!!kgOf(mine),loads:{},prs:{}};
   if(mine){
     fillState(m,S.entry,mine);
     for(const [k,v] of Object.entries(mine.loads||{}))S.entry.loads[k]=String(v).replace('.',',');
@@ -3398,8 +3402,8 @@ function submitEntry(w){
   const atNew=new Date().toISOString();
   const m=metconOf(w),e={at:(prevE&&prevE.at)||atNew};
   if(m){
-    if(S.entry.custom&&!S.entry.adj){toast('Choisis ton niveau personnalisé (par exemple Rx +10 %).',true);return;}
-    e.level=S.entry.level;if(S.entry.adj)e.adj=S.entry.adj;
+    if(S.entry.custom&&!kgOf(S.entry)){toast('Choisis ton niveau personnalisé (par exemple Rx +10 kg).',true);return;}
+    e.level=S.entry.level;if(kgOf(S.entry))e.kg=kgOf(S.entry);
     const r=readScore(m,S.entry);
     if(r.bad||r.over||r.many){toast(scoreErr(m,r),true);return;}
     if(!r.empty){
@@ -4997,7 +5001,7 @@ function wodEditor(){
       box.append(h('label',{class:'chk'},h('input',{type:'checkbox',id:'p'+i+'-redo',checked:p.redo!==false,onchange:e=>{p.redo=e.target.checked;}}),h('span',{},'Le REDO rapporte des points sur ce metcon')),
         h('p',{class:'hint'},'À décocher pour un metcon court ou volontairement léger (gestion, récupération) qu’on ne veut pas voir refaire pour entasser des points : le REDO n’est alors plus proposé. Coché : un REDO rapporte 1 point s’il est moins bon que le premier résultat, 2 s’il marque autant de points, 3 s’il l’améliore (niveau et points de metcon).'));
       box.append(h('label',{class:'chk'},h('input',{type:'checkbox',id:'p'+i+'-custlvl',checked:p.customLvl!==false,onchange:e=>{p.customLvl=e.target.checked;}}),h('span',{},'Autoriser le niveau personnalisé sur ce metcon')),
-        h('p',{class:'hint'},'Coché : les athlètes peuvent choisir un niveau personnalisé (Rx +10 %, etc.). Décoché : seuls les niveaux prévus (Débutant, Intermédiaire, Rx) sont proposés, et le bouton « Niveau personnalisé » disparaît pour ce metcon. Les résultats déjà saisis avec un niveau personnalisé sont conservés.'));
+        h('p',{class:'hint'},'Coché : les athlètes peuvent choisir un niveau personnalisé (Rx +10 kg, etc.). Décoché : seuls les niveaux prévus (Débutant, Intermédiaire, Rx) sont proposés, et le bouton « Niveau personnalisé » disparaît pour ce metcon. Les résultats déjà saisis avec un niveau personnalisé sont conservés.'));
       {const words=S.prof.words||[];
         const wta=h('textarea',{id:'p'+i+'-word',rows:'2',maxlength:'200',placeholder:'Ex : Reste régulier sur les premiers tours !',value:p.word||'',oninput:e=>{p.word=e.target.value;}});
         box.append(field('Mot du coach (affiché près du metcon et pendant les 10 s de préparation)',wta),
