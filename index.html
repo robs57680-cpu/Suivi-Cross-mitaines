@@ -5383,12 +5383,12 @@ const ICO_PHONE='<svg '+SVGA+'><rect x="7" y="2" width="10" height="20" rx="2.5"
 const ICO_COACH='<svg '+SVGA+'><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 2.5h6V6H9z"/><path d="M8.5 11h7M8.5 15h5"/></svg>';
 const ICO_RULES='<svg '+SVGA+'><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9.5 14l2 2 3.5-4"/></svg>';
 /* ---------- règlement : un point à la fois, « suivant » = lu et accepté ---------- */
-const RULES_VER='1'; /* à changer pour faire réapparaître le point rouge après une modification du règlement */
+const RULES_VER='2'; /* à changer pour faire réapparaître le point rouge après une modification du règlement */
 const rulesKey=()=>'bs-rules-'+S.uid;
 const rulesSeen=()=>{try{return localStorage.getItem(rulesKey())===RULES_VER;}catch(e){return true;}}; /* stockage indisponible : pas de point rouge permanent */
 const rulesMark=()=>{try{localStorage.setItem(rulesKey(),RULES_VER);}catch(e){}};
 const RULES=[
- {t:'Esprit de la compétition',p:['Box Score est une compétition amicale entre participants d’un même box. Elle sert à se motiver, à progresser et à s’amuser ensemble, pas à gagner à tout prix. Chacun s’engage à jouer le jeu avec honnêteté.']},
+ {t:'Esprit de la compétition',p:['Box Score est une compétition amicale entre participants. Elle sert à se motiver, à progresser et à s’amuser ensemble, pas à gagner à tout prix. Chacun s’engage à jouer le jeu avec honnêteté.']},
  {t:'Exécution des répétitions',p:[
   '**Une répétition ne compte que si elle est réalisée correctement.** Pour que ton résultat soit valable, chaque mouvement doit respecter le standard demandé : amplitude complète, position de départ et d’arrivée, etc. Un résultat obtenu avec des répétitions incomplètes n’est pas valable.',
   'Avant la séance, et au moindre doute, **clique sur le nom de l’exercice** pour consulter les consignes : ce qui est attendu et ce qui ne compte pas. Tous les participants sont invités à le faire.']},
@@ -5396,10 +5396,15 @@ const RULES=[
   b:['tu as réalisé la séance telle qu’elle a été publiée ;','tu as respecté les standards des mouvements ;','tu as choisi le niveau que tu as réellement fait ;','tu as respecté le time cap et saisi ton vrai temps ou ton vrai score.'],
   after:['Tricher ne trompe personne d’autre que soi-même, et gâche le plaisir de tous.']},
  {t:'Participation',b:['Certains classements demandent des informations dans ton profil : le sexe pour LA GOAT, le poids de corps pour « Poids / puissance »…','Le coach organise la compétition, publie les séances et gère les saisons.']},
- {t:'Saisons et séances',b:['La compétition est organisée en saisons.','Une séance peut être réalisée n’importe quel jour de la semaine, du lundi au dimanche. Une séance faite en dehors de la bonne semaine ne compte pas.','Chaque athlète saisit lui-même son résultat dans l’appli.']},
+ {t:'Saisons et séances',b:['La compétition est organisée en saisons. Chaque saison suit le même déroulé :',
+  '**Premières semaines :** 2 ou 3 metcons « tests », où il faut se donner à fond.',
+  '**Pendant la saison :** on cherche à s’améliorer sur les mouvements de ces metcons tests, sans oublier la variété typique du CrossFit.',
+  '**Avant-dernière semaine :** on refait les metcons tests pour voir si on a progressé.',
+  '**Dernière semaine :** semaine de deload (allégée, pour récupérer).',
+  'Une séance peut être réalisée n’importe quel jour de la semaine, du lundi au dimanche. Une séance faite en dehors de la bonne semaine ne compte pas.','Chaque athlète saisit lui-même son résultat dans l’appli.']},
  {t:'Niveaux',p:['Pour chaque metcon, tu choisis le niveau auquel tu l’as réalisé : Débutant, Intermédiaire, Rx ou personnalisé. Choisis le niveau que tu as réellement fait, charges et mouvements compris. Un niveau plus élevé valorise davantage tes points de metcon dans certains classements.']},
  {t:'Points',b:['Chaque séance rapporte des points de séance, auxquels s’ajoutent les points de ton ou tes metcons.','Les points de metcon dépendent de ta performance, selon des paliers fixés par le coach.','Les paliers sont fixés dès la création du metcon mais peuvent évoluer légèrement en fonction des résultats observés pour que la compétition reste cohérente et attractive.','Si le time cap t’arrête, ton score est le nombre de répétitions réalisées, converti en points selon les paliers prévus pour ce cas.','**REDO :** si le coach l’autorise sur le metcon, tu peux refaire la séance. Un REDO rapporte 3 points s’il améliore ton premier résultat, 2 points s’il l’égale et 1 point s’il fait moins bien. Il compte aussi pour ton objectif de séances.']},
- {t:'Erreurs et décisions du coach',b:['En cas d’erreur de saisie, préviens le coach : il peut corriger ou supprimer un résultat.','Le coach peut retirer un résultat manifestement irréaliste.']}
+ {t:'Erreurs et décisions du coach',b:['Un participant peut modifier lui-même ses résultats dans l’onglet Séance : inutile de contacter le coach.','Le coach peut retirer un résultat manifestement irréaliste.']}
 ];
 const rlText=t=>t.split('**').map((x,i)=>i%2?h('b',{},x):x);
 function viewRules(){
@@ -5504,6 +5509,8 @@ const TOURS={
     TOUR_STEPS.loginEmail,TOUR_STEPS.loginPw,TOUR_STEPS.loginCreate,
     {sel:'#tour-help',title:'Besoin d’un rappel ?',text:'Ce bouton « ? » te remet ce guide quand tu veux.'}],
   feed:()=>[
+    {title:'Mettre l’appli sur l’écran d’accueil : iPhone',text:'Ouvre l’appli dans Safari, touche le bouton Partager (le carré avec une flèche vers le haut), fais défiler et choisis « Sur l’écran d’accueil », puis « Ajouter ». Sur iPhone, les notifications ne marchent que depuis cette icône.'},
+    {title:'Mettre l’appli sur l’écran d’accueil : Android',text:'Ouvre l’appli dans Chrome, touche les trois points en haut à droite, puis « Ajouter à l’écran d’accueil » (ou « Installer l’application ») et confirme. L’icône apparaît comme une appli classique.'},
     {sel:'main .day',title:'Le fil d’actualité',text:'Ici apparaissent les séances validées par les athlètes du groupe, de la plus récente à la plus ancienne.'},
     {sel:'.feed-card',title:'Une séance publiée',text:'Le pseudo, le titre de la séance et les résultats. Touche un pseudo pour ouvrir le profil de l’athlète.'},
     {sel:'.rxrow',title:'Encourage tes partenaires',text:'Un emoji pour féliciter : ça fait toujours plaisir.'},
@@ -5515,11 +5522,10 @@ const TOURS={
     {needs:'drawer',sel:'[data-tour=dm-mail]',title:'Message du coach : l’enveloppe',text:'Relis le dernier message du coach. Le point rouge indique un message pas encore lu.'},
     {needs:'drawer',sel:'[data-tour=dm-rules]',title:'Règlement : le livre',text:'Les règles de la compétition, à lire un point à la fois. Le point rouge disparaît dès que tu as ouvert le règlement.'},
     {needs:'drawer',sel:'[data-tour=dm-share]',title:'Partager l’appli : le téléphone',text:'Ouvre une page avec le lien de l’appli : tu le copies et tu l’envoies à quelqu’un.'},
-    {title:'Mettre l’appli sur l’écran d’accueil : iPhone',text:'Ouvre l’appli dans Safari, touche le bouton Partager (le carré avec une flèche vers le haut), fais défiler et choisis « Sur l’écran d’accueil », puis « Ajouter ». Sur iPhone, les notifications ne marchent que depuis cette icône.'},
-    {title:'Mettre l’appli sur l’écran d’accueil : Android',text:'Ouvre l’appli dans Chrome, touche les trois points en haut à droite, puis « Ajouter à l’écran d’accueil » (ou « Installer l’application ») et confirme. L’icône apparaît comme une appli classique.'},
     {sel:'#tour-help',title:'Besoin d’un rappel ?',text:'Ce bouton « ? » te remet le guide de l’onglet où tu te trouves, quand tu veux.'}],
   today:()=>[
     {sel:'main .day',title:'La séance du jour',text:'La date de la séance. Tu peux la faire n’importe quel jour de la semaine.'},
+    {sel:'#wu-card',title:'L’échauffement',text:'Un échauffement avant d’attaquer la séance est très fortement conseillé. Celui qui est proposé est complet, mais tu es libre de faire le tien. « Lancer l’échauffement » démarre le mode guidé avec timer, « Mode libre » te laisse avancer à ton rythme, et « Voir les exercices » affiche la liste. Pendant l’échauffement, touche « Voir les infos » pour voir l’image et les consignes de l’exercice. Le « ? » en haut à droite de la carte explique les deux modes.'},
     {sel:'main .wtitle',title:'Titre et points',text:'Le titre de la séance et les points de base qu’elle rapporte. Le metcon ajoute des points selon ton niveau.'},
     {sel:'.pbody',title:'Les parties de la séance',text:'Force, renforcement, metcon… Chaque partie détaille ce qu’il faut faire. Le metcon est celle qui rapporte des points au classement.'},
     {sel:'[data-tour=start-metcon]',title:'Démarrer le metcon',text:'Lance le minuteur en plein écran : 10 secondes de préparation, puis le chrono qui monte (For Time, avec le time cap), le compte à rebours et le bouton TOUR (AMRAP) ou un bip chaque minute (EMOM). À l’arrêt, tu peux corriger ton résultat : il est prérempli dans le formulaire.'},
