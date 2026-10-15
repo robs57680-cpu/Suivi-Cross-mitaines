@@ -106,6 +106,16 @@ textarea{resize:vertical}
 .tro-h .chev{font-size:18px;transition:transform .2s}
 .tro-h[aria-expanded="true"] .chev{transform:rotate(180deg)}
 .btn-block{width:100%;min-height:52px}
+/* encart « Entrer mes résultats » : fenêtre au-dessus de la page, les champs brillent quelques fois à l'ouverture */
+body.modal-open{overflow:hidden}
+.entry-ov{z-index:35}
+.entry-sheet{max-height:92vh;max-height:92dvh;padding-top:0;gap:14px}
+.ov-h{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 0 10px;background:var(--surface);border-bottom:2px solid var(--edge)}
+.ov-h .ov-t{font-family:var(--f-display);font-size:26px;line-height:1;text-transform:uppercase}
+.ov-x{flex:none;width:44px;height:44px;border:2px solid var(--edge);border-radius:4px;background:var(--surface2);color:var(--ink);font:inherit;font-size:18px;cursor:pointer}
+@keyframes entryGlow{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 0 3px var(--accent),0 0 18px 5px var(--accent)}}
+.entry-sheet.glow :is(input:not([type=checkbox]):not([type=radio]),textarea,select){animation:entryGlow .9s ease-in-out 3}
+@media (prefers-reduced-motion:reduce){.entry-sheet.glow :is(input,textarea,select){animation:none}}
 .rw-cat{display:grid;gap:8px;border-top:1px solid var(--line);padding-top:14px;margin-top:6px}
 .pbody.has-sw{position:relative;padding-right:66px;min-height:66px}
 .pbody.has-sw>.sw{position:absolute;top:0;right:0}
@@ -1717,9 +1727,9 @@ const typing=()=>{const a=document.activeElement;return a&&main.contains(a)&&/^(
 function scheduleRender(){if(typing()){pending=true;return;}render();}
 document.addEventListener('focusout',()=>{if(!pending)return;setTimeout(()=>{if(!typing()){pending=false;render();}},0);});
 
-function go(tab){closeDrawer(true);if(tab==='coach'&&S.tab==='coach')S.coach.view=null;S.profView=null;S.viewUser=null;S.tip=null;S.trophOpen='';S.trophSeason='';S.tab=tab;S.boardDetail=false;S.confirm=null;if(S.entry&&S.entry.coach)S.entry=null;render();window.scrollTo(0,0);}
+function go(tab){closeDrawer(true);if(tab==='coach'&&S.tab==='coach')S.coach.view=null;S.profView=null;S.viewUser=null;S.tip=null;S.trophOpen='';S.trophSeason='';S.tab=tab;S.boardDetail=false;S.confirm=null;if(S.entry&&S.entry.coach)S.entry=null;if(S.tab!=='today'){S.entry=null;S.redo=null;}render();window.scrollTo(0,0);}
 function render(){
-  pending=false;S._aw=null;S._ob=null;applyTheme();
+  pending=false;S._aw=null;S._ob=null;applyTheme();document.body.classList.remove('modal-open');
   {const tp=document.querySelector('.top');if(tp)document.documentElement.style.setProperty('--toph',tp.offsetHeight+'px');}
   if(!S.uid){
     $('#tabs').replaceChildren();$('#hdr-right').replaceChildren(S.authReady&&S.db?helpBtn():null);
@@ -1743,7 +1753,9 @@ function render(){
   $('#tabs').classList.remove('coach-tabs');
   $('#tabs').replaceChildren(...tabEls);
   const view={feed:viewFeed,today:viewToday,board:viewBoard,profile:viewProfile,coach:viewCoach,stats:viewStats,prefs:viewPrefs,share:viewShare,rules:viewRules}[S.tab]||viewFeed;
+  const _esc=document.querySelector('.entry-sheet'),_escTop=_esc?_esc.scrollTop:0;
   main.replaceChildren(...banners(),view());
+  {const n=document.querySelector('.entry-sheet');if(n&&_esc)n.scrollTop=_escTop;document.body.classList.toggle('modal-open',!!document.getElementById('entry-ov'));}
   document.querySelectorAll('.bubs.rxfloat').forEach(x=>x.remove());
   const rxLayer=rxReceived();if(rxLayer)document.body.append(rxLayer);
   {const tb=document.querySelector('.tabs');if(tb)document.documentElement.style.setProperty('--tabh',tb.offsetHeight+'px');}
@@ -2079,8 +2091,9 @@ function openEntryWith(w,date,patch){
   S.viewDate=date;S.tab='today';S.redo=null;S.confirm=null;
   openEntry(w,date);
   Object.assign(S.entry,patch);
+  S.entryGlowUntil=Date.now()+2900;
   render();
-  setTimeout(()=>{const f=document.getElementById('entry-form');if(f)f.scrollIntoView({behavior:'smooth',block:'start'});},60);
+  window.scrollTo(0,0);
   toast('Résultat du minuteur ajouté. Choisis ton niveau puis valide la séance.');
 }
 /* ---------- échauffement guidé ----------
@@ -2651,6 +2664,7 @@ function loadsText(lv){
 function toggleTip(id){S.tip=S.tip===id?null:id;render();}
 document.addEventListener('click',e=>{if(S.tip&&!(e.target.closest&&e.target.closest('.tip,.tipbtn,.qbtn'))){S.tip=null;render();}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&S.tip){S.tip=null;render();}});
+document.addEventListener('keydown',e=>{if(e.key!=='Escape'||S.tip||!document.getElementById('entry-ov'))return;if(S.entry&&!S.entry.coach)S.entry=null;else if(S.redo)S.redo=null;else return;render();});
 function levelRecord(m,i){
   const sig=metSig(m),ft=m.format==='FT',wds=[];
   for(const w2 of Object.values(S.wods)){
@@ -2689,7 +2703,7 @@ function levelDetail(m,lv,i){
 function customDetail(m){
   const lo=lowLvl(m),rows=[];
   const mk=(base,kg)=>{const lv=levelsOf(m)[base]||{},ld=loadsText({loadF:addKg(lv.loadF,kg),loadH:addKg(lv.loadH,kg)});
-    return h('div',{class:'lvl-head'},h('span',{class:'nm'},levelName(m,base)+' '+(kg>0?'+':'−')+Math.abs(kg)+' kg'),h('span',{class:'lvl-load'},'niveau '+fmtN(Math.max(LV_MIN,Math.min(LV_MAX,LV_VAL[base]+kg/KG_STEP*KG_LV)))+(ld?' · '+ld:'')));};
+    return h('div',{class:'lvl-head'},h('span',{class:'nm'},levelName(m,base)+' '+(kg>0?'+':'−')+Math.abs(kg)+' kg'),h('span',{class:'lvl-load'},'niveau '+fmt2(Math.max(LV_MIN,Math.min(LV_MAX,LV_VAL[base]+kg/KG_STEP*KG_LV)))+(ld?' · '+ld:'')));};
   [5,10].forEach(k=>rows.push(mk(2,k)));
   if(lo!==2)[5,10].forEach(k=>rows.push(mk(lo,-k)));
   return [h('div',{class:'sub'},'Ajoute ou retire des kilos à la charge d’un niveau : ton niveau monte ou descend de 0,25 par tranche de 5 kg (Rx +10 kg = 3,5 ; Débutant −10 kg = 1,5). Tes points ne changent pas.'),
@@ -3092,16 +3106,29 @@ function viewToday(){
     el.append(h('h2',{class:'wtitle'},w.title),h('p',{class:'eyebrow'},'Séance à '+basePts(w,per)+' pts'+(metconOf(w)?' + points du metcon selon ton niveau':'')),h('p',{class:'hint'},'À faire n’importe quel jour de la semaine, du '+fmtShort(mondayOf(date))+' au '+fmtShort(addDays(mondayOf(date),6))+'.'));
     (w.parts||[]).forEach(p=>el.append(partCard(p,w,date)));
     {const es=entrySection(w,date);es.setAttribute('data-tour','entry');el.append(es);}
+    {const ov=entryOverlay(w,date);if(ov)el.append(ov);}
   }
   el.append(upcomingList(t,date),recentList(t,date));
   return el;
+}
+/* encart plein écran : s'ouvre au clic sur « Entrer mes résultats » / « Modifier mes résultats », à la validation du minuteur, et pour le REDO.
+   Il est redessiné avec la page : on garde donc la position de défilement (voir render) et le halo des champs ne dure que quelques secondes après l'ouverture. */
+function entryOverlay(w,date){
+  let form=null,kind='',ttl='';
+  if(S.entry&&S.entry.date===date&&!S.entry.coach){form=entryForm(w,date);kind='entry';ttl='Entrer mes résultats';}
+  else if(S.redo&&S.redo.date===date){form=redoForm(w,date);kind='redo';ttl='Entrer mon REDO';}
+  if(!form)return null;
+  const close=()=>{if(kind==='entry')S.entry=null;else S.redo=null;render();};
+  const glow=Date.now()<(S.entryGlowUntil||0);
+  return h('div',{class:'ov entry-ov',id:'entry-ov'},
+    h('div',{class:'sheet entry-sheet'+(glow?' glow':''),role:'dialog','aria-modal':'true','aria-label':ttl},
+      h('div',{class:'ov-h'},h('span',{class:'ov-t'},ttl),h('button',{type:'button',class:'ov-x',id:'entry-close','aria-label':'Fermer sans enregistrer',onclick:close},'✕')),
+      form));
 }
 function entrySection(w,date){
   const t=todayStr();
   if(!S.uid||!S.db)return h('p',{class:'muted'},'Connecte-toi pour enregistrer tes résultats.');
   if(t<mondayOf(date))return h('p',{class:'muted'},'Les résultats s’ouvrent le lundi '+fmtShort(mondayOf(date))+', début de la semaine de la séance.');
-  if(S.entry&&S.entry.date===date&&!S.entry.coach)return entryForm(w,date);
-  if(S.redo&&S.redo.date===date)return redoForm(w,date);
   const mine=S.logs[S.uid]&&S.logs[S.uid].entries&&S.logs[S.uid].entries[date];
   const per=periodFor(date);
   const sec=h('section',{class:'card'});
@@ -3187,7 +3214,7 @@ function adjPicker(m,st){
   if(lo!==2)[5,10].forEach(n=>opts.push([String(-n),levelName(m,lo)+' −'+n+' kg']));
   const a=kgOf(st);
   let hint='Ajoute 5 ou 10 kg à la charge du niveau Rx, ou retire 5 ou 10 kg à celle du niveau le plus bas. Chaque tranche de 5 kg change ton niveau de 0,25 (10 kg = 0,5). Tes points ne changent pas : seul ton niveau est ajusté.';
-  if(a){const ld=loadsText(customLoad(m,st));hint='Ton niveau compte pour '+fmtN(lvVal(st))+'.'+(ld?' '+(S.prof.sex?'Ta charge recalculée : ':'Charge recalculée : ')+ld+'.':' Pas de charge indiquée pour ce niveau.')+' Tes points ne changent pas.';}
+  if(a){const ld=loadsText(customLoad(m,st));hint='Ton niveau compte pour '+fmt2(lvVal(st))+'.'+(ld?' '+(S.prof.sex?'Ta charge recalculée : ':'Charge recalculée : ')+ld+'.':' Pas de charge indiquée pour ce niveau.')+' Tes points ne changent pas.';}
   return field('Choix du niveau personnalisé',sel(opts,String(a),v=>{const n=parseInt(v,10)||0;st.kg=n;if(n>0)st.level=2;else if(n<0)st.level=lo;render();},{id:'adj-select','aria-label':'Niveau personnalisé'}),hint);
 }
 function levelField(m,st,label){
@@ -3303,7 +3330,7 @@ function openRedo(w,date){
   if(lockedDate(date)||lockedDate(todayStr())){toast(LOCKMSG,true);return;}
   const m=metconOf(w),cur=S.logs[S.uid]||{},rd=(cur.redos||{})[date],mine=(cur.entries||{})[date];
   if(m.redo===false&&!rd){toast('Le REDO est désactivé sur ce metcon.',true);return;}
-  S.entry=null;
+  S.entry=null;S.entryGlowUntil=Date.now()+2900;
   const src=rd||mine||{};
   S.redo={date,score:'',rounds:'',reps:'',level:okLvl(m,src.level!==undefined?src.level:lowLvl(m)),kg:kgOf(src),custom:!!kgOf(src)};
   fillState(m,S.redo,rd);
@@ -3323,7 +3350,7 @@ function redoForm(w,date){
     }
     preview.textContent=(per?'':'Hors saison, ne compte pas au classement. ')+'REDO : '+fmtN(pts)+' pt'+(pts>1?'s':'')+' (1 si moins bien, 2 si égal, 3 si mieux).'+why;
   };
-  const form=h('form',{class:'card',onsubmit:e=>{e.preventDefault();submitRedo(w);}},h('h2',{class:'h2'},'REDO · '+w.title),
+  const form=h('form',{class:'stack',onsubmit:e=>{e.preventDefault();submitRedo(w);}},h('h2',{class:'h2'},'REDO · '+w.title),
     hasScore(first)?h('p',{class:'hint'},'À comparer avec ton premier résultat : '+lvlLab(m,first)+' · '+scoreText(m,first.score,first)+'. Même niveau et autant de points de metcon = égal ; plus de points, ou un niveau plus haut sans marquer moins = mieux ; un niveau plus bas ou moins de points = moins bien.'):null,
     levelField(m,S.redo,m.label+' · Ton niveau'),...scoreFields(m,S.redo,upd,'redo'));
   upd();
@@ -3356,6 +3383,7 @@ function openEntry(w,date,uid,coach){
   if(!coach&&lockedDate(date)){toast(LOCKMSG,true);return;}
   uid=uid||S.uid;
   const mine=S.logs[uid]&&S.logs[uid].entries&&S.logs[uid].entries[date];const m=metconOf(w);
+  if(!coach)S.entryGlowUntil=Date.now()+2900;
   S.entry={date,uid,coach:!!coach,score:'',rounds:'',reps:'',message:(mine&&mine.message)||'',level:m?okLvl(m,mine&&mine.level!==undefined?mine.level:lowLvl(m)):0,kg:kgOf(mine),custom:!!kgOf(mine),loads:{},prs:{}};
   if(mine){
     fillState(m,S.entry,mine);
@@ -3374,7 +3402,7 @@ function entryForm(w,date){
     preview.textContent=(per?'':'Hors saison, ne compte pas au classement. ')+'Points : '+base+' pour la séance'+(m?' + '+fmtN(perf)+' pour le metcon':'')+' = '+fmtN(base+perf);
   };
   const title=S.entry.coach?'Résultats de '+((S.logs[S.entry.uid]||{}).pseudo||'l’athlète'):'Mes résultats';
-  const form=h('form',{class:'card',id:'entry-form',onsubmit:e=>{e.preventDefault();submitEntry(w);}},h('h2',{class:'h2'},title));
+  const form=h('form',{class:S.entry.coach?'card':'stack',id:'entry-form',onsubmit:e=>{e.preventDefault();submitEntry(w);}},S.entry.coach?h('h2',{class:'h2'},title):h('p',{class:'eyebrow'},cap(fmtShort(date))+' · '+w.title));
   if(S.entry.coach)form.append(h('p',{class:'hint'},'Tu modifies ce résultat en tant que coach. Les points et le classement se recalculent tout de suite.'));
   (w.parts||[]).forEach(p=>{
     if(p.kind==='force'){
@@ -5529,7 +5557,7 @@ const TOURS={
     {sel:'main .wtitle',title:'Titre et points',text:'Le titre de la séance et les points de base qu’elle rapporte. Le metcon ajoute des points selon ton niveau.'},
     {sel:'.pbody',title:'Les parties de la séance',text:'Force, renforcement, metcon… Chaque partie détaille ce qu’il faut faire. Le metcon est celle qui rapporte des points au classement.'},
     {sel:'[data-tour=start-metcon]',title:'Démarrer le metcon',text:'Lance le minuteur en plein écran : 10 secondes de préparation, puis le chrono qui monte (For Time, avec le time cap), le compte à rebours et le bouton TOUR (AMRAP) ou un bip chaque minute (EMOM). À l’arrêt, tu peux corriger ton résultat : il est prérempli dans le formulaire.'},
-    {sel:'[data-tour=entry]',title:'Enregistre ton résultat',text:'Une fois la séance terminée, choisis ton niveau, entre tes charges et ton score ici, puis valide : tes points arrivent dans le classement.'},
+    {sel:'[data-tour=entry]',title:'Enregistre ton résultat',text:'Une fois la séance terminée, touche « Entrer mes résultats » : un encart s’ouvre (il s’ouvre aussi tout seul quand tu valides le minuteur). Les cases à remplir brillent un instant : choisis ton niveau, entre tes charges et ton score, puis valide. Tes points arrivent dans le classement.'},
     {sel:'[data-tour=tab-board]',title:'Et ensuite ?',text:'Tes points apparaissent dans l’onglet Classement.'}],
   board:()=>[
     {sel:'main .day',title:'Le classement',text:'Les points de tous les athlètes sur la saison. Ta ligne est mise en avant.'},
