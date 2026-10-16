@@ -616,6 +616,17 @@ html[data-hal] .top{border-bottom-color:#E8710A}
 .feed-card.th-angrypumpkin .feed-metric span{color:#8e9bb7}
 .feed-card.th-angrypumpkin .rxb{background:rgba(14,22,40,.78);border-color:#1f3157}
 .feed-card.th-angrypumpkin .rxb[aria-pressed="true"]{border-color:#ff8a2a;background:rgba(255,138,42,.18)}
+/* carte du fil habillée Alpha : la bannière Alpha reste en haut, le reste de la carte est noir avec des coups de pinceau dorés */
+.feed-card.th-alpha{position:relative;overflow:hidden;background:#0a0a0b;border-color:#3b3a3d;color:#f2f2f2}
+.feed-card.th-alpha::after{content:'';position:absolute;right:0;bottom:0;width:26%;aspect-ratio:312/317;background:url('assets/embedded/alpha-coin-bas-droit.webp') right bottom/100% 100% no-repeat;pointer-events:none;z-index:0}
+.feed-card.th-alpha>*{position:relative;z-index:1}
+.feed-card.th-alpha .wtitle{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.8)}
+.feed-card.th-alpha .sub{color:#a9a6a0}
+.feed-card.th-alpha .feed-metric{background:rgba(10,10,10,.72);border:1px solid #7a5a22}
+.feed-card.th-alpha .feed-metric b{color:#fff}
+.feed-card.th-alpha .feed-metric span{color:#a9a6a0}
+.feed-card.th-alpha .rxb{background:rgba(10,10,10,.72);border-color:#7a5a22}
+.feed-card.th-alpha .rxb[aria-pressed="true"]{border-color:#f5a623;background:rgba(245,166,35,.18)}
 .bn .nm,.bn .link,.bn h1{color:var(--panel-ink)}
 .bn .sub,.bn .eyebrow{color:var(--panel-muted)}
 .bn h1.day{font-size:34px}
@@ -803,7 +814,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-16.35';
+const APP_VERSION='2026-10-16.36';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -4245,7 +4256,7 @@ function bannerOf(uid){
   return {bg:pick('bg'),frame:pick('frame'),title:pick('title'),avframe:pick('avframe')};
 }
 /* thème de publication : le fond de bannière « Angry Pumpkin » habille toute la carte du fil */
-function cardTheme(uid){const c=(BN.bg[bannerOf(uid).bg]||{}).cls;return c==='bn-bg-angrypumpkin'?' th-angrypumpkin':'';}
+function cardTheme(uid){const c=(BN.bg[bannerOf(uid).bg]||{}).cls;return c==='bn-bg-angrypumpkin'?' th-angrypumpkin':c==='bn-bg-alpha'?' th-alpha':'';}
 function bannerEl(uid,kids,editable=false,withAvf=false){
   const b=bannerOf(uid),fr=b.frame?BN.frame[b.frame]:null;
   const el=h('div',{class:'bn '+BN.bg[b.bg].cls+(fr?' '+fr.cls:'')+(withAvf&&b.avframe?' bn-avf'+(withAvf==='lg'?' bn-avf-lg':''):'')+(editable?' bn-editable':''),'data-banner':b.bg,role:editable?'button':null,tabindex:editable?0:null,'aria-label':editable?'Personnaliser ma bannière':null,onclick:editable?e=>{if(e.target.closest&&e.target.closest('.feed-av,button,a'))return;S.profView='banner';render();window.scrollTo(0,0);}:null,onkeydown:editable?e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();S.profView='banner';render();window.scrollTo(0,0);}}:null},kids);
