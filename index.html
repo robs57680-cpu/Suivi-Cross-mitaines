@@ -750,12 +750,25 @@ html[data-hal] .top{border-bottom-color:#E8710A}
 import {firebaseConfig} from './firebase-config.js';
 import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
 import {getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
-import {getFirestore,collection,doc,onSnapshot,setDoc,deleteDoc} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+import {getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
 
 let auth=null;
 /* Petite couche qui expose Firestore sous la forme utilisée par l'appli */
+/* Écritures hors ligne : Firestore garde la saisie sur l'appareil et l'envoie au retour du réseau, mais sa promesse ne se résout
+   qu'une fois le serveur joint. Sans précaution, la file d'attente de run() resterait bloquée. softWrite rend donc la main tout de
+   suite hors ligne, et au plus tard après 2,5 s en connexion lente ; si le serveur refuse la saisie plus tard, onLateError prévient. */
+const netState={shown:0,onChange:null,onLateError:null};
+function softWrite(p){
+  const offline=navigator.onLine===false;
+  let shown=false,late=false;
+  const t=setTimeout(()=>{shown=true;netState.shown++;if(netState.onChange)netState.onChange();},800);
+  p.then(()=>{clearTimeout(t);if(shown){netState.shown--;if(netState.onChange)netState.onChange();}},
+         e=>{clearTimeout(t);if(shown){netState.shown--;if(netState.onChange)netState.onChange();}if(late&&netState.onLateError)netState.onLateError(e);});
+  if(offline){late=true;return Promise.resolve();}
+  return Promise.race([p,new Promise(res=>setTimeout(()=>{late=true;res();},2500))]);
+}
 function makeDb(fdb){
-  const wrapDoc=r=>({id:r.id,set:d=>setDoc(r,d),delete:()=>deleteDoc(r),
+  const wrapDoc=r=>({id:r.id,set:d=>softWrite(setDoc(r,d)),delete:()=>softWrite(deleteDoc(r)),
     onSnapshot:(n,e)=>onSnapshot(r,s=>n({exists:s.exists(),data:()=>s.data(),fromCache:!!(s.metadata&&s.metadata.fromCache)}),e)});
   return {
     doc:p=>wrapDoc(doc(fdb,p)),
@@ -768,7 +781,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-14.28';
+const APP_VERSION='2026-10-15.29';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -1702,7 +1715,7 @@ async function checkVersion(force){
 async function applyUpdate(){
   try{
     if(navigator.serviceWorker){const rs=await navigator.serviceWorker.getRegistrations();await Promise.all(rs.map(x=>{const u=(x.active||x.waiting||x.installing||{}).scriptURL||'';return /push-sw\.js$/.test(u)?x.update():x.unregister();}));} /* on garde le service worker des notifications : le désinscrire supprimerait l'abonnement */
-    if(window.caches){const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)));}
+    if(window.caches){const ks=await caches.keys();await Promise.all(ks.filter(k=>!/^boxscore-/.test(k)).map(k=>caches.delete(k)));} /* on garde le cache hors ligne (boxscore-*) : il se met à jour tout seul */
   }catch(e){}
   /* on récupère la dernière version directement (sans cache) et on remplace la page ; sinon rechargement classique */
   try{
@@ -1714,9 +1727,17 @@ async function applyUpdate(){
   }catch(e){}
   location.replace(location.pathname+'?v='+encodeURIComponent(S.newVersion||Date.now()));
 }
+function netBanner(){
+  const off=navigator.onLine===false,n=netState.shown;
+  if(!off&&!n)return [];
+  const msg=off?'Hors ligne : tes saisies sont gardées sur ton téléphone et seront envoyées dès le retour du réseau.'+(n?' ('+n+' en attente d’envoi)':'')
+              :n+' saisie'+(n>1?'s':'')+' en cours d’envoi…';
+  return [h('div',{class:'banner warn',role:'status'},h('p',{},msg))];
+}
 function updateBanner(){
-  return S.newVersion?[h('div',{class:'banner warn upd',role:'alert'},h('p',{},'Une nouvelle version de Box Score est disponible.'),
+  const up=S.newVersion?[h('div',{class:'banner warn upd',role:'alert'},h('p',{},'Une nouvelle version de Box Score est disponible.'),
     h('div',{class:'row'},h('button',{class:'btn primary',onclick:applyUpdate},'Mettre à jour')))]:[];
+  return [...up,...netBanner()];
 }
 
 /* ---------- rendu ---------- */
@@ -5387,7 +5408,7 @@ function loginView(){
     startTour(steps,{onEnd:()=>{(!e?email:pw).focus();}});
   };
   return h('div',{class:'stack'},
-    h('div',{},h('p',{class:'eyebrow'},'Groupe de crossfit'),h('h1',{class:'day'},'Connexion'),h('p',{class:'muted'},'Box Score : le classement de ton groupe de crossfit. Fais les séances du coach, note ton résultat, gagne des points.')),
+    h('div',{},h('p',{class:'eyebrow'},'Groupe de Crosstraining'),h('h1',{class:'day'},'Connexion'),h('p',{class:'muted'},'Box Score : le classement de ton groupe de Crosstraining. Fais les séances du coach, note ton résultat, gagne des points.')),
     h('form',{class:'card',onsubmit:e=>{e.preventDefault();attempt(()=>signInWithEmailAndPassword(auth,email.value.trim(),pw.value));}},
       field('E-mail',email),field('Mot de passe',pw),msg,
       h('div',{class:'row'},
@@ -5426,7 +5447,7 @@ const RULES=[
  {t:'Participation',b:['Certains classements demandent des informations dans ton profil : le sexe pour LA GOAT, le poids de corps pour « Poids / puissance »…','Le coach organise la compétition, publie les séances et gère les saisons.']},
  {t:'Saisons et séances',b:['La compétition est organisée en saisons. Chaque saison suit le même déroulé :',
   '**Premières semaines :** 2 ou 3 metcons « tests », où il faut se donner à fond.',
-  '**Pendant la saison :** on cherche à s’améliorer sur les mouvements de ces metcons tests, sans oublier la variété typique du CrossFit.',
+  '**Pendant la saison :** on cherche à s’améliorer sur les mouvements de ces metcons tests, sans oublier la variété typique du Crosstraining.',
   '**Avant-dernière semaine :** on refait les metcons tests pour voir si on a progressé.',
   '**Dernière semaine :** semaine de deload (allégée, pour récupérer).',
   'Une séance peut être réalisée n’importe quel jour de la semaine, du lundi au dimanche. Une séance rattrapée après sa semaine rapporte ses points, mais ne compte pas pour les flammes.','Chaque athlète saisit lui-même son résultat dans l’appli.']},
@@ -5514,7 +5535,7 @@ function viewShare(){
     toast('Lien copié');
   };
   const btns=[h('button',{class:'btn primary',type:'button',id:'share-copy',onclick:copy},'Copier le lien')];
-  if(navigator.share)btns.push(h('button',{class:'btn',type:'button',id:'share-native',onclick:()=>{navigator.share({title:'Box Score',text:'Rejoins le classement de notre groupe de crossfit sur Box Score.',url}).catch(()=>{});}},'Envoyer par…'));
+  if(navigator.share)btns.push(h('button',{class:'btn',type:'button',id:'share-native',onclick:()=>{navigator.share({title:'Box Score',text:'Rejoins le classement de notre groupe de Crosstraining sur Box Score.',url}).catch(()=>{});}},'Envoyer par…'));
   return h('div',{class:'stack'},
     h('div',{},h('p',{class:'eyebrow'},'Faire connaître Box Score'),h('h1',{class:'day'},'Partager l’appli')),
     h('section',{class:'card'},
@@ -5531,7 +5552,7 @@ const TOUR_STEPS={
 };
 const TOURS={
   login:()=>[
-    {title:'Bienvenue sur Box Score',text:'Le classement de ton groupe de crossfit. Le coach publie des séances, tu les fais quand tu veux dans la semaine, tu notes ton résultat et tu gagnes des points.'},
+    {title:'Bienvenue sur Box Score',text:'Le classement de ton groupe de Crosstraining. Le coach publie des séances, tu les fais quand tu veux dans la semaine, tu notes ton résultat et tu gagnes des points.'},
     {title:'Ton niveau, ta performance',text:'Sur chaque metcon, tu choisis le niveau qui te correspond (Débutant, Intermédiaire ou Rx). Les points récompensent ta performance à ton niveau : tout le monde peut viser le haut du classement.'},
     {title:'Plus qu’un classement',text:'Des trophées en fin de saison, des flammes pour la régularité, un avatar à habiller et un fil pour s’encourager avec des emojis.'},
     TOUR_STEPS.loginEmail,TOUR_STEPS.loginPw,TOUR_STEPS.loginCreate,
@@ -5697,7 +5718,16 @@ function init(){
   if(bad){S.authReady=true;render();return;}
   const app=initializeApp(firebaseConfig);
   auth=getAuth(app);
-  S.db=makeDb(getFirestore(app));
+  let fdb;
+  try{fdb=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});}
+  catch(e){fdb=getFirestore(app);} /* navigateur sans stockage local : l'appli marche, mais sans mode hors ligne */
+  S.db=makeDb(fdb);
+  netState.onChange=scheduleRender;
+  netState.onLateError=e=>toast('Une saisie faite hors ligne a été refusée : '+errMsg(e),true);
+  window.addEventListener('offline',scheduleRender);
+  window.addEventListener('online',scheduleRender);
+  /* service worker pour tout le monde (mode hors ligne) : le même fichier que celui des notifications */
+  if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))setTimeout(()=>{navigator.serviceWorker.register(PUSH_SW).catch(()=>{});},1500);
   render();
   let unsubs=[];
   onAuthStateChanged(auth,user=>{
