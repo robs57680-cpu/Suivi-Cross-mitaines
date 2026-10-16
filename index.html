@@ -1425,24 +1425,9 @@ function pullupBlock(text,nums){
   const pr=prFor('Traction lestée');
   if(!(bw>0))return h('div',{class:'chips'},h('span',{class:'chip miss'},'Renseigne ton poids de corps dans ton profil pour calculer le lest'));
   if(!pr||!isFinite(pr.kg))return h('div',{class:'chips'},h('span',{class:'chip miss'},'Enregistre ton 1 RM de Traction lestée dans ton profil'));
-  const rm=pr.kg;
-  const rp=text.match(/(\d+)\s*[x×]\s*(\d+)/i);
-  const wrap=h('div',{class:'pu'});
-  nums.forEach(n=>{
-    const c=pullupCalc(bw,rm,n);
-    const L=(a,b)=>h('div',{class:'pu-l'},h('span',{},a),h('span',{},b));
-    const card=h('div',{class:'pu-card'},
-      h('div',{class:'pu-t'},'Tractions lestées'+(rp?' — '+rp[1]+' × '+rp[2]:'')+' à '+n+' %'),
-      L('Poids de corps',fmtN(bw)+' kg'),
-      L('1 RM lesté',(rm>=0?'+':'')+fmtN(rm)+' kg'),
-      L('Charge totale au 1 RM',fmtN(c.total1)+' kg'),
-      L('Intensité',n+' %'),
-      L('Charge totale cible',fmtN(c.target)+' kg'));
-    if(rm>0&&c.ok)card.append(h('div',{class:'pu-r'},'Lest conseillé : +'+fmtN(c.rounded)+' kg'));
-    else card.append(h('div',{class:'pu-r'},'Le pourcentage calculé correspond à une charge inférieure ou égale à ton poids de corps. Réalise des tractions strictes au poids de corps si tu peux effectuer le nombre de répétitions prévu. Sinon, utilise une assistance adaptée.'));
-    wrap.append(card);
-  });
-  return wrap;
+  /* lest = (poids de corps + 1 RM lesté) × % − poids de corps ; affichage : seulement le lest conseillé, comme les autres mouvements de force */
+  return h('div',{class:'chips'},nums.map(n=>{const c=pullupCalc(bw,pr.kg,n);
+    return h('span',{class:'chip load'},n+' % = '+(c.ok?'lest +'+fmtN(c.rounded)+' kg':'sans lest'));}));
 }
 function renderLine(text){
   const line=h('div',{class:'line'},h('span',{},glossSegs(text)));
