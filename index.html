@@ -593,16 +593,14 @@ html[data-hal] .top{border-bottom-color:#E8710A}
    Le fond, le cadre et le titre se branchent via le registre BN (voir JS). */
 .bn{position:relative;min-width:0;width:100%;max-width:100%;padding:10px 12px;border:2px solid var(--edge);border-radius:4px;color:var(--panel-ink);overflow:hidden}
 .bn-bg-base{background:linear-gradient(115deg,var(--panel) 0 72%,var(--accent) 72% 75%,var(--panel) 75% 78%,var(--accent) 78% 80%,var(--panel) 80%)}
-.bn-bg-alpha{background-color:#0a0a0b;background-image:url('assets/embedded/banniere-box-score-Alpha.png');background-size:100% 100%;background-position:center;background-repeat:no-repeat;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.85);
-  /* la hauteur suit les proportions de l'image (lues au chargement, voir ALPHA_BN_SRC) : plus de barre, de poids ni de « ALPHA SEASON » coupés */
-  aspect-ratio:var(--alpha-r,4.17);display:flex;align-items:flex-end;padding:0 14px 4% 15%;border-color:#3b3a3d}
+.bn-bg-alpha{--alpha-k:1.2;background-color:#0a0a0b;background-image:url('assets/embedded/banniere-box-score-Alpha.png');background-size:contain;background-position:center;background-repeat:no-repeat;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.85);
+  /* image dézoomée (contain) : on la voit en entier (barre, poids, « ALPHA SEASON »), les bords restent noirs comme l'image.
+     --alpha-k règle la hauteur : 1 = hauteur exacte de l'image (plus haute), plus grand = bannière plus basse et image plus petite. */
+  aspect-ratio:calc(var(--alpha-r,4.17)*var(--alpha-k));display:flex;align-items:flex-end;padding:0 14px 2% calc((1 - 1/var(--alpha-k))*50% + 15%/var(--alpha-k));border-color:#3b3a3d}
 .bn-bg-alpha>*{flex:1;min-width:0}
 .bn-bg-alpha .nm,.bn-bg-alpha .link,.bn-bg-alpha h1,.bn-bg-alpha .sub,.bn-bg-alpha .eyebrow{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9),0 0 8px rgba(0,0,0,.6)}
 .bn-bg-alpha .bn-title{color:#f5a623;letter-spacing:.14em;text-shadow:0 1px 3px rgba(0,0,0,.9)}
 .bn.bn-bg-alpha .feed-av{box-shadow:0 0 0 2px #f5a623,0 0 0 4px rgba(0,0,0,.55)}
-/* fond Halloween : dégradé sombre à gauche pour garder le pseudo lisible ; background-position règle la partie de l'affiche visible */
-.bn-bg-halloween{background-image:linear-gradient(90deg,rgba(0,0,0,.62),rgba(0,0,0,.22) 65%,rgba(0,0,0,0)),url('assets/embedded/banniere-box-score-halloween.webp');background-size:cover;background-position:center 40%;background-repeat:no-repeat;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.75)}
-.bn-bg-halloween .nm,.bn-bg-halloween .link,.bn-bg-halloween h1,.bn-bg-halloween .sub,.bn-bg-halloween .eyebrow{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8)}
 /* fond Angry Pumpkin : visuel complet (cadre qui dégouline, citrouille, chauves-souris) ; zone centrale sombre réservée au pseudo */
 .bn-bg-angrypumpkin{background-color:#070b14;background-image:linear-gradient(90deg,rgba(0,0,0,.18),rgba(0,0,0,.35) 45%,rgba(0,0,0,0) 80%),url('assets/embedded/banniere-box-score-angry-pumpkin.webp');background-size:cover;background-position:center 35%;background-repeat:no-repeat;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.85);border-color:#1b2a4a;padding-left:min(22%,84px)}
 .bn-bg-angrypumpkin .nm,.bn-bg-angrypumpkin .link,.bn-bg-angrypumpkin h1,.bn-bg-angrypumpkin .sub,.bn-bg-angrypumpkin .eyebrow{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.85)}
@@ -4258,9 +4256,10 @@ const avfSrc=r=>(AVF[r.asset]||AVF.gold).src;
 /* fonds de bannière à image (dossier assets/embedded). Pour en ajouter : déposer l'image, ajouter une ligne ici et le CSS .bn-bg-<id> */
 const BG_ASSETS={
   alpha:{name:'Box Score Alpha',cls:'bn-bg-alpha',src:'assets/embedded/banniere-box-score-Alpha.png'},
-  halloween:{name:'Halloween',cls:'bn-bg-halloween',src:'assets/embedded/banniere-box-score-halloween.webp'},
   angrypumpkin:{name:'Angry Pumpkin',cls:'bn-bg-angrypumpkin',src:'assets/embedded/banniere-box-score-angry-pumpkin.webp'}
 };
+/* fond Halloween retiré : une ancienne récompense qui l'utiliserait n'est plus proposée aux athlètes ni au coach */
+const bgRemoved=r=>r.type==='bg'&&r.asset==='halloween';
 const bgRewardClass=r=>(BG_ASSETS[r.asset]||{}).cls||'bn-bg-base reward-bg';
 const BN_DEFAULT={bg:'base',frame:'',title:'',avframe:''};
 function bannerOf(uid){
@@ -4303,7 +4302,7 @@ function bannerSection(){
   const unlocked=[];
   for(const [pid,per] of Object.entries(S.periods||{}))for(const r of (per.rewards||[])){
     if(!owned.has(pid+':'+r.id))continue;
-    if(['title','frame','bg','avframe'].includes(r.type))unlocked.push({id:r.id,type:r.type,name:r.name||'Récompense',per:pid,asset:r.asset});
+    if(['title','frame','bg','avframe'].includes(r.type)&&!bgRemoved(r))unlocked.push({id:r.id,type:r.type,name:r.name||'Récompense',per:pid,asset:r.asset});
   }
   const sec=h('section',{class:'card'},h('h2',{class:'h2'},'Ma bannière'),
     h('p',{class:'muted'},'Clique sur ta bannière dans le profil pour revenir à ce menu. Choisis ici les éléments que tu as débloqués.'),
@@ -4317,10 +4316,14 @@ function bannerSection(){
   /* aperçus coach : récompenses de saison pas encore débloquées + visuels spéciaux (même sans récompense créée) */
   const testable=[];
   if(S.owner){
-    for(const [pid,per] of Object.entries(S.periods||{}))for(const r of (per.rewards||[]))if(['title','frame','bg','avframe'].includes(r.type)&&!owned.has(pid+':'+r.id))testable.push({id:r.id,type:r.type,name:r.name||'Récompense',per:pid,asset:r.asset});
+    for(const [pid,per] of Object.entries(S.periods||{}))for(const r of (per.rewards||[]))if(['title','frame','bg','avframe'].includes(r.type)&&!bgRemoved(r)&&!owned.has(pid+':'+r.id))testable.push({id:r.id,type:r.type,name:r.name||'Récompense',per:pid,asset:r.asset});
     for(const [k,v] of Object.entries(BG_ASSETS)){
       if(testable.some(r=>r.type==='bg'&&r.asset===k))continue;
       testable.push({id:'preview-'+k,type:'bg',name:'Fond '+v.name+' (visuel)',asset:k,special:true});
+    }
+    for(const [k,v] of Object.entries(AVF)){
+      if(testable.some(r=>r.type==='avframe'&&r.asset===k))continue;
+      testable.push({id:'preview-avf-'+k,type:'avframe',name:v.name+' (visuel)',asset:k,special:true});
     }
     testable.forEach(r=>{
       if(r.type==='bg'&&!BN.bg[r.id])BN.bg[r.id]={name:r.name,cls:r.special?BG_ASSETS[r.asset].cls:bgRewardClass(r)};
@@ -5360,7 +5363,7 @@ function rewardEditor(d){
     field('Type',sel([['title','Titre'],['frame','Encadré de bannière'],['bg','Fond de bannière'],['avatar','Cosmétique avatar'],['avframe','Cadre d’avatar (fil)']],r.type,v=>{r.type=v;if(v==='avframe'&&!AVF[r.asset])r.asset='gold';if(v==='avatar'&&!r.asset)r.asset=items[0]?.id||'';if(v==='bg'&&r.asset!=='base'&&!BG_ASSETS[r.asset])r.asset='base';render();})),
     field('XP requis',h('input',{type:'number',min:'0',step:'1',value:r.xp,oninput:e=>r.xp=e.target.value,placeholder:'100'})),
     field('Nom de la récompense',h('input',{class:'wide',value:r.name||'',oninput:e=>r.name=e.target.value,placeholder:'Ex. Athlète Alpha'}),null),
-    r.type==='avatar'?field('Cosmétique',sel(items.map(x=>[x.id,x.name]),r.asset,v=>{r.asset=v;},{class:'wide'})):r.type==='avframe'?field('Visuel du cadre',sel(Object.entries(AVF).map(([k,v])=>[k,v.name]),AVF[r.asset]?r.asset:'gold',v=>{r.asset=v;},{class:'wide'}),'Affiché autour de l’avatar dans le fil. L’athlète le choisit dans « Ma bannière ».'):r.type==='bg'?field('Visuel du fond',sel([['base','Box Score classique']].concat(Object.entries(BG_ASSETS).map(([k,v])=>[k,v.name])),r.asset||'base',v=>{r.asset=v;},{class:'wide'}),'Les fonds spéciaux (Alpha, Halloween, Angry Pumpkin) sont disponibles uniquement après avoir remporté cette récompense.'):null,
+    r.type==='avatar'?field('Cosmétique',sel(items.map(x=>[x.id,x.name]),r.asset,v=>{r.asset=v;},{class:'wide'})):r.type==='avframe'?field('Visuel du cadre',sel(Object.entries(AVF).map(([k,v])=>[k,v.name]),AVF[r.asset]?r.asset:'gold',v=>{r.asset=v;},{class:'wide'}),'Affiché autour de l’avatar dans le fil. L’athlète le choisit dans « Ma bannière ».'):r.type==='bg'?field('Visuel du fond',sel([['base','Box Score classique']].concat(Object.entries(BG_ASSETS).map(([k,v])=>[k,v.name])),r.asset||'base',v=>{r.asset=v;},{class:'wide'}),'Les fonds spéciaux (Alpha, Angry Pumpkin) sont disponibles uniquement après avoir remporté cette récompense.'):null,
     field('URL de l’image (facultatif)',h('input',{class:'wide',type:'url',value:r.image||'',oninput:e=>r.image=e.target.value,placeholder:'https://…'}),null));
   const rows=d.rewards.filter(r=>r.id!=='rat-laboratoire').map((r)=>h('div',{class:'reward-edit'},
     h('div',{class:'wide'},h('b',{},r.name||'Récompense sans nom'),h('div',{class:'sub'},(typeName[r.type]||'Récompense')+' · '+(Number(r.xp)||0)+' XP requis')),
