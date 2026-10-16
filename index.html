@@ -255,8 +255,16 @@ body.modal-open{overflow:hidden}
 .ov{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.55);display:grid;align-items:end;justify-items:center}
 .sheet{background:var(--surface);color:var(--ink);border:2px solid var(--edge);border-radius:4px 4px 0 0;width:100%;max-width:720px;max-height:85vh;overflow:auto;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));display:grid;gap:12px}
 .sheet ul{margin:4px 0 0;padding-left:20px;display:grid;gap:4px}
-.gl-img{display:grid;gap:8px;justify-items:start}.gl-fig{margin:0;display:grid;gap:6px;width:100%}.gl-fig[hidden]{display:none}.gl-fig img{width:100%;height:auto;border-radius:4px;border:2px solid var(--edge);display:block}
+.gl-img{display:grid;gap:8px;justify-items:start}.gl-fig{margin:0;display:grid;gap:6px;width:100%}.gl-fig[hidden]{display:none}.gl-fig img{width:100%;height:auto;border-radius:4px;border:2px solid var(--edge);display:block}.gl-fig video{width:100%;max-height:60vh;object-fit:contain;background:#000;border-radius:4px;border:2px solid var(--edge);display:block}
 .gok{color:var(--ok)}.gno{color:var(--danger)}
+/* apprentissage des mouvements */
+.mvcard{scroll-margin-top:calc(var(--toph,60px) + 56px);display:grid;gap:10px}
+.mvcard.focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent)}
+.mv-back{position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--toph,60px));z-index:4;background:var(--bg);padding:8px 0;margin-top:-8px}
+.vfs{position:fixed;inset:0;z-index:40;background:#000;display:grid;grid-template-rows:auto 1fr;color:#fff}
+.vfs-h{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;font-weight:700}
+.vfs-x{background:#fff2;border:0;color:#fff;font-size:20px;line-height:1;width:44px;height:44px;border-radius:50%;cursor:pointer}
+.vfs video{width:100%;height:100%;min-height:0;object-fit:contain;background:#000;padding-bottom:env(safe-area-inset-bottom,0px)}
 .chip.under{color:var(--plate-blue);border-color:var(--plate-blue)}
 .bar{height:10px;background:var(--surface2);border:1px solid var(--line);border-radius:2px;overflow:hidden}
 .bar i{display:block;height:100%}
@@ -829,7 +837,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-16.36';
+const APP_VERSION='2026-10-16.37';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -908,7 +916,8 @@ const GLOSS=[
 ['Overhead Squat',['overhead squat','ohs'],'Squat avec la barre maintenue bras tendus au-dessus de la tête pendant tout le mouvement.',['Bras verrouillés, barre stable au-dessus de la tête','Pli de la hanche sous le sommet des genoux'],['Bras qui fléchissent','Profondeur insuffisante']],
 ['Thruster',['thruster','db thruster','dumbbell thruster'],'Front squat enchaîné avec un développé au-dessus de la tête, en un seul mouvement fluide.',['Profondeur du squat atteinte','En haut : bras, hanches et genoux tendus, barre au-dessus de la tête'],['Profondeur insuffisante','Barre non verrouillée au-dessus de la tête','Extension incomplète des hanches en haut']],
 ['Deadlift',['deadlift','souleve de terre','sdt'],'Soulevé de terre : la barre monte du sol jusqu’aux hanches.',['Hanches et genoux tendus en haut, épaules en arrière','La barre touche le sol entre les répétitions'],['Extension incomplète en haut','Barre qui ne touche pas le sol entre deux répétitions']],
-['Clean',['clean','power clean','squat clean','hang clean','hang power clean'],'Épaulé : la barre passe du sol aux épaules en un mouvement. Power : reçue au-dessus de la parallèle ; squat : reçue en squat ; hang : départ au-dessus des genoux.',['Barre reçue sur les épaules','Hanches et genoux tendus en fin de mouvement'],['Barre qui ne se pose pas sur les épaules','Fin de mouvement sans extension complète','Power clean reçu sous la parallèle']],
+['Clean',['clean','power clean','squat clean','hang clean'],'Épaulé : la barre passe du sol aux épaules en un mouvement. Power : reçue au-dessus de la parallèle ; squat : reçue en squat ; hang : départ au-dessus des genoux.',['Barre reçue sur les épaules','Hanches et genoux tendus en fin de mouvement'],['Barre qui ne se pose pas sur les épaules','Fin de mouvement sans extension complète','Power clean reçu sous la parallèle']],
+['Hang Power Clean',['hang power clean'],'Épaulé en suspension : la barre part au-dessus des genoux et est reçue sur les épaules au-dessus de la parallèle.',['Départ barre au-dessus des genoux','Barre reçue sur les épaules, au-dessus de la parallèle','Hanches et genoux tendus en fin de mouvement'],['Barre qui ne se pose pas sur les épaules','Fin de mouvement sans extension complète','Réception sous la parallèle'],null,'assets/embedded/hang_power_clean.mp4'],
 ['Snatch',['snatch','power snatch','squat snatch','hang power snatch','arrache'],'Arraché : la barre passe du sol au-dessus de la tête en un seul mouvement.',['Barre verrouillée, bras tendus au-dessus de la tête','Hanches et genoux tendus en fin de mouvement'],['Bras non verrouillés','Mouvement en deux temps (barre posée sur les épaules)','Power snatch reçu sous la parallèle'],'assets/embedded/power_snatch_6_etapes.webp'],
 ['Clean & Jerk',['clean & jerk','clean and jerk','c&j'],'Épaulé-jeté : un clean, puis un jerk pour envoyer la barre au-dessus de la tête.',['Clean validé (barre sur les épaules)','Jerk fini bras, hanches et genoux tendus, pieds alignés'],['Bras non verrouillés en haut','Pieds non alignés en fin de jerk']],
 ['Jerk',['push jerk','split jerk','jerk'],'Jeté : la barre part des épaules vers le dessus de la tête grâce à une impulsion des jambes. Push jerk : réception genoux fléchis ; split jerk : réception en fente.',['Barre verrouillée, bras tendus au-dessus de la tête','Pieds ramenés alignés, hanches et genoux tendus'],['Bras non verrouillés','Pieds non alignés en fin de mouvement']],
@@ -939,7 +948,7 @@ const GLOSS_AL=(()=>{const out=[];GLOSS.forEach((g,gi)=>{const set=new Set();g[1
 const MUSCLES=[['pec','Pectoraux'],['eps','Épaules'],['bic','Biceps'],['tri','Triceps'],['avb','Avant-bras'],['trp','Trapèzes'],['dos','Dorsaux'],['lom','Lombaires'],['abd','Abdos / gainage'],['fes','Fessiers'],['qua','Quadriceps'],['isc','Ischio-jambiers'],['mol','Mollets']];
 /* muscle + 2 (principal) ou 1 (secondaire) */
 const MM={'Air Squat':'qua2 fes2 isc1 abd1 mol1','Back Squat':'qua2 fes2 isc1 lom1 abd1','Front Squat':'qua2 fes2 abd1 lom1','Overhead Squat':'qua2 fes2 eps2 abd2 trp1 tri1',
-'Thruster':'qua2 fes2 eps2 tri1 abd1','Deadlift':'fes2 isc2 lom2 trp1 dos1 avb1 qua1','Clean':'fes2 qua2 trp2 isc1 eps1 lom1 avb1 bic1','Snatch':'fes2 qua2 trp2 eps2 lom1 isc1 tri1',
+'Thruster':'qua2 fes2 eps2 tri1 abd1','Deadlift':'fes2 isc2 lom2 trp1 dos1 avb1 qua1','Clean':'fes2 qua2 trp2 isc1 eps1 lom1 avb1 bic1','Hang Power Clean':'fes2 qua2 trp2 isc1 eps1 lom1 avb1 bic1','Snatch':'fes2 qua2 trp2 eps2 lom1 isc1 tri1',
 'Clean & Jerk':'qua2 fes2 trp2 eps2 tri1 lom1','Jerk':'eps2 tri2 qua1 fes1 abd1','Push Press':'eps2 tri2 qua1 pec1','Shoulder Press':'eps2 tri2 pec1 trp1 abd1',
 'Bench Press':'pec2 tri2 eps1','Burpee':'pec2 tri1 eps1 abd1 qua1','Burpee Over the Bar':'pec2 tri1 eps1 abd1 qua1 mol1','Box Jump':'qua2 fes2 mol2 isc1',
 'Pull-up':'dos2 bic2 avb1 abd1 eps1','Chest to Bar':'dos2 bic2 trp1 avb1 abd1','Toes to Bar':'abd2 avb2 dos1 bic1 eps1','Muscle-up':'dos2 tri2 bic1 pec1 eps1 avb1',
@@ -999,7 +1008,10 @@ const kgOf=e=>{if(!e)return 0;if(e.kg!==undefined&&e.kg!==null&&e.kg!=='')return
 const isCust=e=>kgOf(e)!==0;
 const LV_MIN=1.5,LV_MAX=3.5,KG_STEP=5,KG_LV=0.25; /* 5 kg = 0,25 de niveau */
 /* valeur de niveau d'un résultat : niveau choisi + 0,25 par tranche de 5 kg (Rx +10 kg = 3,5 ; Débutant −10 kg = 1,5) */
-const lvVal=e=>Math.max(LV_MIN,Math.min(LV_MAX,LV_VAL[Math.max(0,Math.min(2,e.level||0))]+kgOf(e)/KG_STEP*KG_LV));
+/* rang d'un niveau (0 Débutant, 1 Intermédiaire, 2 Rx) : le niveau le plus haut d'un metcon est toujours Rx, même si le metcon n'a qu'un ou deux niveaux enregistrés */
+const lvTop=m=>Math.max(0,levelsOf(m).length-1);
+const lvRank=(m,i)=>Math.max(0,Math.min(2,(i||0)+Math.max(0,3-levelsOf(m).length)));
+const lvVal=(e,m)=>Math.max(LV_MIN,Math.min(LV_MAX,LV_VAL[m?lvRank(m,e.level):Math.max(0,Math.min(2,e.level||0))]+kgOf(e)/KG_STEP*KG_LV));
 /* niveau le plus proche d'une moyenne (à égalité, le plus haut) */
 function lvNear(avg){let b=0;for(let i=1;i<3;i++)if(Math.abs(avg-LV_VAL[i])<=Math.abs(avg-LV_VAL[b])+1e-9)b=i;return b;}
 /* niveau affiché : le plus proche, avec + ou - s'il n'est pas exact (2,6 = INT+, 2,9 = RX-, 2 = DEB) */
@@ -1109,7 +1121,7 @@ const REDO_PTS=[1,2,3]; /* moins bien, égal, mieux */
 function redoGrade(m,first,x){
   if(!m||!x||!hasScore(x))return 0;
   if(!first||!hasScore(first))return 3;
-  const pa=perfOf(m,first),pb=perfOf(m,x),dl=lvVal(x)-lvVal(first);
+  const pa=perfOf(m,first),pb=perfOf(m,x),dl=lvVal(x,m)-lvVal(first,m);
   if(dl<-1e-9)return 1;
   if(dl>1e-9)return pb>=pa-1e-9?3:1;
   if(pb>pa+1e-9)return 3;
@@ -1266,7 +1278,7 @@ function computeBoard(period){
       run++;r.streak=Math.max(r.streak,run);r.sessions++;
       const pts=wodPoints(w,e,period);r.base+=pts.base;r.perf+=pts.perf;
       const m=metconOf(w);
-      if(m&&e.level!==undefined){r.lvlSum+=lvVal(e);r.lvlN++;}
+      if(m&&e.level!==undefined){r.lvlSum+=lvVal(e,m);r.lvlN++;}
       if(m&&hasScore(e)){r.perfN++;const c=r.cat[m.focus];if(c){c.sum+=pts.perf;c.n++;}}
       for(const p of w.parts||[]){
         if(p.kind==='force'&&p.movement&&e.loads&&e.loads[p.label]>0){const k=norm(p.movement.trim());best[k]=Math.max(best[k]||0,e.loads[p.label]);}
@@ -1469,33 +1481,54 @@ function glossSegs(text){
 }
 /* image illustrée du mouvement (6e élément de l'entrée GLOSS), masquée par défaut, affichée via le bouton */
 function glossImg(g){
-  const fig=h('figure',{class:'gl-fig',hidden:true},
+  S.mvImg=S.mvImg||{};
+  const fig=h('figure',{class:'gl-fig',hidden:!S.mvImg[g[0]]},
     h('img',{src:g[5],alt:'Illustration en six étapes : '+g[0],loading:'lazy',decoding:'async'}),
     h('figcaption',{class:'hint'},'Power snatch en six étapes : départ, 1re tirée, 2e tirée, tirage sous la barre, réception, fin du mouvement.'));
-  const btn=h('button',{type:'button',class:'btn sm','aria-expanded':'false',onclick:()=>{
-    const open=fig.hidden;fig.hidden=!open;
+  const btn=h('button',{type:'button',class:'btn sm','aria-expanded':S.mvImg[g[0]]?'true':'false',onclick:()=>{
+    const open=fig.hidden;fig.hidden=!open;S.mvImg[g[0]]=open;
     btn.setAttribute('aria-expanded',open?'true':'false');
     btn.textContent=open?'Masquer l’image':'Voir l’image';
-  }},'Voir l’image');
+  }},S.mvImg[g[0]]?'Masquer l’image':'Voir l’image');
   return h('div',{class:'gl-img'},btn,fig);
 }
-function openGloss(gi){
-  const g=GLOSS[gi];if(!g)return;
-  const old=document.getElementById('gloss-ov');if(old)old.remove();
-  const esc=e=>{if(e.key==='Escape')close();};
-  const close=()=>{ov.remove();document.removeEventListener('keydown',esc);};
-  const ov=h('div',{class:'ov',id:'gloss-ov',onclick:e=>{if(e.target===ov)close();}},
-    h('div',{class:'sheet',role:'dialog','aria-modal':'true','aria-label':g[0]},
-      h('div',{},h('p',{class:'eyebrow'},'Mouvement'),h('h2',{class:'wtitle'},g[0])),
-      h('p',{},g[2]),
-      h('div',{},h('div',{class:'flabel gok'},'Rep valide'),h('ul',{},g[3].map(x=>h('li',{},x)))),
-      h('div',{},h('div',{class:'flabel gno'},'No rep'),h('ul',{},g[4].map(x=>h('li',{},x)))),
-      g[5]?glossImg(g):null,
-      h('p',{class:'hint'},'Standards habituels. Ton coach peut les préciser pour la séance.'),
-      h('button',{class:'btn primary',id:'gloss-close',type:'button',onclick:close},'Fermer')));
+/* vidéo du mouvement (7e élément de l'entrée GLOSS) : plein écran, lue en boucle dès l'ouverture */
+function openMoveVideo(g){
+  const old=document.getElementById('vfs');if(old)old.remove();
+  const vid=h('video',{src:g[6],controls:true,loop:true,autoplay:true,muted:true,playsinline:true,'aria-label':'Vidéo : '+g[0]});
+  vid.muted=true;vid.loop=true;
+  const esc=e=>{if(e.key==='Escape'){e.stopPropagation();close();}};
+  const close=()=>{
+    try{if(document.fullscreenElement)document.exitFullscreen();}catch(x){}
+    try{vid.pause();}catch(x){}
+    ov.remove();document.removeEventListener('keydown',esc,true);
+  };
+  const ov=h('div',{class:'vfs',id:'vfs',role:'dialog','aria-modal':'true','aria-label':'Vidéo : '+g[0]},
+    h('div',{class:'vfs-h'},h('span',{},g[0]),h('button',{type:'button',class:'vfs-x',id:'vfs-close','aria-label':'Fermer la vidéo',onclick:close},'✕')),
+    vid);
   document.body.append(ov);
-  document.addEventListener('keydown',esc);
-  document.getElementById('gloss-close').focus();
+  document.addEventListener('keydown',esc,true);
+  try{const r=ov.requestFullscreen&&ov.requestFullscreen();if(r&&r.catch)r.catch(()=>{});}catch(x){}
+  vid.play().catch(()=>{});
+}
+/* cliquer sur le nom d'un mouvement ouvre sa fiche dans l'onglet « Apprentissage des mouvements » ;
+   on retient l'endroit d'où l'on vient (onglet, séance affichée, position de défilement) pour le bouton « Retour à la séance » */
+function openGloss(gi){
+  if(!GLOSS[gi])return;
+  closeDrawer(true);
+  S.movBack={tab:S.tab,viewDate:S.viewDate,y:window.scrollY||0};
+  S.movFocus=gi;S.tip=null;S.tab='moves';
+  render();
+  setTimeout(()=>{const el=document.getElementById('mvfiche-'+gi);if(el)el.scrollIntoView({block:'start'});},30);
+}
+function movBackGo(){
+  const b=S.movBack;S.movBack=null;S.movFocus=null;
+  if(!b){go('today');return;}
+  S.tab=b.tab;S.viewDate=b.viewDate;
+  render();
+  window.scrollTo(0,b.y);
+  requestAnimationFrame(()=>window.scrollTo(0,b.y));
+  setTimeout(()=>window.scrollTo(0,b.y),60);
 }
 
 /* ---------- écritures ---------- */
@@ -1842,7 +1875,7 @@ const typing=()=>{const a=document.activeElement;return a&&main.contains(a)&&/^(
 function scheduleRender(){if(typing()){pending=true;return;}render();}
 document.addEventListener('focusout',()=>{if(!pending)return;setTimeout(()=>{if(!typing()){pending=false;render();}},0);});
 
-function go(tab){closeDrawer(true);if(S.coach)S.coach.wodOpen=false;if(tab==='coach'&&S.tab==='coach')S.coach.view=null;S.profView=null;S.viewUser=null;S.tip=null;S.trophOpen='';S.trophSeason='';S.tab=tab;S.boardDetail=false;S.confirm=null;if(S.entry&&S.entry.coach)S.entry=null;if(S.tab!=='today'){S.entry=null;S.redo=null;}render();window.scrollTo(0,0);}
+function go(tab){closeDrawer(true);S.movBack=null;S.movFocus=null;if(S.coach)S.coach.wodOpen=false;if(tab==='coach'&&S.tab==='coach')S.coach.view=null;S.profView=null;S.viewUser=null;S.tip=null;S.trophOpen='';S.trophSeason='';S.tab=tab;S.boardDetail=false;S.confirm=null;if(S.entry&&S.entry.coach)S.entry=null;if(S.tab!=='today'){S.entry=null;S.redo=null;}render();window.scrollTo(0,0);}
 function render(){
   pending=false;S._aw=null;S._ob=null;applyTheme();document.body.classList.remove('modal-open');
   {const tp=document.querySelector('.top');if(tp)document.documentElement.style.setProperty('--toph',tp.offsetHeight+'px');}
@@ -1860,14 +1893,14 @@ function render(){
   const tabs=[['feed','Fil'],['today','Séance'],['board','Classement']];
   const tabEls=tabs.map(([k,l])=>h('button',{class:'tab','data-tour':'tab-'+k,'aria-current':S.tab===k?'page':null,onclick:()=>go(k)},l));
   {
-    const activeExtra=['profile','coach','prefs','stats','share','rules'].includes(S.tab);
+    const activeExtra=['profile','coach','prefs','stats','share','rules','moves'].includes(S.tab);
     const bb=h('button',{class:'tab tab-burger','data-tour':'tab-menu','aria-current':activeExtra?'page':null,'aria-haspopup':'dialog','aria-expanded':drawerEl?'true':'false','aria-label':'Menu',title:'Menu',onclick:()=>{drawerEl?closeDrawer():openDrawer();}});
     bb.innerHTML=ICO_MENU;if(menuDot())bb.append(h('span',{class:'ibdot','aria-hidden':'true'}));
     tabEls.push(bb);
   }
   $('#tabs').classList.remove('coach-tabs');
   $('#tabs').replaceChildren(...tabEls);
-  const view={feed:viewFeed,today:viewToday,board:viewBoard,profile:viewProfile,coach:viewCoach,stats:viewStats,prefs:viewPrefs,share:viewShare,rules:viewRules}[S.tab]||viewFeed;
+  const view={feed:viewFeed,today:viewToday,board:viewBoard,profile:viewProfile,coach:viewCoach,stats:viewStats,prefs:viewPrefs,share:viewShare,rules:viewRules,moves:viewMoves}[S.tab]||viewFeed;
   const _esc=document.querySelector('.entry-sheet'),_escTop=_esc?_esc.scrollTop:0;
   main.replaceChildren(...banners(),view());
   {const n=document.querySelector('.entry-sheet');if(n&&_esc)n.scrollTop=_escTop;document.body.classList.toggle('modal-open',!!document.getElementById('entry-ov'));}
@@ -2818,9 +2851,9 @@ function levelDetail(m,lv,i){
 function customDetail(m){
   const lo=lowLvl(m),rows=[];
   const mk=(base,kg)=>{const lv=levelsOf(m)[base]||{},ld=loadsText({loadF:addKg(lv.loadF,kg),loadH:addKg(lv.loadH,kg)});
-    return h('div',{class:'lvl-head'},h('span',{class:'nm'},levelName(m,base)+' '+(kg>0?'+':'−')+Math.abs(kg)+' kg'),h('span',{class:'lvl-load'},'niveau '+fmt2(Math.max(LV_MIN,Math.min(LV_MAX,LV_VAL[base]+kg/KG_STEP*KG_LV)))+(ld?' · '+ld:'')));};
-  [5,10].forEach(k=>rows.push(mk(2,k)));
-  if(lo!==2)[5,10].forEach(k=>rows.push(mk(lo,-k)));
+    return h('div',{class:'lvl-head'},h('span',{class:'nm'},levelName(m,base)+' '+(kg>0?'+':'−')+Math.abs(kg)+' kg'),h('span',{class:'lvl-load'},'niveau '+fmt2(Math.max(LV_MIN,Math.min(LV_MAX,LV_VAL[lvRank(m,base)]+kg/KG_STEP*KG_LV)))+(ld?' · '+ld:'')));};
+  [5,10].forEach(k=>rows.push(mk(lvTop(m),k)));
+  if(lo!==lvTop(m))[5,10].forEach(k=>rows.push(mk(lo,-k)));
   return [h('div',{class:'sub'},'Ajoute ou retire des kilos à la charge d’un niveau : ton niveau monte ou descend de 0,25 par tranche de 5 kg (Rx +10 kg = 3,5 ; Débutant −10 kg = 1,5). Tes points ne changent pas.'),
     ...rows,S.prof.sex?null:h('p',{class:'sub'},'Renseigne ton sexe dans ton profil pour voir directement ta charge.')];
 }
@@ -3325,12 +3358,12 @@ const addKg=(t,kg)=>String(t||'').replace(/(\d+(?:[.,]\d+)?)(\s*kgs?)/gi,(x,n,u)
 function customLoad(m,st){const lv=levelsOf(m)[st.level]||{},k=kgOf(st);return {loadF:addKg(lv.loadF,k),loadH:addKg(lv.loadH,k)};}
 function adjPicker(m,st){
   const lo=lowLvl(m),opts=[['0','Choisir…']];
-  [5,10].forEach(n=>opts.push([String(n),levelName(m,2)+' +'+n+' kg']));
-  if(lo!==2)[5,10].forEach(n=>opts.push([String(-n),levelName(m,lo)+' −'+n+' kg']));
+  [5,10].forEach(n=>opts.push([String(n),levelName(m,lvTop(m))+' +'+n+' kg']));
+  if(lo!==lvTop(m))[5,10].forEach(n=>opts.push([String(-n),levelName(m,lo)+' −'+n+' kg']));
   const a=kgOf(st);
   let hint='Ajoute 5 ou 10 kg à la charge du niveau Rx, ou retire 5 ou 10 kg à celle du niveau le plus bas. Chaque tranche de 5 kg change ton niveau de 0,25 (10 kg = 0,5). Tes points ne changent pas : seul ton niveau est ajusté.';
-  if(a){const ld=loadsText(customLoad(m,st));hint='Ton niveau compte pour '+fmt2(lvVal(st))+'.'+(ld?' '+(S.prof.sex?'Ta charge recalculée : ':'Charge recalculée : ')+ld+'.':' Pas de charge indiquée pour ce niveau.')+' Tes points ne changent pas.';}
-  return field('Choix du niveau personnalisé',sel(opts,String(a),v=>{const n=parseInt(v,10)||0;st.kg=n;if(n>0)st.level=2;else if(n<0)st.level=lo;render();},{id:'adj-select','aria-label':'Niveau personnalisé'}),hint);
+  if(a){const ld=loadsText(customLoad(m,st));hint='Ton niveau compte pour '+fmt2(lvVal(st,m))+'.'+(ld?' '+(S.prof.sex?'Ta charge recalculée : ':'Charge recalculée : ')+ld+'.':' Pas de charge indiquée pour ce niveau.')+' Tes points ne changent pas.';}
+  return field('Choix du niveau personnalisé',sel(opts,String(a),v=>{const n=parseInt(v,10)||0;st.kg=n;if(n>0)st.level=lvTop(m);else if(n<0)st.level=lo;render();},{id:'adj-select','aria-label':'Niveau personnalisé'}),hint);
 }
 function levelField(m,st,label){
   const cust=!!st.custom||!!kgOf(st),lvl=levelsOf(m)[st.level]||{},canCust=m.customLvl!==false||cust;
@@ -3485,6 +3518,7 @@ function submitRedo(w){
   if(r.empty||r.bad||r.over||r.many){toast(r.empty?'Indique ton résultat.':scoreErr(m,r),true);return;}
   const v=r.v;
   const date=S.redo.date,cur=S.logs[S.uid]||{},old=(cur.redos||{})[date];
+  S.redo.level=okLvl(m,Number.isInteger(S.redo.level)?S.redo.level:lowLvl(m));
   const rd={on:(old&&old.on)||todayStr(),level:S.redo.level,at:new Date().toISOString()};
   if(kgOf(S.redo))rd.kg=kgOf(S.redo);
   if(r.cap){rd.cap=true;rd.capScore=v;if(r.rounds!==undefined)rd.rounds=r.rounds;rd.reps=r.reps;}
@@ -3551,6 +3585,7 @@ function submitEntry(w){
   const m=metconOf(w),e={at:(prevE&&prevE.at)||atNew};
   if(m){
     if(S.entry.custom&&!kgOf(S.entry)){toast('Choisis ton niveau personnalisé (par exemple Rx +10 kg).',true);return;}
+    S.entry.level=okLvl(m,Number.isInteger(S.entry.level)?S.entry.level:lowLvl(m)); /* jamais un niveau désactivé ou absent : à défaut, le plus bas disponible */
     e.level=S.entry.level;if(kgOf(S.entry))e.kg=kgOf(S.entry);
     const r=S.entry.skip?{empty:true}:readScore(m,S.entry);
     if(S.entry.skip)e.noMetcon=true;
@@ -5633,6 +5668,7 @@ function drawerItems(){
   out.push({id:'notif',label:'Notifications',ico:ICO_BELL,dot:notifDotOn(),cur:S.tab==='profile'&&S.profView==='notifs',fn:()=>{go('profile');S.profView='notifs';render();window.scrollTo(0,0);}});
   if(a)out.push({id:'mail',label:'Message du coach',ico:ICO_MAIL,dot:!annIsSeen(a),fn:()=>openAnnouncement(a,{review:true})});
   out.push({id:'rules',label:'Règlement',ico:ICO_RULES,dot:!rulesSeen(),cur:S.tab==='rules',fn:()=>{rulesMark();S.rulesI=0;go('rules');}});
+  out.push({id:'moves',label:'Apprentissage des mouvements',ico:ICO_MOVES,cur:S.tab==='moves',fn:()=>go('moves')});
   out.push({id:'share',label:'Partager l’appli',ico:ICO_PHONE,cur:S.tab==='share',fn:()=>go('share')});
   return out;
 }
@@ -5659,6 +5695,26 @@ function openDrawer(instant){
   const bb=document.querySelector('.tab-burger');if(bb)bb.setAttribute('aria-expanded','true');
   if(instant===true)D.classList.add('open');else{void D.offsetWidth;requestAnimationFrame(()=>D.classList.add('open'));}
   const f=D.querySelector('.dr-item');if(f&&instant!==true)f.focus({preventScroll:true});
+}
+/* ---------- apprentissage des mouvements : banque de fiches ---------- */
+const ICO_MOVES='<svg '+SVGA+'><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9.5v5l4.5-2.5z"/></svg>';
+function moveCard(g,gi){
+  const card=h('section',{class:'card mvcard'+(S.movFocus===gi?' focus':''),id:'mvfiche-'+gi},
+    h('h2',{class:'wtitle'},g[0]),
+    h('p',{},g[2]),
+    h('div',{},h('div',{class:'flabel gok'},'Rep valide'),h('ul',{},g[3].map(x=>h('li',{},x)))),
+    h('div',{},h('div',{class:'flabel gno'},'No rep'),h('ul',{},g[4].map(x=>h('li',{},x)))));
+  if(g[5])card.append(glossImg(g));
+  if(g[6])card.append(h('div',{class:'row'},h('button',{type:'button',class:'btn sm',onclick:()=>openMoveVideo(g)},'Voir la vidéo')));
+  return card;
+}
+function viewMoves(){
+  const el=h('div',{class:'stack'});
+  if(S.movBack)el.append(h('div',{class:'mv-back'},h('button',{type:'button',class:'btn primary',id:'mv-back',onclick:movBackGo},'← Retour à la séance')));
+  el.append(h('div',{},h('p',{class:'eyebrow'},'Banque de mouvements'),h('h1',{class:'day'},'Apprentissage des mouvements')),
+    h('p',{class:'hint'},'Standards habituels. Ton coach peut les préciser pour la séance.'));
+  GLOSS.forEach((g,gi)=>el.append(moveCard(g,gi)));
+  return el;
 }
 /* ---------- partager l'appli ---------- */
 const appUrl=()=>location.href.split(/[?#]/)[0].replace(/index\.html$/,'');
