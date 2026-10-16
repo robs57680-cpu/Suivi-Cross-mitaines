@@ -128,6 +128,11 @@ body.modal-open{overflow:hidden}
 .line{overflow-wrap:anywhere}
 .lines{display:grid;gap:6px}
 .tiers{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.pu{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.pu-card{border:1px solid var(--line,#ddd);border-radius:10px;padding:8px 10px;font-size:.92em}
+.pu-t{font-weight:700;margin-bottom:4px}
+.pu-l{display:flex;justify-content:space-between;gap:8px}
+.pu-r{margin-top:4px;font-weight:700}
 .tier{font-family:var(--f-mono);font-size:13px;background:var(--surface2);border:1px solid var(--line);border-radius:2px;padding:2px 8px}
 
 /* disques */
@@ -780,7 +785,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-16.30';
+const APP_VERSION='2026-10-16.32';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -1238,10 +1243,10 @@ function computeBoard(period){
     r.strength=Object.values(best).reduce((a,b)=>a+b,0);
     /* poids / puissance : meilleures charges (hors traction lestée) divisées par le poids de corps */
     r.sex=lg.sex||'';
-    r.weight=Number(lg.weight)>0?Number(lg.weight):0;
+    r.weight=(uid===S.uid&&Number(S.prof.weight)>0)?Number(S.prof.weight):0; /* le poids reste privé : seul le rapport charge ÷ poids est publié (logs/{uid}.ratios) */
     const relL=Object.entries(best).filter(([k])=>!SIGNED.some(s=>norm(s)===k));
     r.strengthRel=relL.reduce((a,x)=>a+x[1],0);r.ratioN=relL.length;
-    r.ratio=(r.weight>0&&r.ratioN>0)?r.strengthRel/r.ratioN/r.weight:0;
+    r.ratio=(r.weight>0&&r.ratioN>0)?r.strengthRel/r.ratioN/r.weight:((lg.ratios&&Number(lg.ratios[period.id])>0)?Number(lg.ratios[period.id]):0);
     r.perfAvg=r.perfN?r.perf/r.perfN:0;
     r.lvlAvg=r.lvlN?r.lvlSum/r.lvlN:0;
     r.mult=r.lvlN?r.lvlAvg/LEVEL_DIV:1;
@@ -1366,6 +1371,35 @@ function findMove(text){
   }
   return null;
 }
+const PU_STEP=0.5;
+function pullupCalc(bw,rm,pct){
+  const total1=bw+rm,target=total1*pct/100,lest=target-bw,rounded=Math.round(lest/PU_STEP)*PU_STEP;
+  return {total1,target,lest,rounded,ok:rounded>0};
+}
+function pullupBlock(text,nums){
+  const bw=parseNum(S.prof&&S.prof.weight);
+  const pr=prFor('Traction lestée');
+  if(!(bw>0))return h('div',{class:'chips'},h('span',{class:'chip miss'},'Renseigne ton poids de corps dans ton profil pour calculer le lest'));
+  if(!pr||!isFinite(pr.kg))return h('div',{class:'chips'},h('span',{class:'chip miss'},'Enregistre ton 1 RM de Traction lestée dans ton profil'));
+  const rm=pr.kg;
+  const rp=text.match(/(\d+)\s*[x×]\s*(\d+)/i);
+  const wrap=h('div',{class:'pu'});
+  nums.forEach(n=>{
+    const c=pullupCalc(bw,rm,n);
+    const L=(a,b)=>h('div',{class:'pu-l'},h('span',{},a),h('span',{},b));
+    const card=h('div',{class:'pu-card'},
+      h('div',{class:'pu-t'},'Tractions lestées'+(rp?' — '+rp[2]+' rép.':'')+' à '+n+' %'),
+      L('Poids de corps',fmtN(bw)+' kg'),
+      L('1 RM lesté',(rm>=0?'+':'')+fmtN(rm)+' kg'),
+      L('Charge totale au 1 RM',fmtN(c.total1)+' kg'),
+      L('Intensité',n+' %'),
+      L('Charge totale cible',fmtN(c.target)+' kg'));
+    if(rm>0&&c.ok)card.append(h('div',{class:'pu-r'},'Lest conseillé : +'+fmtN(c.rounded)+' kg'));
+    else card.append(h('div',{class:'pu-r'},'Le pourcentage calculé correspond à une charge inférieure ou égale à ton poids de corps. Réalise des tractions strictes au poids de corps si tu peux effectuer le nombre de répétitions prévu. Sinon, utilise une assistance adaptée.'));
+    wrap.append(card);
+  });
+  return wrap;
+}
 function renderLine(text){
   const line=h('div',{class:'line'},h('span',{},glossSegs(text)));
   const m=text.match(PCT_RE);
@@ -1373,6 +1407,7 @@ function renderLine(text){
     const nums=m[1].split(/\s*[\/–-]\s*/).map(Number).filter(n=>n>0&&n<=200);
     const canon=findMove(text);
     if(canon&&nums.length){
+      if(SIGNED.includes(canon)){line.append(pullupBlock(text,nums));return line;}
       const pr=prFor(canon);
       if(!(pr&&pr.kg<=0))line.append(pr?h('div',{class:'chips'},nums.map(n=>h('span',{class:'chip load'},n+' % = '+fmtKg(pr.kg*n/100))))
                     :h('div',{class:'chips'},h('span',{class:'chip miss'},'Renseigne ton PR de '+canon+' dans ton profil')));
@@ -1437,7 +1472,7 @@ function openGloss(gi){
 /* ---------- écritures ---------- */
 let chain=Promise.resolve();
 function run(fn){chain=chain.then(fn).catch(e=>{toast(errMsg(e),true);});return chain;}
-const saveProf=()=>run(async()=>{await S.db.doc('users/'+S.uid+'/private/profile').set({prs:S.prof.prs||{},sex:S.prof.sex||'',genEx:S.prof.genEx||null,genAll:S.prof.genAll||null,words:S.prof.words||[]});});
+const saveProf=()=>run(async()=>{await S.db.doc('users/'+S.uid+'/private/profile').set({prs:S.prof.prs||{},sex:S.prof.sex||'',genEx:S.prof.genEx||null,genAll:S.prof.genAll||null,words:S.prof.words||[],weight:Number(S.prof.weight)>0?Number(S.prof.weight):0});});
 const needPseudo=()=>S.uid&&S.loaded.logs&&!(S.logs[S.uid]&&S.logs[S.uid].pseudo);
 /* groupes : un seul document config/groups {list:[{id,name}], of:{uid:idDuGroupe}}, écrit par le coach seul */
 const groupsList=()=>(S.groups&&S.groups.list)||[];
@@ -1475,6 +1510,37 @@ function maybeFreeze(){
   S.db.doc('config/groups').set({list:groupsList(),of:S.groups.of||{},snap}).catch(()=>{S._freezing=false;});
 }
 const saveGroups=(list,of,msg)=>run(async()=>{const snap=freezeSnap()||(S.groups&&S.groups.snap)||{};await S.db.doc('config/groups').set({list,of,snap});if(msg)toast(msg);});
+/* Poids de corps privé : il vit dans users/{uid}/private/profile. Chaque athlète publie seulement son rapport charge ÷ poids, par saison
+   (logs/{uid}.ratios), que les autres lisent pour le classement « Poids / puissance ». Comme le coach peut corriger des résultats sans connaître
+   le poids, l'athlète recalcule et republie son rapport à l'ouverture de l'appli si besoin. Cette fonction migre aussi l'ancien poids public. */
+function myRatios(){
+  const out={};
+  if(!S.uid||!(Number(S.prof.weight)>0))return out;
+  for(const p of [...Object.values(S.periods),ALL]){
+    const row=computeBoard(p).rows.find(r=>r.uid===S.uid);
+    if(row&&row.weight>0&&row.ratio>0)out[p.id]=Math.round(row.ratio*100)/100;
+  }
+  return out;
+}
+function selfSync(){
+  clearTimeout(S._sst);
+  S._sst=setTimeout(async()=>{
+    if(S._sy||!S.uid||!S.db||!ready()||!S.profLoaded)return;
+    const lg=S.logs[S.uid];if(!lg)return;
+    S._sy=true;
+    try{
+      if(Number(lg.weight)>0){ /* ancien poids public : copié dans le profil privé, puis retiré du journal */
+        if(!(Number(S.prof.weight)>0))S.prof.weight=Number(lg.weight);
+        await saveProf();await saveLog({});
+        return;
+      }
+      const mine=myRatios(),pub=lg.ratios||{};
+      let diff=false;
+      for(const k of new Set([...Object.keys(mine),...Object.keys(pub)])){if(Math.abs((mine[k]||0)-(Number(pub[k])||0))>0.004){diff=true;break;}}
+      if(diff)await saveLog({ratios:mine});
+    }catch(e){}finally{S._sy=false;}
+  },1500);
+}
 /* uid facultatif : le coach peut écrire dans le journal d'un autre athlète (règles Firestore à adapter, voir README) */
 function saveLog(patch,msg,uid){
   uid=uid||S.uid;
@@ -1487,8 +1553,8 @@ function saveLog(patch,msg,uid){
     };
     const rd=patch.redos||cur.redos;
     if(rd&&Object.keys(rd).length)data.redos=rd;
-    const wt=patch.weight!==undefined?patch.weight:cur.weight;
-    if(wt>0)data.weight=wt;
+    const rt=patch.ratios!==undefined?patch.ratios:cur.ratios;
+    if(rt&&Object.keys(rt).length)data.ratios=rt; /* rapport charge ÷ poids par saison (le poids, lui, est privé) */
     const sx=patch.sex!==undefined?patch.sex:(cur.sex||(uid===S.uid?S.prof.sex:'')||'');
     if(sx)data.sex=sx;
     const bd=patch.badge!==undefined?patch.badge:cur.badge;
@@ -1507,7 +1573,7 @@ function saveLog(patch,msg,uid){
     if(Array.isArray(avS))data.avSeen=avS;
     await S.db.doc('logs/'+uid).set(data);
     // Keep the local log synchronized so the reward popup does not reopen.
-    S.logs[uid]=Object.assign({},cur,data);
+    S.logs[uid]=Object.assign({},cur,data);delete S.logs[uid].weight;
     if(msg)toast(msg);
     // Rafraîchir immédiatement la bannière après changement d'équipement.
     if(uid===S.uid)render();
@@ -4401,13 +4467,13 @@ function viewProfile(){
   /* informations personnelles */
   const lgMe=S.logs[S.uid]||{};
   const pin=h('input',{id:'pseudo-edit',type:'text',maxlength:'24',value:pseudo});
-  const win=h('input',{id:'weight-edit',type:'text',inputmode:'decimal',placeholder:'83',value:lgMe.weight>0?String(lgMe.weight).replace('.',','):''});
+  const win=h('input',{id:'weight-edit',type:'text',inputmode:'decimal',placeholder:'83',value:Number(S.prof.weight)>0?String(S.prof.weight).replace('.',','):''});
   const sx=sel([['','Non renseigné'],['F','Femme'],['H','Homme']],S.prof.sex||'',v=>{S.prof.sex=v;saveProf();if(S.logs[S.uid])saveLog({sex:v});render();},{id:'sex-select'});
   const infosForm=(h('form',{class:'card',onsubmit:e=>{e.preventDefault();
       const v=pin.value.trim();if(v.length<2){toast('Pseudo de 2 caractères minimum',true);return;}
       const wraw=win.value.trim(),wt=wraw===''?0:parseNum(wraw);
       if(wt===null||wt<0||wt>400){toast('Poids illisible. Écris-le en kg, par exemple 83.',true);return;}
-      saveLog({pseudo:v,weight:wt},'Infos mises à jour');}},
+      S.prof.weight=wt;saveProf();saveLog({pseudo:v},'Infos mises à jour');}},
     h('h2',{class:'h2'},'Mes infos'),field('Pseudo affiché dans le classement',pin),
     field('Poids de corps (kg)',win,'Sert au trophée poids / puissance. Seul ton rapport charge ÷ poids apparaît dans l’appli, jamais ton poids.'),
     h('div',{class:'row'},h('button',{class:'btn',type:'submit'},'Enregistrer mes infos')),
@@ -5757,13 +5823,13 @@ function init(){
   let unsubs=[];
   onAuthStateChanged(auth,user=>{
     unsubs.forEach(u=>u());unsubs=[];
-    S.loaded={periods:false,wods:false,logs:false};S.periods={};S.wods={};S.logs={};S.prof={prs:{},sex:''};
+    S.loaded={periods:false,wods:false,logs:false};S.periods={};S.wods={};S.logs={};S.prof={prs:{},sex:'',weight:0};S.profLoaded=false;
     S.sexSync=null;S.coachUid=null;S.coachLoaded=false;S.owner=false;S.error=null;S.entry=null;S.redo=null;S.viewDate=null;S.confirm=null;S.cerAuto=false;S._annDone=false;S.ann=null;S.annLoaded=false;S._aw=null;S.groups={list:[],of:{},snap:{}};S._freezing=false;S.boardGroup=undefined;S.comments={};S.reactions={};S.wu={cfg:null,loaded:false,list:false};
     S.coach={wod:null,editing:false,period:null,resDate:null};S.profView=null;S.viewUser=null;S.tip=null;S.tab=user?takeInitialTab():'feed';S.authReady=true;
     if(!user){S.uid=null;render();return;}
     S.uid=user.uid;setTimeout(pushSync,2500);S.meName=user.displayName||(user.email||'').split('@')[0]||'';
     const fail=e=>{S.error=(e&&e.code==='permission-denied')?'Accès refusé par la base de données. Publie les règles de sécurité (voir README).':'Lecture des données impossible pour le moment.';scheduleRender();};
-    const watch=(path,key)=>unsubs.push(S.db.collection(path).onSnapshot(sn=>{S[key]=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));S.loaded[key]=true;scheduleRender();},fail));
+    const watch=(path,key)=>unsubs.push(S.db.collection(path).onSnapshot(sn=>{S[key]=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));S.loaded[key]=true;scheduleRender();if(key==='logs')selfSync();},fail));
     watch('periods','periods');watch('wods','wods');watch('logs','logs');
     unsubs.push(S.db.doc('config/coach').onSnapshot(sn=>{S.coachUid=sn.exists?(sn.data().uid||null):null;S.coachLoaded=true;S.owner=!!S.coachUid&&S.coachUid===S.uid;wuMaybeSeed();scheduleRender();},fail));
     /* les groupes ne bloquent jamais l'appli : si les règles ne sont pas encore publiées, on ignore l'erreur */
@@ -5776,7 +5842,7 @@ function init(){
     unsubs.push(S.db.collection('comments').onSnapshot(sn=>{S.comments=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));if(S.cerRefresh)S.cerRefresh();},()=>{}));
     /* réactions emoji : si les règles ne sont pas publiées, on ignore l'erreur */
     unsubs.push(S.db.collection('reactions').onSnapshot(sn=>{S.reactions=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));scheduleRender();},()=>{}));
-    unsubs.push(S.db.doc('users/'+S.uid+'/private/profile').onSnapshot(sn=>{const d=sn.exists?sn.data():null;S.prof={prs:(d&&d.prs)?JSON.parse(JSON.stringify(d.prs)):{},sex:(d&&d.sex)||'',genEx:(d&&Array.isArray(d.genEx))?d.genEx:null,genAll:(d&&Array.isArray(d.genAll))?d.genAll:null,words:(d&&Array.isArray(d.words))?d.words:[]};scheduleRender();},fail));
+    unsubs.push(S.db.doc('users/'+S.uid+'/private/profile').onSnapshot(sn=>{const d=sn.exists?sn.data():null;S.prof={prs:(d&&d.prs)?JSON.parse(JSON.stringify(d.prs)):{},sex:(d&&d.sex)||'',genEx:(d&&Array.isArray(d.genEx))?d.genEx:null,genAll:(d&&Array.isArray(d.genAll))?d.genAll:null,words:(d&&Array.isArray(d.words))?d.words:[],weight:(d&&Number(d.weight)>0)?Number(d.weight):0};S.profLoaded=true;scheduleRender();selfSync();},fail));
     render();
   });
 }
