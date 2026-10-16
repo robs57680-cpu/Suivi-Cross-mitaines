@@ -602,6 +602,19 @@ html[data-hal] .top{border-bottom-color:#E8710A}
 .bn-bg-angrypumpkin{background-color:#070b14;background-image:linear-gradient(90deg,rgba(0,0,0,.18),rgba(0,0,0,.35) 45%,rgba(0,0,0,0) 80%),url('assets/embedded/banniere-box-score-angry-pumpkin.webp');background-size:cover;background-position:center 35%;background-repeat:no-repeat;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.85);border-color:#1b2a4a;padding-left:min(22%,84px)}
 .bn-bg-angrypumpkin .nm,.bn-bg-angrypumpkin .link,.bn-bg-angrypumpkin h1,.bn-bg-angrypumpkin .sub,.bn-bg-angrypumpkin .eyebrow{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.85)}
 .bn-bg-angrypumpkin .bn-title,.bn-bg-angrypumpkin .eyebrow{color:#ff8a2a}
+/* carte du fil habillée Angry Pumpkin : le visuel passe derrière tout le haut de la carte, les gouttes débordent sur le contenu */
+.feed-card.th-angrypumpkin{position:relative;overflow:hidden;background:#090d17;border-color:#1b2a4a;color:#f2f4f8}
+.feed-card.th-angrypumpkin::before{content:'';position:absolute;left:0;right:0;top:0;height:clamp(98px,27vw,170px);background:url('assets/embedded/banniere-box-score-angry-pumpkin.webp') center top/cover no-repeat;pointer-events:none;z-index:0}
+.feed-card.th-angrypumpkin::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 100%,rgba(255,122,24,.10),rgba(255,122,24,0) 60%);pointer-events:none;z-index:0}
+.feed-card.th-angrypumpkin>*{position:relative;z-index:1}
+.feed-card.th-angrypumpkin>.bn{background:none;border:0;box-shadow:none;padding-left:min(22%,84px)}
+.feed-card.th-angrypumpkin .wtitle{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.8)}
+.feed-card.th-angrypumpkin .sub{color:#9aa6bf}
+.feed-card.th-angrypumpkin .feed-metric{background:rgba(14,22,40,.78);border-color:#1f3157}
+.feed-card.th-angrypumpkin .feed-metric b{color:#fff}
+.feed-card.th-angrypumpkin .feed-metric span{color:#8e9bb7}
+.feed-card.th-angrypumpkin .rxb{background:rgba(14,22,40,.78);border-color:#1f3157}
+.feed-card.th-angrypumpkin .rxb[aria-pressed="true"]{border-color:#ff8a2a;background:rgba(255,138,42,.18)}
 .bn .nm,.bn .link,.bn h1{color:var(--panel-ink)}
 .bn .sub,.bn .eyebrow{color:var(--panel-muted)}
 .bn h1.day{font-size:34px}
@@ -789,7 +802,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-16.33';
+const APP_VERSION='2026-10-16.34';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -3173,7 +3186,7 @@ function viewFeed(){
       const n=Object.values(S.reactions).filter(r=>r&&r.to===uid&&r.date===date&&r.emoji===em).length;
       return h('button',{type:'button',class:'rxb','aria-pressed':mine===em?'true':'false','aria-label':RXN[em],onclick:()=>reactTo(uid,date,em)},em,n?h('small',{},n):null);
     }));
-    el.append(h('section',{class:'card feed-card'},head,h('div',{class:'feed-wod-head'},h('h2',{class:'wtitle',style:'font-size:24px;margin:0'},w.title),h('span',{class:'sub feed-wod-date'},'Réalisée le '+cap(fmtShort(dfmt(new Date(e.at)))))),results.length?h('div',{class:'feed-result'},results):h('p',{class:'muted'},'Résultat détaillé non renseigné.'),e.message?h('p',{class:'feed-message',style:'white-space:pre-wrap;overflow-wrap:anywhere;margin:0'},e.message):null,h('div',{class:'rxwrap'},rx,feedPts(w,e))));
+    el.append(h('section',{class:'card feed-card'+cardTheme(uid)},head,h('div',{class:'feed-wod-head'},h('h2',{class:'wtitle',style:'font-size:24px;margin:0'},w.title),h('span',{class:'sub feed-wod-date'},'Réalisée le '+cap(fmtShort(dfmt(new Date(e.at)))))),results.length?h('div',{class:'feed-result'},results):h('p',{class:'muted'},'Résultat détaillé non renseigné.'),e.message?h('p',{class:'feed-message',style:'white-space:pre-wrap;overflow-wrap:anywhere;margin:0'},e.message):null,h('div',{class:'rxwrap'},rx,feedPts(w,e))));
   });
   if(posts.length>visiblePosts.length){
     el.append(h('div',{class:'row',style:'justify-content:center'},
@@ -4230,6 +4243,8 @@ function bannerOf(uid){
   const pick=k=>(b[k]&&BN[k][b[k]])?b[k]:BN_DEFAULT[k];
   return {bg:pick('bg'),frame:pick('frame'),title:pick('title'),avframe:pick('avframe')};
 }
+/* thème de publication : le fond de bannière « Angry Pumpkin » habille toute la carte du fil */
+function cardTheme(uid){const c=(BN.bg[bannerOf(uid).bg]||{}).cls;return c==='bn-bg-angrypumpkin'?' th-angrypumpkin':'';}
 function bannerEl(uid,kids,editable=false,withAvf=false){
   const b=bannerOf(uid),fr=b.frame?BN.frame[b.frame]:null;
   const el=h('div',{class:'bn '+BN.bg[b.bg].cls+(fr?' '+fr.cls:'')+(withAvf&&b.avframe?' bn-avf'+(withAvf==='lg'?' bn-avf-lg':''):'')+(editable?' bn-editable':''),'data-banner':b.bg,role:editable?'button':null,tabindex:editable?0:null,'aria-label':editable?'Personnaliser ma bannière':null,onclick:editable?e=>{if(e.target.closest&&e.target.closest('.feed-av,button,a'))return;S.profView='banner';render();window.scrollTo(0,0);}:null,onkeydown:editable?e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();S.profView='banner';render();window.scrollTo(0,0);}}:null},kids);
