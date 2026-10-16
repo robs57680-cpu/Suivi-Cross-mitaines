@@ -593,8 +593,13 @@ html[data-hal] .top{border-bottom-color:#E8710A}
    Le fond, le cadre et le titre se branchent via le registre BN (voir JS). */
 .bn{position:relative;min-width:0;width:100%;max-width:100%;padding:10px 12px;border:2px solid var(--edge);border-radius:4px;color:var(--panel-ink);overflow:hidden}
 .bn-bg-base{background:linear-gradient(115deg,var(--panel) 0 72%,var(--accent) 72% 75%,var(--panel) 75% 78%,var(--accent) 78% 80%,var(--panel) 80%)}
-.bn-bg-alpha{background-image:url('/TEST-des-versions-cross-mitaines/assets/embedded/banniere-box-score-Alpha.png');background-size:cover;background-position:center;background-repeat:no-repeat;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.75)}
-.bn-bg-alpha .nm,.bn-bg-alpha .link,.bn-bg-alpha h1,.bn-bg-alpha .sub,.bn-bg-alpha .eyebrow{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.75)}
+.bn-bg-alpha{background-color:#0a0a0b;background-image:url('assets/embedded/banniere-box-score-Alpha.png');background-size:100% 100%;background-position:center;background-repeat:no-repeat;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.85);
+  /* la hauteur suit les proportions de l'image (lues au chargement, voir ALPHA_BN_SRC) : plus de barre, de poids ni de « ALPHA SEASON » coupés */
+  aspect-ratio:var(--alpha-r,4.17);display:flex;align-items:flex-end;padding:0 14px 4% 15%;border-color:#3b3a3d}
+.bn-bg-alpha>*{flex:1;min-width:0}
+.bn-bg-alpha .nm,.bn-bg-alpha .link,.bn-bg-alpha h1,.bn-bg-alpha .sub,.bn-bg-alpha .eyebrow{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.9),0 0 8px rgba(0,0,0,.6)}
+.bn-bg-alpha .bn-title{color:#f5a623;letter-spacing:.14em;text-shadow:0 1px 3px rgba(0,0,0,.9)}
+.bn.bn-bg-alpha .feed-av{box-shadow:0 0 0 2px #f5a623,0 0 0 4px rgba(0,0,0,.55)}
 /* fond Halloween : dégradé sombre à gauche pour garder le pseudo lisible ; background-position règle la partie de l'affiche visible */
 .bn-bg-halloween{background-image:linear-gradient(90deg,rgba(0,0,0,.62),rgba(0,0,0,.22) 65%,rgba(0,0,0,0)),url('assets/embedded/banniere-box-score-halloween.webp');background-size:cover;background-position:center 40%;background-repeat:no-repeat;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.75)}
 .bn-bg-halloween .nm,.bn-bg-halloween .link,.bn-bg-halloween h1,.bn-bg-halloween .sub,.bn-bg-halloween .eyebrow{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8)}
@@ -619,13 +624,24 @@ html[data-hal] .top{border-bottom-color:#E8710A}
 /* carte du fil habillée Alpha : la bannière Alpha reste en haut, le reste de la carte est noir avec des coups de pinceau dorés */
 .feed-card.th-alpha{position:relative;overflow:hidden;background:#0a0a0b;border-color:#3b3a3d;color:#f2f2f2}
 .feed-card.th-alpha::after{content:'';position:absolute;right:0;bottom:0;width:26%;aspect-ratio:312/317;background:url('assets/embedded/alpha-coin-bas-droit.webp') right bottom/100% 100% no-repeat;pointer-events:none;z-index:0}
+/* coups de pinceau dorés : coin bas-gauche de la carte, coin haut-gauche sous la bannière, soulignés du titre / des résultats / du message */
+.feed-card.th-alpha::before{content:'';position:absolute;left:0;bottom:0;width:36%;aspect-ratio:420/380;background:url('assets/embedded/alpha-coin-bas-gauche.webp') left bottom/100% 100% no-repeat;pointer-events:none;z-index:0}
 .feed-card.th-alpha>*{position:relative;z-index:1}
-.feed-card.th-alpha .wtitle{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.8)}
+.feed-card.th-alpha>.bn{z-index:2}
+.feed-card.th-alpha .feed-wod-head{position:relative;margin-bottom:6px}
+.feed-card.th-alpha .feed-wod-head::before{content:'';position:absolute;left:-16px;top:-14px;width:96px;aspect-ratio:300/260;background:url('assets/embedded/alpha-coin-haut-gauche.webp') left top/100% 100% no-repeat;pointer-events:none;z-index:-1}
+.feed-card.th-alpha .wtitle{position:relative;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.8)}
+.feed-card.th-alpha .wtitle::after,.feed-card.th-alpha .feed-message::after,.feed-card.th-alpha .feed-metric::before{content:'';position:absolute;left:0;height:20px;background:url('assets/embedded/alpha-trait.webp') left center/100% 100% no-repeat;pointer-events:none;z-index:-1}
+.feed-card.th-alpha .wtitle::after{bottom:-12px;width:min(100%,300px)}
+.feed-card.th-alpha .feed-message{position:relative}
+.feed-card.th-alpha .feed-message::after{bottom:-14px;width:min(70%,260px)}
 .feed-card.th-alpha .sub{color:#a9a6a0}
-.feed-card.th-alpha .feed-metric{background:rgba(10,10,10,.72);border:1px solid #7a5a22}
+.feed-card.th-alpha .feed-metric{position:relative;isolation:isolate;background:rgba(10,10,10,.72);border:1px solid #b8862d;border-radius:4px;overflow:hidden}
+.feed-card.th-alpha .feed-metric::before{left:6px;top:34px;width:70%;height:16px}
+.feed-card.th-alpha .feed-metric>*{position:relative;z-index:1}
 .feed-card.th-alpha .feed-metric b{color:#fff}
 .feed-card.th-alpha .feed-metric span{color:#a9a6a0}
-.feed-card.th-alpha .rxb{background:rgba(10,10,10,.72);border-color:#7a5a22}
+.feed-card.th-alpha .rxb{background:rgba(10,10,10,.72);border-color:#b8862d}
 .feed-card.th-alpha .rxb[aria-pressed="true"]{border-color:#f5a623;background:rgba(245,166,35,.18)}
 .bn .nm,.bn .link,.bn h1{color:var(--panel-ink)}
 .bn .sub,.bn .eyebrow{color:var(--panel-muted)}
@@ -649,6 +665,7 @@ html[data-hal] .top{border-bottom-color:#E8710A}
 .avf.lg{width:64px;height:64px}
 .avf.lg>.avf-img{width:99px;height:99px}
 .bn.bn-avf.bn-avf-lg{padding:18px 20px}
+.avf>.avf-img.avf-glow{filter:drop-shadow(0 0 2px rgba(255,255,255,.55)) drop-shadow(0 0 6px rgba(255,255,255,.25))}
 .avf-thumb{width:44px;height:44px;object-fit:contain;flex:none;background:#15171B;border-radius:50%}
 
 /* Récompenses XP de saison */
@@ -4231,7 +4248,12 @@ function avatarCoach(){
 const BN={bg:{base:{name:'Box Score',cls:'bn-bg-base'}},frame:{},title:{},avframe:{}};
 /* Cadres d'avatar (affichés autour de l'avatar dans le fil uniquement). Les images sont dans le dossier assets du dépôt, pas dans index.html.
    Pour en ajouter : déposer l'image dans assets/embedded/ puis ajouter une ligne ici (id: {name, src}). */
-const AVF={gold:{name:'Cadre doré',src:'assets/embedded/cadre-avatar-dore.webp'}};
+const AVF={gold:{name:'Cadre doré',src:'assets/embedded/cadre-avatar-dore.webp'},
+  fumee:{name:'Cadre fumée noire',src:'assets/embedded/cadre-avatar-fumee-noire.webp'}};
+/* cadres sombres : léger halo clair pour rester visibles par-dessus un fond de bannière foncé */
+const ALPHA_BN_SRC='assets/embedded/banniere-box-score-Alpha.png';
+(()=>{const im=new Image();im.onload=()=>{if(im.naturalWidth&&im.naturalHeight)document.documentElement.style.setProperty('--alpha-r',(im.naturalWidth/im.naturalHeight).toFixed(4));};im.src=ALPHA_BN_SRC;})();
+const AVF_GLOW={'assets/embedded/cadre-avatar-fumee-noire.webp':1};
 const avfSrc=r=>(AVF[r.asset]||AVF.gold).src;
 /* fonds de bannière à image (dossier assets/embedded). Pour en ajouter : déposer l'image, ajouter une ligne ici et le CSS .bn-bg-<id> */
 const BG_ASSETS={
@@ -4266,7 +4288,7 @@ function bannerEl(uid,kids,editable=false,withAvf=false){
 function avatarFramed(uid,onclick,big=false){
   const circle=avatarCircle(uid,big,onclick),fid=bannerOf(uid).avframe;
   if(!fid||!BN.avframe[fid])return circle;
-  return h('div',{class:'avf'+(big?' lg':'')},circle,h('img',{class:'avf-img',src:BN.avframe[fid].src,alt:'',draggable:'false',loading:'lazy',decoding:'async'}));
+  return h('div',{class:'avf'+(big?' lg':'')},circle,h('img',{class:'avf-img'+(AVF_GLOW[BN.avframe[fid].src]?' avf-glow':''),src:BN.avframe[fid].src,alt:'',draggable:'false',loading:'lazy',decoding:'async'}));
 }
 const bannerTitle=uid=>{const t=bannerOf(uid).title;return t?h('div',{class:'bn-title'},BN.title[t].text):null;};
 function avatarCircle(uid,big,onclick){
