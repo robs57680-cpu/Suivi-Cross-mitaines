@@ -602,12 +602,13 @@ html[data-hal] .top{border-bottom-color:#E8710A}
 .bn-bg-angrypumpkin{background-color:#070b14;background-image:linear-gradient(90deg,rgba(0,0,0,.18),rgba(0,0,0,.35) 45%,rgba(0,0,0,0) 80%),url('assets/embedded/banniere-box-score-angry-pumpkin.webp');background-size:cover;background-position:center 35%;background-repeat:no-repeat;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.85);border-color:#1b2a4a;padding-left:min(22%,84px)}
 .bn-bg-angrypumpkin .nm,.bn-bg-angrypumpkin .link,.bn-bg-angrypumpkin h1,.bn-bg-angrypumpkin .sub,.bn-bg-angrypumpkin .eyebrow{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.85)}
 .bn-bg-angrypumpkin .bn-title,.bn-bg-angrypumpkin .eyebrow{color:#ff8a2a}
-/* carte du fil habillée Angry Pumpkin : le visuel passe derrière tout le haut de la carte, les gouttes débordent sur le contenu */
-.feed-card.th-angrypumpkin{position:relative;overflow:hidden;background:#090d17;border-color:#1b2a4a;color:#f2f4f8}
-.feed-card.th-angrypumpkin::before{content:'';position:absolute;left:0;right:0;top:0;height:clamp(98px,27vw,170px);background:url('assets/embedded/banniere-box-score-angry-pumpkin.webp') center top/cover no-repeat;pointer-events:none;z-index:0}
-.feed-card.th-angrypumpkin::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 100%,rgba(255,122,24,.10),rgba(255,122,24,0) 60%);pointer-events:none;z-index:0}
+/* carte du fil habillée Angry Pumpkin : sans contour, le haut du visuel est le haut de la carte et les gouttes du bas en sont le bas */
+.feed-card.th-angrypumpkin{--pk-h:clamp(98px,27vw,170px);--pk-b:clamp(34px,9vw,58px);position:relative;overflow:hidden;background:#090d17;border:0;border-radius:0;color:#f2f4f8;padding-bottom:calc(var(--pk-b) - 4px)}
+.feed-card.th-angrypumpkin::before{content:'';position:absolute;left:0;right:0;top:0;height:var(--pk-h);background:url('assets/embedded/banniere-box-score-angry-pumpkin.webp') center top/cover no-repeat;pointer-events:none;z-index:0}
+.feed-card.th-angrypumpkin::after{content:'';position:absolute;left:0;right:0;bottom:0;height:var(--pk-b);background:url('assets/embedded/banniere-box-score-angry-pumpkin-bas.webp') center bottom/100% 100% no-repeat;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);pointer-events:none;z-index:0}
 .feed-card.th-angrypumpkin>*{position:relative;z-index:1}
-.feed-card.th-angrypumpkin>.bn{background:none;border:0;box-shadow:none;padding-left:min(22%,84px)}
+.feed-card.th-angrypumpkin>.bn{background:none;border:0;box-shadow:none;border-radius:0;display:flex;align-items:center;min-height:var(--pk-h);padding:calc(var(--pk-h)*.08) 14px calc(var(--pk-h)*.08) min(22%,84px)}
+.feed-card.th-angrypumpkin>.bn>.feed-head{flex:1;min-width:0}
 .feed-card.th-angrypumpkin .wtitle{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.8)}
 .feed-card.th-angrypumpkin .sub{color:#9aa6bf}
 .feed-card.th-angrypumpkin .feed-metric{background:rgba(14,22,40,.78);border-color:#1f3157}
@@ -802,7 +803,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-16.34';
+const APP_VERSION='2026-10-16.35';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
