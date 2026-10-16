@@ -1,4 +1,4 @@
-/* Envoie les notifications push de Box Score (nouvelle séance, message du coach, réaction reçue).
+/* Envoie les notifications push de Box Score (nouvelle séance, message du coach, réaction reçue, et, pour le coach, nouvelle inscription).
    Lancé toutes les 15 minutes par .github/workflows/notify.yml. L'état (dernier passage, notifications déjà envoyées)
    est gardé dans Firestore : config/pushState. */
 import admin from 'firebase-admin';
@@ -51,10 +51,29 @@ const ann = aSnap.exists ? aSnap.data() : null;
 const newAnn = (ann && ann.id && ann.active !== false && ann.notify === true && String(ann.text || '').trim()
   && Date.now() - new Date(ann.at).getTime() < ANN_MAX_AGE_MS)
   ? [{ ...ann, key: 'a:' + ann.id }].filter(x => !done.has(x.key)) : [];
-console.log(`Nouvelles séances : ${newWods.length} · nouveau message du coach : ${newAnn.length} · nouvelles réactions : ${newRx.length} · nouvelles séances validées : ${newSess.length}`);
+/* nouveaux comptes : liste des comptes Firebase Authentication créés depuis le dernier passage (une seule notification par compte, clé « u:uid »).
+   Le nom affiché est le pseudo s'il existe déjà, sinon le nom du compte, sinon le début de l'adresse e-mail. Une erreur de droits ne bloque pas les autres notifications. */
+const pseudoOf = Object.fromEntries(lSnap.docs.map(d => [d.id, d.data().pseudo]));
+const newUsers = [];
+try {
+  let token;
+  do {
+    const page = await admin.auth().listUsers(1000, token);
+    for (const u of page.users) {
+      const key = 'u:' + u.uid;
+      if (done.has(key) || !u.metadata || !u.metadata.creationTime) continue;
+      if (new Date(u.metadata.creationTime).toISOString() <= since) continue;
+      newUsers.push({ uid: u.uid, key, name: pseudoOf[u.uid] || u.displayName || (u.email || '').split('@')[0] });
+    }
+    token = page.pageToken;
+  } while (token);
+} catch (e) {
+  console.error('Liste des comptes impossible (droits du compte de service ?) : ' + (e.message || e));
+}
+console.log(`Nouvelles séances : ${newWods.length} · nouveau message du coach : ${newAnn.length} · nouvelles réactions : ${newRx.length} · nouvelles séances validées : ${newSess.length} · nouveaux comptes : ${newUsers.length}`);
 
-const saveState = () => stRef.set({ lastRun: now.toISOString(), sent: [...sent, ...newWods.map(x => x.key), ...newAnn.map(x => x.key), ...newRx.map(x => x.key), ...newSess.map(x => x.key)].slice(-KEEP) });
-if (!newWods.length && !newAnn.length && !newRx.length && !newSess.length) { await saveState(); process.exit(0); }
+const saveState = () => stRef.set({ lastRun: now.toISOString(), sent: [...sent, ...newWods.map(x => x.key), ...newAnn.map(x => x.key), ...newRx.map(x => x.key), ...newSess.map(x => x.key), ...newUsers.map(x => x.key)].slice(-KEEP) });
+if (!newWods.length && !newAnn.length && !newRx.length && !newSess.length && !newUsers.length) { await saveState(); process.exit(0); }
 
 const subs = (await db.collection('pushSubs').get()).docs.map(d => ({ ...d.data(), id: d.id }));
 const coach = await db.doc('config/coach').get();
@@ -97,6 +116,16 @@ if (newSess.length) {
       : `${names[0]} et ${names.length - 1} autre${names.length > 2 ? 's' : ''} ont validé leur séance`;
     add(uid, { tag: 'session', body, go: 'feed' });
   }
+}
+
+/* nouvelle inscription : notification pour le coach uniquement (pas pour son propre compte) */
+const joined = newUsers.filter(x => x.uid !== coachUid);
+if (joined.length && coachUid) {
+  const names = [...new Set(joined.map(x => cut(x.name || '', 24)).filter(Boolean))];
+  const body = joined.length === 1
+    ? (names[0] ? `${names[0]} vient de s'inscrire.` : 'Un nouvel athlète vient de s\'inscrire.')
+    : `${joined.length} nouveaux inscrits${names.length ? ' : ' + names.slice(0, 3).join(', ') + (names.length > 3 ? '…' : '') : ''}.`;
+  add(coachUid, { tag: 'signup', title: joined.length === 1 ? 'Nouvel inscrit' : 'Nouveaux inscrits', body, go: 'feed' });
 }
 
 let ok = 0, gone = 0, fail = 0;
