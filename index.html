@@ -888,7 +888,7 @@ const MOVES=[
  ['Thruster',['thruster']],['Hip Thrust',['hip thrust']],
  ['Split Jerk',['split jerk']],['Hang Power Clean',['hang power clean']],['Hang Power Snatch',['hang power snatch']],
  ['Romanian Deadlift',['romanian deadlift','rdl']],['Pendlay Row',['pendlay row']],
- ['Traction lestée',['traction lestee','tractions lestees','weighted pull-up','weighted pull up','weighted pullup']]
+ ['Traction lestée',['traction lestee','tractions lestees','traction lestée','tractions lestées','traction','tractions','traction stricte','tractions strictes','weighted pull-up','weighted pull up','weighted pullup','weighted pull-ups','pull-up','pull-ups','pull up','pull ups','pullup','pullups']]
 ];
 const SIGNED=['Traction lestée']; /* PR en kg pouvant être nul ou négatif (déleste) */
 const prOk=(n,v)=>v!==null&&(v>0||SIGNED.includes(n));
@@ -1432,7 +1432,7 @@ function pullupBlock(text,nums){
     const c=pullupCalc(bw,rm,n);
     const L=(a,b)=>h('div',{class:'pu-l'},h('span',{},a),h('span',{},b));
     const card=h('div',{class:'pu-card'},
-      h('div',{class:'pu-t'},'Tractions lestées'+(rp?' — '+rp[2]+' rép.':'')+' à '+n+' %'),
+      h('div',{class:'pu-t'},'Tractions lestées'+(rp?' — '+rp[1]+' × '+rp[2]:'')+' à '+n+' %'),
       L('Poids de corps',fmtN(bw)+' kg'),
       L('1 RM lesté',(rm>=0?'+':'')+fmtN(rm)+' kg'),
       L('Charge totale au 1 RM',fmtN(c.total1)+' kg'),
