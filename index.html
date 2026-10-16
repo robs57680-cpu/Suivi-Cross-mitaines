@@ -3357,11 +3357,16 @@ function levelField(m,st,label){
   else if(loadsText(lvl))box.append(h('span',{class:'hint'},(S.prof.sex?'Ta charge : ':'')+loadsText(lvl)));
   return box;
 }
-function scoreFields(m,st,upd,pre){
+function scoreFields(m,st,upd,pre,canSkip){
   const ft=m.format==='FT',bind=k=>e=>{st[k]=e.target.value;upd();};
   const pl=ft?planOf(m):null;
+  /* « Je n'ai pas fait le metcon » : la séance s'enregistre sans points de metcon ; le champ de résultat disparaît. Un nouveau clic (ou un choix Terminé / Time cap) le fait revenir. */
+  const skip=!!canSkip&&!!st.skip;
   const head=ft?[h('div',{class:'seg',style:'grid-template-columns:repeat(2,minmax(0,1fr))',role:'group','aria-label':'Fin du For Time'},
-    [[false,'Terminé dans le temps'],[true,'Time cap atteint']].map(([v,l])=>h('button',{type:'button',class:'btn sm','aria-pressed':!!st.capped===v?'true':'false',onclick:()=>{st.capped=v;render();}},l)))]:[];
+    [[false,'Terminé dans le temps'],[true,'Time cap atteint']].map(([v,l])=>h('button',{type:'button',class:'btn sm','aria-pressed':(!skip&&!!st.capped===v)?'true':'false',onclick:()=>{st.skip=false;st.capped=v;render();}},l)))]:[];
+  if(canSkip)head.push(h('div',{class:'seg',style:'grid-template-columns:minmax(0,1fr)'},
+    h('button',{type:'button',class:'btn sm',id:pre+'-skip','aria-pressed':skip?'true':'false',onclick:()=>{st.skip=!st.skip;upd();render();}},'Je n’ai pas fait le metcon')));
+  if(skip)return head.concat([h('p',{class:'hint'},'La séance sera enregistrée sans les points du metcon. Touche à nouveau le bouton pour saisir un résultat.')]);
   if(ft&&st.capped&&!pl)return head.concat([field(m.label+' · Reps réalisées au time cap',
     h('input',{id:pre+'-creps',type:'text',inputmode:'numeric',placeholder:'81',value:st.creps||'',oninput:bind('creps')}),
     'Écris le nombre total de reps faites quand le time cap a sonné, tous mouvements confondus. Exemple : 81.')]);
@@ -3514,7 +3519,7 @@ function openEntry(w,date,uid,coach){
   uid=uid||S.uid;
   const mine=S.logs[uid]&&S.logs[uid].entries&&S.logs[uid].entries[date];const m=metconOf(w);
   if(!coach)S.entryGlowUntil=Date.now()+2900;
-  S.entry={date,uid,coach:!!coach,score:'',rounds:'',reps:'',message:(mine&&mine.message)||'',level:m?okLvl(m,mine&&mine.level!==undefined?mine.level:lowLvl(m)):0,kg:kgOf(mine),custom:!!kgOf(mine),loads:{},prs:{}};
+  S.entry={date,uid,coach:!!coach,score:'',rounds:'',reps:'',message:(mine&&mine.message)||'',level:m?okLvl(m,mine&&mine.level!==undefined?mine.level:lowLvl(m)):0,kg:kgOf(mine),custom:!!kgOf(mine),loads:{},prs:{},skip:!!(mine&&mine.noMetcon&&!hasScore(mine))};
   if(mine){
     fillState(m,S.entry,mine);
     for(const [k,v] of Object.entries(mine.loads||{}))S.entry.loads[k]=String(v).replace('.',',');
@@ -3528,7 +3533,7 @@ function entryForm(w,date){
   const upd=()=>{
     const base=basePts(w,per);
     let perf=0;
-    if(m){const r=readScore(m,S.entry);if(r.v!==undefined)perf=Math.round(perfPoints(m,r.v,S.entry.level,r.cap)*adjF(S.entry)*100)/100;}
+    if(m&&!S.entry.skip){const r=readScore(m,S.entry);if(r.v!==undefined)perf=Math.round(perfPoints(m,r.v,S.entry.level,r.cap)*adjF(S.entry)*100)/100;}
     preview.textContent=(per?'':'Hors saison, ne compte pas au classement. ')+'Points : '+base+' pour la séance'+(m?' + '+fmtN(perf)+' pour le metcon':'')+' = '+fmtN(base+perf);
   };
   const title=S.entry.coach?'Résultats de '+((S.logs[S.entry.uid]||{}).pseudo||'l’athlète'):'Mes résultats';
@@ -3543,7 +3548,7 @@ function entryForm(w,date){
     if(p.kind==='metcon'){
       const ft=p.format==='FT';
       form.append(levelField(p,S.entry,p.label+' · Ton niveau'));
-      form.append(...scoreFields(p,S.entry,upd,'entry'));
+      form.append(...scoreFields(p,S.entry,upd,'entry',true));
     }
   });
   const messageInput=h('textarea',{maxlength:'180',rows:'3',placeholder:'Un petit message pour le fil (facultatif)…',value:S.entry.message||'',oninput:e=>{S.entry.message=e.target.value;counter.textContent=e.target.value.length+'/180';}});
@@ -3562,7 +3567,8 @@ function submitEntry(w){
   if(m){
     if(S.entry.custom&&!kgOf(S.entry)){toast('Choisis ton niveau personnalisé (par exemple Rx +10 kg).',true);return;}
     e.level=S.entry.level;if(kgOf(S.entry))e.kg=kgOf(S.entry);
-    const r=readScore(m,S.entry);
+    const r=S.entry.skip?{empty:true}:readScore(m,S.entry);
+    if(S.entry.skip)e.noMetcon=true;
     if(r.bad||r.over||r.many){toast(scoreErr(m,r),true);return;}
     if(!r.empty){
       if(r.cap){e.cap=true;e.capScore=r.v;if(r.rounds!==undefined)e.rounds=r.rounds;e.reps=r.reps;}
