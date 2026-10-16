@@ -593,7 +593,7 @@ html[data-hal] .top{border-bottom-color:#E8710A}
    Le fond, le cadre et le titre se branchent via le registre BN (voir JS). */
 .bn{position:relative;min-width:0;width:100%;max-width:100%;padding:10px 12px;border:2px solid var(--edge);border-radius:4px;color:var(--panel-ink);overflow:hidden}
 .bn-bg-base{background:linear-gradient(115deg,var(--panel) 0 72%,var(--accent) 72% 75%,var(--panel) 75% 78%,var(--accent) 78% 80%,var(--panel) 80%)}
-.bn-bg-alpha{--alpha-k:1.2;background-color:#0a0a0b;background-image:url('assets/embedded/banniere-box-score-Alpha.png');background-size:contain;background-position:center;background-repeat:no-repeat;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.85);
+.bn-bg-alpha{--alpha-k:1;background-color:#0a0a0b;background-image:url('assets/embedded/banniere-box-score-Alpha.png');background-size:contain;background-position:center;background-repeat:no-repeat;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.85);
   /* image dézoomée (contain) : on la voit en entier (barre, poids, « ALPHA SEASON »), les bords restent noirs comme l'image.
      --alpha-k règle la hauteur : 1 = hauteur exacte de l'image (plus haute), plus grand = bannière plus basse et image plus petite. */
   aspect-ratio:calc(var(--alpha-r,4.17)*var(--alpha-k));display:flex;align-items:flex-end;padding:0 14px 2% calc((1 - 1/var(--alpha-k))*50% + 15%/var(--alpha-k));border-color:#3b3a3d}
