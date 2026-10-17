@@ -305,6 +305,10 @@ body.modal-open{overflow:hidden}
 .mvchev{width:10px;height:10px;border-right:3px solid currentColor;border-bottom:3px solid currentColor;transform:rotate(45deg);transition:transform .15s;flex:none;margin:-4px 4px 0 0}
 .mvdet[open] .mvchev{transform:rotate(-135deg);margin:4px 4px 0 0}
 .mvbody{display:grid;gap:10px;margin-top:10px}
+.mvvid{position:relative;justify-self:center;width:min(100%,300px);aspect-ratio:9/16;max-height:62vh;border-radius:14px;overflow:hidden;background:#000;cursor:pointer;border:0;padding:0;box-shadow:0 6px 20px rgba(0,0,0,.28)}
+.mvvid video{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none}
+.mvvid .mvfs{position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.6);color:#fff;font-size:12px;font-weight:700;letter-spacing:.03em;padding:6px 10px;border-radius:999px;pointer-events:none}
+.mvvid:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){.mvchev{transition:none}}
 .mvcard.focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent)}
 .mv-back{position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--toph,60px));z-index:4;background:var(--bg);padding:8px 0;margin-top:-8px}
@@ -366,10 +370,7 @@ body.modal-open{overflow:hidden}
 .badge svg{display:block;width:100%;height:100%;overflow:visible}
 .badge.mini{margin-left:6px;vertical-align:-.4em}
 .badge.img{border-radius:0}
-.bm{display:inline-flex;align-items:center;gap:3px;margin-left:6px;vertical-align:-.4em;max-width:100%}
-.badge.mini.in-bm{margin-left:0;vertical-align:baseline}
-.bm-s{font-family:var(--f-display);font-size:10px;line-height:1;letter-spacing:.05em;text-transform:uppercase;font-weight:400;color:var(--muted);max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
 .bsel{display:grid;justify-items:center;align-content:start;gap:4px;padding:12px 8px;border:2px solid var(--line);border-radius:4px;background:var(--surface2);color:var(--ink);cursor:pointer;text-align:center;min-width:0}
 .bsel[aria-pressed="true"]{border-color:var(--accent);background:var(--tint)}
 .bsel:disabled{cursor:default}
@@ -502,7 +503,7 @@ body.modal-open{overflow:hidden}
 .cer{overflow-x:hidden;grid-template-rows:auto minmax(min-content,1fr) auto}
 .cer-body{min-height:min-content}
 .cer-in{min-width:0;max-width:100%}
-.cer .bgrid{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+.cer .bgrid{grid-template-columns:repeat(auto-fit,minmax(110px,1fr))}
 /* bulles de messages et feu d'artifice de la remise */
 .bubs{position:absolute;inset:0;pointer-events:none;z-index:3;overflow:hidden}
 .bub{position:absolute;pointer-events:auto;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
@@ -903,7 +904,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-17.45';
+const APP_VERSION='2026-10-17.48';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -987,7 +988,7 @@ const GLOSS=[
 ['Front Squat',['front squat','squat avant'],'Squat avec la barre en appui sur l’avant des épaules, coudes hauts.',['Pli de la hanche sous le sommet des genoux','Extension complète des hanches et des genoux en haut'],['Profondeur insuffisante','Extension incomplète en haut']],
 ['Overhead Squat',['overhead squat','ohs'],'Squat avec la barre maintenue bras tendus au-dessus de la tête pendant tout le mouvement.',['Bras verrouillés, barre stable au-dessus de la tête','Pli de la hanche sous le sommet des genoux'],['Bras qui fléchissent','Profondeur insuffisante']],
 ['Thruster',['thruster','db thruster','dumbbell thruster'],'Front squat enchaîné avec un développé au-dessus de la tête, en un seul mouvement fluide.',['Profondeur du squat atteinte','En haut : bras, hanches et genoux tendus, barre au-dessus de la tête'],['Profondeur insuffisante','Barre non verrouillée au-dessus de la tête','Extension incomplète des hanches en haut']],
-['Deadlift',['deadlift','souleve de terre','sdt'],'Soulevé de terre : la barre monte du sol jusqu’aux hanches.',['Hanches et genoux tendus en haut, épaules en arrière','La barre touche le sol entre les répétitions'],['Extension incomplète en haut','Barre qui ne touche pas le sol entre deux répétitions']],
+['Deadlift',['deadlift','souleve de terre','sdt'],'Soulevé de terre : la barre monte du sol jusqu’aux hanches.',['Hanches et genoux tendus en haut, épaules en arrière','La barre touche le sol entre les répétitions'],['Extension incomplète en haut','Barre qui ne touche pas le sol entre deux répétitions'],null,'assets/embedded/deadlift.mp4'],
 ['Power Clean',['clean','power clean','squat clean','hang clean'],'Épaulé : la barre passe du sol aux épaules en un mouvement. Power : reçue au-dessus de la parallèle ; squat : reçue en squat ; hang : départ au-dessus des genoux.',['Barre reçue sur les épaules','Hanches et genoux tendus en fin de mouvement'],['Barre qui ne se pose pas sur les épaules','Fin de mouvement sans extension complète','Power clean reçu sous la parallèle'],null,'assets/embedded/power_clean.mp4'],
 ['Hang Power Clean',['hang power clean'],'Épaulé en suspension : la barre part au-dessus des genoux et est reçue sur les épaules au-dessus de la parallèle.',['Départ barre au-dessus des genoux','Barre reçue sur les épaules, au-dessus de la parallèle','Hanches et genoux tendus en fin de mouvement'],['Barre qui ne se pose pas sur les épaules','Fin de mouvement sans extension complète','Réception sous la parallèle'],null,'assets/embedded/hang_power_clean.mp4'],
 ['Snatch',['snatch','power snatch','squat snatch','hang power snatch','arrache'],'Arraché : la barre passe du sol au-dessus de la tête en un seul mouvement.',['Barre verrouillée, bras tendus au-dessus de la tête','Hanches et genoux tendus en fin de mouvement'],['Bras non verrouillés','Mouvement en deux temps (barre posée sur les épaules)','Power snatch reçu sous la parallèle'],'assets/embedded/power_snatch_6_etapes.webp'],
@@ -1353,7 +1354,7 @@ function computeBoard(period){
   const rows=Object.entries(S.logs).map(([uid,lg])=>{
     const r={uid,pseudo:lg.pseudo||'Athlète',sessions:0,base:0,perf:0,perfN:0,strength:0,streak:0,lvlSum:0,lvlN:0,items:[],
       cat:{cardio:{sum:0,n:0},gym:{sum:0,n:0},haltero:{sum:0,n:0}}};
-    const best={};let run=0;
+    const best={};let run=0;r.tonnage=0;
     for(const w of wods){
       const e=lg.entries&&lg.entries[w.date];
       if(!e){run=0;continue;}
@@ -1364,6 +1365,11 @@ function computeBoard(period){
       if(m&&hasScore(e)){r.perfN++;const c=r.cat[m.focus];if(c){c.sum+=pts.perf;c.n++;}}
       for(const p of w.parts||[]){
         if(p.kind==='force'&&p.movement&&e.loads&&e.loads[p.label]>0){const k=norm(p.movement.trim());best[k]=Math.max(best[k]||0,e.loads[p.label]);}
+        /* tonnage = séries × reps × charge (sans la traction lestée) ; sans saisie de séries, on prend le schéma de la séance */
+        if(p.kind==='force'&&p.movement&&!SIGNED.includes(p.movement)&&e.loads&&e.loads[p.label]>0&&!e.metconOnly){
+          const sx=e.sets&&e.sets[p.label],sc=sx||forceSchema(p);
+          if(sc&&sc.s>0&&sc.r>0)r.tonnage+=sc.s*sc.r*e.loads[p.label];
+        }
       }
       r.items.push({w,e,pts});
     }
@@ -1378,6 +1384,7 @@ function computeBoard(period){
     }
     r.items.sort((a,b)=>(a.redo?a.on:a.w.date)<(b.redo?b.on:b.w.date)?-1:1);
     r.total=r.base+r.perf+r.redo;
+    r.tonnage=Math.round(r.tonnage);
     r.strength=Object.values(best).reduce((a,b)=>a+b,0);
     /* poids / puissance : meilleures charges (hors traction lestée) divisées par le poids de corps */
     r.sex=lg.sex||'';
@@ -1476,6 +1483,7 @@ const TROPHIES=[
  {id:'perf',name:'Le plus performant',desc:'La meilleure moyenne de points de metcon, pondérée par le niveau moyen choisi (niveau moyen divisé par 2). 3 metcons minimum.',key:r=>[r.perfAvgW],show:r=>fmtN(r.perfAvgW)+' pts par metcon · '+multTxt(r),elig:(r,b)=>r.perfN>=Math.min(3,b.metconCount)},
  {id:'lafort',name:'La plus forte',desc:'Même calcul que Le plus fort (somme des meilleures charges de force), réservé aux athlètes femmes. Le sexe se renseigne dans le profil.',key:r=>[r.strength],show:r=>fmtN(r.strength)+' kg cumulés',elig:r=>r.sex==='F'},
  {id:'fort',name:'Le plus fort',desc:'Somme des meilleures charges saisies sur chaque mouvement de force.',key:r=>[r.strength],show:r=>fmtN(r.strength)+' kg cumulés'},
+ {id:'tonnage',name:'Roi du tonnage',desc:'Le plus de kilos soulevés sur la saison dans les parties de force : séries × répétitions × charge, additionnés sur toutes les séances. Séries, répétitions et charge sont préremplies d’après la séance et modifiables.',key:r=>[r.tonnage],show:r=>fmtN(r.tonnage)+' kg soulevés'},
  {id:'ratio',name:'Poids / puissance',desc:'Le poids moyen soulevé par rapport à son poids de corps : moyenne des meilleures charges de chaque mouvement de force (hors traction lestée) divisée par le poids de corps. Le poids se renseigne dans le profil.',key:r=>[r.ratio],show:r=>'soulève en moyenne '+fmt2(r.ratio)+' fois son poids'},
  catTrophy('mcardio','Metcon cardio','cardio','cardio'),
  catTrophy('mgym','Metcon gym','gym','gym'),
@@ -1542,6 +1550,19 @@ function renderLine(text){
 }
 /* charge prévue d'une partie force : la plus lourde des charges calculées par les pourcentages des lignes (même calcul que dans la séance).
    null si rien n'est calculable (pas de %, PR ou poids de corps manquant). */
+/* séries × reps prévues par la séance (ex. « 5 x 5 Back Squat à 75 % ») : préremplissent le formulaire, modifiables */
+function forceSchema(p){
+  if(!p||p.kind!=='force')return null;
+  const re=/(\d{1,2})\s*(?:x|×|\*)\s*(\d{1,3})(?!\d)/i;let first=null;
+  for(const raw of String(p.content||'').split('\n')){
+    const m=raw.match(re);if(!m)continue;
+    const o={s:+m[1],r:+m[2]};
+    const canon=findMove(raw);
+    if(p.movement&&canon===p.movement)return o;
+    if(!first)first=o;
+  }
+  return first;
+}
 function forceDefault(p){
   if(!p||p.kind!=='force')return null;
   const bw=parseNum(S.prof&&S.prof.weight),cands=[];
@@ -2049,7 +2070,7 @@ const lvPill=r=>r.lvlN?h('span',{class:'chip lv',title:'Niveau moyen choisi sur 
    Il est calculé (jamais stocké) : il est remis à la fin de la saison aux gagnants du trophée. */
 const BADGES={goat:['#1F55D6','#FFFFFF'],lagoat:['#E0489A','#FFFFFF'],points:['#0E8A8A','#FFFFFF'],regulier:['#1E9B4A','#FFFFFF'],serie:['#D8321A','#FFFFFF'],
   top:['#2B3A67','#FFFFFF'],perf:['#F4C400','#14161A'],fort:['#1B1D20','#FFFFFF'],lafort:['#C2368F','#FFFFFF'],ratio:['#B5651D','#FFFFFF'],mcardio:['#F07A18','#FFFFFF'],
-  mgym:['#8B929A','#14161A'],mhaltero:['#F3F3F1','#14161A'],objectif:['#7B3FC4','#FFFFFF'],bdeb:['#6CC24A','#14161A'],binter:['#2AA6E0','#FFFFFF'],gsolo:['#FF7F50','#14161A'],gduo:['#5C6BC0','#FFFFFF']};
+  mgym:['#8B929A','#14161A'],mhaltero:['#F3F3F1','#14161A'],tonnage:['#1B1D20','#F4C400'],objectif:['#7B3FC4','#FFFFFF'],bdeb:['#6CC24A','#14161A'],binter:['#2AA6E0','#FFFFFF'],gsolo:['#FF7F50','#14161A'],gduo:['#5C6BC0','#FFFFFF']};
 const GOAT='<g transform="translate(-4.8 -5.1) scale(1.15)"><g stroke="#1A1A1A" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">'+
   '<path d="M26 20C19 14 14 9 16 2C24 4 30 11 30 19Z" fill="#D9C28F"/><path d="M38 20C45 14 50 9 48 2C40 4 34 11 34 19Z" fill="#D9C28F"/>'+
   '<path d="M22 25L6 24C3 28 7 32 12 32L23 32Z" fill="#F4E9D0"/><path d="M42 25L58 24C61 28 57 32 52 32L41 32Z" fill="#F4E9D0"/>'+
@@ -2065,6 +2086,7 @@ const ICONS={goat:GOAT,lagoat:GOAT,
   top:'<path d="M3 56L24 20L34 37L42 27L61 56Z" fill="currentColor"/><path d="M24 20V4" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M24 4L39 9L24 15Z" fill="currentColor"/>',
   perf:'<g fill="none" stroke="currentColor" stroke-width="5"><circle cx="32" cy="32" r="26"/><circle cx="32" cy="32" r="14"/></g><circle cx="32" cy="32" r="5" fill="currentColor"/>',
   lafort:'<path d="M20 26C18 6 46 6 44 26" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><circle cx="32" cy="40" r="19" fill="currentColor"/><path d="M32 31L34.5 37.5L41 38L36 42.5L37.6 49L32 45.5L26.4 49L28 42.5L23 38L29.5 37.5Z" fill="%BG%"/>',
+  tonnage:'<g fill="currentColor"><rect x="6" y="44" width="52" height="10" rx="3"/><rect x="12" y="30" width="40" height="10" rx="3"/><rect x="18" y="16" width="28" height="10" rx="3"/></g>',
   fort:'<path d="M20 26C18 6 46 6 44 26" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><circle cx="32" cy="40" r="19" fill="currentColor"/>',
   ratio:'<g stroke="currentColor" stroke-width="4" stroke-linecap="round" fill="none"><path d="M32 8V54M18 56H46M8 18H56"/><path d="M8 18L2 40M8 18L20 40M56 18L44 40M56 18L62 40" stroke-width="2.5"/></g><path d="M0 40Q11 52 22 40Z M42 40Q53 52 64 40Z" fill="currentColor"/>',
   mcardio:'<path d="M32 56C4 38 6 12 21 12C27 12 31 16 32 21C33 16 37 12 43 12C58 12 60 38 32 56Z" fill="currentColor"/><path d="M10 33H24L28 25L35 42L39 33H54" fill="none" stroke="%BG%" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>',
@@ -2097,7 +2119,7 @@ function badgeHTML(tid,label,size){
 /* ---- badges illustrés (saisons suivantes) ----
    Images dans assets/embedded/badge-<trophée>.webp (280 x 300, plaque du bas vide). Le nom de la saison s'écrit sur la plaque ;
    le badge est trop petit pour le lire sous ~100 px : il reste alors dans l'info-bulle. Les saisons Alpha et Bêta gardent les anciens badges dessinés. */
-const BADGE_IMG_Y={goat:0.9167,lagoat:0.9167,points:0.92,regulier:0.9167,serie:0.9167,top:0.9167,perf:0.9133,lafort:0.92,fort:0.9325,mcardio:0.9183,mgym:0.9167,mhaltero:0.9167,gduo:0.9067,gsolo:0.9083,bdeb:0.9083,binter:0.9083,objectif:0.9083,ratio:0.9183}; /* hauteur du centre de la plaque, en fraction de l'image */
+const BADGE_IMG_Y={goat:0.9167,lagoat:0.9167,points:0.92,regulier:0.9167,serie:0.9167,top:0.9167,perf:0.9133,lafort:0.92,fort:0.9325,mcardio:0.9183,mgym:0.9167,mhaltero:0.9167,tonnage:0.955,gduo:0.9067,gsolo:0.9083,bdeb:0.9083,binter:0.9083,objectif:0.9083,ratio:0.9183}; /* hauteur du centre de la plaque, en fraction de l'image */
 const BADGE_IMG_FILE={}; /* correspondances trophée -> fichier quand ils diffèrent (ex. {ratio:'fort'}) ; chaque trophée a son image badge-<id>.webp */
 const BADGE_LEGACY_RX=/alpha|b[eé]ta/i; /* saisons dont les badges restent inchangés */
 const badgeImgOn=(per,tid)=>!!per&&!!BADGE_IMG_Y[BADGE_IMG_FILE[tid]||tid]&&!BADGE_LEGACY_RX.test(String(per.name||''));
@@ -2105,9 +2127,9 @@ function badgeImgHTML(tid,label,size){
   const key=BADGE_IMG_FILE[tid]||tid,ty=BADGE_IMG_Y[key];
   const name=String(label||'').toUpperCase(),short=(name.length>16?name.slice(0,15)+'…':name).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
   let g='<svg viewBox="0 0 280 300" aria-hidden="true"><image href="assets/embedded/badge-'+key+'.webp" x="0" y="0" width="280" height="300"/>';
-  if(size>=96&&short){
-    const fs=short.length<=8?20:short.length<=11?17:14;
-    g+='<text x="140" y="'+(ty*300+fs*.36).toFixed(1)+'" text-anchor="middle" fill="#FFFFFF"'+(short.length*fs*.6>100?' textLength="100" lengthAdjust="spacingAndGlyphs"':'')+' style="font-family:var(--f-display);font-size:'+fs+'px;letter-spacing:.05em">'+short+'</text>';
+  if(size>=100&&short){
+    const fs=short.length<=8?16:short.length<=11?14:12;
+    g+='<text x="140" y="'+(ty*300+fs*.36).toFixed(1)+'" text-anchor="middle" fill="#FFFFFF"'+(short.length*fs*.62>100?' textLength="100" lengthAdjust="spacingAndGlyphs"':'')+' style="font-family:var(--f-display);font-size:'+fs+'px;letter-spacing:.05em">'+short+'</text>';
   }
   return g+'</svg>';
 }
@@ -2136,11 +2158,7 @@ function badgeOf(uid){
 function badgeMini(uid,size){
   const a=badgeOf(uid);if(!a)return null;
   const e=badgeEl(a.tid,a.per.name,size||30,trophyName(a.tid)+' · '+a.per.name,a.per);
-  e.classList.add('mini');
-  if(!badgeImgOn(a.per,a.tid))return e; /* anciens badges : le nom de la saison est déjà sur le ruban */
-  /* badge illustré : trop petit pour écrire sur la plaque, le nom de la saison s'affiche juste à côté */
-  e.classList.add('in-bm');
-  return h('span',{class:'bm',title:trophyName(a.tid)+' · '+a.per.name},e,h('span',{class:'bm-s'},String(a.per.name||'')));
+  e.classList.add('mini');return e;
 }
 function badgesSection(){
   const mine=(awards()[S.uid]||[]).slice().sort((a,b)=>a.per.start<b.per.start?1:a.per.start>b.per.start?-1:0);
@@ -2151,7 +2169,7 @@ function badgesSection(){
     h('div',{class:'bgrid'},mine.map(a=>{
       const on=!!cur&&cur.id===a.id;
       return h('button',{type:'button',class:'bsel','aria-pressed':on?'true':'false',onclick:()=>saveLog({badge:on?'':a.id},on?'Badge retiré':'Badge choisi')},
-        badgeEl(a.tid,a.per.name,badgeImgOn(a.per,a.tid)?140:84,null,a.per),h('span',{class:'nm'},trophyName(a.tid)),h('span',{class:'sub'},seasonLabel(a.per)+' · '+a.per.name+(scopeName(a.gid,a.per)?' · '+scopeName(a.gid,a.per):'')));
+        badgeEl(a.tid,a.per.name,badgeImgOn(a.per,a.tid)?120:84,null,a.per),h('span',{class:'nm'},trophyName(a.tid)),h('span',{class:'sub'},seasonLabel(a.per)+' · '+a.per.name+(scopeName(a.gid,a.per)?' · '+scopeName(a.gid,a.per):'')));
     })));
   return sec;
 }
@@ -2296,7 +2314,7 @@ function openCeremony(pid,gid0){
       const id=per.id+'|'+x.t.id;
       const btn=h('button',{type:'button',class:'bsel',disabled:!final,'aria-pressed':(S.logs[S.uid]||{}).badge===id?'true':'false',
         onclick:()=>{const on=btn.getAttribute('aria-pressed')==='true';saveLog({badge:on?'':id},on?'Badge retiré':'Badge choisi');btns.forEach(b=>b.setAttribute('aria-pressed','false'));if(!on)btn.setAttribute('aria-pressed','true');}},
-        badgeEl(x.t.id,per.name,badgeImgOn(per,x.t.id)?130:84,null,per),h('span',{class:'nm'},x.t.name));
+        badgeEl(x.t.id,per.name,badgeImgOn(per,x.t.id)?112:84,null,per),h('span',{class:'nm'},x.t.name));
       btns.push(btn);return btn;
     }));
     return h('div',{class:'cer-in'},h('p',{class:'eyebrow cer-eb'},'Tes badges'),
@@ -3810,11 +3828,17 @@ function openEntry(w,date,uid,coach){
   uid=uid||S.uid;
   const mine=S.logs[uid]&&S.logs[uid].entries&&S.logs[uid].entries[date];const m=metconOf(w);
   if(!coach)S.entryGlowUntil=Date.now()+2900;
-  S.entry={date,uid,coach:!!coach,score:'',rounds:'',reps:'',message:(mine&&mine.message)||'',level:m?okLvl(m,mine&&mine.level!==undefined?mine.level:lowLvl(m)):0,kg:kgOf(mine),custom:!!kgOf(mine),loads:{},prs:{},skip:!!(mine&&mine.noMetcon&&!hasScore(mine)),only:!!(mine&&mine.metconOnly)};
+  S.entry={date,uid,coach:!!coach,score:'',rounds:'',reps:'',message:(mine&&mine.message)||'',level:m?okLvl(m,mine&&mine.level!==undefined?mine.level:lowLvl(m)):0,kg:kgOf(mine),custom:!!kgOf(mine),loads:{},sets:{},prs:{},skip:!!(mine&&mine.noMetcon&&!hasScore(mine)),only:!!(mine&&mine.metconOnly)};
   if(mine){
     fillState(m,S.entry,mine);
     for(const [k,v] of Object.entries(mine.loads||{}))S.entry.loads[k]=String(v).replace('.',',');
     for(const [k,x] of Object.entries(mine.prs||{}))S.entry.prs[k]={reps:String(x.reps)};
+    for(const [k,x] of Object.entries(mine.sets||{}))S.entry.sets[k]={s:String(x.s),r:String(x.r)};
+  }
+  /* séries et reps prévues par la séance, modifiables */
+  for(const p of (w.parts||[])){
+    if(p.kind!=='force'||S.entry.sets[p.label])continue;
+    const sc=forceSchema(p);if(sc)S.entry.sets[p.label]={s:String(sc.s),r:String(sc.r)};
   }
   /* la charge prévue par les pourcentages apparaît d'office dans la partie force (modifiable) */
   if(!coach&&uid===S.uid)for(const p of (w.parts||[])){
@@ -3846,8 +3870,15 @@ function entryForm(w,date){
       if(S.entry.only)return;
       const prb=prBox(p,date);
       const fd=(!S.entry.coach&&(S.entry.uid||S.uid)===S.uid)?forceDefault(p):null;
-      form.append(field(p.label+' · '+(p.movement||p.name||'Force')+' : charge la plus lourde (kg)',
-        h('input',{id:'load-'+p.label,type:'text',inputmode:SIGNED.includes(p.movement)?'text':'decimal',placeholder:fd!==null?'charge prévue':'optionnel',value:S.entry.loads[p.label]||'',oninput:e=>{S.entry.loads[p.label]=e.target.value;prb.upd();}}),fd!==null?'Charge prévue d’après tes pourcentages : '+fmtN(fd)+' kg. Modifie-la si tu as utilisé autre chose ; si tu la laisses vide, c’est elle qui est enregistrée.':null),prb);
+      const signed=SIGNED.includes(p.movement);
+      if(!signed){
+        const sx=S.entry.sets[p.label]||(S.entry.sets[p.label]={s:'',r:''});
+        form.append(h('div',{class:'grid2'},
+          field(p.label+' · '+(p.movement||p.name||'Force')+' : séries',h('input',{id:'sets-'+p.label,type:'text',inputmode:'numeric',placeholder:'séries',value:sx.s,oninput:e=>{sx.s=e.target.value;}})),
+          field('Répétitions par série',h('input',{id:'reps-'+p.label,type:'text',inputmode:'numeric',placeholder:'reps',value:sx.r,oninput:e=>{sx.r=e.target.value;}}))));
+      }
+      form.append(field((signed?p.label+' · '+(p.movement||p.name||'Force')+' : charge la plus lourde (kg)':'Charge utilisée (kg)'),
+        h('input',{id:'load-'+p.label,type:'text',inputmode:SIGNED.includes(p.movement)?'text':'decimal',placeholder:fd!==null?'charge prévue':'optionnel',value:S.entry.loads[p.label]||'',oninput:e=>{S.entry.loads[p.label]=e.target.value;prb.upd();}}),fd!==null?'Charge prévue d’après tes pourcentages : '+fmtN(fd)+' kg. Modifie-la si tu as utilisé autre chose ; si tu la laisses vide, c’est elle qui est enregistrée.'+(signed?'':' Séries × reps × charge forment ton tonnage de la saison.'):(signed?null:'Séries × reps × charge forment ton tonnage de la saison (trophée Roi du tonnage).')),prb);
     }
     if(p.kind==='metcon'){
       const ft=p.format==='FT';
@@ -3892,6 +3923,16 @@ function submitEntryNow(w){
     const d=forceDefault(p);if(d!==null&&prOk(p.movement,d))loads[p.label]=d;
   }
   if(Object.keys(loads).length)e.loads=loads;
+  /* séries × reps : enregistrés avec la charge (tonnage) */
+  const setsO={};
+  for(const p of (w.parts||[])){
+    if(p.kind!=='force'||SIGNED.includes(p.movement)||loads[p.label]===undefined)continue;
+    const sx=S.entry.sets&&S.entry.sets[p.label],sc=forceSchema(p);
+    let n=sx&&String(sx.s).trim()!==''?parseInt(sx.s,10):(sc?sc.s:NaN),rr=sx&&String(sx.r).trim()!==''?parseInt(sx.r,10):(sc?sc.r:NaN);
+    if(!(n>0&&n<=99&&rr>0&&rr<=999)){if(sx&&(String(sx.s).trim()!==''||String(sx.r).trim()!=='')){toast('Séries et reps illisibles pour '+p.label,true);return;}continue;}
+    setsO[p.label]={s:n,r:rr};
+  }
+  if(Object.keys(setsO).length)e.sets=setsO;
   /* PR déclarés : {label:{reps,mv}} ; la charge reste celle de e.loads (pas de doublon) */
   const prs={};
   for(const [k,x] of (S.entry.only&&m?[]:Object.entries(S.entry.prs||{}))){
@@ -6514,16 +6555,33 @@ const MV_CAT={'Back Squat':'haltero','Front Squat':'haltero','Overhead Squat':'h
   'Corde à sauter':'cardio','Shuttle run':'cardio','Row (rameur)':'cardio'};
 const mvCat=name=>MV_CAT[name]||'gym';
 const MV_ORDER=['haltero','gym','cardio'];
+/* aperçu vidéo dans la fiche : boucle muette, chargée seulement quand la fiche est ouverte ; un toucher = plein écran avec commandes */
+function moveVidPreview(g){
+  const box=h('button',{type:'button',class:'mvvid','aria-label':'Voir la vidéo en plein écran : '+g[0],onclick:()=>openMoveVideo(g)},h('span',{class:'mvfs','aria-hidden':'true'},'⛶ Plein écran'));
+  let vid=null,alt=false;
+  box.load=()=>{
+    if(vid){vid.play().catch(()=>{});return;}
+    vid=h('video',{src:g[6],loop:true,muted:true,playsinline:true,preload:'metadata','aria-hidden':'true',tabindex:'-1'});
+    vid.muted=true;
+    vid.addEventListener('error',()=>{if(alt){box.hidden=true;return;}alt=true;vid.src=g[6].replace(/s?\.mp4$/,m=>m==='s.mp4'?'.mp4':'s.mp4');vid.load();vid.play().catch(()=>{});});
+    box.prepend(vid);vid.play().catch(()=>{});
+  };
+  box.stop=()=>{if(vid)try{vid.pause();}catch(x){}};
+  return box;
+}
 function moveCard(g,gi){
   S.mvOpen=S.mvOpen||{};
-  const det=h('details',Object.assign({class:'mvdet',ontoggle:e=>{S.mvOpen[gi]=e.currentTarget.open;}},S.mvOpen[gi]?{open:true}:{}),
+  const pv=g[6]?moveVidPreview(g):null;
+  const det=h('details',Object.assign({class:'mvdet',ontoggle:e=>{const o=e.currentTarget.open;S.mvOpen[gi]=o;if(pv){if(o)pv.load();else pv.stop();}}},S.mvOpen[gi]?{open:true}:{}),
     h('summary',{class:'mvsum'},h('span',{class:'wtitle'},g[0]),h('span',{class:'mvchev','aria-hidden':'true'})),
     h('div',{class:'mvbody'},
+      pv,
       h('p',{},g[2]),
       h('div',{},h('div',{class:'flabel gok'},'Rep valide'),h('ul',{},g[3].map(x=>h('li',{},x)))),
       h('div',{},h('div',{class:'flabel gno'},'No rep'),h('ul',{},g[4].map(x=>h('li',{},x)))),
       g[5]?glossImg(g):null,
-      g[6]?h('div',{class:'row'},h('button',{type:'button',class:'btn sm',onclick:()=>openMoveVideo(g)},'Voir la vidéo')):null));
+      null));
+  if(pv&&S.mvOpen[gi])setTimeout(()=>pv.load(),0);
   return h('section',{class:'card mvcard'+(S.movFocus===gi?' focus':''),id:'mvfiche-'+gi},det);
 }
 function viewMoves(){
@@ -6580,6 +6638,7 @@ const TOURS={
     {title:'Mettre l’appli sur l’écran d’accueil : iPhone',text:'Ouvre l’appli dans Safari, touche le bouton Partager (le carré avec une flèche vers le haut), fais défiler et choisis « Sur l’écran d’accueil », puis « Ajouter ». Sur iPhone, les notifications ne marchent que depuis cette icône.'},
     {title:'Mettre l’appli sur l’écran d’accueil : Android',text:'Ouvre l’appli dans Chrome, touche les trois points en haut à droite, puis « Ajouter à l’écran d’accueil » (ou « Installer l’application ») et confirme. L’icône apparaît comme une appli classique.'},
     {sel:'main .day',title:'Le fil d’actualité',text:'Ici apparaissent les séances validées par les athlètes du groupe, de la plus récente à la plus ancienne.'},
+    {sel:'.rv',title:'Tes actualités de la semaine',text:'Cette carte te parle de ta saison : rivalités avec les athlètes proches de toi au classement, objectif de séances, prochaine récompense. Touche son en-tête pour la déplier ou la replier.'},
     {sel:'.feed-card',title:'Une séance publiée',text:'Le pseudo, le titre de la séance et les résultats. Touche un pseudo pour ouvrir le profil de l’athlète.'},
     {sel:'.rxrow',title:'Encourage tes partenaires',text:'Un emoji pour féliciter : ça fait toujours plaisir.'},
     {sel:'[data-tour=tab-menu]',title:'Nouveau : le menu',text:'Touche ces trois traits : un bandeau se déplie sur le côté. Il regroupe ton profil, tes notifications, le message du coach et le partage de l’appli.'},
@@ -6590,6 +6649,8 @@ const TOURS={
     {needs:'drawer',sel:'[data-tour=dm-mail]',title:'Message du coach : l’enveloppe',text:'Relis le dernier message du coach. Le point rouge indique un message pas encore lu.'},
     {needs:'drawer',sel:'[data-tour=dm-rules]',title:'Règlement : le livre',text:'Les règles de la compétition, à lire un point à la fois. Le point rouge disparaît dès que tu as ouvert le règlement.'},
     {needs:'drawer',sel:'[data-tour=dm-health]',title:'Santé et sécurité : le cœur',text:'Des conseils pour t’entraîner en sécurité : avis médical avant de commencer ou de reprendre, écouter ton corps, choisir ton niveau. Le point rouge disparaît dès que tu as ouvert la page.'},
+    {needs:'drawer',sel:'[data-tour=dm-moves]',title:'Apprentissage des mouvements',text:'La banque de mouvements : pour chacun, la fiche avec les critères de rep valide et de no rep, une image et parfois une vidéo. Tu y accèdes aussi en touchant le nom d’un mouvement dans une séance.'},
+    {needs:'drawer',sel:'[data-tour=dm-bug]',title:'Signaler un bug',text:'Un souci dans l’appli ? Décris-le ici, il arrive directement au développeur.'},
     {needs:'drawer',sel:'[data-tour=dm-share]',title:'Partager l’appli : le téléphone',text:'Ouvre une page avec le lien de l’appli : tu le copies et tu l’envoies à quelqu’un.'},
     {sel:'#tour-help',title:'Besoin d’un rappel ?',text:'Ce bouton « ? » te remet le guide de l’onglet où tu te trouves, quand tu veux.'}],
   today:()=>[
@@ -6597,14 +6658,19 @@ const TOURS={
     {sel:'#wu-card',title:'L’échauffement',text:'Un échauffement avant d’attaquer la séance est très fortement conseillé. Celui qui est proposé est complet, mais tu es libre de faire le tien. « Lancer l’échauffement » démarre le mode guidé avec timer, « Mode libre » te laisse avancer à ton rythme, et « Voir les exercices » affiche la liste. Pendant l’échauffement, touche « Voir les infos » pour voir l’image et les consignes de l’exercice. Le « ? » en haut à droite de la carte explique les deux modes.'},
     {sel:'main .wtitle',title:'Titre et points',text:'Le titre de la séance et les points de base qu’elle rapporte. Le metcon ajoute des points selon ton niveau.'},
     {sel:'.pbody',title:'Les parties de la séance',text:'Force, renforcement, metcon… Chaque partie détaille ce qu’il faut faire. Le metcon est celle qui rapporte des points au classement.'},
+    {sel:'.mv',title:'Touche un mouvement',text:'Le nom d’un mouvement (avec la petite main) ouvre sa fiche : rep valide, no rep, image ou vidéo. Le bouton « Retour à la séance » te ramène là où tu étais.'},
+    {sel:'.sw',title:'Le chronomètre',text:'Sur la force et le renforcement, ce chronomètre t’aide à gérer tes temps de travail et de repos.'},
+    {sel:'.fmtbtn',title:'Le format du metcon',text:'Touche le format (For Time, AMRAP, EMOM…) pour une explication de son fonctionnement.'},
+    {sel:'.levels',title:'Les niveaux',text:'Choisis Débutant, Intermédiaire ou Rx : tu vois le record du niveau et tu peux aussi personnaliser ton niveau si tu adaptes la séance.'},
     {sel:'[data-tour=start-metcon]',title:'Démarrer le metcon',text:'Lance le minuteur en plein écran : 10 secondes de préparation, puis le chrono qui monte (For Time, avec le time cap), le compte à rebours et le bouton TOUR (AMRAP) ou un bip chaque minute (EMOM). À l’arrêt, tu peux corriger ton résultat : il est prérempli dans le formulaire.'},
-    {sel:'[data-tour=entry]',title:'Enregistre ton résultat',text:'Une fois la séance terminée, touche « Entrer mes résultats » : un encart s’ouvre (il s’ouvre aussi tout seul quand tu valides le minuteur). Les cases à remplir brillent un instant : choisis ton niveau, entre tes charges et ton score, puis valide. Tes points arrivent dans le classement.'},
+    {sel:'[data-tour=entry]',title:'Enregistre ton résultat',text:'Une fois la séance terminée, touche « Entrer mes résultats » : un encart s’ouvre (il s’ouvre aussi tout seul quand tu valides le minuteur). Les cases à remplir brillent un instant : choisis ton niveau, entre tes charges et ton score, puis valide. Tes points arrivent dans le classement. Tu peux aussi indiquer « Je n’ai pas fait le metcon » ou « Je n’ai fait que le metcon », refaire une séance passée (REDO) et laisser un message dans le fil.'},
     {sel:'[data-tour=tab-board]',title:'Et ensuite ?',text:'Tes points apparaissent dans l’onglet Classement.'}],
   board:()=>[
     {sel:'main .day',title:'Le classement',text:'Les points de tous les athlètes sur la saison. Ta ligne est mise en avant.'},
+    {sel:'#board-group',title:'Les groupes',text:'Filtre le classement par groupe pour te comparer à ton équipe.'},
     {sel:'#period-select',title:'Les saisons',text:'Change de saison ici pour revoir les anciens classements.'},
     {sel:'.lb',title:'Qui est devant ?',text:'Rang, pseudo, nombre de séances et de metcons, et total de points. Touche un pseudo pour voir son profil.'},
-    {sel:'.trophies',title:'Les trophées',text:'Chaque trophée récompense un type de performance ou de régularité. Ils sont décernés à la fin de la saison.'},
+    {sel:'.trophies',title:'Les trophées',text:'Chaque trophée récompense un type de performance ou de régularité. Ils sont décernés à la fin de la saison, lors de la « Remise des trophées » que tu peux revoir pour une saison terminée.'},
     {sel:'[data-tour=board-detail]',title:'Le détail',text:'Pour voir ton groupe et le classement plus en détail.'}],
   profile:()=>[
     {sel:'[data-tour=profhead]',title:'Ton profil',text:'Ton pseudo et ta bannière. Touche ici pour la personnaliser.'},
@@ -6612,10 +6678,30 @@ const TOURS={
     {sel:'.stats',title:'Tes chiffres',text:'Points, rang, séances, points par metcon et série maximale.'},
     {sel:'.flames',title:'Tes flammes',text:'La série en cours compte tes séances d’affilée. « Temps au top » compte tes metcons d’affilée à 90 % des points ou plus. Touche le « ? » de la carte pour le détail.'},
     {sel:'[data-tour=goal]',title:'Ton objectif de séances',text:'Choisis combien de séances par semaine tu vises. Si tu tiens ton objectif, tu gagnes le trophée et tu gardes ta flamme.'},
+    {sel:'.jcoin-btn',title:'Tes jokers',text:'Les jokers protègent ta flamme quand tu rates une semaine. Touche la pièce pour en savoir plus.'},
+    {sel:'#pm-infos',title:'Le menu du profil',text:'Tes informations, tes badges, ta bannière, ta progression et tes records (PR), et tes notifications : chaque rubrique s’ouvre d’un toucher.'},
     {sel:'#pseudo-edit',title:'Tes informations',text:'Ton pseudo apparaît dans le classement. Tu peux le modifier ici.'}]
 };
+TOURS.moves=()=>[
+    {sel:'main .day',title:'Apprentissage des mouvements',text:'La banque de tous les mouvements, classés en haltérophilie, gymnastique et cardio.'},
+    {sel:'.mvcard',title:'Une fiche',text:'Touche un mouvement pour la déplier : description, critères de rep valide et de no rep, image, et vidéo quand elle existe.'},
+    {sel:'#mv-back',title:'Retour à la séance',text:'Arrivé depuis une séance ? Ce bouton te ramène exactement là où tu étais.'}];
+TOURS.rules=()=>[
+    {sel:'.rl-bar',title:'Le règlement point par point',text:'La barre montre ta progression dans la lecture.'},
+    {sel:'#rules-next',title:'Continuer',text:'Passe au point suivant. À la fin, tu acceptes le règlement.'}];
+TOURS.health=()=>[
+    {sel:'.rl-bar',title:'Santé et sécurité',text:'Des conseils lus un point à la fois : avis médical, écoute de ton corps, choix du niveau.'},
+    {sel:'#health-next',title:'Continuer',text:'Passe au point suivant puis valide à la fin.'}];
+TOURS.bug=()=>[
+    {sel:'#bug-tab',title:'Où est le bug ?',text:'Choisis l’onglet concerné.'},
+    {sel:'#bug-text',title:'Décris-le',text:'Ce que tu faisais, ce qui s’est passé, ce que tu attendais.'},
+    {sel:'#bug-send',title:'Envoyer',text:'Le message arrive directement au développeur.'}];
+TOURS.share=()=>[
+    {sel:'#share-url',title:'Le lien de l’appli',text:'Le lien à envoyer à quelqu’un de ton groupe.'},
+    {sel:'#share-copy',title:'Copier',text:'Copie le lien, puis colle-le dans un message.'}];
+const TOUR_AUTO=['login','feed','today','board','profile']; /* les autres guides s'ouvrent avec le « ? » */
 let tourEl=null;
-const TOUR_VER={feed:'-v2',today:'-v2'}; /* un guide enrichi est remontré une fois */
+const TOUR_VER={feed:'-v3',today:'-v3',board:'-v2',profile:'-v2'}; /* un guide enrichi est remontré une fois */
 const tourKey=t=>'bs-tour-'+(t==='login'?'login':(S.uid||'anon')+'-'+t)+(TOUR_VER[t]||'');
 const tourSeen=t=>{try{return localStorage.getItem(tourKey(t))==='1';}catch(e){return true;}}; /* stockage indisponible : on n'insiste pas */
 const tourMark=t=>{try{localStorage.setItem(tourKey(t),'1');}catch(e){}};
@@ -6625,7 +6711,7 @@ function helpBtn(){return h('button',{class:'help-btn',id:'tour-help',type:'butt
 function maybeTour(){
   if(tourEl)return;
   const t=curTourId();
-  if(!t||tourSeen(t))return;
+  if(!t||!TOUR_AUTO.includes(t)||tourSeen(t))return;
   if(S.uid&&(!ready()||needPseudo()))return;
   if(tourBusy())return;
   tourMark(t);
