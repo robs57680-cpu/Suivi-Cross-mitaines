@@ -199,6 +199,16 @@ body.modal-open{overflow:hidden}
 .banner{border:2px solid var(--edge);background:var(--surface);border-radius:4px;padding:14px;display:grid;gap:10px;margin-bottom:16px}
 .banner.warn{border-color:var(--accent)}
 .preview{font-family:var(--f-mono);font-size:14px;font-weight:600}
+.lvl-ban{border-radius:4px;padding:12px 14px;color:#fff;display:grid;gap:3px;border:2px solid rgba(0,0,0,.25)}
+.lvl-ban.lv-0{background:#1F8A4C}.lvl-ban.lv-1{background:#C77700}.lvl-ban.lv-2{background:#D8321A}.lvl-ban.lv-c{background:#6B3FA0}
+.lvl-ban .lb-k{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.9}
+.lvl-ban .lb-t{font-size:22px;font-weight:800;line-height:1.1;text-transform:uppercase}
+.lvl-ban .lb-d{font-size:14px;line-height:1.35}
+.lvc{display:grid;gap:12px;align-content:start}
+.lvc-row{display:grid;gap:3px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.lvc-row b{font-size:16px}
+.lvc-res{display:grid;gap:3px;margin:0}.lvc-res b{font-size:20px;font-family:var(--f-mono)}
+.lvc-lines{display:grid;gap:2px;font-size:14px}
 .empty{border:2px dashed var(--line);border-radius:4px;padding:20px;display:grid;gap:10px;color:var(--muted)}
 
 /* navigation */
@@ -859,7 +869,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-17.42';
+const APP_VERSION='2026-10-17.44';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -1549,6 +1559,9 @@ function openMoveVideo(g){
   const old=document.getElementById('vfs');if(old)old.remove();
   const vid=h('video',{src:g[6],controls:true,loop:true,autoplay:true,muted:true,playsinline:true,'aria-label':'Vidéo : '+g[0]});
   vid.muted=true;vid.loop=true;
+  /* si le fichier est introuvable, on essaie le même nom avec / sans « s » final (back_squat.mp4 ↔ back_squats.mp4) */
+  let alt=false;
+  vid.addEventListener('error',()=>{if(alt)return;alt=true;const u=g[6].replace(/s?\.mp4$/,m=>m==='s.mp4'?'.mp4':'s.mp4');vid.src=u;vid.load();vid.play().catch(()=>{});});
   const esc=e=>{if(e.key==='Escape'){e.stopPropagation();close();}};
   const close=()=>{
     try{if(document.fullscreenElement)document.exitFullscreen();}catch(x){}
@@ -3456,8 +3469,59 @@ function levelField(m,st,label){
       activeLevels(m).map(([lv,i])=>h('button',{type:'button',class:'btn sm','aria-pressed':(!cust&&st.level===i)?'true':'false',onclick:()=>{st.level=i;st.kg=0;st.custom=false;render();}},dispLvl(lv.name||('Niveau '+(i+1))))),
       canCust?h('button',{type:'button',class:'btn sm',id:'lvl-custom',style:'grid-column:1/-1','aria-pressed':cust?'true':'false',onclick:()=>{st.custom=true;render();}},'Niveau personnalisé'):null));
   if(cust)box.append(adjPicker(m,st));
-  else if(loadsText(lvl))box.append(h('span',{class:'hint'},(S.prof.sex?'Ta charge : ':'')+loadsText(lvl)));
+  box.append(lvlBanner(m,st));
   return box;
+}
+/* résumé du niveau choisi (nom, couleur, charge, variante) : sert au bandeau de saisie et à la fenêtre de confirmation */
+function lvlInfo(m,st){
+  const cust=!!st.custom||!!kgOf(st),k=kgOf(st),lv=levelsOf(m)[st.level]||{};
+  if(cust&&!k)return {pending:true,cls:'lv-c'};
+  const rank=lvRank(m,st.level),base=levelName(m,st.level);
+  return {cls:k?'lv-c':'lv-'+rank,label:k?base+' '+(k>0?'+':'−')+Math.abs(k)+' kg':base,
+    load:loadsText(k?customLoad(m,st):lv),note:lv.note||'',kg:k};
+}
+function lvlBanner(m,st){
+  const i=lvlInfo(m,st);
+  if(i.pending)return h('div',{class:'lvl-ban lv-c',role:'status'},h('div',{class:'lb-t'},'Choisis ton niveau personnalisé'),h('div',{class:'lb-d'},'Par exemple Rx +10 kg.'));
+  return h('div',{class:'lvl-ban '+i.cls,role:'status','aria-live':'polite'},
+    h('div',{class:'lb-k'},'Tu saisis un score en'),
+    h('div',{class:'lb-t'},i.label),
+    i.load?h('div',{class:'lb-d'},h('b',{},(S.prof.sex?'Ta charge : ':'Charge : ')),i.load):h('div',{class:'lb-d'},'Pas de charge indiquée pour ce niveau.'),
+    i.note?h('div',{class:'lb-d'},h('b',{},'Variante : '),i.note):null);
+}
+/* fenêtre de confirmation avant d'enregistrer : rappelle le niveau, la charge, les variantes et le résultat saisi */
+function confirmLevel(m,st,go){
+  const old=document.getElementById('lvc-ov');if(old)old.remove();
+  const i=lvlInfo(m,st);
+  const r=readScore(m,st);
+  const se=r.cap?{cap:true,capScore:r.v,rounds:r.rounds,reps:r.reps}:{score:r.v,rounds:r.rounds,reps:r.reps};
+  const res=r.empty?'':scoreText(m,se.score,se);
+  const lines=(m.content||'').split('\n').map(x=>x.trim()).filter(Boolean);
+  const esc=e=>{if(e.key==='Escape'){e.stopPropagation();close();}};
+  const close=()=>{ov.remove();document.removeEventListener('keydown',esc,true);document.body.classList.remove('modal-open');};
+  const ov=h('div',{class:'ov',id:'lvc-ov',style:'z-index:60'},
+    h('div',{class:'sheet lvc',role:'dialog','aria-modal':'true','aria-label':'Confirme ton niveau'},
+      h('div',{class:'ov-h'},h('span',{class:'ov-t'},'Confirme ton niveau'),h('button',{type:'button',class:'ov-x','aria-label':'Fermer',onclick:close},'✕')),
+      h('div',{class:'lvl-ban '+i.cls},
+        h('div',{class:'lb-k'},'Tu valides un score en'),h('div',{class:'lb-t'},i.label)),
+      res?h('p',{class:'lvc-res'},h('span',{class:'flabel'},'Ton résultat'),h('b',{},res)):null,
+      h('div',{class:'lvc-row'},h('span',{class:'flabel'},'Charge à utiliser'),h('b',{},i.load||'Pas de charge indiquée pour ce niveau')),
+      i.note?h('div',{class:'lvc-row'},h('span',{class:'flabel'},'Variante de ce niveau'),h('b',{},i.note)):h('div',{class:'lvc-row'},h('span',{class:'flabel'},'Variantes'),h('span',{class:'sub'},'Aucune : mêmes mouvements que le Rx.')),
+      lines.length?h('div',{class:'lvc-row'},h('span',{class:'flabel'},'Metcon · '+(m.label||'')),h('div',{class:'lvc-lines'},lines.map(x=>h('div',{},x)))):null,
+      h('p',{class:'hint'},'Vérifie que tu as bien fait la charge et les mouvements de ce niveau. Sinon, reviens corriger ton niveau.'),
+      h('div',{class:'row'},
+        h('button',{type:'button',class:'btn primary',id:'lvc-ok',onclick:()=>{close();go();}},'Oui, valider en '+i.label),
+        h('button',{type:'button',class:'btn',id:'lvc-back',onclick:close},'Modifier mon niveau'))));
+  document.body.append(ov);document.body.classList.add('modal-open');
+  document.addEventListener('keydown',esc,true);
+  try{document.getElementById('lvc-ok').focus();}catch(x){}
+}
+/* ouvre la confirmation seulement si une saisie valide de metcon va être enregistrée ; sinon la validation normale affiche son message d'erreur */
+function needConfirm(m,st){
+  if(!m||st.skip||st.coach)return false;
+  if((st.custom||kgOf(st))&&!kgOf(st))return false;
+  const r=readScore(m,st);
+  return !(r.bad||r.over||r.many||r.empty);
 }
 function scoreFields(m,st,upd,pre,canSkip){
   const ft=m.format==='FT',bind=k=>e=>{st[k]=e.target.value;upd();};
@@ -3595,6 +3659,11 @@ function redoForm(w,date){
   return form;
 }
 function submitRedo(w){
+  const m0=metconOf(w);
+  if(S.redo&&m0&&!lockedDate(S.redo.date)&&needConfirm(m0,S.redo)){const rd=S.redo;confirmLevel(m0,rd,()=>{if(S.redo===rd)submitRedoNow(w);});return;}
+  submitRedoNow(w);
+}
+function submitRedoNow(w){
   if(lockedDate(S.redo.date)||lockedDate(todayStr())){toast(LOCKMSG,true);return;}
   const m=metconOf(w),ft=m.format==='FT';
   if(S.redo.custom&&!kgOf(S.redo)){toast('Choisis ton niveau personnalisé (par exemple Rx +10 kg).',true);return;}
@@ -3674,6 +3743,10 @@ function entryForm(w,date){
   return form;
 }
 function submitEntry(w){
+  if(needConfirm(metconOf(w),S.entry)){const en=S.entry;confirmLevel(metconOf(w),en,()=>{if(S.entry===en)submitEntryNow(w);});return;}
+  submitEntryNow(w);
+}
+function submitEntryNow(w){
   if(!S.entry.coach&&lockedDate(S.entry.date)){toast(LOCKMSG,true);return;}
   const uid=S.entry.uid||S.uid,coach=!!S.entry.coach;
   const prevE=((S.logs[uid]||{}).entries||{})[S.entry.date];
