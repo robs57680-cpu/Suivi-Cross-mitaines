@@ -900,7 +900,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-17.46';
+const APP_VERSION='2026-10-17.47';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -1350,7 +1350,7 @@ function computeBoard(period){
   const rows=Object.entries(S.logs).map(([uid,lg])=>{
     const r={uid,pseudo:lg.pseudo||'Athlète',sessions:0,base:0,perf:0,perfN:0,strength:0,streak:0,lvlSum:0,lvlN:0,items:[],
       cat:{cardio:{sum:0,n:0},gym:{sum:0,n:0},haltero:{sum:0,n:0}}};
-    const best={};let run=0;
+    const best={};let run=0;r.tonnage=0;
     for(const w of wods){
       const e=lg.entries&&lg.entries[w.date];
       if(!e){run=0;continue;}
@@ -1361,6 +1361,11 @@ function computeBoard(period){
       if(m&&hasScore(e)){r.perfN++;const c=r.cat[m.focus];if(c){c.sum+=pts.perf;c.n++;}}
       for(const p of w.parts||[]){
         if(p.kind==='force'&&p.movement&&e.loads&&e.loads[p.label]>0){const k=norm(p.movement.trim());best[k]=Math.max(best[k]||0,e.loads[p.label]);}
+        /* tonnage = séries × reps × charge (sans la traction lestée) ; sans saisie de séries, on prend le schéma de la séance */
+        if(p.kind==='force'&&p.movement&&!SIGNED.includes(p.movement)&&e.loads&&e.loads[p.label]>0&&!e.metconOnly){
+          const sx=e.sets&&e.sets[p.label],sc=sx||forceSchema(p);
+          if(sc&&sc.s>0&&sc.r>0)r.tonnage+=sc.s*sc.r*e.loads[p.label];
+        }
       }
       r.items.push({w,e,pts});
     }
@@ -1375,6 +1380,7 @@ function computeBoard(period){
     }
     r.items.sort((a,b)=>(a.redo?a.on:a.w.date)<(b.redo?b.on:b.w.date)?-1:1);
     r.total=r.base+r.perf+r.redo;
+    r.tonnage=Math.round(r.tonnage);
     r.strength=Object.values(best).reduce((a,b)=>a+b,0);
     /* poids / puissance : meilleures charges (hors traction lestée) divisées par le poids de corps */
     r.sex=lg.sex||'';
@@ -1473,6 +1479,7 @@ const TROPHIES=[
  {id:'perf',name:'Le plus performant',desc:'La meilleure moyenne de points de metcon, pondérée par le niveau moyen choisi (niveau moyen divisé par 2). 3 metcons minimum.',key:r=>[r.perfAvgW],show:r=>fmtN(r.perfAvgW)+' pts par metcon · '+multTxt(r),elig:(r,b)=>r.perfN>=Math.min(3,b.metconCount)},
  {id:'lafort',name:'La plus forte',desc:'Même calcul que Le plus fort (somme des meilleures charges de force), réservé aux athlètes femmes. Le sexe se renseigne dans le profil.',key:r=>[r.strength],show:r=>fmtN(r.strength)+' kg cumulés',elig:r=>r.sex==='F'},
  {id:'fort',name:'Le plus fort',desc:'Somme des meilleures charges saisies sur chaque mouvement de force.',key:r=>[r.strength],show:r=>fmtN(r.strength)+' kg cumulés'},
+ {id:'tonnage',name:'Roi du tonnage',desc:'Le plus de kilos soulevés sur la saison dans les parties de force : séries × répétitions × charge, additionnés sur toutes les séances. Séries, répétitions et charge sont préremplies d’après la séance et modifiables.',key:r=>[r.tonnage],show:r=>fmtN(r.tonnage)+' kg soulevés'},
  {id:'ratio',name:'Poids / puissance',desc:'Le poids moyen soulevé par rapport à son poids de corps : moyenne des meilleures charges de chaque mouvement de force (hors traction lestée) divisée par le poids de corps. Le poids se renseigne dans le profil.',key:r=>[r.ratio],show:r=>'soulève en moyenne '+fmt2(r.ratio)+' fois son poids'},
  catTrophy('mcardio','Metcon cardio','cardio','cardio'),
  catTrophy('mgym','Metcon gym','gym','gym'),
@@ -1539,6 +1546,19 @@ function renderLine(text){
 }
 /* charge prévue d'une partie force : la plus lourde des charges calculées par les pourcentages des lignes (même calcul que dans la séance).
    null si rien n'est calculable (pas de %, PR ou poids de corps manquant). */
+/* séries × reps prévues par la séance (ex. « 5 x 5 Back Squat à 75 % ») : préremplissent le formulaire, modifiables */
+function forceSchema(p){
+  if(!p||p.kind!=='force')return null;
+  const re=/(\d{1,2})\s*(?:x|×|\*)\s*(\d{1,3})(?!\d)/i;let first=null;
+  for(const raw of String(p.content||'').split('\n')){
+    const m=raw.match(re);if(!m)continue;
+    const o={s:+m[1],r:+m[2]};
+    const canon=findMove(raw);
+    if(p.movement&&canon===p.movement)return o;
+    if(!first)first=o;
+  }
+  return first;
+}
 function forceDefault(p){
   if(!p||p.kind!=='force')return null;
   const bw=parseNum(S.prof&&S.prof.weight),cands=[];
@@ -2046,7 +2066,7 @@ const lvPill=r=>r.lvlN?h('span',{class:'chip lv',title:'Niveau moyen choisi sur 
    Il est calculé (jamais stocké) : il est remis à la fin de la saison aux gagnants du trophée. */
 const BADGES={goat:['#1F55D6','#FFFFFF'],lagoat:['#E0489A','#FFFFFF'],points:['#0E8A8A','#FFFFFF'],regulier:['#1E9B4A','#FFFFFF'],serie:['#D8321A','#FFFFFF'],
   top:['#2B3A67','#FFFFFF'],perf:['#F4C400','#14161A'],fort:['#1B1D20','#FFFFFF'],lafort:['#C2368F','#FFFFFF'],ratio:['#B5651D','#FFFFFF'],mcardio:['#F07A18','#FFFFFF'],
-  mgym:['#8B929A','#14161A'],mhaltero:['#F3F3F1','#14161A'],objectif:['#7B3FC4','#FFFFFF'],bdeb:['#6CC24A','#14161A'],binter:['#2AA6E0','#FFFFFF'],gsolo:['#FF7F50','#14161A'],gduo:['#5C6BC0','#FFFFFF']};
+  mgym:['#8B929A','#14161A'],mhaltero:['#F3F3F1','#14161A'],tonnage:['#1B1D20','#F4C400'],objectif:['#7B3FC4','#FFFFFF'],bdeb:['#6CC24A','#14161A'],binter:['#2AA6E0','#FFFFFF'],gsolo:['#FF7F50','#14161A'],gduo:['#5C6BC0','#FFFFFF']};
 const GOAT='<g transform="translate(-4.8 -5.1) scale(1.15)"><g stroke="#1A1A1A" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">'+
   '<path d="M26 20C19 14 14 9 16 2C24 4 30 11 30 19Z" fill="#D9C28F"/><path d="M38 20C45 14 50 9 48 2C40 4 34 11 34 19Z" fill="#D9C28F"/>'+
   '<path d="M22 25L6 24C3 28 7 32 12 32L23 32Z" fill="#F4E9D0"/><path d="M42 25L58 24C61 28 57 32 52 32L41 32Z" fill="#F4E9D0"/>'+
@@ -2062,6 +2082,7 @@ const ICONS={goat:GOAT,lagoat:GOAT,
   top:'<path d="M3 56L24 20L34 37L42 27L61 56Z" fill="currentColor"/><path d="M24 20V4" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M24 4L39 9L24 15Z" fill="currentColor"/>',
   perf:'<g fill="none" stroke="currentColor" stroke-width="5"><circle cx="32" cy="32" r="26"/><circle cx="32" cy="32" r="14"/></g><circle cx="32" cy="32" r="5" fill="currentColor"/>',
   lafort:'<path d="M20 26C18 6 46 6 44 26" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><circle cx="32" cy="40" r="19" fill="currentColor"/><path d="M32 31L34.5 37.5L41 38L36 42.5L37.6 49L32 45.5L26.4 49L28 42.5L23 38L29.5 37.5Z" fill="%BG%"/>',
+  tonnage:'<g fill="currentColor"><rect x="6" y="44" width="52" height="10" rx="3"/><rect x="12" y="30" width="40" height="10" rx="3"/><rect x="18" y="16" width="28" height="10" rx="3"/></g>',
   fort:'<path d="M20 26C18 6 46 6 44 26" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><circle cx="32" cy="40" r="19" fill="currentColor"/>',
   ratio:'<g stroke="currentColor" stroke-width="4" stroke-linecap="round" fill="none"><path d="M32 8V54M18 56H46M8 18H56"/><path d="M8 18L2 40M8 18L20 40M56 18L44 40M56 18L62 40" stroke-width="2.5"/></g><path d="M0 40Q11 52 22 40Z M42 40Q53 52 64 40Z" fill="currentColor"/>',
   mcardio:'<path d="M32 56C4 38 6 12 21 12C27 12 31 16 32 21C33 16 37 12 43 12C58 12 60 38 32 56Z" fill="currentColor"/><path d="M10 33H24L28 25L35 42L39 33H54" fill="none" stroke="%BG%" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>',
@@ -2094,7 +2115,7 @@ function badgeHTML(tid,label,size){
 /* ---- badges illustrés (saisons suivantes) ----
    Images dans assets/embedded/badge-<trophée>.webp (280 x 300, plaque du bas vide). Le nom de la saison s'écrit sur la plaque ;
    le badge est trop petit pour le lire sous ~100 px : il reste alors dans l'info-bulle. Les saisons Alpha et Bêta gardent les anciens badges dessinés. */
-const BADGE_IMG_Y={goat:0.9167,lagoat:0.9167,points:0.92,regulier:0.9167,serie:0.9167,top:0.9167,perf:0.9133,lafort:0.92,fort:0.9325,mcardio:0.9183,mgym:0.9167,mhaltero:0.9167,gduo:0.9067,gsolo:0.9083,bdeb:0.9083,binter:0.9083,objectif:0.9083,ratio:0.9183}; /* hauteur du centre de la plaque, en fraction de l'image */
+const BADGE_IMG_Y={goat:0.9167,lagoat:0.9167,points:0.92,regulier:0.9167,serie:0.9167,top:0.9167,perf:0.9133,lafort:0.92,fort:0.9325,mcardio:0.9183,mgym:0.9167,mhaltero:0.9167,tonnage:0.955,gduo:0.9067,gsolo:0.9083,bdeb:0.9083,binter:0.9083,objectif:0.9083,ratio:0.9183}; /* hauteur du centre de la plaque, en fraction de l'image */
 const BADGE_IMG_FILE={}; /* correspondances trophée -> fichier quand ils diffèrent (ex. {ratio:'fort'}) ; chaque trophée a son image badge-<id>.webp */
 const BADGE_LEGACY_RX=/alpha|b[eé]ta/i; /* saisons dont les badges restent inchangés */
 const badgeImgOn=(per,tid)=>!!per&&!!BADGE_IMG_Y[BADGE_IMG_FILE[tid]||tid]&&!BADGE_LEGACY_RX.test(String(per.name||''));
@@ -3803,11 +3824,17 @@ function openEntry(w,date,uid,coach){
   uid=uid||S.uid;
   const mine=S.logs[uid]&&S.logs[uid].entries&&S.logs[uid].entries[date];const m=metconOf(w);
   if(!coach)S.entryGlowUntil=Date.now()+2900;
-  S.entry={date,uid,coach:!!coach,score:'',rounds:'',reps:'',message:(mine&&mine.message)||'',level:m?okLvl(m,mine&&mine.level!==undefined?mine.level:lowLvl(m)):0,kg:kgOf(mine),custom:!!kgOf(mine),loads:{},prs:{},skip:!!(mine&&mine.noMetcon&&!hasScore(mine)),only:!!(mine&&mine.metconOnly)};
+  S.entry={date,uid,coach:!!coach,score:'',rounds:'',reps:'',message:(mine&&mine.message)||'',level:m?okLvl(m,mine&&mine.level!==undefined?mine.level:lowLvl(m)):0,kg:kgOf(mine),custom:!!kgOf(mine),loads:{},sets:{},prs:{},skip:!!(mine&&mine.noMetcon&&!hasScore(mine)),only:!!(mine&&mine.metconOnly)};
   if(mine){
     fillState(m,S.entry,mine);
     for(const [k,v] of Object.entries(mine.loads||{}))S.entry.loads[k]=String(v).replace('.',',');
     for(const [k,x] of Object.entries(mine.prs||{}))S.entry.prs[k]={reps:String(x.reps)};
+    for(const [k,x] of Object.entries(mine.sets||{}))S.entry.sets[k]={s:String(x.s),r:String(x.r)};
+  }
+  /* séries et reps prévues par la séance, modifiables */
+  for(const p of (w.parts||[])){
+    if(p.kind!=='force'||S.entry.sets[p.label])continue;
+    const sc=forceSchema(p);if(sc)S.entry.sets[p.label]={s:String(sc.s),r:String(sc.r)};
   }
   /* la charge prévue par les pourcentages apparaît d'office dans la partie force (modifiable) */
   if(!coach&&uid===S.uid)for(const p of (w.parts||[])){
@@ -3839,8 +3866,15 @@ function entryForm(w,date){
       if(S.entry.only)return;
       const prb=prBox(p,date);
       const fd=(!S.entry.coach&&(S.entry.uid||S.uid)===S.uid)?forceDefault(p):null;
-      form.append(field(p.label+' · '+(p.movement||p.name||'Force')+' : charge la plus lourde (kg)',
-        h('input',{id:'load-'+p.label,type:'text',inputmode:SIGNED.includes(p.movement)?'text':'decimal',placeholder:fd!==null?'charge prévue':'optionnel',value:S.entry.loads[p.label]||'',oninput:e=>{S.entry.loads[p.label]=e.target.value;prb.upd();}}),fd!==null?'Charge prévue d’après tes pourcentages : '+fmtN(fd)+' kg. Modifie-la si tu as utilisé autre chose ; si tu la laisses vide, c’est elle qui est enregistrée.':null),prb);
+      const signed=SIGNED.includes(p.movement);
+      if(!signed){
+        const sx=S.entry.sets[p.label]||(S.entry.sets[p.label]={s:'',r:''});
+        form.append(h('div',{class:'grid2'},
+          field(p.label+' · '+(p.movement||p.name||'Force')+' : séries',h('input',{id:'sets-'+p.label,type:'text',inputmode:'numeric',placeholder:'séries',value:sx.s,oninput:e=>{sx.s=e.target.value;}})),
+          field('Répétitions par série',h('input',{id:'reps-'+p.label,type:'text',inputmode:'numeric',placeholder:'reps',value:sx.r,oninput:e=>{sx.r=e.target.value;}}))));
+      }
+      form.append(field((signed?p.label+' · '+(p.movement||p.name||'Force')+' : charge la plus lourde (kg)':'Charge utilisée (kg)'),
+        h('input',{id:'load-'+p.label,type:'text',inputmode:SIGNED.includes(p.movement)?'text':'decimal',placeholder:fd!==null?'charge prévue':'optionnel',value:S.entry.loads[p.label]||'',oninput:e=>{S.entry.loads[p.label]=e.target.value;prb.upd();}}),fd!==null?'Charge prévue d’après tes pourcentages : '+fmtN(fd)+' kg. Modifie-la si tu as utilisé autre chose ; si tu la laisses vide, c’est elle qui est enregistrée.'+(signed?'':' Séries × reps × charge forment ton tonnage de la saison.'):(signed?null:'Séries × reps × charge forment ton tonnage de la saison (trophée Roi du tonnage).')),prb);
     }
     if(p.kind==='metcon'){
       const ft=p.format==='FT';
@@ -3885,6 +3919,16 @@ function submitEntryNow(w){
     const d=forceDefault(p);if(d!==null&&prOk(p.movement,d))loads[p.label]=d;
   }
   if(Object.keys(loads).length)e.loads=loads;
+  /* séries × reps : enregistrés avec la charge (tonnage) */
+  const setsO={};
+  for(const p of (w.parts||[])){
+    if(p.kind!=='force'||SIGNED.includes(p.movement)||loads[p.label]===undefined)continue;
+    const sx=S.entry.sets&&S.entry.sets[p.label],sc=forceSchema(p);
+    let n=sx&&String(sx.s).trim()!==''?parseInt(sx.s,10):(sc?sc.s:NaN),rr=sx&&String(sx.r).trim()!==''?parseInt(sx.r,10):(sc?sc.r:NaN);
+    if(!(n>0&&n<=99&&rr>0&&rr<=999)){if(sx&&(String(sx.s).trim()!==''||String(sx.r).trim()!=='')){toast('Séries et reps illisibles pour '+p.label,true);return;}continue;}
+    setsO[p.label]={s:n,r:rr};
+  }
+  if(Object.keys(setsO).length)e.sets=setsO;
   /* PR déclarés : {label:{reps,mv}} ; la charge reste celle de e.loads (pas de doublon) */
   const prs={};
   for(const [k,x] of (S.entry.only&&m?[]:Object.entries(S.entry.prs||{}))){
