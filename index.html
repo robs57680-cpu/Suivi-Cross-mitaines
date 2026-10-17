@@ -94,6 +94,20 @@ textarea{resize:vertical}
 .link{background:none;border:0;padding:0;text-align:left;cursor:pointer;color:inherit;font-weight:600}
 /* petite main à côté de chaque mot cliquable (liens, noms de mouvements, format du metcon) */
 .link::after,.mv::after,.fmtbtn::after{content:'👆';display:inline-block;margin-left:3px;font-size:.72em;font-weight:400;font-style:normal;text-decoration:none;text-shadow:none;text-transform:none;letter-spacing:0;opacity:.85}
+.av.noav{display:grid;place-items:center;text-align:center;padding:8px;font-size:12px;line-height:1.3;color:var(--muted);background:var(--surface2);border:2px dashed var(--line);aspect-ratio:480/968;background-image:none}
+.av.noav.tap{cursor:pointer}
+.feed-av .noav-dot{width:100%;height:100%;display:grid;place-items:center;font-weight:700;color:var(--muted);background:var(--surface2);cursor:pointer}
+/* profil d'un autre participant : avatar pleine hauteur à gauche de la bannière */
+.bn.bn-prof{padding:0;height:230px}
+.bn-prof-row{display:flex;align-items:stretch;height:100%;gap:0}
+.bn-prof .bn-prof-row>.av{flex:none;width:114px!important;height:230px;aspect-ratio:auto;border:0;border-right:2px solid var(--edge);border-radius:0}
+.bn-prof-txt{flex:1;min-width:0;padding:12px 14px;display:flex;flex-direction:column;justify-content:center;overflow:hidden}
+.bn-prof-txt h1.day{font-size:30px;overflow-wrap:anywhere;word-break:break-word;min-width:0}
+.bn-prof-txt .eyebrow{overflow-wrap:anywhere}
+.varmk{background:var(--accent);color:var(--accent-ink);border-radius:3px;padding:0 4px;font-weight:700}
+.varnote{font-size:13px;font-weight:600;color:var(--accent)}
+.mvpanel{border:1px dashed var(--line);border-radius:6px;padding:10px;background:var(--surface2)}
+.mvpanel .chk{display:inline-flex;margin-right:12px}
 .fmtbtn{background:none;border:0;padding:0;font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit;cursor:pointer;text-align:left;text-decoration:underline dotted;text-underline-offset:3px}
 
 /* séance, façon tableau blanc de la box */
@@ -982,7 +996,10 @@ const GLOSS=[
 ['Lunge',['lunge','walking lunge','fente'],'Fente alternée, en marchant ou sur place.',['Le genou arrière touche le sol','Hanches et genoux tendus entre deux fentes'],['Genou arrière qui ne touche pas le sol','Extension incomplète en haut']],
 ['Sit-up',['sit-up','abmat sit-up'],'Relevé de buste, sur AbMat en général.',['Omoplates au sol en bas','Buste relevé en haut (mains au niveau des pieds si la consigne le demande)'],['Épaules qui ne touchent pas le sol','Buste non relevé en haut']],
 ['Dumbbell Snatch',['dumbbell snatch','db snatch'],'Arraché à un bras avec haltère, du sol au-dessus de la tête en un mouvement.',['Haltère du sol à bout de bras au-dessus de la tête','Bras, hanches et genoux tendus en haut'],['Bras non verrouillé en haut','Haltère qui ne part pas du sol']],
-['Shuttle run',['shuttle run'],'Course en navette entre deux plots : tu cours jusqu’au plot opposé, tu touches la ligne ou le plot, puis tu reviens à ton point de départ. 1 shuttle run = 1 aller-retour. La distance indiquée dans le WOD est celle entre les deux plots (10 m entre les plots = 20 m parcourus par aller-retour).',['Toucher la ligne ou le plot à chaque extrémité','Revenir au point de départ : 1 aller-retour = 1 rep'],['Faire demi-tour sans toucher la ligne ou le plot','Aller-retour non terminé au point de départ']]
+['Shuttle run',['shuttle run'],'Course en navette entre deux plots : tu cours jusqu’au plot opposé, tu touches la ligne ou le plot, puis tu reviens à ton point de départ. 1 shuttle run = 1 aller-retour. La distance indiquée dans le WOD est celle entre les deux plots (10 m entre les plots = 20 m parcourus par aller-retour).',['Toucher la ligne ou le plot à chaque extrémité','Revenir au point de départ : 1 aller-retour = 1 rep'],['Faire demi-tour sans toucher la ligne ou le plot','Aller-retour non terminé au point de départ']],
+['Row (rameur)',['row','rowing','rameur'],'Rameur (row) : on pousse sur les jambes, puis le buste s’ouvre et les bras tirent la poignée vers le bas des côtes, puis on revient dans l’ordre inverse. Selon le WOD, la distance (mètres) ou les calories se lisent sur la console.',['Console remise à zéro avant le départ','Pieds sanglés sur les cale-pieds','Distance ou calories demandées atteintes sur la console'],['Partir sans remettre la console à zéro','S’arrêter avant d’avoir atteint la distance ou les calories demandées']],
+['Pompes sur genoux',['pompes sur genoux','pompe sur genoux','pompes genoux','knee push-up','knee push up','knee pushup'],'Pompe au sol en appui sur les genoux au lieu des pieds : variante accessible de la pompe, avec le corps gainé des genoux à la tête.',['La poitrine touche le sol','Corps gainé des genoux à la tête','Bras verrouillés en haut'],['Poitrine qui ne touche pas le sol','Fesses en arrière ou ventre qui touche avant la poitrine','Bras non verrouillés en haut']],
+['Rowing TRX',['rowing trx','trx row','trx rows'],'Tirage horizontal aux sangles TRX : tu te penches en arrière, bras tendus et corps gainé de la tête aux talons, puis tu te tires vers les poignées. Plus tes pieds sont proches de l’ancrage, plus c’est difficile.',['Corps gainé de la tête aux talons','Bras tendus en bas','Poitrine à hauteur des poignées en haut'],['Hanches qui s’affaissent','Bras non tendus en bas','Poitrine qui n’atteint pas les poignées']]
 ];
 const GLOSS_AL=(()=>{const out=[];GLOSS.forEach((g,gi)=>{const set=new Set();g[1].forEach(a=>{[a,a.replace(/-/g,' '),a.replace(/-/g,'')].forEach(v=>{set.add(v);if(!v.endsWith('s'))set.add(v+'s');});});set.forEach(a=>out.push([a,gi]));});return out.sort((x,y)=>y[0].length-x[0].length);})();
 
@@ -994,7 +1011,7 @@ const MM={'Air Squat':'qua2 fes2 isc1 abd1 mol1','Back Squat':'qua2 fes2 isc1 lo
 'Bench Press':'pec2 tri2 eps1','Burpee':'pec2 tri1 eps1 abd1 qua1','Burpee Over the Bar':'pec2 tri1 eps1 abd1 qua1 mol1','Box Jump':'qua2 fes2 mol2 isc1',
 'Pull-up':'dos2 bic2 avb1 abd1 eps1','Chest to Bar':'dos2 bic2 trp1 avb1 abd1','Toes to Bar':'abd2 avb2 dos1 bic1 eps1','Muscle-up':'dos2 tri2 bic1 pec1 eps1 avb1',
 'Handstand Push-up':'eps2 tri2 trp1 abd1','Push-up':'pec2 tri2 eps1 abd1','Ring Dip':'tri2 pec2 eps1','Corde à sauter':'mol2 avb1 eps1 qua1','Wall Ball':'qua2 fes2 eps1 tri1',
-'Kettlebell Swing':'fes2 isc2 lom1 eps1 abd1 avb1','Rope Climb':'dos2 bic2 avb2 abd1','Lunge':'qua2 fes2 isc1 mol1','Sit-up':'abd2 qua1','Dumbbell Snatch':'eps2 fes1 qua1 trp1 isc1 abd1'};
+'Kettlebell Swing':'fes2 isc2 lom1 eps1 abd1 avb1','Rope Climb':'dos2 bic2 avb2 abd1','Lunge':'qua2 fes2 isc1 mol1','Sit-up':'abd2 qua1','Dumbbell Snatch':'eps2 fes1 qua1 trp1 isc1 abd1','Rowing TRX':'dos2 bic1 avb1 abd1','Pompes sur genoux':'pec2 tri1 eps1 abd1'};
 const EXTRA=[
 ['Rameur',['row','rameur','rowing'],'dos2 qua1 isc1 fes1 bic1 abd1'],['Ring Row',['ring row','rowing ring'],'dos2 bic1 avb1 abd1'],
 ['Pendlay Row',['pendlay row','barbell row','bent over row'],'dos2 lom1 bic1 trp1 isc1'],['Course',['run','course','running','courir'],'mol2 qua1 isc1 fes1 abd1'],
@@ -1534,13 +1551,16 @@ const metLine=text=>plainLine(tagShow(text));
 function glossSegs(text){
   const t=norm(text);
   if(t.length!==text.length)return [text];
-  const hits=[];
+  const hits=[],cand=[];
   for(const [al,gi] of GLOSS_AL){
     for(let i=t.indexOf(al);i>=0;i=t.indexOf(al,i+1)){
       const e=i+al.length;
-      if((i===0||!/[a-z0-9]/.test(t[i-1]))&&(e>=t.length||!/[a-z0-9]/.test(t[e]))&&!hits.some(x=>i<x.e&&e>x.s))hits.push({s:i,e,g:gi});
+      if(/^rowing?s?$|^rows?$/.test(al)&&(/(ring|pendlay|barbell|bent over|bent-over|dumbbell|db|kb|inverted|renegade|seal|trx|upright|cable)\s+$/.test(t.slice(0,i))||/^\s*(rings?|trx)\b/.test(t.slice(e))))continue; /* Ring Row, Pendlay Row… ne sont pas le rameur */
+      if((i===0||!/[a-z0-9]/.test(t[i-1]))&&(e>=t.length||!/[a-z0-9]/.test(t[e])))cand.push({s:i,e,g:gi});
     }
   }
+  cand.sort((a,b)=>(b.e-b.s)-(a.e-a.s)||a.s-b.s); /* le plus long alias gagne */
+  for(const x of cand)if(!hits.some(y=>x.s<y.e&&x.e>y.s))hits.push(x);
   hits.sort((a,b)=>a.s-b.s);
   const out=[];let c=0;
   for(const x of hits){
@@ -1609,7 +1629,7 @@ function movBackGo(){
 /* ---------- écritures ---------- */
 let chain=Promise.resolve();
 function run(fn){chain=chain.then(fn).catch(e=>{toast(errMsg(e),true);});return chain;}
-const saveProf=()=>run(async()=>{await S.db.doc('users/'+S.uid+'/private/profile').set({prs:S.prof.prs||{},sex:S.prof.sex||'',genEx:S.prof.genEx||null,genAll:S.prof.genAll||null,words:S.prof.words||[],weight:Number(S.prof.weight)>0?Number(S.prof.weight):0});});
+const saveProf=()=>run(async()=>{await S.db.doc('users/'+S.uid+'/private/profile').set({prs:S.prof.prs||{},sex:S.prof.sex||'',genEx:S.prof.genEx||null,genAll:S.prof.genAll||null,words:S.prof.words||[],mvcfg:S.prof.mvcfg||{},weight:Number(S.prof.weight)>0?Number(S.prof.weight):0});});
 const needPseudo=()=>S.uid&&S.loaded.logs&&!(S.logs[S.uid]&&S.logs[S.uid].pseudo);
 /* groupes : un seul document config/groups {list:[{id,name}], of:{uid:idDuGroupe}}, écrit par le coach seul */
 const groupsList=()=>(S.groups&&S.groups.list)||[];
@@ -2941,7 +2961,7 @@ function levelDetail(m,lv,i){
       null),
     recordBox(m,i),
     loadsText(lv)?h('div',{class:'lvl-load'},(S.prof.sex?'Ta charge : ':'')+loadsText(lv)):null,
-    lv.note?h('div',{class:'sub'},lv.note):null,
+    lvNote(lv)?h('div',{class:'sub'},lvNote(lv)):null,
     (lv.tiers&&lv.tiers.length)?h('div',{class:'tiers'},lv.tiers.map(t=>h('span',{class:'tier'},(ft?'≤ '+fmtTime(t.t):isDead(m)?'Tenir ≥ '+fmtTime(t.t):'≥ '+roundsLabel(m,t.t))+' → '+t.p+' pts'))):null,
     (ft&&lv.capTiers&&lv.capTiers.length)?h('div',{class:'tiers'},lv.capTiers.map(t=>h('span',{class:'tier'},'Time cap ≥ '+capLabel(m,tierCum(m,t.t),true)+' → '+t.p+' pts'))):null,
     S.prof.sex?null:h('p',{class:'sub'},'Renseigne ton sexe dans ton profil pour voir directement ta charge.')];
@@ -3041,6 +3061,9 @@ function partCard(p,w,date){
   const metcon=p.kind==='metcon';
   const lines=(p.content||'').split('\n').map(s=>s.trim()).filter(Boolean);
   const hasSw=p.kind==='force'||p.kind==='renfo';
+  /* niveau ouvert avec des variantes : elles remplacent les mouvements dans le descriptif, en surbrillance */
+  const lvOpen=metcon?activeLevels(p).find(x=>S.tip==='lv-'+p.label+x[1]&&(x[0].variants||[]).length):null;
+  const metL=lvOpen?(t=>h('div',{class:'line'},varSegs(tagShow(t),lvOpen[0].variants))):metLine;
   /* format cliquable : metcon (For Time, AMRAP, EMOM) ou renforcement en EMOM */
   const fmtId=(metcon||(p.kind==='renfo'&&p.format==='EMOM'))?'fmt-'+(date||'')+'-'+p.label:null;
   const body=h('div',{class:'pbody'+(hasSw?' has-sw':'')},
@@ -3053,7 +3076,8 @@ function partCard(p,w,date){
     fmtId?h('div',{class:'fmt'},h('button',{type:'button',class:'fmtbtn tipbtn','aria-expanded':S.tip===fmtId?'true':'false',onclick:()=>toggleTip(fmtId)},fmtLabel(p)),
       metcon?[p.detail,p.lineRounds?'Chaque ligne = 1 tour':(p.repsRound?'1 tour = '+p.repsRound+' reps':'')].filter(Boolean).map(x=>' · '+x).join(''):''):null,
     (fmtId&&S.tip===fmtId)?h('div',{class:'tip',role:'dialog'},fmtExplain(p).map((t,k)=>k===0?h('b',{},t):h('p',{},t))):null,
-    h('div',{class:'lines'},lines.map(metcon?metLine:renderLine)),
+    lvOpen?h('div',{class:'varnote'},'Version '+levelName(p,lvOpen[1])+' : les variantes remplacent les mouvements en surbrillance.'):null,
+    h('div',{class:'lines'},lines.map(metcon?metL:renderLine)),
     (metcon&&p.word)?h('div',{class:'cword'},h('span',{class:'flabel'},'Mot du coach'),h('p',{},p.word)):null,
     metcon?levelsBlock(p):null,
     (metcon&&w&&timerOk(date))?h('div',{class:'row'},h('button',{class:'btn primary btn-block',type:'button','data-tour':'start-metcon',onclick:()=>openTimer(w,date,p)},'Démarrer le metcon')):null);
@@ -3528,7 +3552,7 @@ function lvlInfo(m,st){
   if(cust&&!k)return {pending:true,cls:'lv-c'};
   const rank=lvRank(m,st.level),base=levelName(m,st.level);
   return {cls:k?'lv-c':'lv-'+rank,label:k?base+' '+(k>0?'+':'−')+Math.abs(k)+' kg':base,
-    load:loadsText(k?customLoad(m,st):lv),note:lv.note||'',kg:k};
+    load:loadsText(k?customLoad(m,st):lv),note:lvNote(lv),kg:k};
 }
 function lvlBanner(m,st){
   const i=lvlInfo(m,st);
@@ -3920,14 +3944,17 @@ function viewAthlete(uid){
   const p=selPeriod(),board=computeBoard(p),rank=board.rows.findIndex(r=>r.uid===uid),me=board.rows[rank];
   if(!me){el.append(h('div',{class:'empty'},h('p',{},'Athlète introuvable.')));return el;}
   const asx=((S.logs[uid]||{}).sex==='F')?'f':'h';
-  const avatar=avatarEl(asx,avEq(uid),110,()=>openAvatar(uid),'Avatar de '+me.pseudo+', touche pour l’agrandir');
+  const avatar=sexKnown(uid)?avatarEl(asx,avEq(uid),114,()=>openAvatar(uid),'Avatar de '+me.pseudo+', touche pour l’agrandir'):noAvatarEl(uid,114,false);
   const gn=groupName(groupOf(uid));
-  el.append(bannerEl(uid,h('div',{class:'row',style:'flex-wrap:nowrap;gap:16px'},avatar,
-    h('div',{style:'min-width:0'},h('p',{class:'eyebrow'},(p.virtual?'Saison':seasonLabel(p)+' · '+p.name)+(gn?' · '+gn:'')),h('h1',{class:'day'},me.pseudo,badgeMini(uid,32)),bannerTitle(uid),
+  /* bannière : l'avatar est collé à gauche et fait toute la hauteur de la bannière ; le texte à droite passe à la ligne au lieu d'être coupé */
+  const ban=bannerEl(uid,h('div',{class:'bn-prof-row'},avatar,
+    h('div',{class:'bn-prof-txt'},h('p',{class:'eyebrow'},(p.virtual?'Saison':seasonLabel(p)+' · '+p.name)+(gn?' · '+gn:'')),h('h1',{class:'day'},me.pseudo,badgeMini(uid,32)),bannerTitle(uid),
       /* flammes sous le pseudo, sans encadré */
       h('div',{style:'display:flex;align-items:flex-end;gap:18px;margin-top:8px'},
         h('div',{style:'display:grid;justify-items:center;gap:2px',title:'Série en cours (record : '+(me.flameBest||0)+')'},flameEl('fire',me.flameCur||0),h('span',{class:'sub',style:'font-size:11px'},'Série')),
-        h('div',{style:'display:grid;justify-items:center;gap:2px',title:'Temps au top (record : '+(me.flameTopBest||0)+')'},flameEl('plat',me.flameTopCur||0),h('span',{class:'sub',style:'font-size:11px'},'Top')))))));
+        h('div',{style:'display:grid;justify-items:center;gap:2px',title:'Temps au top (record : '+(me.flameTopBest||0)+')'},flameEl('plat',me.flameTopCur||0),h('span',{class:'sub',style:'font-size:11px'},'Top'))))));
+  ban.classList.add('bn-prof');
+  el.append(ban);
   const ranked=board.rows.filter(r=>r.sessions>0).length;
   el.append(h('div',{class:'stats'},
     h('div',{class:'stat'},h('b',{},fmtN(me.total)),h('span',{},'points bruts')),h('div',{class:'stat'},h('b',{},fmtN(me.weighted||0)),h('span',{},'XP pondérée')),
@@ -4314,6 +4341,16 @@ function avOverlay(sx,eq){
   return '<svg viewBox="0 0 '+AV_W+' '+AV_H+'" aria-hidden="true">'+g+'</svg>';
 }
 /* width : largeur en px, 0 = s'adapte à la hauteur du conteneur */
+/* sexe renseigné ? sans lui, pas d'avatar : un encart invite à renseigner « Mes infos » */
+const sexKnown=uid=>{const lg=S.logs[uid]||{};const v=(uid===S.uid)?(S.prof.sex||lg.sex):lg.sex;return v==='F'||v==='H';};
+const goInfos=()=>{go('profile');S.profView='infos';render();window.scrollTo(0,0);};
+function noAvatarEl(uid,width,dot,onclick){
+  const own=uid===S.uid,go_=own?goInfos:onclick;
+  const label=own?'Pas d’avatar : renseigne tes infos (sexe) dans Mes infos':'Pas d’avatar pour l’instant';
+  const el=dot?h('div',{class:'noav-dot',title:label,'aria-label':label},'?'):h('div',{class:'av noav',style:width?'width:'+width+'px':null,'aria-label':label},h('span',{},own?'Pas d’avatar. Renseigne tes infos pour le créer.':'Pas d’avatar'));
+  if(go_){el.classList.add('tap');el.setAttribute('role','button');el.setAttribute('tabindex','0');el.addEventListener('click',e=>{e.stopPropagation();go_();});el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go_();}});}
+  return el;
+}
 function avatarEl(sx,eq,width,onclick,label,world){
   const wrap=h('div',{class:'av'+(onclick?' tap':'')+(world?' nobg':''),style:width?'width:'+width+'px':null,role:'img','aria-label':label||'Avatar'});
   const cv=h('canvas',{width:AV_W,height:AV_H});wrap.append(cv);
@@ -4343,6 +4380,10 @@ function avIcon(it){
   return d.firstChild;
 }
 function avatarCard(){
+  if(!sexKnown(S.uid))return h('section',{class:'card'},h('div',{class:'avrow'},noAvatarEl(S.uid,92,false),
+    h('div',{class:'stack',style:'gap:8px;min-width:0'},h('h2',{class:'h2',style:'font-size:20px'},'Mon avatar'),
+      h('p',{class:'muted'},'Tu n’as pas encore d’avatar : renseigne ton sexe dans « Mes infos » pour le créer.'),
+      h('div',{class:'row'},h('button',{class:'btn primary sm',type:'button',id:'av-infos',onclick:goInfos},'Renseigner mes infos')))));
   const sx=avSex(),own=avOwned(S.uid),open=()=>openAvatar();
   return h('section',{class:'card'},h('div',{class:'avrow'},
     avatarEl(sx,avEq(S.uid),92,open,'Mon avatar, touche pour l’agrandir'),
@@ -4398,6 +4439,7 @@ function addZoom(stage,el){
 function openAvatar(uid){
   if(document.getElementById('av-ov'))return;
   const mine=!uid||uid===S.uid;uid=mine?S.uid:uid;
+  if(!sexKnown(uid)){if(mine)goInfos();return;}
   const sx=mine?avSex():(((S.logs[uid]||{}).sex==='F')?'f':'h'),own=avOwned(uid),eq=Object.assign({},avEq(uid)),pseudo=(S.logs[uid]||{}).pseudo||'Athlète';
   let slot=null,info=null;
   const vis=x=>S.owner||avSexOk(x,sx);
@@ -4551,6 +4593,7 @@ function avatarFramed(uid,onclick,big=false){
 const bannerTitle=uid=>{const t=bannerOf(uid).title;return t?h('div',{class:'bn-title'},BN.title[t].text):null;};
 function avatarCircle(uid,big,onclick){
   const lg=S.logs[uid]||{},w=h('div',{class:'feed-av'+(big?' lg':'')});
+  if(!sexKnown(uid)){w.append(noAvatarEl(uid,0,true,onclick));return w;}
   w.append(avatarEl(lg.sex==='F'?'f':'h',avEq(uid),big?64:44,onclick,'Avatar de '+(lg.pseudo||'Athlète')));
   return w;
 }
@@ -5133,11 +5176,11 @@ const GEN=[
 ['Squat Clean','haltero','bar',3,8,4.5],['Hang Power Clean','haltero','bar',4,9,3.5],['Hang Squat Clean','haltero','bar',3,8,4.5],['Clean & Jerk','haltero','bar',3,7,6],
 ['Dumbbell Snatch','haltero','db',6,14,3],['Kettlebell Swing','haltero','kb',10,25,2],['Wall Ball','haltero','ball',10,25,2.5],
 ['Pull-up','gym','',5,15,2.5],['Chest to Bar','gym','',5,12,3],['Toes to Bar','gym','',5,15,3.5],['Muscle-up','gym','',3,8,7],
-['Handstand Push-up','gym','',5,12,4],['Ring Dip','gym','',5,12,3.5],['Push-up','gym','',10,25,2],
+['Handstand Push-up','gym','',5,12,4],['Ring Dip','gym','',5,12,3.5],['Push-up','gym','',10,25,2],['Rowing TRX','gym','',8,15,3],
 ['Double under','cardio','',30,60,0.7],['Single under','cardio','',50,100,0.4],['Shuttle run','cardio','',6,12,7],['Mountain climber','cardio','',20,50,1],['Jumping jack','cardio','',30,60,0.6],['Rameur','cardio','',10,20,3.5,'Cal'],['Vélo','cardio','',10,20,3.5,'Cal'],['SkiErg','cardio','',10,20,3.5,'Cal'],
 ['Burpee','corps','',8,20,3.5],['Burpee Over the Bar','corps','',6,15,4],['Box Jump','corps','',8,20,2.5],['Air Squat','corps','',15,30,1.5],
 ['Sit-up','corps','',15,30,2],['Lunge','corps','',20,40,2]];
-const GEN_NEW=['Squat Clean','Hang Power Clean','Hang Squat Clean','Clean & Jerk','Single under','Shuttle run','Mountain climber','Jumping jack'];
+const GEN_NEW=['Rowing TRX','Squat Clean','Hang Power Clean','Hang Squat Clean','Clean & Jerk','Single under','Shuttle run','Mountain climber','Jumping jack'];
 /* un exercice ajouté après l'enregistrement des préférences est coché par défaut */
 const genEnabled=()=>{
   const ex=S.prof.genEx;if(!ex)return GEN;
@@ -5268,6 +5311,7 @@ function coachMenu(){
     ['results','Gérer les résultats',pl_(nA,'athlète')],
     ['seasons','Gérer les saisons',pl_(plist().length,'saison')],
     ['avatar','Objets secrets',pl_(AV_ITEMS.length,'objet')+' d’avatar à débloquer'],
+    ['mvcfg','Configurer les mouvements',pl_(mvCfgCount(),'mouvement')+' configuré'+(mvCfgCount()>1?'s':'')],
     ['warmup','Gérer l’échauffement',pl_(wuItems().length,'exercice')],
     ['message','Message aux athlètes',annActive()?'Un message est en ligne':'Aucun message en ligne']];
   return h('div',{class:'stack'},items.map(([k,t,sub])=>h('button',{class:'mbtn',type:'button',id:'cm-'+k,onclick:()=>{if(k==='warmup'){openWarmupEdit();return;}S.coach.view=k;render();window.scrollTo(0,0);}},h('div',{},h('b',{},t),h('span',{},sub)),h('i',{},'›'))));
@@ -5296,18 +5340,18 @@ function parseCap(m,s){
   if(/^\d+(?:[.,]\d+)?$/.test(t))return parseNum(t);
   return null;
 }
-const blankLevels=()=>LEVEL_NAMES.map((n,k)=>({name:n,loadF:'',loadH:'',note:'',tiers:blankTiers(),capTiers:blankCapTiers(),mode:k<2?'same':'custom',touched:false}));
+const blankLevels=()=>LEVEL_NAMES.map((n,k)=>({name:n,loadF:'',loadH:'',note:'',vars:{},tiers:blankTiers(),capTiers:blankCapTiers(),mode:k<2?'same':'custom',touched:false}));
 const blankPart=k=>({kind:k,name:'',content:'',movement:'',format:'FT',detail:'',repsRound:'',dur:'',interval:'1',deadBy:false,focus:'',syncTiers:true,word:'',lineRounds:false,redo:true,levels:blankLevels()});
 function blankWod(){return {date:todayStr(),title:'',base:'',parts:[Object.assign(blankPart('force'),{name:'Force'}),Object.assign(blankPart('renfo'),{name:'Renforcement'}),Object.assign(blankPart('metcon'),{name:'Metcon'})]};}
 function wodToDraft(w){
   return {date:w.date,title:w.title||'',base:(w.base!==undefined&&w.base!==null)?String(w.base):'',
     parts:(w.parts||[]).map(p=>{
       const fmt=p.format||'FT';const cm={format:fmt,content:p.content||'',repsRound:p.repsRound||0,lineRounds:!!p.lineRounds};
-      const lv=(p.kind==='metcon'?levelsOf(p):blankLevels()).slice(0,3).map((l,i)=>({mode:l.mode||(l.off?'off':'custom'),touched:l.touched!==undefined?l.touched:!l.off,name:l.name||LEVEL_NAMES[i],loadF:l.loadF||'',loadH:l.loadH||'',note:l.note||'',
+      const lv=(p.kind==='metcon'?levelsOf(p):blankLevels()).slice(0,3).map((l,i)=>({mode:l.mode||(l.off?'off':'custom'),touched:l.touched!==undefined?l.touched:!l.off,name:l.name||LEVEL_NAMES[i],loadF:l.loadF||'',loadH:l.loadH||'',note:l.note||'',vars:mvVarsOf(l),
         tiers:(l.tiers&&l.tiers.length)?l.tiers.map(t=>({t:(fmt==='FT'||(fmt==='EMOM'&&p.deadBy))?fmtTime(t.t):String(t.t).replace('.',','),p:String(t.p)})):blankTiers(),
         capTiers:(l.capTiers&&l.capTiers.length)?l.capTiers.map(t=>({t:capInput(cm,tierCum(p,t.t)),p:String(t.p)})):blankCapTiers()}));
-      while(lv.length<3)lv.push({mode:lv.length<2?'off':'custom',touched:false,name:LEVEL_NAMES[lv.length],loadF:'',loadH:'',note:'',tiers:blankTiers(),capTiers:blankCapTiers()});
-      const sk=l=>JSON.stringify([l.loadF,l.loadH,l.note,l.tiers,l.capTiers]);lv.forEach((l,k)=>{if(k<2&&l.mode==='custom'&&sk(l)===sk(lv[2]))l.mode='same';});
+      while(lv.length<3)lv.push({mode:lv.length<2?'off':'custom',touched:false,name:LEVEL_NAMES[lv.length],loadF:'',loadH:'',note:'',vars:{},tiers:blankTiers(),capTiers:blankCapTiers()});
+      const sk=l=>JSON.stringify([l.loadF,l.loadH,l.note,l.vars,l.tiers,l.capTiers]);lv.forEach((l,k)=>{if(k<2&&l.mode==='custom'&&sk(l)===sk(lv[2]))l.mode='same';});
       return {kind:p.kind||'autre',name:p.name||'',content:p.content||'',movement:p.movement||'',format:fmt,detail:p.detail||'',repsRound:p.repsRound?String(p.repsRound):'',word:p.word||'',lineRounds:!!p.lineRounds,redo:p.redo!==false,customLvl:p.customLvl!==false,dur:p.dur?String(p.dur):'',interval:p.interval?String(p.interval).replace('.',','):'1',deadBy:!!p.deadBy,focus:FOCUS[p.focus]?p.focus:'',levels:lv,syncTiers:(()=>{const k=l=>JSON.stringify([l.tiers,l.capTiers]);return lv.every((l,j)=>j===2||l.mode==='off'||k(l)===k(lv[2]));})()};
     })};
 }
@@ -5365,7 +5409,9 @@ function draftToWod(d){
           }
           capTiers.sort((a,b)=>b.t-a.t);
         }
-        return {name,loadF:lv.loadF.trim(),loadH:lv.loadH.trim(),note:lv.note.trim(),tiers,capTiers};
+        const o2={name,loadF:lv.loadF.trim(),loadH:lv.loadH.trim(),note:lv.note.trim(),tiers,capTiers};
+        const variants=mvVariantsOut(p,lv);if(variants.length)o2.variants=variants;
+        return o2;
       };
       const rx=build(p.levels[2],2);
       o.levels=p.levels.map((lv,k)=>{
@@ -5426,7 +5472,7 @@ function viewCoach(){
   const el=h('div',{class:'stack'});
   if(!S.owner){el.append(h('div',{class:'empty'},h('p',{},'Cet espace est réservé au coach.')));return el;}
   if(!S.coach.wod)S.coach.wod=blankWod();
-  const v=S.coach.view,titles={wod:'Entrer un WOD',groups:'Gérer les groupes',results:'Gérer les résultats',seasons:'Gérer les saisons',avatar:'Objets secrets',rivals:'Messages du fil',message:'Message aux athlètes'};
+  const v=S.coach.view,titles={wod:'Entrer un WOD',groups:'Gérer les groupes',results:'Gérer les résultats',seasons:'Gérer les saisons',avatar:'Objets secrets',rivals:'Messages du fil',message:'Message aux athlètes',mvcfg:'Configurer les mouvements'};
   if(titles[v])el.append(h('div',{class:'row'},h('button',{class:'btn sm',type:'button',onclick:()=>{S.coach.view=null;S.entry=null;S.confirm=null;render();window.scrollTo(0,0);}},'← Coach')));
   el.append(h('div',{class:'row',style:'justify-content:space-between;flex-wrap:nowrap;align-items:flex-start'},h('div',{style:'min-width:0'},h('p',{class:'eyebrow'},'Espace coach'),h('h1',{class:'day'},titles[v]||'Programmation')),coachIcons()));
   if(!titles[v])el.append(coachMenu());
@@ -5436,7 +5482,197 @@ function viewCoach(){
   else if(v==='avatar')el.append(avatarCoach());
   else if(v==='rivals')el.append(rivalryCoach());
   else if(v==='message')el.append(annCoach());
+  else if(v==='mvcfg')el.append(mvCfgSection());
   else el.append(periodEditor(),periodList());
+  return el;
+}
+/* ---------- configuration des mouvements (onglet Coach › Configurer les mouvements) ----------
+   Pour chaque mouvement, le coach règle les trois niveaux (0 Débutant, 1 Intermédiaire, 2 Rx) : charge femmes, charge hommes et variantes
+   (d'autres mouvements, ex. Pull-up -> Rowing TRX). Stocké dans le profil du coach : S.prof.mvcfg = { 'Pull-up': { lv:[{f,h,v:[…]}×3], custom? } }.
+   Dans l'éditeur de WOD, un niveau « Adapté » (ou Rx) propose ces charges et ces variantes pour les mouvements reconnus dans le contenu du metcon ;
+   les variantes cochées sont enregistrées dans levels[k].variants = [{from,to:[…]}] et remplacent le mouvement, en surbrillance, dans le descriptif vu par l'athlète. */
+const MV_LV=['Débutant','Intermédiaire','Rx'];
+const mvCfg=()=>(S.prof&&S.prof.mvcfg)||{};
+const mvHas=e=>!!e&&!!e.lv&&e.lv.some(x=>x&&(String(x.f||'').trim()||String(x.h||'').trim()||(x.v&&x.v.length)));
+const mvCfgCount=()=>Object.values(mvCfg()).filter(mvHas).length;
+const mvCfgLv=(name,k)=>{const c=mvCfg()[name];return (c&&c.lv&&c.lv[k])||{f:'',h:'',v:[]};};
+function mvLvObj(name,k){const c=(S.prof.mvcfg=S.prof.mvcfg||{});const e=c[name]=c[name]||{lv:[]};while(e.lv.length<3)e.lv.push({f:'',h:'',v:[]});if(!e.lv[k].v)e.lv[k].v=[];return e.lv[k];}
+const MV_EXTRA_CAT={'Course':'cardio','Vélo':'cardio','SkiErg':'cardio','Rameur':'cardio','Sled':'haltero','Farmer Carry':'haltero','Hip Thrust':'haltero','Romanian Deadlift':'haltero','Pendlay Row':'haltero'};
+function mvGroup(name){
+  if(MV_CAT[name])return MV_CAT[name];
+  if(MV_EXTRA_CAT[name])return MV_EXTRA_CAT[name];
+  const g=GEN.find(x=>x[0]===name);
+  if(g)return g[1]==='corps'?'gym':g[1];
+  return 'gym';
+}
+/* catalogue des mouvements reconnus : GLOSS + EXTRA + exercices du générateur + mouvements ajoutés par le coach */
+let _mvCat=null,_mvKey='';
+function mvCatalog(){
+  const key=Object.keys(mvCfg()).sort().join('|');
+  if(_mvCat&&_mvKey===key)return _mvCat;
+  const names=new Map();
+  const owned=a=>{for(const set of names.values())if(set.has(a))return true;return false;};
+  const add=(name,al,strict)=>{
+    const ns=al.map(norm);
+    if(strict&&ns.some(owned))return; /* un autre mouvement porte déjà cet alias */
+    if(!names.has(name))names.set(name,new Set());
+    ns.forEach(a=>names.get(name).add(a));
+  };
+  GLOSS.forEach(g=>add(g[0],g[1].concat([g[0]]),false));
+  EXTRA.forEach(x=>add(x[0],x[1].concat([x[0]]),true));
+  GEN.forEach(x=>add(x[0],[x[0]],true));
+  Object.keys(mvCfg()).forEach(n=>{if(!names.has(n))add(n,[n],false);});
+  const list=[];
+  names.forEach((set,name)=>{const forms=new Set();set.forEach(a=>{[a,a.replace(/-/g,' '),a.replace(/-/g,'')].forEach(v=>{forms.add(v);if(!v.endsWith('s'))forms.add(v+'s');});});forms.forEach(f=>list.push([f,name]));});
+  list.sort((a,b)=>b[0].length-a[0].length);
+  _mvCat={names,list};_mvKey=key;return _mvCat;
+}
+/* mouvements reconnus dans une ligne (le plus long alias gagne : « ring row » avant « row ») */
+function mvSpans(text){
+  const t=norm(text);if(t.length!==text.length)return [];
+  const out=[];
+  for(const [al,name] of mvCatalog().list){
+    for(let i=t.indexOf(al);i>=0;i=t.indexOf(al,i+1)){
+      const e=i+al.length;
+      if((i>0&&/[a-z0-9]/.test(t[i-1]))||(e<t.length&&/[a-z0-9]/.test(t[e])))continue;
+      if(out.some(x=>i<x.e&&e>x.s))continue;
+      out.push({s:i,e,name});
+    }
+  }
+  return out.sort((a,b)=>a.s-b.s);
+}
+function mvDetect(content){
+  const seen=[];
+  for(const raw of String(content||'').split('\n'))for(const sp of mvSpans(raw.replace(WTAG,'')))if(!seen.includes(sp.name))seen.push(sp.name);
+  return seen;
+}
+/* ligne du descriptif avec les variantes d'un niveau à la place du mouvement d'origine (en surbrillance) */
+function varSegs(text,vars){
+  const sp=(vars&&vars.length)?mvSpans(text).filter(x=>vars.some(v=>v.from===x.name&&v.to&&v.to.length)):[];
+  if(!sp.length)return glossSegs(text);
+  const out=[];let c=0;
+  for(const x of sp){
+    if(x.s>c)out.push(glossSegs(text.slice(c,x.s)));
+    const v=vars.find(y=>y.from===x.name);
+    out.push(h('mark',{class:'varmk',title:'Variante de '+x.name},glossSegs(v.to.join(' ou '))));
+    c=x.e;
+  }
+  if(c<text.length)out.push(glossSegs(text.slice(c)));
+  return out;
+}
+const lvNote=lv=>{
+  if(!lv)return '';
+  const a=(lv.variants||[]).filter(x=>x&&x.to&&x.to.length).map(x=>x.from+' → '+x.to.join(' ou '));
+  if(lv.note)a.push(lv.note);
+  return a.join(' · ');
+};
+const mvVarsOf=l=>{const o={};(l.variants||[]).forEach(x=>{if(x&&x.from&&x.to&&x.to.length)o[x.from]=x.to.slice();});return o;};
+function mvVariantsOut(p,lv){
+  const det=mvDetect(p.content),out=[];
+  for(const [from,to] of Object.entries(lv.vars||{}))if(det.includes(from)&&to&&to.length)out.push({from,to:to.slice()});
+  return out;
+}
+/* charges proposées par la configuration pour un niveau : une seule valeur si un seul mouvement est réglé, sinon « Mouvement valeur · … » */
+function mvLoads(names,k){
+  const f=[],hh=[];
+  names.forEach(n=>{const c=mvCfgLv(n,k);if(String(c.f||'').trim())f.push({n,v:c.f.trim()});if(String(c.h||'').trim())hh.push({n,v:c.h.trim()});});
+  const fm=a=>a.length===1?a[0].v:a.map(x=>x.n+' '+x.v).join(' · ');
+  return {f:fm(f),h:fm(hh)};
+}
+function mvApplyCfg(p,lv,k){
+  const det=mvDetect(p.content),sug=mvLoads(det,k);
+  if(sug.f)lv.loadF=sug.f;
+  if(sug.h)lv.loadH=sug.h;
+  lv.vars={};
+  det.forEach(n=>{const v=mvCfgLv(n,k).v;if(v&&v.length)lv.vars[n]=v.slice();});
+}
+/* encart « variantes » de l'éditeur de WOD, pour un niveau */
+function mvPanel(p,lv,i,k){
+  if(!lv.vars)lv.vars={};
+  const det=mvDetect(p.content),cfgd=det.filter(n=>mvHas(mvCfg()[n]));
+  const box=h('div',{class:'stack mvpanel'},h('div',{class:'flabel'},'Mouvements du metcon : charges et variantes ('+MV_LV[k]+')'));
+  if(!cfgd.length){
+    box.append(h('p',{class:'hint'},det.length?'Aucun réglage pour les mouvements reconnus ('+det.join(', ')+'). Règle-les dans Coach › Configurer les mouvements pour que les charges et les variantes soient proposées ici.':'Aucun mouvement reconnu dans le contenu pour l’instant : écris les mouvements dans le contenu du metcon (par exemple « 15 Pull-ups ») et ils apparaîtront ici.'));
+    return box;
+  }
+  const sug=mvLoads(cfgd,k);
+  if(sug.f||sug.h)box.append(h('div',{class:'row'},
+    h('span',{class:'hint',style:'flex:1;min-width:180px'},'Charges proposées : '+[sug.f?'femmes '+sug.f:'',sug.h?'hommes '+sug.h:''].filter(Boolean).join(' · ')),
+    h('button',{class:'btn sm',type:'button',onclick:()=>{if(sug.f)lv.loadF=sug.f;if(sug.h)lv.loadH=sug.h;render();}},'Appliquer les charges')));
+  let any=false;
+  cfgd.forEach(n=>{
+    const c=mvCfg()[n],mine=lv.vars[n]||[],avail=[];
+    const push=v=>{if(v&&!avail.includes(v))avail.push(v);};
+    ((c.lv[k]||{}).v||[]).forEach(push);
+    [0,1,2].forEach(j=>{if(j!==k)((c.lv[j]||{}).v||[]).forEach(push);});
+    if(!avail.length)return;
+    any=true;
+    const here=((c.lv[k]||{}).v||[]);
+    box.append(h('div',{class:'field'},h('span',{class:'flabel'},n+' : variantes disponibles'),
+      h('div',{class:'row'},avail.map(v=>h('label',{class:'chk'},
+        h('input',{type:'checkbox',checked:mine.includes(v),onchange:e=>{const a=(lv.vars[n]||[]).filter(x=>x!==v);if(e.target.checked)a.push(v);lv.vars[n]=a;render();}}),
+        h('span',{},v+(here.includes(v)?'':' (réglée pour un autre niveau)')))))));
+  });
+  if(!any)box.append(h('p',{class:'hint'},'Aucune variante réglée pour '+cfgd.join(', ')+'.'));
+  const chosen=mvVariantsOut(p,lv);
+  if(chosen.length){
+    const lines=String(p.content||'').split('\n').map(x=>x.trim()).filter(Boolean);
+    box.append(h('div',{},h('span',{class:'flabel'},'Aperçu du descriptif pour ce niveau'),
+      h('div',{class:'lines'},lines.map(x=>h('div',{class:'line'},varSegs(x.replace(WTAG,''),chosen))))));
+  }
+  return box;
+}
+function mvCfgSave(){
+  const c=mvCfg();
+  for(const [n,e] of Object.entries(c)){
+    if(e&&e.lv)e.lv.forEach(x=>{x.f=String(x.f||'').trim();x.h=String(x.h||'').trim();x.v=(x.v||[]).map(String).filter(Boolean);});
+    if(!mvHas(e)&&!(e&&e.custom))delete c[n];
+  }
+  S.prof.mvcfg=c;saveProf();toast('Configuration des mouvements enregistrée');render();
+}
+function mvCfgCard(name){
+  const e=mvCfg()[name];
+  S.coach.mvOpen=S.coach.mvOpen||{};
+  const lvBlock=k=>{
+    const L=mvCfgLv(name,k);
+    const inp=(key,ph)=>h('input',{type:'text',value:L[key]||'',placeholder:ph,'aria-label':MV_LV[k]+' · '+name+' · '+(key==='f'?'charge femmes':'charge hommes'),oninput:ev=>{mvLvObj(name,k)[key]=ev.target.value;}});
+    const addIn=h('input',{type:'text',list:'mv-dl',placeholder:'Ajouter une variante (ex. Rowing TRX)','aria-label':'Variante '+MV_LV[k]+' pour '+name});
+    const add=()=>{const v=addIn.value.trim();if(!v||v===name)return;const o=mvLvObj(name,k);if(!o.v.includes(v))o.v.push(v);render();};
+    addIn.addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();add();}});
+    return h('div',{class:'lvl-edit'},h('div',{class:'flabel'},MV_LV[k]+(k===2?' · Rx':'')),
+      h('div',{class:'grid2'},field('Charge femmes',inp('f','30 kg')),field('Charge hommes',inp('h','40 kg'))),
+      h('div',{class:'field'},h('span',{class:'flabel'},'Variantes proposées'),
+        h('div',{class:'chips'},(L.v||[]).map((v,j)=>h('span',{class:'chip'},v+' ',h('button',{type:'button',class:'btn sm','aria-label':'Retirer '+v,onclick:()=>{mvLvObj(name,k).v.splice(j,1);render();}},'✕')))),
+        h('div',{class:'row',style:'flex-wrap:nowrap'},addIn,h('button',{type:'button',class:'btn sm',onclick:add},'Ajouter'))));
+  };
+  const det=h('details',Object.assign({class:'mvdet',ontoggle:ev=>{S.coach.mvOpen[name]=ev.currentTarget.open;}},S.coach.mvOpen[name]?{open:true}:{}),
+    h('summary',{class:'mvsum'},h('span',{class:'row'},h('span',{class:'wtitle'},name),mvHas(e)?h('span',{class:'chip live'},'réglé'):null),h('span',{class:'mvchev','aria-hidden':'true'})),
+    h('div',{class:'mvbody'},lvBlock(2),lvBlock(1),lvBlock(0),
+      (e&&e.custom)?h('div',{class:'row'},h('button',{type:'button',class:'btn sm danger',onclick:()=>{delete S.prof.mvcfg[name];render();}},'Retirer ce mouvement')):null));
+  return h('section',{class:'card mvcard','data-mv':norm(name)},det);
+}
+function mvCfgSection(){
+  const el=h('div',{class:'stack'});
+  const names=[...mvCatalog().names.keys()];
+  el.append(h('p',{class:'muted'},'Pour chaque mouvement, règle la charge (femmes et hommes) et les variantes de chaque niveau : Rx, Intermédiaire et Débutant. Dans l’éditeur de WOD, quand tu actives un niveau en « Adapté », les charges sont remplies et les variantes te sont proposées à cocher pour les mouvements reconnus dans ton metcon. Les variantes cochées remplacent le mouvement, en surbrillance, dans le descriptif vu par l’athlète.'),
+    h('datalist',{id:'mv-dl'},names.map(n=>h('option',{value:n}))));
+  const search=h('input',{id:'mv-q',type:'search',placeholder:'Chercher un mouvement','aria-label':'Chercher un mouvement',oninput:ev=>{
+    const q=norm(ev.target.value).trim();
+    el.querySelectorAll('[data-mv]').forEach(c=>{c.hidden=!!q&&!c.getAttribute('data-mv').includes(q);});}});
+  el.append(h('div',{class:'row',style:'flex-wrap:nowrap'},h('div',{style:'flex:1;min-width:0'},search),
+    h('button',{class:'btn primary',type:'button',id:'mv-save',onclick:mvCfgSave},'Enregistrer')));
+  const nw=h('input',{id:'mv-new',type:'text',placeholder:'Ajouter un mouvement absent de la liste','aria-label':'Nom du nouveau mouvement'});
+  const addNew=()=>{const n=nw.value.trim();if(!n)return;S.prof.mvcfg=S.prof.mvcfg||{};if(!S.prof.mvcfg[n])S.prof.mvcfg[n]={custom:true,lv:[{f:'',h:'',v:[]},{f:'',h:'',v:[]},{f:'',h:'',v:[]}]};S.coach.mvOpen=S.coach.mvOpen||{};S.coach.mvOpen[n]=true;render();};
+  nw.addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();addNew();}});
+  el.append(h('div',{class:'row',style:'flex-wrap:nowrap'},h('div',{style:'flex:1;min-width:0'},nw),h('button',{class:'btn',type:'button',onclick:addNew},'Ajouter')));
+  MV_ORDER.forEach(cat=>{
+    const items=names.filter(n=>mvGroup(n)===cat).sort((a,b)=>a.localeCompare(b,'fr',{sensitivity:'base'}));
+    if(!items.length)return;
+    el.append(h('h2',{class:'h2'},FOCUS[cat]));
+    items.forEach(n=>el.append(mvCfgCard(n)));
+  });
+  el.append(h('div',{class:'row'},h('button',{class:'btn primary',type:'button',onclick:mvCfgSave},'Enregistrer la configuration')),
+    h('p',{class:'hint'},'N’oublie pas d’enregistrer : la configuration est gardée dans ton profil de coach et sert seulement à préremplir l’éditeur de WOD. Les séances déjà publiées ne changent pas.'));
   return el;
 }
 function tiersEditor(p,lv,i,k){
@@ -5558,7 +5794,7 @@ function wodEditor(modal){
         const kids=[h('div',{class:'flabel'},'Niveau '+(k+1)+' sur 3'+(k===2?' · Rx, à remplir en premier':''))];
         if(k===2)kids.push(h('label',{class:'chk'},h('input',{type:'checkbox',id:'p'+i+'-sync',checked:!!p.syncTiers,onchange:e=>{p.syncTiers=e.target.checked;render();}}),h('span',{},'Mêmes paliers pour les 3 niveaux (hors niveaux désactivés)')));
         if(k<2)kids.push(h('div',{class:'seg',role:'group','aria-label':'Mode du niveau '+(k+1)},[['same','Comme niveau 3'],['custom','Adapté'],['off','Désactivé']].map(([m,l])=>h('button',{type:'button',class:'btn sm','aria-pressed':mode===m?'true':'false',onclick:()=>{
-          if(m==='custom'&&!lv.touched){const rx=p.levels[2];lv.loadF=rx.loadF;lv.loadH=rx.loadH;lv.note=rx.note;lv.tiers=rx.tiers.map(t=>({t:t.t,p:t.p}));lv.capTiers=(rx.capTiers||blankCapTiers()).map(t=>({t:t.t,p:t.p}));lv.touched=true;}
+          if(m==='custom'&&!lv.touched){const rx=p.levels[2];lv.loadF=rx.loadF;lv.loadH=rx.loadH;lv.note=rx.note;lv.tiers=rx.tiers.map(t=>({t:t.t,p:t.p}));lv.capTiers=(rx.capTiers||blankCapTiers()).map(t=>({t:t.t,p:t.p}));lv.touched=true;mvApplyCfg(p,lv,k);}
           lv.mode=m;render();}},l))));
         if(mode==='same')kids.push(h('p',{class:'hint'},'Reprend les charges, la variante et les paliers du niveau 3 au moment de la publication.'));
         else if(mode==='off')kids.push(h('p',{class:'hint'},'Ce niveau n’est pas proposé aux athlètes pour ce metcon.'));
@@ -5567,7 +5803,8 @@ function wodEditor(modal){
             field('Nom du niveau',tin(lv,'name',{id:'p'+i+'-l'+k+'-name'})),
             field('Charge femmes',tin(lv,'loadF',{id:'p'+i+'-l'+k+'-f',placeholder:'30 kg'})),
             field('Charge hommes',tin(lv,'loadH',{id:'p'+i+'-l'+k+'-h',placeholder:'40 kg'}))),
-          field('Variante (optionnel)',tin(lv,'note',{id:'p'+i+'-l'+k+'-note',placeholder:'Ring rows à la place des pull-ups'})),
+          mvPanel(p,lv,i,k),
+          field('Autre variante (texte libre, optionnel)',tin(lv,'note',{id:'p'+i+'-l'+k+'-note',placeholder:'Ring rows à la place des pull-ups'})),
           (k<2&&p.syncTiers)?h('p',{class:'hint'},'Paliers identiques à ceux du niveau 3 (case cochée sur le niveau 3).'):tiersEditor(p,lv,i,k),
           (k<2&&p.syncTiers)?null:(p.format==='FT'?capTiersEditor(p,lv,i,k):null));
         box.append(h('div',{class:'lvl-edit'},kids));
@@ -6020,7 +6257,7 @@ function openDrawer(instant){
 const ICO_MOVES='<svg '+SVGA+'><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9.5v5l4.5-2.5z"/></svg>';
 /* catégorie de chaque mouvement : haltéro (charges : barre, haltères, kettlebell, balle) · gym (poids du corps) · cardio */
 const MV_CAT={'Back Squat':'haltero','Front Squat':'haltero','Overhead Squat':'haltero','Thruster':'haltero','Deadlift':'haltero','Power Clean':'haltero','Hang Power Clean':'haltero','Snatch':'haltero','Clean & Jerk':'haltero','Jerk':'haltero','Push Press':'haltero','Shoulder Press':'haltero','Bench Press':'haltero','Dumbbell Snatch':'haltero','Kettlebell Swing':'haltero','Wall Ball':'haltero',
-  'Corde à sauter':'cardio','Shuttle run':'cardio'};
+  'Corde à sauter':'cardio','Shuttle run':'cardio','Row (rameur)':'cardio'};
 const mvCat=name=>MV_CAT[name]||'gym';
 const MV_ORDER=['haltero','gym','cardio'];
 function moveCard(g,gi){
@@ -6325,7 +6562,7 @@ function startFirebase(){
     unsubs.push(S.db.collection('comments').onSnapshot(sn=>{S.comments=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));if(S.cerRefresh)S.cerRefresh();},()=>{}));
     /* réactions emoji : si les règles ne sont pas publiées, on ignore l'erreur */
     unsubs.push(S.db.collection('reactions').onSnapshot(sn=>{S.reactions=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));scheduleRender();},()=>{}));
-    unsubs.push(S.db.doc('users/'+S.uid+'/private/profile').onSnapshot(sn=>{const d=sn.exists?sn.data():null;S.prof={prs:(d&&d.prs)?JSON.parse(JSON.stringify(d.prs)):{},sex:(d&&d.sex)||'',genEx:(d&&Array.isArray(d.genEx))?d.genEx:null,genAll:(d&&Array.isArray(d.genAll))?d.genAll:null,words:(d&&Array.isArray(d.words))?d.words:[],weight:(d&&Number(d.weight)>0)?Number(d.weight):0};S.profLoaded=true;scheduleRender();selfSync();},fail));
+    unsubs.push(S.db.doc('users/'+S.uid+'/private/profile').onSnapshot(sn=>{const d=sn.exists?sn.data():null;S.prof={prs:(d&&d.prs)?JSON.parse(JSON.stringify(d.prs)):{},sex:(d&&d.sex)||'',genEx:(d&&Array.isArray(d.genEx))?d.genEx:null,genAll:(d&&Array.isArray(d.genAll))?d.genAll:null,words:(d&&Array.isArray(d.words))?d.words:[],mvcfg:(d&&d.mvcfg&&typeof d.mvcfg==='object')?JSON.parse(JSON.stringify(d.mvcfg)):{},weight:(d&&Number(d.weight)>0)?Number(d.weight):0};S.profLoaded=true;scheduleRender();selfSync();},fail));
     render();
   });
 }
