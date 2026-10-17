@@ -859,7 +859,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-17.39';
+const APP_VERSION='2026-10-17.41';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -933,12 +933,12 @@ const CUP='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-wid
 
 const GLOSS=[
 ['Air Squat',['air squat','squat','squat poids du corps'],'Squat au poids du corps, pieds à largeur d’épaules.',['Le pli de la hanche descend sous le sommet des genoux','Hanches et genoux en extension complète en haut'],['Profondeur insuffisante','Extension incomplète en haut']],
-['Back Squat',['back squat','squat arriere'],'Squat avec la barre posée sur les trapèzes, derrière les épaules.',['Pli de la hanche sous le sommet des genoux','Extension complète des hanches et des genoux en haut'],['Profondeur insuffisante','Remontée sans extension complète']],
+['Back Squat',['back squat','squat arriere'],'Squat avec la barre posée sur les trapèzes, derrière les épaules.',['Pli de la hanche sous le sommet des genoux','Extension complète des hanches et des genoux en haut'],['Profondeur insuffisante','Remontée sans extension complète'],null,'assets/videos/back-squat.mp4'],
 ['Front Squat',['front squat','squat avant'],'Squat avec la barre en appui sur l’avant des épaules, coudes hauts.',['Pli de la hanche sous le sommet des genoux','Extension complète des hanches et des genoux en haut'],['Profondeur insuffisante','Extension incomplète en haut']],
 ['Overhead Squat',['overhead squat','ohs'],'Squat avec la barre maintenue bras tendus au-dessus de la tête pendant tout le mouvement.',['Bras verrouillés, barre stable au-dessus de la tête','Pli de la hanche sous le sommet des genoux'],['Bras qui fléchissent','Profondeur insuffisante']],
 ['Thruster',['thruster','db thruster','dumbbell thruster'],'Front squat enchaîné avec un développé au-dessus de la tête, en un seul mouvement fluide.',['Profondeur du squat atteinte','En haut : bras, hanches et genoux tendus, barre au-dessus de la tête'],['Profondeur insuffisante','Barre non verrouillée au-dessus de la tête','Extension incomplète des hanches en haut']],
 ['Deadlift',['deadlift','souleve de terre','sdt'],'Soulevé de terre : la barre monte du sol jusqu’aux hanches.',['Hanches et genoux tendus en haut, épaules en arrière','La barre touche le sol entre les répétitions'],['Extension incomplète en haut','Barre qui ne touche pas le sol entre deux répétitions']],
-['Clean',['clean','power clean','squat clean','hang clean'],'Épaulé : la barre passe du sol aux épaules en un mouvement. Power : reçue au-dessus de la parallèle ; squat : reçue en squat ; hang : départ au-dessus des genoux.',['Barre reçue sur les épaules','Hanches et genoux tendus en fin de mouvement'],['Barre qui ne se pose pas sur les épaules','Fin de mouvement sans extension complète','Power clean reçu sous la parallèle']],
+['Clean',['clean','power clean','squat clean','hang clean'],'Épaulé : la barre passe du sol aux épaules en un mouvement. Power : reçue au-dessus de la parallèle ; squat : reçue en squat ; hang : départ au-dessus des genoux.',['Barre reçue sur les épaules','Hanches et genoux tendus en fin de mouvement'],['Barre qui ne se pose pas sur les épaules','Fin de mouvement sans extension complète','Power clean reçu sous la parallèle'],null,'assets/videos/power-clean.mp4'],
 ['Hang Power Clean',['hang power clean'],'Épaulé en suspension : la barre part au-dessus des genoux et est reçue sur les épaules au-dessus de la parallèle.',['Départ barre au-dessus des genoux','Barre reçue sur les épaules, au-dessus de la parallèle','Hanches et genoux tendus en fin de mouvement'],['Barre qui ne se pose pas sur les épaules','Fin de mouvement sans extension complète','Réception sous la parallèle'],null,'assets/embedded/hang_power_clean.mp4'],
 ['Snatch',['snatch','power snatch','squat snatch','hang power snatch','arrache'],'Arraché : la barre passe du sol au-dessus de la tête en un seul mouvement.',['Barre verrouillée, bras tendus au-dessus de la tête','Hanches et genoux tendus en fin de mouvement'],['Bras non verrouillés','Mouvement en deux temps (barre posée sur les épaules)','Power snatch reçu sous la parallèle'],'assets/embedded/power_snatch_6_etapes.webp'],
 ['Clean & Jerk',['clean & jerk','clean and jerk','c&j'],'Épaulé-jeté : un clean, puis un jerk pour envoyer la barre au-dessus de la tête.',['Clean validé (barre sur les épaules)','Jerk fini bras, hanches et genoux tendus, pieds alignés'],['Bras non verrouillés en haut','Pieds non alignés en fin de jerk']],
@@ -1485,6 +1485,28 @@ function renderLine(text){
     }
   }
   return line;
+}
+/* charge prévue d'une partie force : la plus lourde des charges calculées par les pourcentages des lignes (même calcul que dans la séance).
+   null si rien n'est calculable (pas de %, PR ou poids de corps manquant). */
+function forceDefault(p){
+  if(!p||p.kind!=='force')return null;
+  const bw=parseNum(S.prof&&S.prof.weight),cands=[];
+  for(const raw of String(p.content||'').split('\n')){
+    const text=raw.trim();if(!text)continue;
+    const m=text.match(PCT_RE);if(!m)continue;
+    const canon=findMove(text);if(!canon)continue;
+    const pr=prFor(canon);if(!pr||!isFinite(pr.kg))continue;
+    const nums=m[1].split(/\s*[\/–-]\s*/).map(Number).filter(n=>n>0&&n<=200);
+    for(const n of nums){
+      let v;
+      if(SIGNED.includes(canon)){if(!(bw>0))continue;v=pullupCalc(bw,pr.kg,n).rounded;}
+      else{if(!(pr.kg>0))continue;v=Math.round(pr.kg*n/100*2)/2;}
+      cands.push({canon,v});
+    }
+  }
+  const mine=p.movement?cands.filter(c=>c.canon===p.movement):[];
+  const use=mine.length?mine:cands;
+  return use.length?Math.max(...use.map(c=>c.v)):null;
 }
 const plainLine=text=>h('div',{class:'line'},glossSegs(text));
 const metLine=text=>plainLine(tagShow(text));
@@ -3606,6 +3628,11 @@ function openEntry(w,date,uid,coach){
     for(const [k,v] of Object.entries(mine.loads||{}))S.entry.loads[k]=String(v).replace('.',',');
     for(const [k,x] of Object.entries(mine.prs||{}))S.entry.prs[k]={reps:String(x.reps)};
   }
+  /* la charge prévue par les pourcentages apparaît d'office dans la partie force (modifiable) */
+  if(!coach&&uid===S.uid)for(const p of (w.parts||[])){
+    if(p.kind!=='force'||S.entry.loads[p.label]!==undefined)continue;
+    const d=forceDefault(p);if(d!==null)S.entry.loads[p.label]=String(d).replace('.',',');
+  }
   render();
 }
 function entryForm(w,date){
@@ -3630,8 +3657,9 @@ function entryForm(w,date){
     if(p.kind==='force'){
       if(S.entry.only)return;
       const prb=prBox(p,date);
+      const fd=(!S.entry.coach&&(S.entry.uid||S.uid)===S.uid)?forceDefault(p):null;
       form.append(field(p.label+' · '+(p.movement||p.name||'Force')+' : charge la plus lourde (kg)',
-        h('input',{id:'load-'+p.label,type:'text',inputmode:SIGNED.includes(p.movement)?'text':'decimal',placeholder:'optionnel',value:S.entry.loads[p.label]||'',oninput:e=>{S.entry.loads[p.label]=e.target.value;prb.upd();}})),prb);
+        h('input',{id:'load-'+p.label,type:'text',inputmode:SIGNED.includes(p.movement)?'text':'decimal',placeholder:fd!==null?'charge prévue':'optionnel',value:S.entry.loads[p.label]||'',oninput:e=>{S.entry.loads[p.label]=e.target.value;prb.upd();}}),fd!==null?'Charge prévue d’après tes pourcentages : '+fmtN(fd)+' kg. Modifie-la si tu as utilisé autre chose ; si tu la laisses vide, c’est elle qui est enregistrée.':null),prb);
     }
     if(p.kind==='metcon'){
       const ft=p.format==='FT';
@@ -3667,6 +3695,10 @@ function submitEntry(w){
   }
   const loads={};
   for(const [k,raw] of (S.entry.only&&m?[]:Object.entries(S.entry.loads))){if(String(raw).trim()==='')continue;const v=parseNum(raw),pm=(w.parts||[]).find(q=>q.label===k);if(!prOk(pm&&pm.movement,v)){toast('Charge illisible pour '+k,true);return;}loads[k]=v;}
+  if(!coach&&uid===S.uid&&!(S.entry.only&&m))for(const p of (w.parts||[])){
+    if(p.kind!=='force'||loads[p.label]!==undefined)continue;
+    const d=forceDefault(p);if(d!==null&&prOk(p.movement,d))loads[p.label]=d;
+  }
   if(Object.keys(loads).length)e.loads=loads;
   /* PR déclarés : {label:{reps,mv}} ; la charge reste celle de e.loads (pas de doublon) */
   const prs={};
