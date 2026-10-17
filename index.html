@@ -92,6 +92,9 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
 textarea{resize:vertical}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
 .link{background:none;border:0;padding:0;text-align:left;cursor:pointer;color:inherit;font-weight:600}
+/* petite main à côté de chaque mot cliquable (liens, noms de mouvements, format du metcon) */
+.link::after,.mv::after,.fmtbtn::after{content:'👆';display:inline-block;margin-left:3px;font-size:.72em;font-weight:400;font-style:normal;text-decoration:none;text-shadow:none;text-transform:none;letter-spacing:0;opacity:.85}
+.fmtbtn{background:none;border:0;padding:0;font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit;cursor:pointer;text-align:left;text-decoration:underline dotted;text-underline-offset:3px}
 
 /* séance, façon tableau blanc de la box */
 .part{display:grid;grid-template-columns:56px minmax(0,1fr);gap:14px;padding:14px;background:var(--surface);border:2px solid var(--edge);border-radius:4px}
@@ -889,6 +892,8 @@ const fmt2=n=>String(Math.round(n*100)/100).replace('.',',');
 const fmtKg=n=>String(Math.round(n*2)/2).replace('.',',')+' kg';
 const fmtTime=sec=>Math.floor(sec/60)+':'+pad(Math.round(sec%60));
 function parseTime(s){const m=String(s).trim().match(/^(\d{1,3})\s*[:'’mM.]\s*(\d{1,2})\s*s?$/);if(!m)return null;const sec=+m[2];if(sec>59)return null;return +m[1]*60+sec;}
+/* temps tenu d'un Dead by : « 14:00 », « 14'30 » ou des minutes seules (« 14 », « 14,5 ») -> secondes */
+function parseHold(s){const t=String(s).trim();if(t==='')return null;const a=parseTime(t);if(a!==null)return a;const m=t.match(/^(\d{1,3}(?:[.,]\d+)?)\s*(?:'|’|min|mn|m)?$/i);if(!m)return null;return Math.round(parseFloat(m[1].replace(',','.'))*60);}
 function parseNum(s){const v=parseFloat(String(s).replace(',','.').replace('−','-'));return isNaN(v)?null:v;}
 
 function h(tag,attrs,...kids){
@@ -934,6 +939,10 @@ const SIGNED=['Traction lestée']; /* PR en kg pouvant être nul ou négatif (d�
 const prOk=(n,v)=>v!==null&&(v>0||SIGNED.includes(n));
 const KIND={force:'Force',renfo:'Renforcement',metcon:'Metcon',autre:'Autre'};
 const FORMAT={FT:'For Time',AMRAP:'AMRAP',EMOM:'EMOM'};
+/* EMOM : intervalle en minutes (1 = EMOM, 2 = E2MOM, 3 = E3MOM…) et mode « Dead by » (score = temps tenu, en secondes ; plus on tient, plus on marque) */
+const emomIv=m=>{const n=Number(m&&m.interval);return n>0?n:1;};
+const isDead=m=>!!m&&m.format==='EMOM'&&!!m.deadBy;
+const fmtLabel=m=>{if(!m||m.format!=='EMOM')return FORMAT[m&&m.format]||'';const n=emomIv(m);return (n===1?'EMOM':'E'+String(Math.round(n*10)/10).replace('.',',')+'MOM')+(m.deadBy?' · Dead by':'');};
 const FOCUS={cardio:'Cardio',gym:'Gym',haltero:'Haltéro'};
 const LEVEL_NAMES=['Débutant','Intermédiaire','Rx'];
 const PCTS=[50,60,70,75,80,85,90,95];
@@ -1234,6 +1243,7 @@ function roundsLabel(m,v){
 function scoreText(m,score,e){
   if(e&&e.cap)return 'Time cap · '+capLabel(m,capValue(m,e));
   if(score===undefined||score===null)return '';
+  if(isDead(m))return 'Tenu '+fmtTime(score);
   if(m.format==='FT')return fmtTime(score);
   if(e&&e.rounds!==undefined)return e.rounds+' tour'+(e.rounds>1?'s':'')+(e.reps?' + '+e.reps+' reps':'');
   return roundsLabel(m,score);
@@ -2657,6 +2667,9 @@ function openWarmupEdit(){
 function openTimer(w,date,m){
   if(document.getElementById('tm-ov'))return;
   const fmt=m.format||'FT',dur=metDuration(m),size=fmt==='AMRAP'?roundSizeFor(m):0;
+  const ivS=Math.max(1,Math.round(emomIv(m)*60)),dead=isDead(m); /* durée d'un intervalle EMOM en secondes ; Dead by */
+  const emomSub=el=>{const k=Math.floor(el/ivS)+1,n=dur?Math.ceil(dur/ivS):0,left=Math.max(0,Math.ceil(k*ivS-el));
+    return (ivS===60?'Minute ':'Intervalle ')+(n?Math.min(k,n)+' / '+n:k)+(ivS===60?'':' · reste '+mmss(left))+(dead?' · tenu '+mmss(Math.min(Math.max(0,Math.floor(el/ivS)-1)*ivS,dur||Infinity)):'');};
   const st={phase:'prep',t0:Date.now(),t1:0,laps:[],muted:tmMuted(),wake:null,iv:null,ac:null,last:-1,rem:null,min:0,res:null,adj:0,vid:null};
   try{st.ac=new (window.AudioContext||window.webkitAudioContext)();if(st.ac.resume)st.ac.resume();}catch(e){}
   const beep=(f,ms)=>{
@@ -2681,7 +2694,7 @@ function openTimer(w,date,m){
   const close=()=>{st.phase='closed';clearInterval(st.iv);document.removeEventListener('visibilitychange',onVis);release();try{if(st.ac&&st.ac.close)st.ac.close();}catch(e){}ov.remove();};
   const finish=patch=>{close();openEntryWith(w,date,patch);};
   const armed=(btn,txt,fn)=>{let t=null;const orig=btn.textContent;return ()=>{if(t){clearTimeout(t);t=null;btn.textContent=orig;fn();return;}btn.textContent=txt;t=setTimeout(()=>{t=null;btn.textContent=orig;},3000);};};
-  const label=fmt==='AMRAP'?'AMRAP':fmt==='EMOM'?'EMOM':'For Time';
+  const label=fmt==='AMRAP'?'AMRAP':fmt==='EMOM'?fmtLabel(m):'For Time';
   const info=label+(dur?(fmt==='FT'?' · time cap ':' · ')+mmss(dur):'');
   const ov=h('div',{class:'tm prep',id:'tm-ov',role:'dialog','aria-modal':'true','aria-label':'Minuteur du metcon'});
   let numEl,timeEl,subEl,lapsEl,lastEl;
@@ -2718,8 +2731,8 @@ function openTimer(w,date,m){
         h('button',{type:'button',class:'btn primary tm-end',onclick:()=>stopManual()},'TERMINÉ'),
         h('div',{class:'row'},h('button',{type:'button',class:'btn sm',onclick:undoLap},'Annuler le dernier tour')));
     }else{
-      const stop=h('button',{type:'button',class:'btn'},'Arrêter');
-      stop.addEventListener('click',armed(stop,'Confirmer l’arrêt',()=>stopManual()));
+      const stop=h('button',{type:'button',class:dead?'btn primary tm-end':'btn'},dead?'J’ai décroché':'Arrêter');
+      stop.addEventListener('click',armed(stop,dead?'Confirmer : j’ai décroché':'Confirmer l’arrêt',()=>stopManual()));
       bot.append(h('div',{class:'row'},stop));
     }
     ov.className='tm run';
@@ -2734,9 +2747,9 @@ function openTimer(w,date,m){
       subEl.textContent=dur?'Time cap '+mmss(dur)+' · reste '+mmss(Math.ceil(Math.max(0,dur-el))):'';
     }else if(dur){
       timeEl.textContent=mmss(Math.ceil(Math.max(0,dur-el)));
-      subEl.textContent=fmt==='EMOM'?'Minute '+Math.min(Math.floor(el/60)+1,Math.ceil(dur/60))+' / '+Math.ceil(dur/60):'';
+      subEl.textContent=fmt==='EMOM'?emomSub(el):'';
     }else{
-      timeEl.textContent=mmss(el);subEl.textContent=fmt==='EMOM'?'Minute '+(Math.floor(el/60)+1):'';
+      timeEl.textContent=mmss(el);subEl.textContent=fmt==='EMOM'?emomSub(el):'';
     }
     ov.classList.toggle('alert',!!dur&&dur-el<=10);
     if((fmt==='AMRAP'||fmt==='FT')&&lapsEl){
@@ -2759,7 +2772,7 @@ function openTimer(w,date,m){
     if(dur){
       const rem=Math.ceil(dur-el);
       if(rem!==st.rem){st.rem=rem;if(rem>0&&rem<=3)beep(660,120);}
-      if(fmt==='EMOM'){const k=Math.floor(el/60);if(k!==st.min){st.min=k;if(el<dur)beep(880,200);}}
+      if(fmt==='EMOM'){const k=Math.floor(el/ivS);if(k!==st.min){st.min=k;if(el<dur)beep(880,200);}}
       if(el>=dur){endAuto();return;}
     }
     draw();
@@ -2775,8 +2788,8 @@ function openTimer(w,date,m){
   /* reprise après un arrêt par erreur : le chrono repart comme s'il n'avait jamais été arrêté */
   function resume(){if(st.phase==='done'&&st.res&&st.res.manual){st.phase='run';st.res=null;showRun();}}
   const bigIn=(val,attrs)=>h('input',Object.assign({class:'tm-in',type:'text',value:val},attrs||{}));
-  const stepper=(inp,min)=>{
-    const set=n=>{inp.value=String(Math.max(min||0,n));};
+  const stepper=(inp,min,on)=>{
+    const set=n=>{inp.value=String(Math.max(min||0,n));if(on)on();};
     const cur=()=>{const v=parseInt(inp.value,10);return isNaN(v)?0:v;};
     return h('div',{class:'tm-step'},h('button',{type:'button',class:'btn',onclick:()=>set(cur()-1),'aria-label':'Moins un'},'−'),inp,h('button',{type:'button',class:'btn',onclick:()=>set(cur()+1),'aria-label':'Plus un'},'+'));
   };
@@ -2834,14 +2847,31 @@ function openTimer(w,date,m){
         else finish({score:String(Math.round((r+(size>0?rp/size:0))*100)/100).replace('.',','),capped:false,creps:'',rounds:'',reps:'',laps});
       }},'Enregistrer dans mon résultat'),h('div',{class:'row'},resumeBtn(),discard()));
     }else{
-      const sIn=bigIn(String(dur?Math.floor((st.res.sec||0)/60):0),{inputmode:'numeric','aria-label':'Tours réussis'});
-      mid.append(h('p',{class:'eyebrow tm-eb'},st.res.auto?'Temps écoulé':'Arrêté à '+mmss(st.res.sec)),
-        h('p',{class:'tm-sub'},'Combien de tours as-tu réussis ? Tu peux corriger.'),
-        h('div',{class:'tm-fld'},h('span',{class:'flabel tm-eb'},'Tours réussis'),stepper(sIn,0)));
-      bot.append(h('button',{type:'button',class:'btn primary tm-save',onclick:()=>{
-        const n=parseInt(sIn.value,10);if(isNaN(n)||n<0){toast('Écris un nombre de tours.',true);return;}
-        finish({score:String(n),capped:false,rounds:'',reps:'',creps:''});
-      }},'Enregistrer dans mon résultat'),h('div',{class:'row'},resumeBtn(),discard()));
+      if(dead){
+        /* Dead by : le score est le temps tenu = intervalles réussis x durée de l'intervalle (plafonné au time cap) */
+        const n0=st.res.auto?Math.ceil((dur||0)/ivS):Math.max(0,Math.floor((st.res.sec||0)/ivS)-1); /* appui après la fin d'un intervalle = série de l'intervalle précédent non terminée : il ne compte pas (14:00 à 14:59 en EMOM = 13 min tenues ; en E2MOM, 14:00 = 12 min) */
+        const sIn=bigIn(String(n0),{inputmode:'numeric','aria-label':'Intervalles réussis'});
+        const held=()=>Math.min(Math.max(0,parseInt(sIn.value,10)||0)*ivS,dur||Infinity);
+        const big=h('div',{class:'tm-time'},mmss(held()));
+        const sync=()=>{big.textContent=mmss(held());};
+        sIn.addEventListener('input',sync);
+        mid.append(h('p',{class:'eyebrow tm-eb'},st.res.auto?'Time cap atteint : tu as tout tenu !':'Dead by · arrêté à '+mmss(st.res.sec)),big,
+          h('p',{class:'tm-sub'},'Temps tenu = intervalles réussis × '+(ivS===60?'1 min':mmss(ivS)+' min')+'. Si tu as appuyé après la fin d’un intervalle, c’est que tu n’avais pas fini sa série : il ne compte pas. Tu peux corriger le nombre d’intervalles réussis.'),
+          h('div',{class:'tm-fld'},h('span',{class:'flabel tm-eb'},'Intervalles réussis'),stepper(sIn,0,sync)));
+        bot.append(h('button',{type:'button',class:'btn primary tm-save',onclick:()=>{
+          const n=parseInt(sIn.value,10);if(isNaN(n)||n<0){toast('Écris un nombre d’intervalles.',true);return;}
+          finish({score:fmtTime(held()),capped:false,rounds:'',reps:'',creps:''});
+        }},'Enregistrer dans mon résultat'),h('div',{class:'row'},resumeBtn(),discard()));
+      }else{
+        const sIn=bigIn(String(Math.floor((st.res.sec||0)/ivS)),{inputmode:'numeric','aria-label':'Tours réussis'});
+        mid.append(h('p',{class:'eyebrow tm-eb'},st.res.auto?'Temps écoulé':'Arrêté à '+mmss(st.res.sec)),
+          h('p',{class:'tm-sub'},'Combien de tours as-tu réussis'+(ivS===60?'':' (un tour = un intervalle de '+mmss(ivS)+' min)')+' ? Tu peux corriger.'),
+          h('div',{class:'tm-fld'},h('span',{class:'flabel tm-eb'},'Tours réussis'),stepper(sIn,0)));
+        bot.append(h('button',{type:'button',class:'btn primary tm-save',onclick:()=>{
+          const n=parseInt(sIn.value,10);if(isNaN(n)||n<0){toast('Écris un nombre de tours.',true);return;}
+          finish({score:String(n),capped:false,rounds:'',reps:'',creps:''});
+        }},'Enregistrer dans mon résultat'),h('div',{class:'row'},resumeBtn(),discard()));
+      }
     }
     ov.replaceChildren(topBar(false),mid,bot);
   }
@@ -2912,7 +2942,7 @@ function levelDetail(m,lv,i){
     recordBox(m,i),
     loadsText(lv)?h('div',{class:'lvl-load'},(S.prof.sex?'Ta charge : ':'')+loadsText(lv)):null,
     lv.note?h('div',{class:'sub'},lv.note):null,
-    (lv.tiers&&lv.tiers.length)?h('div',{class:'tiers'},lv.tiers.map(t=>h('span',{class:'tier'},(ft?'≤ '+fmtTime(t.t):'≥ '+roundsLabel(m,t.t))+' → '+t.p+' pts'))):null,
+    (lv.tiers&&lv.tiers.length)?h('div',{class:'tiers'},lv.tiers.map(t=>h('span',{class:'tier'},(ft?'≤ '+fmtTime(t.t):isDead(m)?'Tenir ≥ '+fmtTime(t.t):'≥ '+roundsLabel(m,t.t))+' → '+t.p+' pts'))):null,
     (ft&&lv.capTiers&&lv.capTiers.length)?h('div',{class:'tiers'},lv.capTiers.map(t=>h('span',{class:'tier'},'Time cap ≥ '+capLabel(m,tierCum(m,t.t),true)+' → '+t.p+' pts'))):null,
     S.prof.sex?null:h('p',{class:'sub'},'Renseigne ton sexe dans ton profil pour voir directement ta charge.')];
 }
@@ -2993,10 +3023,26 @@ function swBtn(k){
   if(SW[k]&&SW[k].run)swTick();
   return b;
 }
+/* explication affichée quand l'athlète touche le format d'une partie (For Time, AMRAP, EMOM, E2MOM, Dead by…) */
+function fmtExplain(p){
+  const n=emomIv(p),iv=n===1?'chaque minute':'toutes les '+fmtN(n)+' minutes',dur=metDuration(p);
+  if(p.format==='FT')return ['For Time','Tu réalises tout le travail demandé le plus vite possible. Ton score est ton temps : plus il est court, plus tu marques de points.','Si le time cap sonne avant la fin, ton score est le nombre de répétitions réalisées, converti en points selon les paliers prévus.'];
+  if(p.format==='AMRAP')return ['AMRAP · As Many Rounds And Reps As Possible','Tu fais le maximum de tours et de répétitions dans le temps imparti.','Ton score est ton nombre de tours + reps : plus tu en fais, plus tu marques de points.'];
+  if(p.format==='EMOM'){
+    const name=n===1?'EMOM · Every Minute On the Minute':'E'+fmtN(n)+'MOM · Every '+fmtN(n)+' Minutes On the Minute';
+    const base='Au début de chaque intervalle ('+iv+'), tu réalises les exercices demandés. Ce qu’il reste de l’intervalle te sert à récupérer, puis tu repars à l’intervalle suivant.';
+    if(p.kind!=='metcon')return [name,base,'Cette partie est du renforcement : elle ne rapporte pas de points.'];
+    if(p.deadBy)return [name+' · Dead by',base,'Dead by : tu continues jusqu’au time cap'+(dur?' ('+mmss(dur)+')':'')+' ou jusqu’à ce que tu ne réussisses plus les exercices dans le temps imparti.','Si tu appuies sur « J’ai décroché » après la fin d’un intervalle, celui-ci n’est pas compté : en EMOM, appuyer entre 14:00 et 14:59 donne 13 minutes tenues (en E2MOM, appuyer à 14:00 donne 12 minutes).','Ton score est le temps tenu : tenir tout le time cap donne le score maximum, tenir moins donne moins de points. Plus tu tiens longtemps, plus tu marques.'];
+    return [name,base,'Ton score est le nombre d’intervalles réussis, converti en points selon les paliers prévus.'];
+  }
+  return [];
+}
 function partCard(p,w,date){
   const metcon=p.kind==='metcon';
   const lines=(p.content||'').split('\n').map(s=>s.trim()).filter(Boolean);
   const hasSw=p.kind==='force'||p.kind==='renfo';
+  /* format cliquable : metcon (For Time, AMRAP, EMOM) ou renforcement en EMOM */
+  const fmtId=(metcon||(p.kind==='renfo'&&p.format==='EMOM'))?'fmt-'+(date||'')+'-'+p.label:null;
   const body=h('div',{class:'pbody'+(hasSw?' has-sw':'')},
     hasSw?swBtn(swKey(p,date)):null,
     h('div',{class:'phead'},h('h3',{},p.name||KIND[p.kind]||'Partie'),
@@ -3004,7 +3050,9 @@ function partCard(p,w,date){
       metcon&&p.focus&&FOCUS[p.focus]?h('span',{class:'chip'},FOCUS[p.focus]):null,
       metcon&&p.redo===false?h('span',{class:'chip miss'},'Pas de REDO'):null,
       p.kind==='force'&&p.movement?h('span',{class:'chip'},p.movement):null),
-    metcon?h('div',{class:'fmt'},[FORMAT[p.format]||'',p.detail,p.lineRounds?'Chaque ligne = 1 tour':(p.repsRound?'1 tour = '+p.repsRound+' reps':'')].filter(Boolean).join(' · ')):null,
+    fmtId?h('div',{class:'fmt'},h('button',{type:'button',class:'fmtbtn tipbtn','aria-expanded':S.tip===fmtId?'true':'false',onclick:()=>toggleTip(fmtId)},fmtLabel(p)),
+      metcon?[p.detail,p.lineRounds?'Chaque ligne = 1 tour':(p.repsRound?'1 tour = '+p.repsRound+' reps':'')].filter(Boolean).map(x=>' · '+x).join(''):''):null,
+    (fmtId&&S.tip===fmtId)?h('div',{class:'tip',role:'dialog'},fmtExplain(p).map((t,k)=>k===0?h('b',{},t):h('p',{},t))):null,
     h('div',{class:'lines'},lines.map(metcon?metLine:renderLine)),
     (metcon&&p.word)?h('div',{class:'cword'},h('span',{class:'flabel'},'Mot du coach'),h('p',{},p.word)):null,
     metcon?levelsBlock(p):null,
@@ -3322,7 +3370,7 @@ function viewFeed(){
     const head=bannerEl(uid,[h('div',{class:'feed-head'},avwrap,h('div',{class:'feed-meta'},h('div',{class:'nm'},h('button',{class:'link',type:'button',onclick:()=>openAthlete(uid)},lg.pseudo||'Athlète')),bannerTitle(uid)))],false,true);
     const results=[];
     (w.parts||[]).filter(p=>p.kind==='force').forEach(p=>{const kg=e.loads&&e.loads[p.label];if(kg!==undefined)results.push(h('div',{class:'feed-metric'},h('b',{},fmtKg(kg)),h('span',{},p.movement||p.name||'Force')));});
-    if(m&&hasScore(e))results.push(h('div',{class:'feed-metric'},h('b',{},scoreText(m,e.score,e)),h('span',{},'Metcon · '+(m.format==='FT'?'Temps':m.format==='AMRAP'?'Tours / reps':'Tours'))));
+    if(m&&hasScore(e))results.push(h('div',{class:'feed-metric'},h('b',{},scoreText(m,e.score,e)),h('span',{},'Metcon · '+(m.format==='FT'?'Temps':m.format==='AMRAP'?'Tours / reps':isDead(m)?'Dead by':'Tours'))));
     else if(m&&e.noMetcon)results.push(h('div',{class:'feed-metric'},h('b',{},'Metcon non réalisé'),h('span',{},'Pas de points de metcon')));
     const rx=h('div',{class:'rxrow'},RX.map(em=>{
       const n=Object.values(S.reactions).filter(r=>r&&r.to===uid&&r.date===date&&r.emoji===em).length;
@@ -3426,11 +3474,13 @@ function readScore(m,st){
     if(String(st.score||'').trim()==='')return {empty:true};
     const v=parseTime(st.score);return v===null?{bad:true}:{v};
   }
+  if(isDead(m)){const t=String(st.score||'').trim();if(t==='')return {empty:true};const v=parseHold(t),d=metDuration(m);return (v===null||v<0||(d&&v>d+0.5))?{bad:true,hold:true}:{v};}
   if(m.repsRound>0)return readRounds(m,st);
   if(String(st.score||'').trim()==='')return {empty:true};
   const v=parseNum(st.score);return (v===null||v<0)?{bad:true}:{v};
 }
 function scoreErr(m,r){
+  if(r.hold)return 'Temps tenu illisible ou supérieur au time cap. Écris-le comme 14:00 (14 minutes) ou 14.';
   if(r.many)return 'Tu as indiqué plus de tours que le WOD n’en contient. Si tu as tout terminé, choisis « Terminé dans le temps ».';
   if(r.over)return 'Les reps en plus doivent être inférieures à '+(r.max||roundTotal(m))+' (le tour en cours).';
   if(r.capBad)return 'Score illisible. Écris des nombres entiers.';
@@ -3536,6 +3586,12 @@ function scoreFields(m,st,upd,pre,canSkip){
   if(ft&&st.capped&&!pl)return head.concat([field(m.label+' · Reps réalisées au time cap',
     h('input',{id:pre+'-creps',type:'text',inputmode:'numeric',placeholder:'81',value:st.creps||'',oninput:bind('creps')}),
     'Écris le nombre total de reps faites quand le time cap a sonné, tous mouvements confondus. Exemple : 81.')]);
+  if(isDead(m)){
+    const iv=emomIv(m),d=metDuration(m);
+    return head.concat([field(m.label+' · Temps tenu (mm:ss)',
+      h('input',{id:pre+'-score',type:'text',inputmode:'text',placeholder:d?mmss(d):'15:00',value:st.score||'',oninput:bind('score')}),
+      'Dead by : écris combien de temps tu as tenu, en minutes:secondes (14:00 = 14 minutes) ou en minutes seules (14). Compte les intervalles de '+fmtN(iv)+' min que tu as réussis en entier'+(d?', jusqu’au time cap de '+mmss(d):'')+'. Plus tu tiens, plus tu marques de points.')]);
+  }
   if(ft?(st.capped&&pl):m.repsRound>0){
     const hint=ft?capGuide(pl):('Un tour = '+roundTotal(m)+' répétitions. Exemple : 6 tours + 7 reps.'+(roundModel(m)?' Compte tes reps réelles, dans l’ordre des lignes du tour (la corde est pondérée automatiquement).':''));
     return head.concat([h('div',{class:'grid2'},
@@ -3557,8 +3613,8 @@ function fillState(m,st,e){
     return;
   }
   if(e.score===undefined||e.score===null)return;
-  st.score=m.format==='FT'?fmtTime(e.score):String(e.score).replace('.',',');
-  if(m.format!=='FT'&&m.repsRound>0){const sp=splitScore(m,e);st.rounds=String(sp[0]);st.reps=String(sp[1]);}
+  st.score=(m.format==='FT'||isDead(m))?fmtTime(e.score):String(e.score).replace('.',',');
+  if(m.format!=='FT'&&!isDead(m)&&m.repsRound>0){const sp=splitScore(m,e);st.rounds=String(sp[0]);st.reps=String(sp[1]);}
 }
 function metSig(m){
   const c=String(m.content||'').split('\n').map(x=>norm(x).trim()).filter(Boolean).join('|');
@@ -3580,7 +3636,7 @@ function prevBlock(w,date,cur){
     if(!cur||cur.cap||pv.cap||cur.score===undefined||(cur.level||0)!==(pv.level||0))return '';
     const d=cur.score-pv.score;
     if(Math.abs(d)<0.0001)return ' · même résultat qu’ici';
-    return ' · ici '+(m.format==='FT'?(d<0?'−':'+')+fmtTime(Math.abs(d)):(d>0?'+':'−')+roundsLabel(m,Math.abs(d)));
+    return ' · ici '+(m.format==='FT'?(d<0?'−':'+')+fmtTime(Math.abs(d)):(d>0?'+':'−')+(isDead(m)?fmtTime(Math.abs(d)):roundsLabel(m,Math.abs(d))));
   };
   return h('div',{class:'lines'},h('span',{class:'flabel'},'Déjà fait sur ce metcon'),
     h('ul',{class:'list'},rows.map(r=>h('li',{},h('div',{class:'l'},h('div',{class:'nm'},cap(fmtShort(r.d))+r.tag),
@@ -5241,18 +5297,18 @@ function parseCap(m,s){
   return null;
 }
 const blankLevels=()=>LEVEL_NAMES.map((n,k)=>({name:n,loadF:'',loadH:'',note:'',tiers:blankTiers(),capTiers:blankCapTiers(),mode:k<2?'same':'custom',touched:false}));
-const blankPart=k=>({kind:k,name:'',content:'',movement:'',format:'FT',detail:'',repsRound:'',dur:'',focus:'',syncTiers:true,word:'',lineRounds:false,redo:true,levels:blankLevels()});
+const blankPart=k=>({kind:k,name:'',content:'',movement:'',format:'FT',detail:'',repsRound:'',dur:'',interval:'1',deadBy:false,focus:'',syncTiers:true,word:'',lineRounds:false,redo:true,levels:blankLevels()});
 function blankWod(){return {date:todayStr(),title:'',base:'',parts:[Object.assign(blankPart('force'),{name:'Force'}),Object.assign(blankPart('renfo'),{name:'Renforcement'}),Object.assign(blankPart('metcon'),{name:'Metcon'})]};}
 function wodToDraft(w){
   return {date:w.date,title:w.title||'',base:(w.base!==undefined&&w.base!==null)?String(w.base):'',
     parts:(w.parts||[]).map(p=>{
       const fmt=p.format||'FT';const cm={format:fmt,content:p.content||'',repsRound:p.repsRound||0,lineRounds:!!p.lineRounds};
       const lv=(p.kind==='metcon'?levelsOf(p):blankLevels()).slice(0,3).map((l,i)=>({mode:l.mode||(l.off?'off':'custom'),touched:l.touched!==undefined?l.touched:!l.off,name:l.name||LEVEL_NAMES[i],loadF:l.loadF||'',loadH:l.loadH||'',note:l.note||'',
-        tiers:(l.tiers&&l.tiers.length)?l.tiers.map(t=>({t:fmt==='FT'?fmtTime(t.t):String(t.t).replace('.',','),p:String(t.p)})):blankTiers(),
+        tiers:(l.tiers&&l.tiers.length)?l.tiers.map(t=>({t:(fmt==='FT'||(fmt==='EMOM'&&p.deadBy))?fmtTime(t.t):String(t.t).replace('.',','),p:String(t.p)})):blankTiers(),
         capTiers:(l.capTiers&&l.capTiers.length)?l.capTiers.map(t=>({t:capInput(cm,tierCum(p,t.t)),p:String(t.p)})):blankCapTiers()}));
       while(lv.length<3)lv.push({mode:lv.length<2?'off':'custom',touched:false,name:LEVEL_NAMES[lv.length],loadF:'',loadH:'',note:'',tiers:blankTiers(),capTiers:blankCapTiers()});
       const sk=l=>JSON.stringify([l.loadF,l.loadH,l.note,l.tiers,l.capTiers]);lv.forEach((l,k)=>{if(k<2&&l.mode==='custom'&&sk(l)===sk(lv[2]))l.mode='same';});
-      return {kind:p.kind||'autre',name:p.name||'',content:p.content||'',movement:p.movement||'',format:fmt,detail:p.detail||'',repsRound:p.repsRound?String(p.repsRound):'',word:p.word||'',lineRounds:!!p.lineRounds,redo:p.redo!==false,customLvl:p.customLvl!==false,dur:p.dur?String(p.dur):'',focus:FOCUS[p.focus]?p.focus:'',levels:lv,syncTiers:(()=>{const k=l=>JSON.stringify([l.tiers,l.capTiers]);return lv.every((l,j)=>j===2||l.mode==='off'||k(l)===k(lv[2]));})()};
+      return {kind:p.kind||'autre',name:p.name||'',content:p.content||'',movement:p.movement||'',format:fmt,detail:p.detail||'',repsRound:p.repsRound?String(p.repsRound):'',word:p.word||'',lineRounds:!!p.lineRounds,redo:p.redo!==false,customLvl:p.customLvl!==false,dur:p.dur?String(p.dur):'',interval:p.interval?String(p.interval).replace('.',','):'1',deadBy:!!p.deadBy,focus:FOCUS[p.focus]?p.focus:'',levels:lv,syncTiers:(()=>{const k=l=>JSON.stringify([l.tiers,l.capTiers]);return lv.every((l,j)=>j===2||l.mode==='off'||k(l)===k(lv[2]));})()};
     })};
 }
 function draftToWod(d){
@@ -5262,6 +5318,11 @@ function draftToWod(d){
   const parts=d.parts.map((p,i)=>{
     const o={label:'P'+(i+1),name:p.name.trim(),kind:p.kind,content:p.content.trim()};
     if(p.kind==='force')o.movement=p.movement.trim();
+    if(p.kind==='renfo'&&p.format==='EMOM'){
+      const iv=parseNum(String(p.interval||'1').trim()||'1');
+      if(iv===null||iv<=0)throw new Error('Intervalle illisible ('+o.label+') : écris 1 pour un EMOM, 2 pour un E2MOM, 3 pour un E3MOM…');
+      o.format='EMOM';o.interval=iv;
+    }
     if(p.kind==='metcon'){
       if(!FOCUS[p.focus])throw new Error('Choisis le type de metcon ('+o.label+') : il sert aux trophées par catégorie.');
       if(String(p.dur||'').trim()!==''){const dn=parseNum(p.dur);if(dn===null||dn<=0)throw new Error('Durée / time cap illisible ('+o.label+').');o.dur=dn;}
@@ -5269,6 +5330,15 @@ function draftToWod(d){
       if(p.redo===false)o.redo=false;
       if(p.customLvl===false)o.customLvl=false;
       if(p.format==='FT'&&p.lineRounds)o.lineRounds=true;
+      if(p.format==='EMOM'){
+        const iv=parseNum(String(p.interval||'1').trim()||'1');
+        if(iv===null||iv<=0)throw new Error('Intervalle illisible ('+o.label+') : écris 1 pour un EMOM, 2 pour un E2MOM, 3 pour un E3MOM…');
+        o.interval=iv;
+        if(p.deadBy){
+          if(!(o.dur>0)&&!metDuration({format:'EMOM',detail:p.detail,content:p.content}))throw new Error('Dead by ('+o.label+') : indique le time cap dans « Durée / time cap (min) ».');
+          o.deadBy=true;
+        }
+      }
       o.format=p.format;o.detail=p.detail.trim();o.focus=p.focus;o.capV=2; /* capV 2 : paliers time cap en reps cumulées */
       if(String(p.repsRound||'').trim()!==''){const n=parseNum(p.repsRound);if(n===null||n<=0||n%1)throw new Error('Reps par tour illisibles ('+o.label+').');o.repsRound=n;}
       /* si des reps équivalentes sont définies dans le contenu, le total de reps réelles du tour s'en déduit */
@@ -5279,8 +5349,8 @@ function draftToWod(d){
         const tiers=[];
         for(const r of lv.tiers){
           if(String(r.t).trim()==='')continue; /* ligne sans temps/score : ignorée, même si les points sont préremplis */
-          const t=p.format==='FT'?parseTime(r.t):parseNum(r.t),pts=parseNum(r.p);
-          if(t===null||pts===null)throw new Error('Palier illisible ('+o.label+', '+name+')'+(p.format==='FT'?' : écris le temps comme 12:00.':' : écris un nombre de tours.'));
+          const t=p.format==='FT'?parseTime(r.t):(p.format==='EMOM'&&p.deadBy)?parseHold(r.t):parseNum(r.t),pts=parseNum(r.p);
+          if(t===null||pts===null)throw new Error('Palier illisible ('+o.label+', '+name+')'+(p.format==='FT'?' : écris le temps comme 12:00.':(p.format==='EMOM'&&p.deadBy)?' : écris le temps tenu comme 14:00 (ou 14 pour 14 minutes).':' : écris un nombre de tours.'));
           tiers.push({t,p:pts});
         }
         tiers.sort((a,b)=>p.format==='FT'?a.t-b.t:b.t-a.t);
@@ -5370,11 +5440,11 @@ function viewCoach(){
   return el;
 }
 function tiersEditor(p,lv,i,k){
-  const ft=p.format==='FT';
+  const ft=p.format==='FT',dd=isDead(p),tm=ft||dd;
   return h('div',{class:'stack'},
-    h('div',{class:'flabel'},ft?'Paliers de temps : temps inférieur ou égal au palier':'Paliers de tours : score supérieur ou égal au palier'),
+    h('div',{class:'flabel'},ft?'Paliers de temps : temps inférieur ou égal au palier':dd?'Paliers de temps tenu : temps tenu supérieur ou égal au palier (plus on tient, plus on marque)':'Paliers de tours : score supérieur ou égal au palier'),
     lv.tiers.map((r,j)=>h('div',{class:'trow'},
-      h('input',{id:'p'+i+'-l'+k+'-t'+j,type:'text','aria-label':ft?'Temps du palier':'Tours du palier',value:r.t,placeholder:ft?'12:00':'8',oninput:e=>{r.t=e.target.value;}}),
+      h('input',{id:'p'+i+'-l'+k+'-t'+j,type:'text','aria-label':ft?'Temps du palier':dd?'Temps tenu du palier':'Tours du palier',value:r.t,placeholder:ft?'12:00':dd?'15:00':'8',oninput:e=>{r.t=e.target.value;}}),
       h('input',{id:'p'+i+'-l'+k+'-p'+j,type:'text',inputmode:'numeric','aria-label':'Points du palier',value:r.p,placeholder:'points',oninput:e=>{r.p=e.target.value;}}),
       h('button',{class:'btn sm',type:'button','aria-label':'Retirer le palier',onclick:()=>{lv.tiers.splice(j,1);render();}},'✕'))),
     h('div',{class:'row'},h('button',{class:'btn sm',type:'button',onclick:()=>{lv.tiers.push({t:'',p:''});render();}},'Ajouter un palier')));
@@ -5445,6 +5515,7 @@ function wodEditor(modal){
     box.append(h('div',{class:'pedit-head'},
       sel([['force','Force'],['renfo','Renforcement'],['metcon','Metcon (rapporte des points)'],['autre','Autre']],p.kind,v=>{
         p.kind=v;
+        if(v==='metcon'&&p.format==='EMOM'&&!p.deadBy){p.deadBy=true;p.levels.forEach(lv=>{lv.tiers=blankTiers();lv.capTiers=blankCapTiers();});}
         if(v==='metcon')d.parts.forEach((q,j)=>{if(j!==i&&q.kind==='metcon')q.kind='autre';});
         render();},{id:'p'+i+'-kind','aria-label':'Type de la partie'}),
       h('button',{class:'btn sm',type:'button','aria-label':'Monter',disabled:i===0,onclick:()=>{d.parts.splice(i-1,0,d.parts.splice(i,1)[0]);render();}},'↑'),
@@ -5454,14 +5525,20 @@ function wodEditor(modal){
     if(p.kind==='force'){const names=MOVES.map(m=>m[0]);if(p.movement&&!names.includes(p.movement))names.push(p.movement);box.append(field('Mouvement (pour les trophées de force)',sel([['','Aucun']].concat(names.map(n=>[n,n])),p.movement||'',v=>{p.movement=v;},{id:'p'+i+'-mv'})));}
     box.append(field('Contenu, une ligne par consigne',h('textarea',{id:'p'+i+'-content',rows:'4',value:p.content,placeholder:metcon?'21-15-9\nThrusters\nPull-ups':'5 x 5 Back Squat à 75 %',oninput:e=>{p.content=e.target.value;}}),
       metcon?(p.format==='FT'?'Les charges se règlent par niveau ci-dessous. Un schéma comme 21-15-9 ou 10-9-8-7-6-5-4-3-2-1 sur sa propre ligne, suivi des mouvements, est détecté : chaque nombre devient un tour pour les paliers du time cap.':'Les charges se règlent par niveau ci-dessous. Pour qu’un mouvement compte moins de reps (corde à sauter…), ajoute {10=1} en fin de ligne (10 reps comptent pour 1) ou {=5} (la ligne entière vaut 5 reps). Exemple : 50 Single under {10=1}. Écris le nombre de reps en début de ligne.'):'Écris un pourcentage et le mouvement sur la même ligne : chaque athlète verra sa charge calculée.'));
+    if(p.kind==='renfo')box.append(h('div',{class:'grid2'},
+      field('Format',sel([['','Aucun'],['EMOM','EMOM / E2MOM / E3MOM…']],p.format==='EMOM'?'EMOM':'',v=>{p.format=v||'FT';render();},{id:'p'+i+'-rfmt'}),'Le renforcement ne rapporte jamais de points, même en EMOM.'),
+      p.format==='EMOM'?field('Intervalle (min)',tin(p,'interval',{id:'p'+i+'-riv',inputmode:'decimal',placeholder:'1'}),'1 = EMOM (toutes les minutes), 2 = E2MOM (toutes les 2 minutes), 3 = E3MOM…'):null));
     if(metcon){
       const md=roundModel({format:p.format,content:p.content});
       box.append(h('div',{class:'grid2'},
-        field('Format',sel([['FT','For Time'],['AMRAP','AMRAP'],['EMOM','EMOM']],p.format,v=>{p.format=v;p.levels.forEach(lv=>{lv.tiers=blankTiers();lv.capTiers=blankCapTiers();});render();},{id:'p'+i+'-fmt'}),'Changer le format efface les paliers.'),
+        field('Format',sel([['FT','For Time'],['AMRAP','AMRAP'],['DEAD','EMOM Dead by (E1MOM, E2MOM…)']].concat((p.format==='EMOM'&&!p.deadBy)?[['EMOM','EMOM ancien (tours réussis)']]:[]),p.format==='EMOM'?(p.deadBy?'DEAD':'EMOM'):p.format,v=>{if(v==='DEAD'){p.format='EMOM';p.deadBy=true;}else{p.format=v;p.deadBy=false;}p.levels.forEach(lv=>{lv.tiers=blankTiers();lv.capTiers=blankCapTiers();});render();},{id:'p'+i+'-fmt'}),'En metcon, l’EMOM est toujours un Dead by (il rapporte des points). Changer le format efface les paliers. Pour un EMOM sans points, choisis Renforcement.'),
         field('Détail (time cap, durée)',tin(p,'detail',{id:'p'+i+'-detail',placeholder:'Time cap 15 min'})),
         field('Durée / time cap (min)',tin(p,'dur',{id:'p'+i+'-dur',inputmode:'numeric',placeholder:'15'}),'Le minuteur s’arrête tout seul à cette durée. Prioritaire sur le champ Détail.'),
         field('Type de metcon (trophées)',sel([['','Choisir']].concat(Object.entries(FOCUS)),p.focus||'',v=>{p.focus=v;},{id:'p'+i+'-focus'}),'Obligatoire : détermine les trophées Metcon cardio, gym ou haltéro.'),
         field('Reps par tour',tin(p,'repsRound',{id:'p'+i+'-rr',inputmode:'numeric',placeholder:'30'}),(p.format==='FT'&&p.lineRounds)?'Inutile : « Chaque ligne = 1 tour » est coché.':md?'Calculé automatiquement depuis le contenu : '+md.raw+' reps réelles, qui comptent pour '+fmtN(md.eq)+' reps équivalentes.':(p.format==='FT'?'Optionnel. À remplir seulement si le WOD se répète en tours identiques (par exemple 5 rounds for time de 30 reps par tour). Pour un 21-15-9 ou un 10-9-…-1, les tours sont détectés depuis le contenu. Pour un chipper, laisse vide : les paliers du time cap se notent en reps.':'Total des répétitions d’un tour. Sert à convertir « 6 tours + 7 reps » en 6,5 tours pour les points.'))));
+      if(p.format==='EMOM')box.append(
+        field('Intervalle (min)',tin(p,'interval',{id:'p'+i+'-iv',inputmode:'decimal',placeholder:'1'}),'1 = E1MOM (toutes les minutes), 2 = E2MOM (toutes les 2 minutes), 3 = E3MOM… Le minuteur bipe à chaque intervalle.'),
+        h('p',{class:'hint'},p.deadBy?'Dead by : indique le time cap dans « Durée / time cap (min) ». Le score de l’athlète est le temps tenu (intervalles réussis × durée de l’intervalle). Les paliers se règlent en temps tenu : tenir tout le time cap = palier maximum, tenir moins = moins de points.':'Ancien EMOM (score en tours réussis). Choisis « EMOM Dead by » pour noter au temps tenu.'));
       if(p.format==='FT')box.append(h('label',{class:'chk'},h('input',{type:'checkbox',id:'p'+i+'-lr',checked:!!p.lineRounds,onchange:e=>{p.lineRounds=e.target.checked;render();}}),h('span',{},'Chaque ligne = 1 tour')),
         h('p',{class:'hint'},'Chaque ligne d’exercice compte pour un tour (ex. demi Murph = 5 tours). Paliers time cap : « 4+60 » = 4 lignes terminées + 60 reps équivalentes sur la ligne suivante (600 m avec {10=1}).'));
       box.append(h('label',{class:'chk'},h('input',{type:'checkbox',id:'p'+i+'-redo',checked:p.redo!==false,onchange:e=>{p.redo=e.target.checked;}}),h('span',{},'Le REDO rapporte des points sur ce metcon')),
@@ -5869,7 +5946,7 @@ const RULES=[
   '**Dernière semaine :** semaine de deload (allégée, pour récupérer).',
   'Une séance peut être réalisée n’importe quel jour de la semaine, du lundi au dimanche. Une séance rattrapée après sa semaine rapporte ses points, mais ne compte pas pour les flammes.','Chaque athlète saisit lui-même son résultat dans l’appli.']},
  {t:'Niveaux',p:['Pour chaque metcon, tu choisis le niveau auquel tu l’as réalisé : Débutant, Intermédiaire, Rx ou personnalisé. Choisis le niveau que tu as réellement fait, charges et mouvements compris. Un niveau plus élevé valorise davantage tes points de metcon dans certains classements.']},
- {t:'Points',b:['Chaque séance rapporte des points de séance, auxquels s’ajoutent les points de ton ou tes metcons.','Les points de metcon dépendent de ta performance, selon des paliers fixés par le coach.','Les paliers sont fixés dès la création du metcon mais peuvent évoluer légèrement en fonction des résultats observés pour que la compétition reste cohérente et attractive.','Si le time cap t’arrête, ton score est le nombre de répétitions réalisées, converti en points selon les paliers prévus pour ce cas.','**REDO :** si le coach l’autorise sur le metcon, tu peux refaire la séance. Un REDO rapporte 3 points s’il améliore ton premier résultat, 2 points s’il l’égale et 1 point s’il fait moins bien. Il compte aussi pour ton objectif de séances.']},
+ {t:'Points',b:['Chaque séance rapporte des points de séance, auxquels s’ajoutent les points de ton ou tes metcons.','Les points de metcon dépendent de ta performance, selon des paliers fixés par le coach.','Les paliers sont fixés dès la création du metcon mais peuvent évoluer légèrement en fonction des résultats observés pour que la compétition reste cohérente et attractive.','Si le time cap t’arrête, ton score est le nombre de répétitions réalisées, converti en points selon les paliers prévus pour ce cas.','**EMOM / E2MOM / E3MOM :** les exercices se font au début de chaque intervalle (toutes les minutes, toutes les 2 minutes…). En renforcement, un EMOM ne rapporte pas de points. En metcon, seul le **Dead by** existe : tu continues jusqu’au time cap ou jusqu’à ne plus réussir dans le temps imparti : ton score est le temps tenu, et celui qui tient le plus longtemps marque le plus de points.','**REDO :** si le coach l’autorise sur le metcon, tu peux refaire la séance. Un REDO rapporte 3 points s’il améliore ton premier résultat, 2 points s’il l’égale et 1 point s’il fait moins bien. Il compte aussi pour ton objectif de séances.']},
  {t:'Erreurs et décisions du coach',b:['Un participant peut modifier lui-même ses résultats dans l’onglet Séance : inutile de contacter le coach.','Le coach peut retirer un résultat manifestement irréaliste.']}
 ];
 const rlText=t=>t.split('**').map((x,i)=>i%2?h('b',{},x):x);
