@@ -14,7 +14,8 @@
 <title>Box Score</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@500;600&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@500;600&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@500;600&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
 <style>
 /* Layout: a gym whiteboard column. Barbell wordmark on top, scoreboard panel for stats, weight plates as ranks and trophies.
    Light = concrete floor, dark = rubber floor. Anton for headings and numerals, Work Sans for text, Plex Mono for scores. */
@@ -259,6 +260,12 @@ body.modal-open{overflow:hidden}
 .gok{color:var(--ok)}.gno{color:var(--danger)}
 /* apprentissage des mouvements */
 .mvcard{scroll-margin-top:calc(var(--toph,60px) + 56px);display:grid;gap:10px}
+.mvdet>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px}
+.mvdet>summary::-webkit-details-marker{display:none}
+.mvchev{width:10px;height:10px;border-right:3px solid currentColor;border-bottom:3px solid currentColor;transform:rotate(45deg);transition:transform .15s;flex:none;margin:-4px 4px 0 0}
+.mvdet[open] .mvchev{transform:rotate(-135deg);margin:4px 4px 0 0}
+.mvbody{display:grid;gap:10px;margin-top:10px}
+@media (prefers-reduced-motion:reduce){.mvchev{transition:none}}
 .mvcard.focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent)}
 .mv-back{position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--toph,60px));z-index:4;background:var(--bg);padding:8px 0;margin-top:-8px}
 .vfs{position:fixed;inset:0;z-index:40;background:#000;display:grid;grid-template-rows:auto 1fr;color:#fff}
@@ -275,6 +282,13 @@ body.modal-open{overflow:hidden}
 .t-top{--pc:#5B86C9}
 .t-lagoat{--pc:#B5179E}
 .t-lafort{--pc:#8E2C7A}
+.jcoin{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;border:2px solid #8A5A00;background:radial-gradient(circle at 35% 30%,#FFE98A,#F4C400 60%,#C99700);color:#4A2F00;font-family:var(--f-mono);font-weight:600;font-size:13px;line-height:1;box-shadow:inset 0 0 0 2px rgba(255,255,255,.35)}
+.jcoin.zero{filter:grayscale(1);opacity:.55}
+.jcoin.big{width:64px;height:64px;font-size:28px;border-width:3px}
+.jcoin-btn{background:none;border:0;padding:4px;margin:-4px 0 -4px 2px;cursor:pointer;display:inline-grid;place-items:center;border-radius:50%;min-width:36px;min-height:36px;flex:none}
+.jcoin-btn[aria-expanded="true"] .jcoin{outline:3px solid var(--accent);outline-offset:2px}
+.fbox.jk{cursor:pointer;border-color:var(--accent)}
+.jk-hint{font-family:var(--f-mono);font-size:11px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:.04em}
 .flames{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .fbox{display:grid;gap:4px;justify-items:center;text-align:center;align-content:end;padding:12px 8px;border:2px solid var(--edge);border-radius:4px;background:var(--surface2);min-width:0}
 .fstage{height:92px;display:flex;align-items:flex-end;justify-content:center}
@@ -803,10 +817,18 @@ html[data-hal] .top{border-bottom-color:#E8710A}
 <div id="toast" role="status" aria-live="polite"></div>
 
 <script type="module">
-import {firebaseConfig} from './firebase-config.js';
-import {initializeApp} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
-import {getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
-import {getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc} from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+/* Le SDK Firebase est chargé en dynamique : la page s'affiche tout de suite, même si le réseau est lent.
+   Au bout de 3 s sans réponse, l'appli bascule en mode cache (dernières données enregistrées sur l'appareil). */
+let firebaseConfig=null,initializeApp,getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup,getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc,disableNetwork,enableNetwork;
+const FB_URL='https://www.gstatic.com/firebasejs/10.14.1/';
+const sdkPromise=(async()=>{
+  const [cfg,a,u,f]=await Promise.all([import('./firebase-config.js').catch(()=>({})),import(FB_URL+'firebase-app.js'),import(FB_URL+'firebase-auth.js'),import(FB_URL+'firebase-firestore.js')]);
+  firebaseConfig=cfg.firebaseConfig||null;
+  ({initializeApp}=a);
+  ({getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup}=u);
+  ({getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc,disableNetwork,enableNetwork}=f);
+})();
+sdkPromise.catch(()=>{});
 
 let auth=null;
 /* Petite couche qui expose Firestore sous la forme utilisée par l'appli */
@@ -829,7 +851,7 @@ function makeDb(fdb){
   return {
     doc:p=>wrapDoc(doc(fdb,p)),
     collection:p=>({
-      onSnapshot:(n,e)=>onSnapshot(collection(fdb,p),s=>n({docs:s.docs.map(d=>({id:d.id,data:()=>d.data()}))}),e),
+      onSnapshot:(n,e,meta)=>onSnapshot(collection(fdb,p),meta?{includeMetadataChanges:true}:{},s=>n({docs:s.docs.map(d=>({id:d.id,data:()=>d.data()})),fromCache:!!(s.metadata&&s.metadata.fromCache)}),e),
       doc:id=>wrapDoc(id?doc(fdb,p+'/'+id):doc(collection(fdb,p)))
     })
   };
@@ -837,7 +859,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-16.37';
+const APP_VERSION='2026-10-17.39';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -1141,7 +1163,7 @@ function redoObj(st,r){
 }
 function basePts(w,period){return (w.base!==undefined&&w.base!==null)?Number(w.base):((period&&period.base!==undefined)?Number(period.base):10);}
 function wodPoints(w,e,period){
-  const base=basePts(w,period);
+  const base=(e&&e.metconOnly)?0:basePts(w,period); /* « que le metcon » : points du metcon seulement */
   const m=metconOf(w);const perf=m&&e?perfOf(m,e):0;
   return {base,perf,total:base+perf};
 }
@@ -1214,7 +1236,8 @@ function flameAll(lg){
   const t=todayStr(),weeks={};
   for(const w of Object.values(S.wods)){const k=mondayOf(w.date);(weeks[k]=weeks[k]||[]).push(w.date);}
   const onTime=(d,e)=>{if(!e.at)return true;const ds=dfmt(new Date(e.at)),mon=mondayOf(d);return ds>=mon&&ds<=addDays(mon,6);};
-  let cur=0,best=0;
+  const jk=new Set((lg.jokers&&lg.jokers.fire)||[]); /* jours de séance sauvés par un joker : la flamme ne s'éteint pas (la série des trophées, elle, n'en tient pas compte) */
+  let cur=0,best=0,brk=null,extra=0;
   for(const mon of Object.keys(weeks).sort()){
     if(mon>t)break;
     const days=weeks[mon].slice().sort(),closed=addDays(mon,6)<t;
@@ -1224,17 +1247,19 @@ function flameAll(lg){
     const kept=goal>0&&closed&&okN+redoN>=Math.min(goal,days.length);
     for(const d of days){
       const e=lg.entries&&lg.entries[d];
-      if(e&&onTime(d,e)){cur++;best=Math.max(best,cur);}
+      if(e&&onTime(d,e)){cur++;best=Math.max(best,cur);brk=null;extra=0;}
       else if(!e&&!closed)continue;
       else if(kept)continue;
-      else cur=0;
+      else if(jk.has(d))continue;
+      else{if(cur>0){brk={day:d,prev:cur};extra=0;}else if(brk)extra++;cur=0;}
     }
   }
-  return {cur,best};
+  /* save : la flamme est à 0 à cause d'une seule séance ratée → un joker peut encore la sauver (2 séances ratées d'affilée : trop tard) */
+  return {cur,best,save:(cur===0&&brk&&extra===0)?brk:null};
 }
 /* les metcons comptent dans l'ordre où l'athlète les a réellement faits (e.at = jour de validation), pas dans l'ordre des dates de séance :
    un metcon rattrapé plus tard passe donc après ceux déjà faits. Sans horodatage (anciennes entrées), on retombe sur la date de la séance. */
-function topRun(lg,wods){
+function topRun(lg,wods,useJoker){
   const lvMax=lv=>((lv&&lv.tiers)||[]).reduce((a,x)=>Math.max(a,x.p),0);
   const doneAt=(w,e)=>{const t=e&&e.at?Date.parse(e.at):NaN;return isNaN(t)?Date.parse(w.date+'T12:00:00'):t;};
   const list=[];
@@ -1244,13 +1269,16 @@ function topRun(lg,wods){
     list.push({w,m,e,t:doneAt(w,e)});
   }
   list.sort((a,b)=>a.t-b.t||(a.w.date<b.w.date?-1:a.w.date>b.w.date?1:0));
-  let tc=0,tb=0;
-  for(const {m,e} of list){
+  const jk=useJoker?new Set((lg.jokers&&lg.jokers.top)||[]):null; /* joker : seulement pour la flamme, jamais pour le trophée */
+  let tc=0,tb=0,brk=null,extra=0;
+  for(const {w,m,e} of list){
     const lvl=e.level||0,mx=lvMax(levelsOf(m)[lvl]||levelsOf(m)[0]);
     if(!(mx>0))continue;
-    if(perfOf(m,e)>=0.9*mx-1e-9){tc++;tb=Math.max(tb,tc);}else tc=0;
+    if(perfOf(m,e)>=0.9*mx-1e-9){tc++;tb=Math.max(tb,tc);brk=null;extra=0;}
+    else if(jk&&jk.has(w.date))continue;
+    else{if(tc>0){brk={day:w.date,prev:tc};extra=0;}else if(brk)extra++;tc=0;}
   }
-  return {cur:tc,best:tb};
+  return {cur:tc,best:tb,save:(useJoker&&tc===0&&brk&&extra===0)?brk:null};
 }
 /* classement : points, puis niveau moyen (à points égaux, le niveau le plus haut passe devant) ; à points ET niveau égaux, ex æquo (même rang) */
 const tot2=r=>Math.round((r.total||0)*100),lv2=r=>Math.round((r.lvlAvg||0)*100);
@@ -1340,7 +1368,7 @@ function computeBoard(period){
     {
       /* topRun sur la saison : sert au trophée « Top niveau » (plus longue série de la saison seulement) ;
          topRun sur toutes les séances : sert à la flamme « Temps au top », qui ne se réinitialise pas entre les saisons */
-      const ts=topRun(lg,wods),ta=topRun(lg,allWods);
+      const ts=topRun(lg,wods),ta=topRun(lg,allWods,true);
       r.topCur=ts.cur;r.topBest=ts.best;
       r.flameTopCur=ta.cur;r.flameTopBest=ta.best;
     }
@@ -1429,8 +1457,10 @@ function findMove(text){
 }
 const PU_STEP=0.5;
 function pullupCalc(bw,rm,pct){
-  const total1=bw+rm,target=total1*pct/100,lest=target-bw,rounded=Math.round(lest/PU_STEP)*PU_STEP;
-  return {total1,target,lest,rounded,ok:rounded>0};
+  /* charge totale du 1 RM = poids de corps + lest (négatif = déleste) ; lest conseillé = charge totale × % − poids de corps.
+     Un résultat négatif est un déleste (assistance), pas « sans lest ». */
+  const total1=bw+rm,target=total1*pct/100,lest=target-bw,r=Math.round(lest/PU_STEP)*PU_STEP,rounded=r===0?0:r;
+  return {total1,target,lest,rounded};
 }
 function pullupBlock(text,nums){
   const bw=parseNum(S.prof&&S.prof.weight);
@@ -1439,7 +1469,7 @@ function pullupBlock(text,nums){
   if(!pr||!isFinite(pr.kg))return h('div',{class:'chips'},h('span',{class:'chip miss'},'Enregistre ton 1 RM de Traction lestée dans ton profil'));
   /* lest = (poids de corps + 1 RM lesté) × % − poids de corps ; affichage : seulement le lest conseillé, comme les autres mouvements de force */
   return h('div',{class:'chips'},nums.map(n=>{const c=pullupCalc(bw,pr.kg,n);
-    return h('span',{class:'chip load'},n+' % = '+(c.ok?'lest +'+fmtN(c.rounded)+' kg':'sans lest'));}));
+    return h('span',{class:'chip load'},n+' % = '+(c.rounded>0?'lest +'+fmtN(c.rounded)+' kg':c.rounded<0?'déleste −'+fmtN(-c.rounded)+' kg':'sans lest'));}));
 }
 function renderLine(text){
   const line=h('div',{class:'line'},h('span',{},glossSegs(text)));
@@ -1517,7 +1547,7 @@ function openGloss(gi){
   if(!GLOSS[gi])return;
   closeDrawer(true);
   S.movBack={tab:S.tab,viewDate:S.viewDate,y:window.scrollY||0};
-  S.movFocus=gi;S.tip=null;S.tab='moves';
+  S.mvOpen=S.mvOpen||{};S.mvOpen[gi]=true;S.movFocus=gi;S.tip=null;S.tab='moves';
   render();
   setTimeout(()=>{const el=document.getElementById('mvfiche-'+gi);if(el)el.scrollIntoView({block:'start'});},30);
 }
@@ -1633,6 +1663,8 @@ function saveLog(patch,msg,uid){
     if(Array.isArray(owned))data.rewardOwned=owned;
     const avS=patch.avSeen!==undefined?patch.avSeen:cur.avSeen;
     if(Array.isArray(avS))data.avSeen=avS;
+    const jkr=patch.jokers!==undefined?patch.jokers:cur.jokers;
+    if(jkr&&((jkr.fire&&jkr.fire.length)||(jkr.top&&jkr.top.length)))data.jokers={fire:jkr.fire||[],top:jkr.top||[]};
     await S.db.doc('logs/'+uid).set(data);
     // Keep the local log synchronized so the reward popup does not reopen.
     S.logs[uid]=Object.assign({},cur,data);delete S.logs[uid].weight;
@@ -1875,13 +1907,13 @@ const typing=()=>{const a=document.activeElement;return a&&main.contains(a)&&/^(
 function scheduleRender(){if(typing()){pending=true;return;}render();}
 document.addEventListener('focusout',()=>{if(!pending)return;setTimeout(()=>{if(!typing()){pending=false;render();}},0);});
 
-function go(tab){closeDrawer(true);S.movBack=null;S.movFocus=null;if(S.coach)S.coach.wodOpen=false;if(tab==='coach'&&S.tab==='coach')S.coach.view=null;S.profView=null;S.viewUser=null;S.tip=null;S.trophOpen='';S.trophSeason='';S.tab=tab;S.boardDetail=false;S.confirm=null;if(S.entry&&S.entry.coach)S.entry=null;if(S.tab!=='today'){S.entry=null;S.redo=null;}render();window.scrollTo(0,0);}
+function go(tab){closeDrawer(true);S.movBack=null;S.movFocus=null;if(S.coach)S.coach.wodOpen=false;if(tab==='coach'&&S.tab==='coach')S.coach.view=null;S.profView=null;S.viewUser=null;S.tip=null;S.trophOpen='';S.trophSeason='';if(tab==='today'&&S.tab!=='today')S.viewDate=null;S.tab=tab;S.boardDetail=false;S.confirm=null;if(S.entry&&S.entry.coach)S.entry=null;if(S.tab!=='today'){S.entry=null;S.redo=null;}render();window.scrollTo(0,0);}
 function render(){
   pending=false;S._aw=null;S._ob=null;applyTheme();document.body.classList.remove('modal-open');
   {const tp=document.querySelector('.top');if(tp)document.documentElement.style.setProperty('--toph',tp.offsetHeight+'px');}
   if(!S.uid){
     $('#tabs').replaceChildren();$('#hdr-right').replaceChildren(S.authReady&&S.db?helpBtn():null);
-    if(!S.authReady)main.replaceChildren(...updateBanner(),h('p',{class:'muted'},'Chargement…'));
+    if(!S.authReady)main.replaceChildren(...updateBanner(),h('p',{class:'muted'},S.slow?'Chargement… connexion lente, un instant.':'Chargement…'));
     else if(!S.db)main.replaceChildren(...banners());
     else{main.replaceChildren(...updateBanner(),loginView());setTimeout(maybeTour,900);}
     if(tourEl)setTimeout(tourLayout,60);
@@ -1907,11 +1939,12 @@ function render(){
   document.querySelectorAll('.bubs.rxfloat').forEach(x=>x.remove());
   const rxLayer=rxReceived();if(rxLayer)document.body.append(rxLayer);
   {const tb=document.querySelector('.tabs');if(tb)document.documentElement.style.setProperty('--tabh',tb.offsetHeight+'px');}
-  setTimeout(maybeCeremony,400);setTimeout(maybeFreeze,600);setTimeout(maybeRewardPopup,450);setTimeout(maybeAvatarUnlockPopup,750);setTimeout(maybeAnnouncement,900);setTimeout(maybeTour,1600);if(tourEl)setTimeout(tourLayout,60);
+  setTimeout(maybeCeremony,400);setTimeout(maybeFreeze,600);setTimeout(maybeRewardPopup,450);setTimeout(maybeAvatarUnlockPopup,750);setTimeout(maybeAnnouncement,900);setTimeout(maybeJokerPrompt,1100);setTimeout(maybeTour,1600);if(tourEl)setTimeout(tourLayout,60);
 }
 
 function banners(){
   const out=[...updateBanner()];
+  if(S.cacheMode)out.push(h('div',{class:'banner warn',role:'status'},h('p',{},'Connexion lente : tu vois les dernières données enregistrées sur ton téléphone'+(S.snapMode?' (lecture seule)':'')+'. La mise à jour se fait dès que le réseau répond.')));
   if(!S.db){out.push(h('div',{class:'banner warn'},h('p',{},'La configuration Firebase est absente ou incorrecte. Suis le guide README pour remplir le fichier firebase-config.js.')));return out;}
   if(S.error)out.push(h('div',{class:'banner warn'},h('p',{},S.error)));
   if(!S.uid)out.push(h('div',{class:'banner'},h('p',{},'Connecte-toi pour enregistrer tes séances.')));
@@ -2870,6 +2903,33 @@ function levelsBlock(m){
 /* chronomètre des parties force / renfo : 1er appui = lance, 2e = arrête, appui suivant = repart de 0.
    L'état vit hors du DOM (la page se redessine souvent) et se calcule avec l'heure réelle : il continue même écran éteint. */
 const SW={};let swTimer=null;
+/* écran maintenu allumé tant qu'un chronomètre tourne (90 min maximum, pour ne pas vider la batterie si on l'oublie) */
+const AW={wake:null,vid:null,t:null};
+const swRunning=()=>Object.values(SW).some(x=>x.run&&Date.now()-x.t0<5400000);
+async function awakeOn(){
+  try{if(navigator.wakeLock&&!AW.wake){AW.wake=await navigator.wakeLock.request('screen');AW.wake.addEventListener('release',()=>{AW.wake=null;});}}catch(e){}
+  if(!swRunning()){awakeOff();return;}
+  if(!AW.wake){
+    try{
+      if(!AW.vid){
+        const v=document.createElement('video');
+        v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline','');v.setAttribute('muted','');v.muted=true;v.loop=true;
+        v.style.cssText='position:fixed;left:0;top:0;width:2px;height:2px;opacity:.02;pointer-events:none';
+        v.src=NOSLEEP_MP4;document.body.append(v);AW.vid=v;
+      }
+      if(AW.vid.paused){const pr=AW.vid.play();if(pr&&pr.catch)pr.catch(()=>{});}
+    }catch(e){}
+  }
+  clearTimeout(AW.t);AW.t=setTimeout(awakeSync,5400000+1000);
+}
+function awakeOff(){
+  clearTimeout(AW.t);
+  try{if(AW.wake)AW.wake.release();}catch(e){}AW.wake=null;
+  if(AW.vid){try{AW.vid.pause();AW.vid.remove();}catch(e){}AW.vid=null;}
+}
+function awakeSync(){if(swRunning())awakeOn();else awakeOff();}
+/* le verrou d'écran saute quand la page passe en arrière-plan : on le reprend au retour */
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&swRunning()){AW.wake=null;awakeOn();}});
 const swKey=(p,date)=>(date||'')+'|'+(p.label||'')+'|'+p.kind;
 const swMs=k=>{const x=SW[k];return x?(x.run?x.acc+(Date.now()-x.t0):x.acc):0;};
 const swFmt=ms=>{const t=Math.floor(ms/1000),m=Math.floor(t/60),z=n=>String(n).padStart(2,'0');return m>=60?Math.floor(m/60)+'h'+z(m%60):m+':'+z(t%60);};
@@ -2882,7 +2942,7 @@ function swPaint(b,k){
 function swTick(){
   if(swTimer)return;
   swTimer=setInterval(()=>{
-    if(!Object.values(SW).some(x=>x.run)){clearInterval(swTimer);swTimer=null;return;}
+    if(!Object.values(SW).some(x=>x.run)){clearInterval(swTimer);swTimer=null;awakeSync();return;}
     document.querySelectorAll('.sw').forEach(b=>{const k=b.getAttribute('data-sw');if(SW[k]&&SW[k].run)swPaint(b,k);});
   },250);
 }
@@ -2891,7 +2951,7 @@ function swBtn(k){
     const x=SW[k]||(SW[k]={run:false,acc:0,t0:0});
     if(x.run){x.acc+=Date.now()-x.t0;x.run=false;}
     else{x.acc=0;x.t0=Date.now();x.run=true;swTick();}
-    swPaint(b,k);
+    swPaint(b,k);awakeSync();
   }});
   b.innerHTML='<svg viewBox="0 0 64 72" aria-hidden="true"><rect x="26" y="2" width="12" height="8" rx="2" fill="currentColor"/><path d="M47 15l5-5" stroke="currentColor" stroke-width="4" stroke-linecap="round" fill="none"/><circle class="sw-face" cx="32" cy="43" r="25"/><text class="sw-t" x="32" y="49" text-anchor="middle" font-size="18">0:00</text></svg>';
   swPaint(b,k);
@@ -2916,12 +2976,13 @@ function partCard(p,w,date){
     (metcon&&w&&timerOk(date))?h('div',{class:'row'},h('button',{class:'btn primary btn-block',type:'button','data-tour':'start-metcon',onclick:()=>openTimer(w,date,p)},'Démarrer le metcon')):null);
   return h('article',{class:'part'+(metcon?' metcon':'')},h('div',{class:'plabel'},p.label),body);
 }
+/* séance affichée à l'ouverture : celle du jour si elle n'est pas déjà faite, sinon la première séance de la semaine pas encore faite */
 function defaultDate(){
-  const t=todayStr();
-  if(S.wods[t])return t;
-  const mon=mondayOf(t),mine=(S.logs[S.uid]&&S.logs[S.uid].entries)||{};
+  const t=todayStr(),mine=(S.logs[S.uid]&&S.logs[S.uid].entries)||{};
+  if(S.wods[t]&&!mine[t])return t;
+  const mon=mondayOf(t);
   const wk=Object.keys(S.wods).filter(d=>d>=mon&&d<=addDays(mon,6)).sort();
-  return wk.find(d=>!mine[d])||wk[0]||t;
+  return wk.find(d=>!mine[d])||(S.wods[t]?t:(wk[0]||t));
 }
 function upcomingList(t,current){
   const ws=Object.values(S.wods).filter(w=>w.date>t).sort((a,b)=>a.date<b.date?-1:1).slice(0,12);
@@ -3227,6 +3288,7 @@ function viewFeed(){
     const results=[];
     (w.parts||[]).filter(p=>p.kind==='force').forEach(p=>{const kg=e.loads&&e.loads[p.label];if(kg!==undefined)results.push(h('div',{class:'feed-metric'},h('b',{},fmtKg(kg)),h('span',{},p.movement||p.name||'Force')));});
     if(m&&hasScore(e))results.push(h('div',{class:'feed-metric'},h('b',{},scoreText(m,e.score,e)),h('span',{},'Metcon · '+(m.format==='FT'?'Temps':m.format==='AMRAP'?'Tours / reps':'Tours'))));
+    else if(m&&e.noMetcon)results.push(h('div',{class:'feed-metric'},h('b',{},'Metcon non réalisé'),h('span',{},'Pas de points de metcon')));
     const rx=h('div',{class:'rxrow'},RX.map(em=>{
       const n=Object.values(S.reactions).filter(r=>r&&r.to===uid&&r.date===date&&r.emoji===em).length;
       return h('button',{type:'button',class:'rxb','aria-pressed':mine===em?'true':'false','aria-label':RXN[em],onclick:()=>reactTo(uid,date,em)},em,n?h('small',{},n):null);
@@ -3283,7 +3345,7 @@ function entrySection(w,date){
   if(mine){
     const pts=wodPoints(w,mine,per||ALL);const m=metconOf(w);
     sec.append(h('div',{class:'row'},h('span',{class:'chip ok'},'Séance validée'),per?null:h('span',{class:'chip miss'},'Hors saison')),
-      h('p',{},h('b',{},fmtN(pts.total)+' pts'),' · ',pts.base+' pour la séance',m?' + '+fmtN(pts.perf)+' pour le metcon':'',
+      h('p',{},h('b',{},fmtN(pts.total)+' pts'),' · ',mine.metconOnly?'metcon seul':pts.base+' pour la séance',m?' + '+fmtN(pts.perf)+' pour le metcon':'',
         m&&hasScore(mine)?' · '+lvlLab(m,mine)+' · '+scoreText(m,mine.score,mine):''),
       lockedDate(date)?h('p',{class:'hint'},'🔒 '+LOCKMSG):h('div',{class:'row'},
         h('button',{class:'btn',onclick:()=>openEntry(w,date)},'Modifier mes résultats'),
@@ -3383,7 +3445,7 @@ function scoreFields(m,st,upd,pre,canSkip){
   const head=ft?[h('div',{class:'seg',style:'grid-template-columns:repeat(2,minmax(0,1fr))',role:'group','aria-label':'Fin du For Time'},
     [[false,'Terminé dans le temps'],[true,'Time cap atteint']].map(([v,l])=>h('button',{type:'button',class:'btn sm','aria-pressed':(!skip&&!!st.capped===v)?'true':'false',onclick:()=>{st.skip=false;st.capped=v;render();}},l)))]:[];
   if(canSkip)head.push(h('div',{class:'seg',style:'grid-template-columns:minmax(0,1fr)'},
-    h('button',{type:'button',class:'btn sm',id:pre+'-skip','aria-pressed':skip?'true':'false',onclick:()=>{st.skip=!st.skip;upd();render();}},'Je n’ai pas fait le metcon')));
+    h('button',{type:'button',class:'btn sm',id:pre+'-skip','aria-pressed':skip?'true':'false',onclick:()=>{st.skip=!st.skip;if(st.skip)st.only=false;upd();render();}},'Je n’ai pas fait le metcon')));
   if(skip)return head.concat([h('p',{class:'hint'},'La séance sera enregistrée sans les points du metcon. Touche à nouveau le bouton pour saisir un résultat.')]);
   if(ft&&st.capped&&!pl)return head.concat([field(m.label+' · Reps réalisées au time cap',
     h('input',{id:pre+'-creps',type:'text',inputmode:'numeric',placeholder:'81',value:st.creps||'',oninput:bind('creps')}),
@@ -3538,7 +3600,7 @@ function openEntry(w,date,uid,coach){
   uid=uid||S.uid;
   const mine=S.logs[uid]&&S.logs[uid].entries&&S.logs[uid].entries[date];const m=metconOf(w);
   if(!coach)S.entryGlowUntil=Date.now()+2900;
-  S.entry={date,uid,coach:!!coach,score:'',rounds:'',reps:'',message:(mine&&mine.message)||'',level:m?okLvl(m,mine&&mine.level!==undefined?mine.level:lowLvl(m)):0,kg:kgOf(mine),custom:!!kgOf(mine),loads:{},prs:{},skip:!!(mine&&mine.noMetcon&&!hasScore(mine))};
+  S.entry={date,uid,coach:!!coach,score:'',rounds:'',reps:'',message:(mine&&mine.message)||'',level:m?okLvl(m,mine&&mine.level!==undefined?mine.level:lowLvl(m)):0,kg:kgOf(mine),custom:!!kgOf(mine),loads:{},prs:{},skip:!!(mine&&mine.noMetcon&&!hasScore(mine)),only:!!(mine&&mine.metconOnly)};
   if(mine){
     fillState(m,S.entry,mine);
     for(const [k,v] of Object.entries(mine.loads||{}))S.entry.loads[k]=String(v).replace('.',',');
@@ -3550,7 +3612,7 @@ function entryForm(w,date){
   const m=metconOf(w),per=periodFor(date);
   const preview=h('p',{class:'preview'});
   const upd=()=>{
-    const base=basePts(w,per);
+    const base=S.entry.only?0:basePts(w,per);
     let perf=0;
     if(m&&!S.entry.skip){const r=readScore(m,S.entry);if(r.v!==undefined)perf=Math.round(perfPoints(m,r.v,S.entry.level,r.cap)*adjF(S.entry)*100)/100;}
     preview.textContent=(per?'':'Hors saison, ne compte pas au classement. ')+'Points : '+base+' pour la séance'+(m?' + '+fmtN(perf)+' pour le metcon':'')+' = '+fmtN(base+perf);
@@ -3558,8 +3620,15 @@ function entryForm(w,date){
   const title=S.entry.coach?'Résultats de '+((S.logs[S.entry.uid]||{}).pseudo||'l’athlète'):'Mes résultats';
   const form=h('form',{class:S.entry.coach?'card':'stack',id:'entry-form',onsubmit:e=>{e.preventDefault();submitEntry(w);}},S.entry.coach?h('h2',{class:'h2'},title):h('p',{class:'eyebrow'},cap(fmtShort(date))+' · '+w.title));
   if(S.entry.coach)form.append(h('p',{class:'hint'},'Tu modifies ce résultat en tant que coach. Les points et le classement se recalculent tout de suite.'));
+  const hasForce=(w.parts||[]).some(p=>p.kind==='force');
+  if(m&&hasForce){
+    form.append(h('div',{class:'seg',style:'grid-template-columns:minmax(0,1fr)'},
+      h('button',{type:'button',class:'btn sm',id:'entry-only','aria-pressed':S.entry.only?'true':'false',onclick:()=>{S.entry.only=!S.entry.only;if(S.entry.only)S.entry.skip=false;upd();render();}},'Je n’ai fait que le metcon')));
+    if(S.entry.only)form.append(h('p',{class:'hint'},'Tu gagnes les points du metcon, mais pas ceux de la séance. La charge de la partie force n’est pas enregistrée.'));
+  }
   (w.parts||[]).forEach(p=>{
     if(p.kind==='force'){
+      if(S.entry.only)return;
       const prb=prBox(p,date);
       form.append(field(p.label+' · '+(p.movement||p.name||'Force')+' : charge la plus lourde (kg)',
         h('input',{id:'load-'+p.label,type:'text',inputmode:SIGNED.includes(p.movement)?'text':'decimal',placeholder:'optionnel',value:S.entry.loads[p.label]||'',oninput:e=>{S.entry.loads[p.label]=e.target.value;prb.upd();}})),prb);
@@ -3590,17 +3659,18 @@ function submitEntry(w){
     const r=S.entry.skip?{empty:true}:readScore(m,S.entry);
     if(S.entry.skip)e.noMetcon=true;
     if(r.bad||r.over||r.many){toast(scoreErr(m,r),true);return;}
+    if(S.entry.only){if(r.empty){toast('Indique ton résultat du metcon.',true);return;}e.metconOnly=true;}
     if(!r.empty){
       if(r.cap){e.cap=true;e.capScore=r.v;if(r.rounds!==undefined)e.rounds=r.rounds;e.reps=r.reps;}
       else{e.score=r.v;if(r.rounds!==undefined){e.rounds=r.rounds;e.reps=r.reps;}}
     }
   }
   const loads={};
-  for(const [k,raw] of Object.entries(S.entry.loads)){if(String(raw).trim()==='')continue;const v=parseNum(raw),pm=(w.parts||[]).find(q=>q.label===k);if(!prOk(pm&&pm.movement,v)){toast('Charge illisible pour '+k,true);return;}loads[k]=v;}
+  for(const [k,raw] of (S.entry.only&&m?[]:Object.entries(S.entry.loads))){if(String(raw).trim()==='')continue;const v=parseNum(raw),pm=(w.parts||[]).find(q=>q.label===k);if(!prOk(pm&&pm.movement,v)){toast('Charge illisible pour '+k,true);return;}loads[k]=v;}
   if(Object.keys(loads).length)e.loads=loads;
   /* PR déclarés : {label:{reps,mv}} ; la charge reste celle de e.loads (pas de doublon) */
   const prs={};
-  for(const [k,x] of Object.entries(S.entry.prs||{})){
+  for(const [k,x] of (S.entry.only&&m?[]:Object.entries(S.entry.prs||{}))){
     const pm=(w.parts||[]).find(q=>q.label===k);
     if(!pm||!pm.movement||loads[k]===undefined){toast('PR '+k+' : indique la charge et le mouvement.',true);return;}
     prs[k]={reps:Number(x.reps)||1,mv:pm.movement};
@@ -3611,6 +3681,7 @@ function submitEntry(w){
   const message=String(S.entry.message||'').trim().slice(0,180);if(message)e.message=message;
   const date=S.entry.date;const cur=S.logs[uid]||{};
   S.entry=null;
+  if(!coach&&!S.viewDate)S.viewDate=date; /* on reste sur la séance qu'on vient d'enregistrer ; « Revenir à la séance du jour » mène à la suivante */
   if(!coach&&uid===S.uid&&Object.keys(prs).length){
     const next=Object.assign({},S.prof.prs||{});
     for(const [label,x] of Object.entries(prs)){
@@ -3626,7 +3697,8 @@ function submitEntry(w){
   render();
 }
 function recentList(t,current){
-  const ws=Object.values(S.wods).filter(w=>w.date<=t).sort((a,b)=>a.date<b.date?1:-1).slice(0,12);
+  const per=periodFor(t)||activePeriod(); /* les séances des saisons précédentes n'apparaissent pas */
+  const ws=Object.values(S.wods).filter(w=>w.date<=t&&inP(w.date,per)).sort((a,b)=>a.date<b.date?1:-1).slice(0,12);
   if(!ws.length)return h('div');
   const mine=(S.logs[S.uid]&&S.logs[S.uid].entries)||{};
   return h('section',{class:'card'},h('h2',{class:'h2'},'Séances récentes'),
@@ -4466,8 +4538,66 @@ function flameEl(kind,n){
   el.append(h('span',{class:'fnum',style:'font-size:'+Math.max(14,Math.round(w*.34))+'px'},n));
   return el;
 }
-function flameBox(kind,n,title,rec){
-  return h('div',{class:'fbox'},h('div',{class:'fstage'},flameEl(kind,n)),h('div',{class:'nm'},title),h('div',{class:'ver'},rec));
+/* ---------- jokers : gagnés avec l'XP (récompense de saison « Joker »), le stock ne se réinitialise jamais ---------- */
+function jokerEarned(lg){
+  let n=0;
+  for(const key of ((lg&&lg.rewardOwned)||[])){const [pid,rid]=String(key).split(':'),pr=S.periods[pid],r=pr&&(pr.rewards||[]).find(x=>x.id===rid);if(r&&r.type==='joker')n++;}
+  return n;
+}
+const jokerUsed=lg=>((lg&&lg.jokers&&lg.jokers.fire)||[]).length+((lg&&lg.jokers&&lg.jokers.top)||[]).length;
+const jokerLeft=lg=>Math.max(0,jokerEarned(lg)-jokerUsed(lg));
+const JK_NAME={fire:'Série en cours',top:'Temps au top'};
+function myFlames(){
+  const lg=S.logs[S.uid]||{},allWods=Object.values(S.wods).sort((a,b)=>a.date<b.date?-1:1);
+  return {fire:flameAll(lg),top:topRun(lg,allWods,true)};
+}
+function useJoker(kind){
+  if(S._jkBusy)return;
+  const lg=S.logs[S.uid]||{};
+  if(jokerLeft(lg)<1){toast('Tu n’as pas de joker disponible.',true);return;}
+  const f=myFlames()[kind];
+  if(!f.save){toast('Ce joker ne peut plus être utilisé sur cette flamme.',true);return;}
+  const jk={fire:((lg.jokers||{}).fire||[]).slice(),top:((lg.jokers||{}).top||[]).slice()};
+  jk[kind].push(f.save.day);
+  S._jkBusy=true;
+  saveLog({jokers:jk},'Joker utilisé : « '+JK_NAME[kind]+' » garde son '+f.save.prev+' et repart de là. La série du trophée reste interrompue.').finally(()=>{S._jkBusy=false;render();});
+}
+const jokerCoin=(n,big)=>h('span',{class:'jcoin'+(n>0?'':' zero')+(big?' big':''),'aria-hidden':'true'},n);
+function jokerAsk(kind){
+  if(S._jkOpen)return;
+  const lg=S.logs[S.uid]||{},left=jokerLeft(lg),f=myFlames()[kind];
+  if(left<1||!f.save)return;
+  S._jkOpen=true;
+  const pop=h('div',{class:'reward-pop',id:'jk-pop',role:'dialog','aria-modal':'true','aria-label':'Utiliser un joker ?'});
+  const close=()=>{pop.remove();S._jkOpen=false;};
+  pop.append(h('div',{class:'rp-card'},h('p',{class:'eyebrow'},'Flamme éteinte · '+JK_NAME[kind]),
+    h('div',{style:'justify-self:center'},jokerCoin(left,true)),
+    h('h2',{class:'wtitle'},'Voulez-vous utiliser un joker ?'),
+    h('p',{},'Ta flamme « '+JK_NAME[kind]+' » ('+f.save.prev+') vient de s’éteindre. Avec un joker, elle garde son '+f.save.prev+' et repart de là. La série pour le trophée, elle, reste interrompue.'),
+    h('p',{class:'hint'},'Il te reste '+left+' joker'+(left>1?'s':'')+'. Tu pourras aussi l’utiliser plus tard depuis ton profil, en touchant la flamme.'),
+    h('div',{class:'row',style:'justify-content:center'},
+      h('button',{class:'btn',type:'button',onclick:()=>{try{localStorage.setItem('bsjk-no:'+S.uid+':'+kind+':'+f.save.day,'1');}catch(e){}close();}},'Non'),
+      h('button',{class:'btn primary',type:'button',onclick:()=>{close();useJoker(kind);}},'Utiliser un joker'))));
+  document.body.append(pop);
+}
+/* à l'ouverture de l'appli : si une flamme vient de s'éteindre et qu'un joker est disponible, on propose de l'utiliser (une seule fois par flamme éteinte) */
+function maybeJokerPrompt(){
+  if(!S.uid||!ready()||S.snapMode||S._jkOpen||S._jkBusy||S._rewardPopupOpen)return;
+  if(document.querySelector('#tm-ov,#cer-ov,.reward-pop,#av-ov,#entry-ov'))return;
+  if(!jokerLeft(S.logs[S.uid]||{}))return;
+  const fl=myFlames();
+  for(const kind of ['fire','top']){
+    const sv=fl[kind].save;if(!sv)continue;
+    let no=null;try{no=localStorage.getItem('bsjk-no:'+S.uid+':'+kind+':'+sv.day);}catch(e){}
+    if(no)continue;
+    jokerAsk(kind);return;
+  }
+}
+function flameBox(kind,n,title,rec,jk){
+  const box=h('div',{class:'fbox'+(jk?' jk':''),role:jk?'button':null,tabindex:jk?'0':null,'aria-label':jk?title+' : touche pour utiliser un joker':null,onclick:jk?jk.fn:null,onkeydown:jk?(e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();jk.fn();}}):null},
+    h('div',{class:'fstage'},flameEl(kind,n)),h('div',{class:'nm'},title),h('div',{class:'ver'},rec));
+  if(jk&&jk.hint)box.append(h('div',{class:'jk-hint'},jk.hint));
+  return box;
 }
 /* trophées d'un athlète : bandeau replié par défaut, filtrable par saison ; seuls les trophées décernés (saison terminée) sont listés.
    Les trophées provisoires de la saison en cours restent visibles dans le classement uniquement. */
@@ -4528,14 +4658,22 @@ function viewProfile(){
     h('div',{class:'stat'},h('b',{},me.flameBest||0),h('span',{},'série max'))));
   if(me.sessions>0)el.append(h('div',{class:'tally-row'},h('span',{class:'flabel'},'Séances de la saison'),tally(me.sessions)));
   el.append(h('section',{class:'card'},
-    h('div',{class:'row',style:'justify-content:space-between;flex-wrap:nowrap'},h('h2',{class:'h2',style:'flex:1'},'Mes flammes'),
+    h('div',{class:'row',style:'justify-content:space-between;flex-wrap:nowrap'},h('h2',{class:'h2',style:'flex:1'},'Mes flammes',h('button',{type:'button',class:'jcoin-btn','aria-label':'Jokers disponibles : '+jokerLeft(S.logs[S.uid]||{}),'aria-expanded':S.tip==='joker'?'true':'false',onclick:()=>toggleTip('joker')},jokerCoin(jokerLeft(S.logs[S.uid]||{})))),
       h('button',{type:'button',class:'qbtn','aria-label':'Informations sur les flammes','aria-expanded':S.tip==='flames'?'true':'false',onclick:()=>toggleTip('flames')},'?')),
+    S.tip==='joker'?h('div',{class:'tip',role:'dialog'},
+      h('div',{},h('b',{},'Le joker'),h('div',{class:'sub'},'Une pièce gagnée avec ton XP (récompense de saison). Elle sauve une flamme qui vient de s’éteindre, « Série en cours » ou « Temps au top » : la flamme garde son nombre et repart de là.')),
+      h('div',{},h('b',{},'Quand l’utiliser ?'),h('div',{class:'sub'},'Quand une flamme tombe à 0 à cause d’une seule séance ratée (ou d’un seul metcon sous 90 %). Touche la flamme éteinte pour l’utiliser. Si 2 séances ou 2 metcons d’affilée sont ratés, c’est trop tard.')),
+      h('div',{},h('b',{},'Bon à savoir'),h('div',{class:'sub'},'Un joker par flamme. Il ne protège pas la série pour les trophées : elle reste interrompue. Tu peux en cumuler plusieurs et ils ne disparaissent pas au changement de saison.'))):null,
     S.tip==='flames'?h('div',{class:'tip',role:'dialog'},
       h('div',{},h('b',{},'Série en cours'),h('div',{class:'sub'},'Séances d’affilée, faites pendant la bonne semaine, toutes saisons confondues. Objectif de séances respecté = flamme conservée.')),
       h('div',{},h('b',{},'Temps au top'),h('div',{class:'sub'},'Metcons d’affilée à 90 % des points ou plus, dans l’ordre où tu les as réalisés (pas celui des dates de séance), toutes saisons confondues : la flamme ne se réinitialise pas au changement de saison.'))):null,
-    h('div',{class:'flames'},
-      flameBox('fire',me.flameCur||0,'Série en cours','Record : '+(me.flameBest||0)),
-      flameBox('plat',me.flameTopCur||0,'Temps au top','Record : '+(me.flameTopBest||0)))));
+    (()=>{
+      const fl=myFlames(),left=jokerLeft(S.logs[S.uid]||{});
+      const jk=kind=>{const f=fl[kind];if(!(f.cur===0&&f.save))return null;return {hint:left>0?'Touche pour utiliser un joker':'Pas de joker disponible',fn:()=>{if(left>0)jokerAsk(kind);else toast('Tu n’as pas de joker disponible. Ils se gagnent avec l’XP.',true);}};};
+      return h('div',{class:'flames'},
+        flameBox('fire',fl.fire.cur,'Série en cours','Record : '+(me.flameBest||0),jk('fire')),
+        flameBox('plat',fl.top.cur,'Temps au top','Record : '+(me.flameTopBest||0),jk('top')));
+    })()));
   {const gc=goalCard(p);gc.setAttribute('data-tour','goal');el.append(gc);}
   /* dernières séances */
   const items=me.items.slice().reverse().slice(0,8);
@@ -5384,9 +5522,9 @@ function blankSeasonReward(){return {id:'rw'+Date.now().toString(36)+Math.random
 function rewardEditor(d){
   if(!Array.isArray(d.rewards))d.rewards=[];
   const items=AV_ITEMS.filter(x=>!avOff(x));
-  const typeName={title:'Titre',frame:'Encadré de bannière',bg:'Fond de bannière',avatar:'Cosmétique avatar',avframe:'Cadre d’avatar (fil)'};
+  const typeName={title:'Titre',frame:'Encadré de bannière',bg:'Fond de bannière',avatar:'Cosmétique avatar',avframe:'Cadre d’avatar (fil)',joker:'Joker (sauve une flamme)'};
   const editor=r=>h('div',{class:'reward-edit'},
-    field('Type',sel([['title','Titre'],['frame','Encadré de bannière'],['bg','Fond de bannière'],['avatar','Cosmétique avatar'],['avframe','Cadre d’avatar (fil)']],r.type,v=>{r.type=v;if(v==='avframe'&&!AVF[r.asset])r.asset='gold';if(v==='avatar'&&!r.asset)r.asset=items[0]?.id||'';if(v==='bg'&&r.asset!=='base'&&!BG_ASSETS[r.asset])r.asset='base';render();})),
+    field('Type',sel([['title','Titre'],['frame','Encadré de bannière'],['bg','Fond de bannière'],['avatar','Cosmétique avatar'],['avframe','Cadre d’avatar (fil)'],['joker','Joker (sauve une flamme)']],r.type,v=>{r.type=v;if(v==='avframe'&&!AVF[r.asset])r.asset='gold';if(v==='avatar'&&!r.asset)r.asset=items[0]?.id||'';if(v==='bg'&&r.asset!=='base'&&!BG_ASSETS[r.asset])r.asset='base';render();})),
     field('XP requis',h('input',{type:'number',min:'0',step:'1',value:r.xp,oninput:e=>r.xp=e.target.value,placeholder:'100'})),
     field('Nom de la récompense',h('input',{class:'wide',value:r.name||'',oninput:e=>r.name=e.target.value,placeholder:'Ex. Athlète Alpha'}),null),
     r.type==='avatar'?field('Cosmétique',sel(items.map(x=>[x.id,x.name]),r.asset,v=>{r.asset=v;},{class:'wide'})):r.type==='avframe'?field('Visuel du cadre',sel(Object.entries(AVF).map(([k,v])=>[k,v.name]),AVF[r.asset]?r.asset:'gold',v=>{r.asset=v;},{class:'wide'}),'Affiché autour de l’avatar dans le fil. L’athlète le choisit dans « Ma bannière ».'):r.type==='bg'?field('Visuel du fond',sel([['base','Box Score classique']].concat(Object.entries(BG_ASSETS).map(([k,v])=>[k,v.name])),r.asset||'base',v=>{r.asset=v;},{class:'wide'}),'Les fonds spéciaux (Alpha, Angry Pumpkin) sont disponibles uniquement après avoir remporté cette récompense.'):null,
@@ -5408,7 +5546,7 @@ function seasonXp(uid,per){
   const b=computeBoard(per);const r=b.rows.find(x=>x.uid===uid);return r?Math.max(0,Math.floor(r.weighted*10)/10):0;
 }
 function rewardImage(r){
-  const art=h('div',{class:'reward-art'},r.image?h('img',{src:r.image,alt:r.name||'Récompense'}):r.type==='avatar'?'🏋️':r.type==='title'?'★':r.type==='frame'?'▣':'◆');
+  const art=h('div',{class:'reward-art'},r.image?h('img',{src:r.image,alt:r.name||'Récompense'}):r.type==='avatar'?'🏋️':r.type==='title'?'★':r.type==='frame'?'▣':r.type==='joker'?'🪙':'◆');
   if(r.type==='avatar'&&!r.image&&AV_BY[r.asset]&&AV_BY[r.asset].img){const ic=avIcon(AV_BY[r.asset]);ic.style.cssText='width:100%;height:100%';art.replaceChildren(ic);}
   if(r.type==='avframe'&&!r.image){art.replaceChildren(h('img',{src:avfSrc(r),alt:r.name||'Cadre d’avatar'}));}
   if(r.type==='bg'&&!r.image&&BG_ASSETS[r.asset]){art.replaceChildren(h('img',{src:BG_ASSETS[r.asset].src,alt:r.name||'Fond de bannière',style:'width:100%;height:100%;object-fit:cover;border-radius:4px'}));}
@@ -5458,11 +5596,11 @@ function maybeRewardPopup(){
   const close=()=>finish(false),equip=()=>finish(true);
   pop.append(h('div',{class:'rp-card'},h('p',{class:'eyebrow'},'Récompense débloquée'),
     rewardImage(rw),h('h2',{class:'wtitle'},rw.name||'Nouvelle récompense'),
-    h('p',{class:'muted'},(rw.type==='avatar'?'Cosmétique avatar':rw.type==='title'?'Titre':rw.type==='frame'?'Encadré de bannière':rw.type==='avframe'?'Cadre d’avatar (fil)':'Fond de bannière')+' · '+rw.xp+' XP'),
-    h('p',{},'Tu viens de débloquer cette récompense !'),
+    h('p',{class:'muted'},(rw.type==='avatar'?'Cosmétique avatar':rw.type==='title'?'Titre':rw.type==='frame'?'Encadré de bannière':rw.type==='avframe'?'Cadre d’avatar (fil)':rw.type==='joker'?'Joker':'Fond de bannière')+' · '+rw.xp+' XP'),
+    h('p',{},rw.type==='joker'?'Tu gagnes un joker ! Il sauve une flamme (série ou temps au top) qui s’éteint à cause d’une seule séance ratée. Retrouve-le dans « Mes flammes », sur ton profil.':'Tu viens de débloquer cette récompense !'),
     h('div',{class:'row',style:'justify-content:center'},
-      h('button',{class:'btn',type:'button',onclick:close},'Fermer'),
-      h('button',{class:'btn primary',type:'button',onclick:equip},'Équiper'))));
+      rw.type==='joker'?h('button',{class:'btn primary',type:'button',onclick:close},'Super !'):h('button',{class:'btn',type:'button',onclick:close},'Fermer'),
+      rw.type==='joker'?null:h('button',{class:'btn primary',type:'button',onclick:equip},'Équiper'))));
   document.body.append(pop);
 }
 
@@ -5698,22 +5836,35 @@ function openDrawer(instant){
 }
 /* ---------- apprentissage des mouvements : banque de fiches ---------- */
 const ICO_MOVES='<svg '+SVGA+'><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9.5v5l4.5-2.5z"/></svg>';
+/* catégorie de chaque mouvement : haltéro (charges : barre, haltères, kettlebell, balle) · gym (poids du corps) · cardio */
+const MV_CAT={'Back Squat':'haltero','Front Squat':'haltero','Overhead Squat':'haltero','Thruster':'haltero','Deadlift':'haltero','Clean':'haltero','Hang Power Clean':'haltero','Snatch':'haltero','Clean & Jerk':'haltero','Jerk':'haltero','Push Press':'haltero','Shoulder Press':'haltero','Bench Press':'haltero','Dumbbell Snatch':'haltero','Kettlebell Swing':'haltero','Wall Ball':'haltero',
+  'Corde à sauter':'cardio','Shuttle run':'cardio'};
+const mvCat=name=>MV_CAT[name]||'gym';
+const MV_ORDER=['haltero','gym','cardio'];
 function moveCard(g,gi){
-  const card=h('section',{class:'card mvcard'+(S.movFocus===gi?' focus':''),id:'mvfiche-'+gi},
-    h('h2',{class:'wtitle'},g[0]),
-    h('p',{},g[2]),
-    h('div',{},h('div',{class:'flabel gok'},'Rep valide'),h('ul',{},g[3].map(x=>h('li',{},x)))),
-    h('div',{},h('div',{class:'flabel gno'},'No rep'),h('ul',{},g[4].map(x=>h('li',{},x)))));
-  if(g[5])card.append(glossImg(g));
-  if(g[6])card.append(h('div',{class:'row'},h('button',{type:'button',class:'btn sm',onclick:()=>openMoveVideo(g)},'Voir la vidéo')));
-  return card;
+  S.mvOpen=S.mvOpen||{};
+  const det=h('details',Object.assign({class:'mvdet',ontoggle:e=>{S.mvOpen[gi]=e.currentTarget.open;}},S.mvOpen[gi]?{open:true}:{}),
+    h('summary',{class:'mvsum'},h('span',{class:'wtitle'},g[0]),h('span',{class:'mvchev','aria-hidden':'true'})),
+    h('div',{class:'mvbody'},
+      h('p',{},g[2]),
+      h('div',{},h('div',{class:'flabel gok'},'Rep valide'),h('ul',{},g[3].map(x=>h('li',{},x)))),
+      h('div',{},h('div',{class:'flabel gno'},'No rep'),h('ul',{},g[4].map(x=>h('li',{},x)))),
+      g[5]?glossImg(g):null,
+      g[6]?h('div',{class:'row'},h('button',{type:'button',class:'btn sm',onclick:()=>openMoveVideo(g)},'Voir la vidéo')):null));
+  return h('section',{class:'card mvcard'+(S.movFocus===gi?' focus':''),id:'mvfiche-'+gi},det);
 }
 function viewMoves(){
   const el=h('div',{class:'stack'});
   if(S.movBack)el.append(h('div',{class:'mv-back'},h('button',{type:'button',class:'btn primary',id:'mv-back',onclick:movBackGo},'← Retour à la séance')));
   el.append(h('div',{},h('p',{class:'eyebrow'},'Banque de mouvements'),h('h1',{class:'day'},'Apprentissage des mouvements')),
-    h('p',{class:'hint'},'Standards habituels. Ton coach peut les préciser pour la séance.'));
-  GLOSS.forEach((g,gi)=>el.append(moveCard(g,gi)));
+    h('p',{class:'hint'},'Standards habituels. Ton coach peut les préciser pour la séance. Touche un mouvement pour ouvrir sa fiche.'));
+  /* l'index gi reste celui de GLOSS (liens depuis les séances) : on trie seulement l'affichage */
+  MV_ORDER.forEach(cat=>{
+    const items=GLOSS.map((g,gi)=>[g,gi]).filter(x=>mvCat(x[0][0])===cat).sort((a,b)=>a[0][0].localeCompare(b[0][0],'fr',{sensitivity:'base'}));
+    if(!items.length)return;
+    el.append(h('h2',{class:'h2'},FOCUS[cat]));
+    items.forEach(x=>el.append(moveCard(x[0],x[1])));
+  });
   return el;
 }
 /* ---------- partager l'appli ---------- */
@@ -5893,6 +6044,33 @@ function tourLayout(fresh){
 }
 function steps2dots(n,i){return Array.from({length:n},(_,k)=>h('i',{class:k===i?'on':''}));}
 
+/* ---------- mode cache ---------- */
+/* copie locale des dernières données (localStorage) : sert à afficher l'appli quand le SDK Firebase n'arrive pas dans les 3 s */
+const SNAP_KEY='boxscore-snap-v1';
+function snapRead(){try{const x=JSON.parse(localStorage.getItem(SNAP_KEY)||'null');return x&&x.uid&&x.periods&&x.wods&&x.logs?x:null;}catch(e){return null;}}
+let snapT=null;
+function snapSave(){
+  clearTimeout(snapT);
+  snapT=setTimeout(()=>{
+    if(!S.uid||!ready()||S.cacheMode||S.snapMode)return;
+    try{localStorage.setItem(SNAP_KEY,JSON.stringify({uid:S.uid,meName:S.meName,at:Date.now(),periods:S.periods,wods:S.wods,logs:S.logs,prof:S.prof,coachUid:S.coachUid,groups:S.groups,wu:S.wu&&S.wu.cfg||null}));}
+    catch(e){try{localStorage.removeItem(SNAP_KEY);}catch(x){}}
+  },8000);
+}
+function enterSnapMode(){
+  if(S.uid)return true;
+  const sn=snapRead();if(!sn)return false;
+  const off={id:'',set:()=>Promise.reject({code:'unavailable'}),delete:()=>Promise.reject({code:'unavailable'}),onSnapshot:()=>()=>{}};
+  S.db={doc:()=>off,collection:()=>({onSnapshot:()=>()=>{},doc:()=>off})};
+  Object.assign(S,{snapMode:true,cacheMode:true,uid:sn.uid,meName:sn.meName||'',periods:sn.periods,wods:sn.wods,logs:sn.logs,
+    prof:Object.assign({prs:{},sex:'',weight:0},sn.prof||{}),profLoaded:true,coachUid:sn.coachUid||null,coachLoaded:true,owner:false,
+    groups:Object.assign({list:[],of:{},snap:{}},sn.groups||{},{loaded:true}),ann:null,annLoaded:true,authReady:true,
+    loaded:{periods:true,wods:true,logs:true},tab:takeInitialTab()});
+  S.wu={cfg:sn.wu||null,loaded:true,list:false,err:false,fromCache:true};
+  render();
+  return true;
+}
+
 /* ---------- démarrage ---------- */
 function init(){
   /* l'enveloppe ne revient que si l'appli est restée en arrière-plan plus de 30 minutes (= une nouvelle ouverture), jamais pendant un minuteur */
@@ -5909,14 +6087,28 @@ function init(){
   window.addEventListener('focus',()=>checkVersion());
   window.addEventListener('online',()=>checkVersion(true));
   window.addEventListener('pageshow',()=>checkVersion(true));
+  /* démarrage : la page est dessinée tout de suite ; Firebase se branche dès que son SDK est là.
+     Sans réponse au bout de 3 s, on affiche les dernières données enregistrées sur l'appareil (mode cache). */
+  let launched=false;
+  const launch=()=>{if(launched)return;launched=true;S.snapMode=false;startFirebase();};
+  sdkPromise.then(launch,()=>{S.sdkFail=true;if(!S.uid&&!enterSnapMode())render();window.addEventListener('online',()=>{if(!launched)location.reload();},{once:true});});
+  setTimeout(()=>{if(S.authReady)return;S.slow=true;if(!enterSnapMode())render();},3000);
+  render();
+}
+function startFirebase(){
   const bad=!firebaseConfig||!firebaseConfig.apiKey||String(firebaseConfig.apiKey).indexOf('COLLE')===0;
-  if(bad){S.authReady=true;render();return;}
+  if(bad){S.cacheMode=false;S.authReady=true;render();return;}
   const app=initializeApp(firebaseConfig);
   auth=getAuth(app);
-  let fdb;
+  let fdb,persist=true;
   try{fdb=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});}
-  catch(e){fdb=getFirestore(app);} /* navigateur sans stockage local : l'appli marche, mais sans mode hors ligne */
+  catch(e){persist=false;fdb=getFirestore(app);} /* navigateur sans stockage local : l'appli marche, mais sans mode hors ligne */
   S.db=makeDb(fdb);
+  /* mode cache : si les données ne sont pas là après 3 s, on coupe le réseau de Firestore pour qu'il serve tout de suite son cache local,
+     puis on le rallume : la mise à jour se fait en arrière-plan dès que le réseau répond */
+  let cacheT=null;
+  const backOnline=()=>{if(!S._netOff)return;S._netOff=false;try{enableNetwork(fdb).catch(()=>{});}catch(e){}};
+  const goCache=()=>{if(S._netOff)return;S._netOff=true;S.cacheMode=true;try{disableNetwork(fdb).catch(()=>{});}catch(e){S._netOff=false;}scheduleRender();setTimeout(backOnline,2500);};
   netState.onChange=scheduleRender;
   netState.onLateError=e=>toast('Une saisie faite hors ligne a été refusée : '+errMsg(e),true);
   window.addEventListener('offline',scheduleRender);
@@ -5928,13 +6120,18 @@ function init(){
   onAuthStateChanged(auth,user=>{
     unsubs.forEach(u=>u());unsubs=[];
     S.loaded={periods:false,wods:false,logs:false};S.periods={};S.wods={};S.logs={};S.prof={prs:{},sex:'',weight:0};S.profLoaded=false;
-    S.sexSync=null;S.coachUid=null;S.coachLoaded=false;S.owner=false;S.error=null;S.entry=null;S.redo=null;S.viewDate=null;S.confirm=null;S.cerAuto=false;S._annDone=false;S.ann=null;S.annLoaded=false;S._aw=null;S.groups={list:[],of:{},snap:{}};S._freezing=false;S.boardGroup=undefined;S.comments={};S.reactions={};S.wu={cfg:null,loaded:false,list:false};
+    S.sexSync=null;S.coachUid=null;S.coachLoaded=false;S.owner=false;S.error=null;S.entry=null;S.redo=null;S.viewDate=null;S.confirm=null;S.cerAuto=false;S._annDone=false;S.ann=null;S.annLoaded=false;S._aw=null;S.groups={list:[],of:{},snap:{}};S._freezing=false;S.boardGroup=undefined;S.comments={};S.cacheMode=false;S.snapMode=false;S._srv={};S._netOff=false;clearTimeout(cacheT);S.reactions={};S.wu={cfg:null,loaded:false,list:false};
     S.coach={wod:null,editing:false,period:null,resDate:null};S.profView=null;S.viewUser=null;S.tip=null;S.tab=user?takeInitialTab():'feed';S.authReady=true;
-    if(!user){S.uid=null;render();return;}
+    if(!user){S.uid=null;try{localStorage.removeItem(SNAP_KEY);}catch(e){}render();return;}
     S.uid=user.uid;setTimeout(pushSync,2500);S.meName=user.displayName||(user.email||'').split('@')[0]||'';
     const fail=e=>{S.error=(e&&e.code==='permission-denied')?'Accès refusé par la base de données. Publie les règles de sécurité (voir README).':'Lecture des données impossible pour le moment.';scheduleRender();};
-    const watch=(path,key)=>unsubs.push(S.db.collection(path).onSnapshot(sn=>{S[key]=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));S.loaded[key]=true;scheduleRender();if(key==='logs')selfSync();},fail));
+    const watch=(path,key)=>unsubs.push(S.db.collection(path).onSnapshot(sn=>{S[key]=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));S.loaded[key]=true;S._srv[key]=!sn.fromCache;
+      if(S._netOff&&ready())backOnline();
+      if(S.cacheMode&&S._srv.periods&&S._srv.wods&&S._srv.logs)S.cacheMode=false;
+      if(!S.cacheMode)snapSave();
+      scheduleRender();if(key==='logs')selfSync();},fail,true));
     watch('periods','periods');watch('wods','wods');watch('logs','logs');
+    if(persist)cacheT=setTimeout(()=>{if(S.uid===user.uid&&!ready()&&snapRead()&&snapRead().uid===user.uid)goCache();},3000);
     unsubs.push(S.db.doc('config/coach').onSnapshot(sn=>{S.coachUid=sn.exists?(sn.data().uid||null):null;S.coachLoaded=true;S.owner=!!S.coachUid&&S.coachUid===S.uid;wuMaybeSeed();scheduleRender();},fail));
     /* les groupes ne bloquent jamais l'appli : si les règles ne sont pas encore publiées, on ignore l'erreur */
     unsubs.push(S.db.doc('config/groups').onSnapshot(sn=>{const d=sn.exists?sn.data():null;S.groups={list:(d&&Array.isArray(d.list))?d.list:[],of:(d&&d.of&&typeof d.of==='object')?d.of:{},snap:(d&&d.snap&&typeof d.snap==='object')?d.snap:{},loaded:true};S._freezing=false;scheduleRender();},()=>{}));
