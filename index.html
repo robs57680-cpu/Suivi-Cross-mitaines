@@ -1525,7 +1525,14 @@ const TROPHIES=[
    et qu'il y a au moins ce nombre d'athlètes éligibles actifs dans le groupe. Les saisons sans per.minElig (dont la Bêta, verrouillée)
    n'ont aucun seuil : la règle n'est jamais rétroactive. Les nouvelles saisons reçoivent MIN_ELIGIBLE par défaut (modifiable à la création). */
 const MIN_ELIGIBLE=3;
-const minEligOf=per=>{const n=per&&!per.virtual?Number(per.minElig):0;return n>0?n:0;};
+/* seuil effectif : valeur explicite de la saison si elle existe (0 = pas de seuil, choisi par le coach) ;
+   saison sans valeur enregistree (creee avant l'ajout du seuil) = seuil par defaut, sauf saisons verrouillees ou Alpha/Beta (resultats deja figes) */
+const minEligOf=per=>{
+  if(!per)return 0;
+  if(per.minElig!==undefined&&per.minElig!==null&&per.minElig!=='')return Math.max(0,Number(per.minElig)||0);
+  if(per.locked||/alpha|beta/.test(norm(per.name||'')))return 0;
+  return MIN_ELIGIBLE;
+};
 function eligCount(t,board){return board.rows.filter(r=>r.sessions>0&&(!t.elig||t.elig(r,board))).length;}
 /* nombre d'éligibles quand le seuil bloque le trophée, sinon 0 */
 function trophyShort(t,board,gid){
@@ -6483,7 +6490,7 @@ function periodList(){
       h('div',{class:'row'},
         h('button',{class:'btn sm'+(p.locked?' primary':''),type:'button',id:'lock-'+p.id,onclick:()=>run(async()=>{const d=Object.assign({},S.periods[p.id]);if(p.locked)delete d.locked;else d.locked=true;await S.db.doc('periods/'+p.id).set(d);toast(p.locked?'Saison déverrouillée':'Saison verrouillée');})},p.locked?'Déverrouiller':'Verrouiller'),
         h('button',{class:'btn sm',type:'button',onclick:()=>openCeremony(p.id)},'Aperçu remise'),
-        h('button',{class:'btn sm',onclick:()=>{S.coach.period={id:p.id,num:String(seasonNum(p)),name:p.name,start:p.start,end:p.end,base:String(p.base),minElig:p.minElig>0?String(p.minElig):'',av:(p.avItems||[]),rewards:JSON.parse(JSON.stringify(p.rewards||[]))};render();window.scrollTo(0,0);}},'Modifier'),
+        h('button',{class:'btn sm',onclick:()=>{S.coach.period={id:p.id,num:String(seasonNum(p)),name:p.name,start:p.start,end:p.end,base:String(p.base),minElig:minEligOf(p)>0?String(minEligOf(p)):'',av:(p.avItems||[]),rewards:JSON.parse(JSON.stringify(p.rewards||[]))};render();window.scrollTo(0,0);}},'Modifier'),
         S.confirm==='per-'+p.id?h('button',{class:'btn sm danger',onclick:()=>{S.confirm=null;run(async()=>{await S.db.doc('periods/'+p.id).delete();toast('Saison supprimée');});}},'Confirmer')
                                 :h('button',{class:'btn sm danger',onclick:()=>{S.confirm='per-'+p.id;render();}},'Supprimer')));}))
     :h('p',{class:'muted'},'Aucune saison programmée. En attendant, toutes les séances comptent dans une saison unique.'));
