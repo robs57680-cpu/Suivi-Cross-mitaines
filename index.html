@@ -1016,6 +1016,7 @@ const GLOSS=[
 ['Shoulder Press',['shoulder press','strict press'],'Développé militaire strict : seuls les bras poussent, sans aide des jambes.',['Bras verrouillés au-dessus de la tête','Jambes et hanches restent tendues'],['Impulsion des genoux','Bras non verrouillés']],
 ['Bench Press',['bench press','developpe couche'],'Développé couché.',['Barre qui touche la poitrine','Bras tendus en haut, fesses et épaules sur le banc'],['Barre qui ne touche pas la poitrine','Bras non verrouillés','Fesses qui décollent du banc'],null,'assets/embedded/bench_press.mp4'],
 ['Burpee',['burpee'],'Pompe au sol suivie d’un saut.',['Poitrine et cuisses touchent le sol','Saut final avec extension complète, mains au-dessus de la tête (selon la consigne du coach)'],['Poitrine ou cuisses qui ne touchent pas le sol','Extension incomplète en haut']],
+['Down Up',['down up','down-up','downup'],'Version simplifiée du burpee : depuis la position debout, l’athlète pose les mains au sol, recule les pieds en position de pompe puis se relève. Sans pompe ni saut.',['Position de pompe atteinte : mains au sol, corps gainé','Retour debout, hanches et genoux en extension complète en haut'],['Position de pompe non atteinte (genoux ou ventre qui restent en appui)','Extension incomplète en haut']],
 ['Burpee Over the Bar',['burpee over the bar','burpee over bar'],'Burpee avec saut par-dessus la barre posée au sol, à pieds joints.',['Décollage et réception à deux pieds','Les deux pieds franchissent la barre'],['Passer la barre en marchant','Pied posé sur la barre']],
 ['Box Jump',['box jump','saut sur box'],'Saut pieds joints sur une box. La descente se fait en sautant ou en marchant.',['Départ du sol à deux pieds, réception à deux pieds sur la box','Hanches et genoux tendus en haut (debout)'],['Extension incomplète en haut','Pied qui n’est pas entièrement sur la box']],
 ['Pull-up',['pull-up','traction'],'Traction à la barre, strict ou kipping selon la consigne.',['Départ bras tendus','Menton au-dessus de la barre en haut'],['Menton qui ne passe pas au-dessus de la barre','Bras non tendus en bas']],
@@ -1044,7 +1045,7 @@ const MUSCLES=[['pec','Pectoraux'],['eps','Épaules'],['bic','Biceps'],['tri','T
 const MM={'Air Squat':'qua2 fes2 isc1 abd1 mol1','Back Squat':'qua2 fes2 isc1 lom1 abd1','Front Squat':'qua2 fes2 abd1 lom1','Overhead Squat':'qua2 fes2 eps2 abd2 trp1 tri1',
 'Thruster':'qua2 fes2 eps2 tri1 abd1','Deadlift':'fes2 isc2 lom2 trp1 dos1 avb1 qua1','Power Clean':'fes2 qua2 trp2 isc1 eps1 lom1 avb1 bic1','Hang Power Clean':'fes2 qua2 trp2 isc1 eps1 lom1 avb1 bic1','Snatch':'fes2 qua2 trp2 eps2 lom1 isc1 tri1',
 'Clean & Jerk':'qua2 fes2 trp2 eps2 tri1 lom1','Jerk':'eps2 tri2 qua1 fes1 abd1','Push Press':'eps2 tri2 qua1 pec1','Shoulder Press':'eps2 tri2 pec1 trp1 abd1',
-'Bench Press':'pec2 tri2 eps1','Burpee':'pec2 tri1 eps1 abd1 qua1','Burpee Over the Bar':'pec2 tri1 eps1 abd1 qua1 mol1','Box Jump':'qua2 fes2 mol2 isc1',
+'Bench Press':'pec2 tri2 eps1','Burpee':'pec2 tri1 eps1 abd1 qua1','Down Up':'pec1 tri1 eps1 abd1 qua1','Burpee Over the Bar':'pec2 tri1 eps1 abd1 qua1 mol1','Box Jump':'qua2 fes2 mol2 isc1',
 'Pull-up':'dos2 bic2 avb1 abd1 eps1','Chest to Bar':'dos2 bic2 trp1 avb1 abd1','Toes to Bar':'abd2 avb2 dos1 bic1 eps1','Muscle-up':'dos2 tri2 bic1 pec1 eps1 avb1',
 'Handstand Push-up':'eps2 tri2 trp1 abd1','Push-up':'pec2 tri2 eps1 abd1','Ring Dip':'tri2 pec2 eps1','Corde à sauter':'mol2 avb1 eps1 qua1','Wall Ball':'qua2 fes2 eps1 tri1',
 'Kettlebell Swing':'fes2 isc2 lom1 eps1 abd1 avb1','Rope Climb':'dos2 bic2 avb2 abd1','Lunge':'qua2 fes2 isc1 mol1','Sit-up':'abd2 qua1','Dumbbell Snatch':'eps2 fes1 qua1 trp1 isc1 abd1','Rowing TRX':'dos2 bic1 avb1 abd1','Pompes sur genoux':'pec2 tri1 eps1 abd1'};
@@ -4200,6 +4201,7 @@ const AV_HEAD={h:{cx:232,y:70,s:1.2},f:{cx:240,y:92,s:1.08}};
 const AV_HAND={h:{x:86,y:536},f:{x:106,y:532}};
 const AV_CHEST={h:{x:236,y:300},f:{x:240,y:305}};
 const AV_STRIPE=[298,322];
+const AV_SEAM=10; /* hauteur max (px, image 480x968) du liseré comblé entre t-shirt et bas ; à augmenter si une ligne claire reste visible */
 const AV_DY={hat:0,crown:-14,laurel:-6};
 /* emplacements désactivés : on garde la place dans l'inventaire, mais ces objets ne peuvent plus être gagnés (à refaire) */
 const AV_OFF=new Set();
@@ -4470,6 +4472,26 @@ function avPaint(cv,A,eq,key){
         if(m>0){
           const a=Math.min(1,m/255*1.7),mean=ml>ms?A.mean[2]:A.mean[1],k=Math.max(.45,Math.min(1.5,1+(L/mean-1)*.9));
           for(let c=0;c<3;c++)O[i+c]=D[i+c]*(1-a)+Math.min(255,cp[c]*k)*a;
+        }
+      }
+    }
+    /* liseré clair entre le t-shirt et le bas : les masques ne se touchent pas tout à fait (bord du t-shirt, bord anti-aliasé du short),
+       les pixels entre les deux gardent la couleur d'origine du dessin et ressortent en blanc dès qu'un bas est recoloré.
+       Dans chaque colonne, un pixel hors masque situé entre un pixel de t-shirt (au-dessus) et un pixel de bas (en dessous), à moins de AV_SEAM px
+       de chacun, reprend la couleur déjà calculée du bas juste en dessous. */
+    if(cp){
+      const W=AV_W,H=AV_H,GAP=AV_SEAM,lg=pn.long;
+      const isSh=q=>M[q*4]>128,isPn=q=>(lg?Math.max(M[q*4+1],M[q*4+2]):M[q*4+1])>128;
+      for(let x=0;x<W;x++){
+        let lastSh=-1e9;
+        for(let y=0;y<H;y++){
+          const q=y*W+x;
+          if(isSh(q)){lastSh=y;continue;}
+          if(y-lastSh>GAP||isPn(q))continue;
+          for(let d=1;d<=GAP&&y+d<H;d++){
+            const r=q+d*W;
+            if(isPn(r)){const a=q*4,b=r*4;O[a]=O[b];O[a+1]=O[b+1];O[a+2]=O[b+2];break;}
+          }
         }
       }
     }
