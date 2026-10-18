@@ -913,7 +913,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-18.50';
+const APP_VERSION='2026-10-18.51';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -5872,6 +5872,31 @@ function reslotTiers(rows,parse,asc){
   idx.forEach((j,n)=>{if(rows[j].t!==sorted[n].s){rows[j].t=sorted[n].s;changed=true;}});
   return changed;
 }
+/* points modifiés : les points se rangent du plus grand au plus petit, les TEMPS restent à leur place (ligne 1 = 1er temps…).
+   Un palier de 18 points saisi entre 19 et 17 prend le temps de la ligne du 17 ; le 17 et tout le reste descendent d'une ligne. */
+function reslotPoints(rows){
+  const idx=[],vals=[];
+  for(let j=0;j<rows.length;j++){
+    const s=String(rows[j].p).trim();if(s==='')continue;
+    const v=parseNum(s);if(v===null)return false;
+    idx.push(j);vals.push({s:rows[j].p,v,n:vals.length});
+  }
+  const sorted=vals.slice().sort((x,y)=>(y.v-x.v)||x.n-y.n);
+  let changed=false;
+  idx.forEach((j,n)=>{if(rows[j].p!==sorted[n].s){rows[j].p=sorted[n].s;changed=true;}});
+  return changed;
+}
+function tierAfterPoints(p,lv,j){
+  if(!reslotPoints(lv.tiers))return;
+  lv.pend=null;
+  /* la ligne du bas (copie du temps précédent) reçoit le temps suivant : on applique l'intervalle */
+  const n=lv.tiers.length;
+  if(n>=2){
+    const a=lv.tiers[n-2],b=lv.tiers[n-1],st=stepParse(p,lv.step||stepDefault(p));
+    if(st&&String(b.t).trim()!==''&&String(a.t).trim()===String(b.t).trim()){const nt=stepApply(p,b.t,st);if(nt!==null)b.t=nt;}
+  }
+  render();
+}
 function tierAfterEdit(p,lv,j){
   const parse=s=>tierParse(p,s);
   const bad=lv.tiers.findIndex(r=>String(r.t).trim()!==''&&parse(r.t)===null);
@@ -5912,7 +5937,7 @@ function tiersEditor(p,lv,i,k){
     lv.tiers.map((r,j)=>{
       const row=h('div',{class:'trow'+(j===pend?' pend':'')},
         h('input',{id:'p'+i+'-l'+k+'-t'+j,type:'text','aria-label':ft?'Temps du palier':dd?'Temps tenu du palier':'Tours du palier',value:r.t,placeholder:ft?'12:00':dd?'15:00':'8',oninput:e=>{r.t=e.target.value;if(lv.pend===j)lv.pend=null;},onchange:()=>tierAfterEdit(p,lv,j)}),
-        h('input',{id:'p'+i+'-l'+k+'-p'+j,type:'text',inputmode:'numeric','aria-label':'Points du palier',value:r.p,placeholder:'points',oninput:e=>{r.p=e.target.value;}}),
+        h('input',{id:'p'+i+'-l'+k+'-p'+j,type:'text',inputmode:'numeric','aria-label':'Points du palier',value:r.p,placeholder:'points',oninput:e=>{r.p=e.target.value;},onchange:()=>tierAfterPoints(p,lv,j)}),
         h('button',{class:'btn sm',type:'button','aria-label':'Retirer le palier',onclick:()=>{lv.tiers.splice(j,1);if(lv.pend===j)lv.pend=null;else if(lv.pend>j)lv.pend--;render();}},'✕'));
       return j===pend?h('div',{class:'tgroup'},row,stepper(j)):row;
     }),
