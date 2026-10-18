@@ -375,6 +375,9 @@ body.modal-open{overflow:hidden}
 .badge{display:inline-block;flex:none;vertical-align:middle;border-radius:50%;line-height:0}
 .badge svg{display:block;width:100%;height:100%;overflow:visible}
 .badge.mini{margin-left:6px;vertical-align:-.4em}
+.bwrap{display:inline-flex;align-items:center;gap:4px;margin-left:6px;vertical-align:-.4em;max-width:100%}
+.bwrap .badge.mini{margin-left:0;vertical-align:baseline}
+.bwrap .bsn{font-family:var(--f-display);font-size:11px;line-height:1;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);white-space:nowrap;max-width:9em;overflow:hidden;text-overflow:ellipsis}
 .badge.img{border-radius:0}
 .bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
 .bsel{display:grid;justify-items:center;align-content:start;gap:4px;padding:12px 8px;border:2px solid var(--line);border-radius:4px;background:var(--surface2);color:var(--ink);cursor:pointer;text-align:center;min-width:0}
@@ -910,7 +913,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-17.48';
+const APP_VERSION='2026-10-18.50';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -2183,7 +2186,9 @@ function badgeOf(uid){
 function badgeMini(uid,size){
   const a=badgeOf(uid);if(!a)return null;
   const e=badgeEl(a.tid,a.per.name,size||30,trophyName(a.tid)+' · '+a.per.name,a.per);
-  e.classList.add('mini');return e;
+  e.classList.add('mini');
+  /* le nom de la saison remportée s'affiche à côté du badge */
+  return h('span',{class:'bwrap'},e,h('span',{class:'bsn'},seasonTag(a.per)));
 }
 function badgesSection(){
   const mine=(awards()[S.uid]||[]).slice().sort((a,b)=>a.per.start<b.per.start?1:a.per.start>b.per.start?-1:0);
@@ -5519,6 +5524,7 @@ function draftToWod(d){
           if(j===lv.pend)continue; /* palier recopié par le bouton +/− mais jamais validé : ignoré */
           if(String(r.t).trim()==='')continue; /* ligne sans temps/score : ignorée, même si les points sont préremplis */
           const t=p.format==='FT'?parseTime(r.t):(p.format==='EMOM'&&p.deadBy)?parseHold(r.t):tierRounds({format:p.format,content:p.content,repsRound:o.repsRound||0},r.t),pts=parseNum(r.p);
+          if(pts===null&&t!==null)throw new Error('Palier '+String(r.t).trim()+' sans points ('+o.label+', '+name+') : indique ses points ou retire la ligne.');
           if(t===null||pts===null)throw new Error('Palier illisible ('+o.label+', '+name+')'+(p.format==='FT'?' : écris le temps comme 12:00.':(p.format==='EMOM'&&p.deadBy)?' : écris le temps tenu comme 14:00 (ou 14 pour 14 minutes).':' : écris un nombre de tours (ou « tours+reps », par exemple 6+7, si « Reps par tour » est renseigné).'));
           tiers.push({t,p:pts});
         }
@@ -5849,7 +5855,8 @@ function stepApply(p,txt,st){
 function nextPoints(rows,idx){
   if(idx<1)return '';
   const a=parseNum(rows[idx-1].p);if(a===null)return '';
-  const b=idx>=2?parseNum(rows[idx-2].p):null,d=(b!==null&&b>a)?b-a:1,v=a-d;
+  const b=idx>=2?parseNum(rows[idx-2].p):null,d=(b!==null&&b>a)?b-a:1;
+  let v=a-d;if(v<=0)v=a/2; /* sous un dernier palier à 1 point : la moitié (0,5), jamais de ligne sans points */
   return v>0?String(Math.round(v*100)/100).replace('.',','):'';
 }
 /* range les scores dans l'ordre (meilleur en haut) sans toucher aux points : retourne true si quelque chose a bougé */
@@ -5867,6 +5874,8 @@ function reslotTiers(rows,parse,asc){
 }
 function tierAfterEdit(p,lv,j){
   const parse=s=>tierParse(p,s);
+  const bad=lv.tiers.findIndex(r=>String(r.t).trim()!==''&&parse(r.t)===null);
+  if(bad>=0){toast(tierKind(p)==='amrap'?'Palier illisible : écris un nombre de tours (ou 6+7).':'Palier illisible : écris le temps comme 18:00 (minutes:secondes). Tant qu’il est illisible, les paliers ne se rangent pas.',true);return;}
   if(reslotTiers(lv.tiers,parse,p.format==='FT')){lv.pend=null;render();return;}
   const r=lv.tiers[j];
   if(r&&String(r.t).trim()!==''&&parse(r.t)!==null&&j+1<lv.tiers.length&&String(lv.tiers[j+1].t).trim()===''){
