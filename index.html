@@ -80,6 +80,9 @@ h1,h2,h3,p{margin:0}
 .btn{border:2px solid var(--edge);background:transparent;border-radius:4px;padding:10px 16px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:13px;cursor:pointer;min-height:44px}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .btn.sm{padding:6px 10px;min-height:36px;font-size:12px}
+.capbox{display:grid;gap:8px;margin:10px 0}.capbox .caprow{display:flex;flex-wrap:wrap;gap:8px}
+.capchk{padding:10px 12px;border-radius:10px;background:rgba(127,127,127,.14);border:1px solid rgba(127,127,127,.35);font-size:13px;line-height:1.45;color:inherit;text-align:left}
+.capchk[hidden]{display:none}.capchk p{margin:0 0 6px}.capchk p:last-child{margin:0}.capchk ul{margin:4px 0 6px;padding-left:18px}.capchk b{font-weight:700}.capchk.err{border-color:var(--danger)}
 .btn.danger{border-color:var(--danger);color:var(--danger)}
 .btn:disabled{opacity:.4;cursor:not-allowed}
 .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
@@ -1009,11 +1012,11 @@ const GLOSS=[
 ['Deadlift',['deadlift','souleve de terre','sdt'],'Soulevé de terre : la barre monte du sol jusqu’aux hanches.',['Hanches et genoux tendus en haut, épaules en arrière','La barre touche le sol entre les répétitions'],['Extension incomplète en haut','Barre qui ne touche pas le sol entre deux répétitions'],null,'assets/embedded/deadlift.mp4'],
 ['Power Clean',['clean','power clean','squat clean','hang clean'],'Épaulé : la barre passe du sol aux épaules en un mouvement. Power : reçue au-dessus de la parallèle ; squat : reçue en squat ; hang : départ au-dessus des genoux.',['Barre reçue sur les épaules','Hanches et genoux tendus en fin de mouvement'],['Barre qui ne se pose pas sur les épaules','Fin de mouvement sans extension complète','Power clean reçu sous la parallèle'],null,'assets/embedded/power_clean.mp4'],
 ['Hang Power Clean',['hang power clean'],'Épaulé en suspension : la barre part au-dessus des genoux et est reçue sur les épaules au-dessus de la parallèle.',['Départ barre au-dessus des genoux','Barre reçue sur les épaules, au-dessus de la parallèle','Hanches et genoux tendus en fin de mouvement'],['Barre qui ne se pose pas sur les épaules','Fin de mouvement sans extension complète','Réception sous la parallèle'],null,'assets/embedded/hang_power_clean.mp4'],
-['Snatch',['snatch','power snatch','squat snatch','hang power snatch','arrache'],'Arraché : la barre passe du sol au-dessus de la tête en un seul mouvement.',['Barre verrouillée, bras tendus au-dessus de la tête','Hanches et genoux tendus en fin de mouvement'],['Bras non verrouillés','Mouvement en deux temps (barre posée sur les épaules)','Power snatch reçu sous la parallèle'],'assets/embedded/power_snatch_6_etapes.webp'],
+['Snatch',['snatch','power snatch','squat snatch','hang power snatch','arrache'],'Arraché : la barre passe du sol au-dessus de la tête en un seul mouvement.',['Barre verrouillée, bras tendus au-dessus de la tête','Hanches et genoux tendus en fin de mouvement'],['Bras non verrouillés','Mouvement en deux temps (barre posée sur les épaules)','Power snatch reçu sous la parallèle'],'assets/embedded/power_snatch_6_etapes.webp','assets/embedded/snatch.mp4'],
 ['Clean & Jerk',['clean & jerk','clean and jerk','c&j'],'Épaulé-jeté : un clean, puis un jerk pour envoyer la barre au-dessus de la tête.',['Clean validé (barre sur les épaules)','Jerk fini bras, hanches et genoux tendus, pieds alignés'],['Bras non verrouillés en haut','Pieds non alignés en fin de jerk'],null,'assets/embedded/clean_and_jerk.mp4'],
 ['Jerk',['push jerk','split jerk','jerk'],'Jeté : la barre part des épaules vers le dessus de la tête grâce à une impulsion des jambes. Push jerk : réception genoux fléchis ; split jerk : réception en fente.',['Barre verrouillée, bras tendus au-dessus de la tête','Pieds ramenés alignés, hanches et genoux tendus'],['Bras non verrouillés','Pieds non alignés en fin de mouvement'],null,'assets/embedded/jerk.mp4'],
 ['Push Press',['push press'],'Développé poussé : impulsion des jambes (dip and drive) puis poussée des bras, sans re-fléchir sous la barre.',['Barre des épaules jusqu’au-dessus de la tête','Bras, hanches et genoux tendus en haut'],['Re-flexion sous la barre (c’est un push jerk)','Bras non verrouillés'],null,'assets/embedded/push_press.mp4'],
-['Shoulder Press',['shoulder press','strict press'],'Développé militaire strict : seuls les bras poussent, sans aide des jambes.',['Bras verrouillés au-dessus de la tête','Jambes et hanches restent tendues'],['Impulsion des genoux','Bras non verrouillés']],
+['Shoulder Press',['shoulder press','strict press'],'Développé militaire strict : seuls les bras poussent, sans aide des jambes.',['Bras verrouillés au-dessus de la tête','Jambes et hanches restent tendues'],['Impulsion des genoux','Bras non verrouillés'],null,'assets/embedded/shoulder_press.mp4'],
 ['Bench Press',['bench press','developpe couche'],'Développé couché.',['Barre qui touche la poitrine','Bras tendus en haut, fesses et épaules sur le banc'],['Barre qui ne touche pas la poitrine','Bras non verrouillés','Fesses qui décollent du banc'],null,'assets/embedded/bench_press.mp4'],
 ['Burpee',['burpee'],'Pompe au sol suivie d’un saut.',['Poitrine et cuisses touchent le sol','Saut final avec extension complète, mains au-dessus de la tête (selon la consigne du coach)'],['Poitrine ou cuisses qui ne touchent pas le sol','Extension incomplète en haut'],null,'assets/embedded/burpees.mp4'],
 ['Down Up',['down up','down-up','downup'],'Version simplifiée du burpee : depuis la position debout, l’athlète pose les mains au sol, recule les pieds en position de pompe puis se relève. Sans pompe ni saut.',['Position de pompe atteinte : mains au sol, corps gainé','Retour debout, hanches et genoux en extension complète en haut'],['Position de pompe non atteinte (genoux ou ventre qui restent en appui)','Extension incomplète en haut']],
@@ -1153,8 +1156,11 @@ function lineItems(m){
   return items;
 }
 /* reps équivalentes saisies sur la ligne r <-> reps réelles */
-function eqToRaw(pl,r,x){if(!pl||!pl.lines)return x;const it=pl.items[r];return it&&it.eq>0?Math.round(x*it.n/it.eq):x;}
-function rawToEq(pl,r,x){if(!pl||!pl.lines)return x;const it=pl.items[r];return it&&it.n>0?Math.round(x*it.eq/it.n*100)/100:x;}
+/* tour pondéré ({10=1}…) : reps équivalentes <-> reps réelles, en parcourant les lignes du tour dans l'ordre */
+function mdEqToRaw(md,x){let raw=0;for(const it of md.items){if(it.eq<=1e-9){raw+=it.n;continue;}if(x>=it.eq-1e-9){raw+=it.n;x-=it.eq;}else{raw+=Math.round(x/it.eq*it.n);break;}}return raw;}
+function mdRawToEq(md,x){let eq=0,left=x;for(const it of md.items){const k=Math.min(left,it.n);eq+=it.eq*k/it.n;left-=k;if(left<=0)break;}return Math.round(eq*100)/100;}
+function eqToRaw(pl,r,x){if(pl&&pl.rm)return mdEqToRaw(pl.rm,x);if(!pl||!pl.lines)return x;const it=pl.items[r];return it&&it.eq>0?Math.round(x*it.n/it.eq):x;}
+function rawToEq(pl,r,x){if(pl&&pl.rm)return mdRawToEq(pl.rm,x);if(!pl||!pl.lines)return x;const it=pl.items[r];return it&&it.n>0?Math.round(x*it.eq/it.n*100)/100:x;}
 function planOf(m){
   if(!m)return null;
   if(m.lineRounds){
@@ -1169,7 +1175,7 @@ function planOf(m){
     if(nums.length>1&&k>0)return {nums,k,sizes:nums.map(n=>n*k)};
   }
   const rt=roundTotal(m);
-  return rt>0?{size:rt}:null;
+  {const rm=rt>0?roundModel(m):null;return rt>0?{size:rt,rm,lns:rm?capLines(m):null}:null;}
 }
 const sizeAt=(pl,i)=>pl.sizes?pl.sizes[i]:pl.size;
 function planCum(pl,r,rp){let s=0;for(let i=0;i<r;i++)s+=sizeAt(pl,i)||0;return s+rp;}
@@ -1189,14 +1195,15 @@ function capValue(m,e){
 function tierCum(m,t){
   if(m.capV===2||!(m.repsRound>0))return t;
   const r=Math.floor(t+1e-9);
-  return r*roundTotal(m)+repsOf(m,t-r);
+  return r*roundTotal(m)+repsOfRaw(m,t-r);
 }
 function capLabel(m,v,total){
   const pl=planOf(m);
   if(!pl)return fmtN(v)+' reps';
   const x=cumToRounds(pl,v);
   if(pl.lines){const e=rawToEq(pl,x.r,x.rp);return [x.r>0?x.r+' ligne'+(x.r>1?'s':'')+' terminée'+(x.r>1?'s':''):'',(e>0||x.r===0)?fmtN(e)+(x.r>=pl.sizes.length?'':' sur la ligne '+(x.r+1)):''].filter(Boolean).join(' + ')+(total&&x.r>0?' ('+fmtN(v)+' reps)':'');}
-  const s=[x.r>0?x.r+' tour'+(x.r>1?'s':''):'',(x.rp>0||x.r===0)?fmtN(x.rp)+' rep'+(x.rp>1?'s':''):''].filter(Boolean).join(' + ');
+  const xe=rawToEq(pl,x.r,x.rp);
+  const s=[x.r>0?x.r+' tour'+(x.r>1?'s':''):'',(xe>0||x.r===0)?fmtN(xe)+' rep'+(xe>1?'s':''):''].filter(Boolean).join(' + ');
   return s+(total&&x.r>0?' ('+fmtN(v)+' reps)':'');
 }
 /* cap=true : résultat d'un For Time arrêté par le time cap (reps cumulées), points selon les paliers capTiers (score >= palier) */
@@ -1279,14 +1286,12 @@ function roundModel(m){
   return {items,raw,eq:eqT};
 }
 const roundTotal=m=>{const md=roundModel(m);return md?md.raw:m.repsRound;};
-function fracOf(m,rp){ /* reps réelles en plus -> fraction de tour en reps équivalentes */
-  const md=roundModel(m);
-  if(!md)return rp/m.repsRound;
-  let left=rp,eq=0;
-  for(const it of md.items){const k=Math.min(left,it.n);eq+=it.eq*k/it.n;left-=k;if(left<=0)break;}
-  return eq/md.eq;
-}
-function repsOf(m,frac){ /* l'inverse : fraction de tour -> reps réelles */
+/* reps en plus saisies en reps ÉQUIVALENTES (une ligne {10=1} : 250 m comptent pour 25 reps) <-> fraction de tour */
+const eqTotal=m=>{const md=roundModel(m);return md?md.eq:m.repsRound;};
+function fracOf(m,rp){return rp/eqTotal(m);}
+function repsOf(m,frac){return Math.round(frac*eqTotal(m)*100)/100;}
+/* anciennes versions, en reps réelles (anciens paliers du time cap) */
+function repsOfRaw(m,frac){
   const md=roundModel(m);
   if(!md)return Math.round(frac*m.repsRound);
   let t=frac*md.eq,raw=0;
@@ -1311,7 +1316,7 @@ function scoreText(m,score,e){
   if(score===undefined||score===null)return '';
   if(isDead(m))return 'Tenu '+fmtTime(score);
   if(m.format==='FT')return fmtTime(score);
-  if(e&&e.rounds!==undefined)return e.rounds+' tour'+(e.rounds>1?'s':'')+(e.reps?' + '+e.reps+' reps':'');
+  if(e&&e.rounds!==undefined&&!roundModel(m))return e.rounds+' tour'+(e.rounds>1?'s':'')+(e.reps?' + '+e.reps+' reps':'');
   return roundsLabel(m,score);
 }
 
@@ -2447,6 +2452,7 @@ function metDuration(m){
 }
 /* nombre de reps d'un tour : « Reps par tour » du coach, sinon somme des nombres en début de ligne du contenu */
 function roundSizeFor(m){
+  const md=roundModel(m);if(md)return Math.round(md.eq*100)/100;
   const t=roundTotal(m);if(t>0)return t;
   let s=0;
   for(const raw of String(m.content||'').split('\n')){
@@ -2968,6 +2974,8 @@ function openTimer(w,date,m){
         h('p',{class:'tm-sub'},pl?capGuide(pl):'Indique le nombre total de reps faites quand le time cap a sonné, tous mouvements confondus. Exemple : 81.'),
         pl?h('div',{class:'tm-two'},h('div',{class:'tm-fld'},h('span',{class:'flabel tm-eb'},'Tours complets'),ri),h('div',{class:'tm-fld'},h('span',{class:'flabel tm-eb'},'Reps en plus'),pi))
           :h('div',{class:'tm-fld'},h('span',{class:'flabel tm-eb'},'Reps réalisées'),pi),lapsList());
+      {const tl=capTools(m,()=>pl?{capped:true,rounds:ri.value,reps:pi.value}:{capped:true,creps:pi.value});
+       [ri,pi].forEach(x=>x&&x.addEventListener('input',()=>tl.reset()));mid.append(tl);}
       bot.append(h('button',{type:'button',class:'btn primary tm-save',onclick:()=>{
         const tmp=pl?{capped:true,rounds:ri.value,reps:pi.value}:{capped:true,creps:pi.value};
         const r=readScore(m,tmp);
@@ -3201,7 +3209,7 @@ function partCard(p,w,date){
       metcon&&p.redo===false?h('span',{class:'chip miss'},'Pas de REDO'):null,
       p.kind==='force'&&p.movement?h('span',{class:'chip'},p.movement):null),
     fmtId?h('div',{class:'fmt'},h('button',{type:'button',class:'fmtbtn tipbtn','aria-expanded':S.tip===fmtId?'true':'false',onclick:()=>toggleTip(fmtId)},fmtLabel(p)),
-      metcon?[p.detail,p.lineRounds?'Chaque ligne = 1 tour':(p.repsRound?'1 tour = '+p.repsRound+' reps':'')].filter(Boolean).map(x=>' · '+x).join(''):''):null,
+      metcon?[p.detail,p.lineRounds?'Chaque ligne = 1 tour':(p.repsRound?'1 tour = '+fmtN(eqTotal({content:p.content,repsRound:Number(p.repsRound)||0}))+' reps':'')].filter(Boolean).map(x=>' · '+x).join(''):''):null,
     (fmtId&&S.tip===fmtId)?h('div',{class:'tip',role:'dialog'},fmtExplain(p).map((t,k)=>k===0?h('b',{},t):h('p',{},t))):null,
     lvOpen?h('div',{class:'varnote'},'Version '+levelName(p,lvOpen[1])+' : les variantes remplacent les mouvements en surbrillance.'):null,
     h('div',{class:'lines'},lines.map(metcon?metL:renderLine)),
@@ -3607,7 +3615,7 @@ function readRounds(m,st){
   if(a===''&&b==='')return {empty:true};
   const rn=a===''?0:parseNum(a),rp=b===''?0:parseNum(b);
   if(rn===null||rp===null||rn<0||rp<0||rn%1||rp%1)return {bad:true};
-  if(rp>=roundTotal(m))return {over:true};
+  if(rp>=eqTotal(m)-1e-9)return {over:true,max:fmtN(eqTotal(m))};
   return {v:Math.round((rn+fracOf(m,rp))*10000)/10000,rounds:rn,reps:rp};
 }
 function readScore(m,st){
@@ -3622,7 +3630,7 @@ function readScore(m,st){
         if(pl.sizes&&rn>=pl.sizes.length)return {many:true};
         const sz=sizeAt(pl,rn);
         const rr=eqToRaw(pl,rn,rp);
-        if(rr>=sz)return {over:true,max:pl.lines?fmtN(pl.items[rn].eq):sz};
+        if(rr>=sz)return {over:true,max:pl.lines?fmtN(pl.items[rn].eq):(pl.rm?fmtN(pl.rm.eq):sz)};
         return {v:planCum(pl,rn,rr),cap:true,rounds:rn,reps:rr};
       }
       const s=String(st.creps||'').trim();if(s==='')return {empty:true};
@@ -3645,17 +3653,107 @@ function scoreErr(m,r){
   return m.repsRound>0?'Score illisible. Écris des nombres entiers de tours et de reps.':'Score illisible. Écris un nombre de tours.';
 }
 function splitScore(m,e){
-  if(e.rounds!==undefined)return [e.rounds,e.reps||0];
+  if(e.rounds!==undefined&&!roundModel(m))return [e.rounds,e.reps||0];
   const r=Math.floor(e.score+1e-9);return [r,repsOf(m,e.score-r)];
 }
 /* consigne affichée sous les champs de score, pour un résultat au time cap avec tours */
 function capGuide(pl){
   if(pl.lines)return 'Chaque ligne du WOD = 1 tour. Indique les lignes COMPLÈTES terminées, puis ce que tu as fait sur la ligne en cours (en reps ; si la ligne est pondérée, ex. {10=1}, compte en reps équivalentes : 600 m avec {10=1} = 60). Exemple : 4 + 60 = 4 lignes terminées + 600 m sur la ligne 5.';
   const n=pl.sizes?Math.max(1,Math.min(5,pl.sizes.length-1)):5;
+  if(pl.rm&&pl.lns&&pl.lns.length===pl.rm.items.length){
+    const eqs=pl.lns.map(it=>it.n+' '+it.rest+' = '+capS(it.eq,'rep')).join(' ; ');
+    const ex=Math.max(1,Math.min(Math.round(pl.rm.eq*0.6),Math.ceil(pl.rm.eq)-1));
+    let left=mdEqToRaw(pl.rm,ex);const d=[];
+    for(const it of pl.lns){const k=Math.min(left,it.n);if(k>0)d.push(fmtN(k)+' '+it.rest);left-=k;if(left<=0)break;}
+    return 'Un tour = '+fmtN(pl.rm.eq)+' reps équivalentes ('+eqs+'). Indique les tours COMPLETS terminés, puis les reps équivalentes faites dans le tour en cours, dans l’ordre des lignes. Exemple : 2 tours + '+ex+' = 2 tours complets, puis '+d.join(' et ')+'.';
+  }
   const intro=pl.sizes
     ?'Schéma '+pl.nums.join('-')+(pl.k>1?' ('+pl.k+' mouvements par ligne)':'')+' : un tour terminé = une ligne du schéma. '
     :'Un tour = '+pl.size+' reps. ';
   return intro+'Indique les tours COMPLETS terminés, puis les reps faites dans le tour en cours (tous mouvements confondus, dans l’ordre). Exemple : '+n+' tours + 4 reps'+(pl.sizes?' = tours '+pl.nums.slice(0,n).join('-')+' terminés + 4 reps du tour suivant.':'.');
+}
+/* ---------- aide à la saisie au time cap : « Comment calculer le nombre de reps » et « Vérifier » ---------- */
+/* lignes de reps d'un tour : nombre, reps équivalentes (pondération {a=b}) et texte du mouvement */
+function capLines(m){
+  const out=[];
+  for(const raw of String(m.content||'').split('\n')){
+    const s=raw.trim();if(!s)continue;
+    const w=s.match(WTAG),clean=s.replace(WTAG,'').trim();
+    if(NOT_REPS.test(clean)||/^\d+(\s*[-–\/]\s*\d+)+(\s|$)/.test(clean))continue;
+    const lm=clean.match(/^(\d+)\s+(\S.*)$/);if(!lm)continue;
+    const n=+lm[1];let eq=n;
+    if(w){const a=w[1]?parseNum(w[1]):null,b=parseNum(w[2]);if(b!==null&&b>=0&&(a===null||a>0))eq=a?n*b/a:b;}
+    out.push({n,eq,rest:lm[2]});
+  }
+  return out;
+}
+const capEqTxt=(it,k)=>{const e=it.eq*k/it.n;return Math.abs(it.eq-it.n)>1e-9?' (compte pour '+fmtN(e)+' rep'+(e>1?'s':'')+')':'';};
+const capPart=(it,k)=>fmtN(k)+' '+it.rest+capEqTxt(it,k);
+const capS=(n,w)=>fmtN(n)+' '+w+(n>1?'s':'');
+/* ce que l'appli a compris de la saisie : {ok:'…'} ou {err:'…'} */
+function capExplain(m,st){
+  const r=readScore(m,st);
+  if(r.empty)return {err:'Remplis d’abord tes tours et tes reps, puis clique sur Vérifier.'};
+  if(r.bad||r.over||r.many)return {err:scoreErr(m,r)};
+  const pl=planOf(m);
+  if(!pl)return {ok:'Tu as fait '+capS(r.reps,'rep')+' au total, tous mouvements confondus.'};
+  const rn=r.rounds,rr=r.reps,lns=capLines(m);
+  const none='Tu n’as encore compté aucun tour ni aucune rep.';
+  if(pl.lines){
+    const ok=lns.length===pl.items.length;
+    const parts=[];
+    if(rn>0)parts.push(capS(rn,'ligne')+' terminée'+(rn>1?'s':'')+(ok?' ('+lns.slice(0,rn).map(it=>it.n+' '+it.rest).join(', ')+')':''));
+    if(rr>0)parts.push((ok?capPart(lns[rn],rr):capS(rawToEq(pl,rn,rr),'rep équivalente'))+' sur la ligne en cours');
+    return {ok:parts.length?'Tu as fait '+parts.join(', puis ')+'.':none};
+  }
+  if(pl.sizes){
+    const L=String(m.content||'').split('\n').map(x=>x.replace(WTAG,'').trim()).filter(Boolean);
+    const li=L.findIndex(x=>LADDER.test(x)),movs=L.slice(li+1).filter(x=>!LADDER.test(x));
+    const parts=[];
+    if(rn>0)parts.push(rn===1?'le tour de '+pl.nums[0]+' en entier':'les tours '+pl.nums.slice(0,rn).join('-')+' en entier');
+    if(rr>0){
+      const N=pl.nums[rn];let left=rr;const d=[];
+      for(const mv of movs){const k=Math.min(left,N);if(k>0)d.push(fmtN(k)+' '+mv);left-=k;if(left<=0)break;}
+      parts.push('dans le tour de '+N+' : '+d.join(' et '));
+    }
+    return {ok:parts.length?'Tu as terminé '+parts.join(', puis ')+'.':none};
+  }
+  const tot=lns.reduce((a,x)=>a+x.n,0),good=lns.length>0&&tot===pl.size;
+  const parts=[];
+  if(rn>0)parts.push(rn+' tour'+(rn>1?'s':'')+' complet'+(rn>1?'s':'')+(good?' (un tour = '+lns.map(it=>it.n+' '+it.rest).join(' + ')+')':''));
+  if(rr>0){
+    if(good){let left=rr;const d=[];for(const it of lns){const k=Math.min(left,it.n);if(k>0)d.push(capPart(it,k));left-=k;if(left<=0)break;}parts.push('dans le tour suivant : '+d.join(' et '));}
+    else parts.push(capS(rr,'rep')+' dans le tour suivant');
+  }
+  return {ok:parts.length?'Tu as fait '+parts.join(', puis ')+'.':none};
+}
+/* fenêtre dépliable « Comment calculer le nombre de reps » : consigne de saisie + équivalences du WOD */
+function capHelpKids(m){
+  const pl=planOf(m),lns=capLines(m),kids=[];
+  kids.push(h('p',{},pl?capGuide(pl):'Indique le nombre total de reps faites quand le time cap a sonné, tous mouvements confondus. Exemple : 81.'));
+  const weighted=lns.some(it=>Math.abs(it.eq-it.n)>1e-9);
+  if(lns.length&&pl&&(weighted||pl.lines)){
+    kids.push(h('p',{},h('b',{},'Équivalences du WOD')));
+    kids.push(h('ul',{},lns.map(it=>h('li',{},it.n+' '+it.rest+' → '+(Math.abs(it.eq-it.n)>1e-9?'compte pour '+fmtN(it.eq)+' rep'+(it.eq>1?'s':''):capS(it.n,'rep'))))));
+    if(weighted&&!pl.lines)kids.push(h('p',{},'Compte en reps équivalentes, dans l’ordre des lignes (par exemple 250 m de rameur = 25 reps) : l’appli retrouve les mètres toute seule.'));
+  }
+  kids.push(h('p',{},'Un doute ? Clique sur « Vérifier » : l’appli t’indique ce qu’elle a compris.'));
+  return kids;
+}
+/* boutons « Comment calculer » + « Vérifier » ; get() renvoie la saisie courante ({capped:true,rounds,reps} ou {capped:true,creps}) ; box.reset() masque le dernier résultat */
+function capTools(m,get){
+  const help=h('div',{class:'capchk',hidden:true},capHelpKids(m));
+  const res=h('div',{class:'capchk',role:'status','aria-live':'polite',hidden:true});
+  const bH=h('button',{type:'button',class:'btn sm','aria-expanded':'false',onclick:()=>{const o=help.hidden;help.hidden=!o;bH.setAttribute('aria-expanded',o?'true':'false');}},'Comment calculer le nombre de reps');
+  const bV=h('button',{type:'button',class:'btn sm',onclick:()=>{
+    const x=capExplain(m,get());
+    res.className='capchk'+(x.err?' err':'');
+    res.replaceChildren(...(x.err?[h('p',{},x.err)]:[h('p',{},h('b',{},'Ce que l’appli a compris')),h('p',{},x.ok),h('p',{},'C’est bien ça ? Sinon, corrige tes champs avant d’enregistrer.')]));
+    res.hidden=false;
+  }},'Vérifier');
+  const box=h('div',{class:'capbox'},h('div',{class:'caprow'},bH,bV),help,res);
+  box.reset=()=>{res.hidden=true;};
+  return box;
 }
 const scaleKg=(t,f)=>String(t||'').replace(/(\d+(?:[.,]\d+)?)(\s*(?:kg|lb)s?)/gi,(x,n,u)=>fmtN(Math.round(parseNum(n)*f*2)/2)+u);
 const addKg=(t,kg)=>String(t||'').replace(/(\d+(?:[.,]\d+)?)(\s*kgs?)/gi,(x,n,u)=>fmtN(Math.max(0,Math.round((parseNum(n)+kg)*2)/2))+u);
@@ -3740,9 +3838,12 @@ function scoreFields(m,st,upd,pre,canSkip){
   if(canSkip)head.push(h('div',{class:'seg',style:'grid-template-columns:minmax(0,1fr)'},
     h('button',{type:'button',class:'btn sm',id:pre+'-skip','aria-pressed':skip?'true':'false',onclick:()=>{st.skip=!st.skip;if(st.skip)st.only=false;upd();render();}},'Je n’ai pas fait le metcon')));
   if(skip)return head.concat([h('p',{class:'hint'},'La séance sera enregistrée sans les points du metcon. Touche à nouveau le bouton pour saisir un résultat.')]);
-  if(ft&&st.capped&&!pl)return head.concat([field(m.label+' · Reps réalisées au time cap',
-    h('input',{id:pre+'-creps',type:'text',inputmode:'numeric',placeholder:'81',value:st.creps||'',oninput:bind('creps')}),
-    'Écris le nombre total de reps faites quand le time cap a sonné, tous mouvements confondus. Exemple : 81.')]);
+  if(ft&&st.capped&&!pl){
+    const tl0=capTools(m,()=>({capped:true,creps:st.creps}));
+    return head.concat([field(m.label+' · Reps réalisées au time cap',
+      h('input',{id:pre+'-creps',type:'text',inputmode:'numeric',placeholder:'81',value:st.creps||'',oninput:e=>{bind('creps')(e);tl0.reset();}}),
+      'Écris le nombre total de reps faites quand le time cap a sonné, tous mouvements confondus. Exemple : 81.'),tl0]);
+  }
   if(isDead(m)){
     const iv=emomIv(m),d=metDuration(m);
     return head.concat([field(m.label+' · Temps tenu (mm:ss)',
@@ -3750,11 +3851,13 @@ function scoreFields(m,st,upd,pre,canSkip){
       'Dead by : écris combien de temps tu as tenu, en minutes:secondes (14:00 = 14 minutes) ou en minutes seules (14). Compte les intervalles de '+fmtN(iv)+' min que tu as réussis en entier'+(d?', jusqu’au time cap de '+mmss(d):'')+'. Plus tu tiens, plus tu marques de points.')]);
   }
   if(ft?(st.capped&&pl):m.repsRound>0){
-    const hint=ft?capGuide(pl):('Un tour = '+roundTotal(m)+' répétitions. Exemple : 6 tours + 7 reps.'+(roundModel(m)?' Compte tes reps réelles, dans l’ordre des lignes du tour (la corde est pondérée automatiquement).':''));
+    const hint=ft?capGuide(pl):('Un tour = '+fmtN(eqTotal(m))+' répétitions. Exemple : 6 tours + 7 reps.'+(roundModel(m)?' Compte en reps équivalentes, dans l’ordre des lignes du tour (une ligne pondérée {10=1} compte pour moins de reps : 250 m = 25 reps).':''));
+    const tl=ft?capTools(m,()=>({capped:true,rounds:st.rounds,reps:st.reps})):null;
+    const rst=()=>{if(tl)tl.reset();};
     return head.concat([h('div',{class:'grid2'},
-      field(m.label+' · Tours complets',h('input',{id:pre+'-rounds',type:'text',inputmode:'numeric',placeholder:ft?'5':'6',value:st.rounds||'',oninput:bind('rounds')})),
-      field('Reps en plus',h('input',{id:pre+'-reps',type:'text',inputmode:'numeric',placeholder:ft?'4':'7',value:st.reps||'',oninput:bind('reps')}))),
-      h('p',{class:'hint'},hint)]);
+      field(m.label+' · Tours complets',h('input',{id:pre+'-rounds',type:'text',inputmode:'numeric',placeholder:ft?'5':'6',value:st.rounds||'',oninput:e=>{bind('rounds')(e);rst();}})),
+      field('Reps en plus',h('input',{id:pre+'-reps',type:'text',inputmode:'numeric',placeholder:ft?'4':'7',value:st.reps||'',oninput:e=>{bind('reps')(e);rst();}}))),
+      h('p',{class:'hint'},hint),tl]);
   }
   return head.concat([field(m.label+' · '+(ft?'Ton temps (mm:ss)':m.format==='EMOM'?'Tours réussis':'Tours complétés'),
     h('input',{id:pre+'-score',type:'text',inputmode:ft?'text':'decimal',placeholder:ft?'12:45':'7,5',value:st.score||'',oninput:bind('score')}),
@@ -5886,7 +5989,7 @@ const amrapModel=p=>({format:p.format,content:p.content,repsRound:Number(p.repsR
 /* score d'un palier en tours : « 8 », « 6,5 » ou « 6+7 » (6 tours + 7 reps, si « Reps par tour » est connu) */
 function tierRounds(m,s){
   const t=String(s).trim(),x=t.match(/^(\d+)\s*\+\s*(\d+)$/);
-  if(x){const tot=roundTotal(m);if(!(tot>0)||+x[2]>=tot)return null;return Math.round((+x[1]+fracOf(m,+x[2]))*10000)/10000;}
+  if(x){const tot=eqTotal(m);if(!(tot>0)||+x[2]>=tot)return null;return Math.round((+x[1]+fracOf(m,+x[2]))*10000)/10000;}
   return parseNum(t);
 }
 const tierParse=(p,s)=>{const k=tierKind(p);return k==='ft'?parseTime(s):k==='dead'?parseHold(s):tierRounds(amrapModel(p),s);};
@@ -5912,7 +6015,7 @@ function stepApply(p,txt,st){
   const k=tierKind(p);
   if(k==='ft'){const v=parseTime(txt);return v===null?null:fmtTime(v+st.sec);}
   if(k==='dead'){const v=parseHold(txt);if(v===null)return null;const n=v-st.sec;return n<0?null:fmtTime(n);}
-  const m=amrapModel(p),tot=roundTotal(m)||0,t=String(txt).trim(),x=t.match(/^(\d+)\s*\+\s*(\d+)$/);
+  const m=amrapModel(p),tot=eqTotal(m)||0,t=String(txt).trim(),x=t.match(/^(\d+)\s*\+\s*(\d+)$/);
   let T,R;
   if(x){T=+x[1];R=+x[2];}
   else{const v=parseNum(t);if(v===null||v<0)return null;T=Math.floor(v+1e-9);R=tot>0?repsOf(m,v-T):0;if(tot===0&&v-T>1e-9)return null;}
@@ -6024,7 +6127,7 @@ function capTiersEditor(p,lv,i,k){
     ?'Aucun tour détecté : écris un nombre de reps réalisées au time cap (par exemple 81). Pour noter en tours + reps (5+4), écris un schéma dans le contenu (21-15-9, 10-9-8-…-1) ou renseigne « Reps par tour ».'
     :(pl.sizes
       ?'Schéma détecté : '+pl.nums.join('-')+(pl.k>1?' ('+pl.k+' mouvements par ligne)':'')+'. Chaque nombre est un tour, en reps : '+sz+'. Écris « 2+10 » pour 2 tours + 10 reps, ou un nombre seul pour un total de reps (par exemple 81).'
-      :'Un tour = '+pl.size+' reps. Écris « 5+4 » pour 5 tours + 4 reps, ou un nombre seul pour un total de reps (par exemple 81).');
+      :'Un tour = '+fmtN(pl.rm?pl.rm.eq:pl.size)+' reps. Écris « 5+4 » pour 5 tours + 4 reps, ou un nombre seul pour un total de reps (par exemple 81).');
   return h('div',{class:'stack'},
     h('div',{class:'flabel'},'Si le time cap arrête l’athlète : score supérieur ou égal au palier'),
     h('p',{class:'hint'},info),
