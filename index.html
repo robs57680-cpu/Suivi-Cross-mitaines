@@ -296,6 +296,8 @@ body.modal-open{overflow:hidden}
 .dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--edge)}
 .dot.on{background:var(--accent);border-color:var(--accent)}
 .ver{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.lvsh{display:inline-block;vertical-align:middle;margin-left:8px;padding:3px 8px 9px;font-family:var(--f-mono);font-size:11px;font-weight:800;line-height:1;letter-spacing:.05em;text-transform:none;color:#fff;background:#D8321A;clip-path:polygon(0 0,100% 0,100% 68%,50% 100%,0 68%)}
+.lvsh.l0{background:#6CC24A;color:#14161A}.lvsh.l1{background:#2AA6E0;color:#fff}.lvsh.l2{background:#D8321A;color:#fff}
 .chip.lv{margin-left:8px;background:var(--tint);border-color:transparent;color:var(--ink);vertical-align:middle;text-transform:none;letter-spacing:0;font-size:12px}
 .t-points{--pc:#0E8A8A}
 .mv{background:none;border:0;padding:0;font:inherit;font-weight:700;color:inherit;text-decoration:none;cursor:pointer;text-align:left}
@@ -913,7 +915,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-18.51';
+const APP_VERSION='2026-10-18.52';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -3453,6 +3455,12 @@ function rivalryCard(){
   return el;
 }
 /* points remportés sur la séance, en blanc et en diagonale à côté des emojis */
+/* écusson du niveau choisi sur le metcon : DEB / INT / RX, avec + ou - pour un niveau personnalisé (ex. RX+, DEB-) */
+function feedLvBadge(m,e){
+  if(!m||!e||e.level===undefined||(e.noMetcon&&!hasScore(e)))return null;
+  const v=lvVal(e,m),tag=lvTag(v);
+  return h('span',{class:'lvsh l'+lvNear(v),title:'Niveau choisi : '+tag,'aria-label':'Niveau choisi : '+tag},tag);
+}
 function feedPts(w,e){
   let t=0;try{t=wodPoints(w,e,periodFor(w.date)||ALL).total;}catch(x){return null;}
   if(!(t>0))return null;
@@ -3487,7 +3495,7 @@ function viewFeed(){
       const n=Object.values(S.reactions).filter(r=>r&&r.to===uid&&r.date===date&&r.emoji===em).length;
       return h('button',{type:'button',class:'rxb','aria-pressed':mine===em?'true':'false','aria-label':RXN[em],onclick:()=>reactTo(uid,date,em)},em,n?h('small',{},n):null);
     }));
-    el.append(h('section',{class:'card feed-card'+cardTheme(uid)},head,h('div',{class:'feed-wod-head'},h('h2',{class:'wtitle',style:'font-size:24px;margin:0'},w.title),h('span',{class:'sub feed-wod-date'},'Réalisée le '+cap(fmtShort(dfmt(new Date(e.at)))))),results.length?h('div',{class:'feed-result'},results):h('p',{class:'muted'},'Résultat détaillé non renseigné.'),e.message?h('p',{class:'feed-message',style:'white-space:pre-wrap;overflow-wrap:anywhere;margin:0'},e.message):null,h('div',{class:'rxwrap'},rx,feedPts(w,e))));
+    el.append(h('section',{class:'card feed-card'+cardTheme(uid)},head,h('div',{class:'feed-wod-head'},h('h2',{class:'wtitle',style:'font-size:24px;margin:0'},w.title,feedLvBadge(m,e)),h('span',{class:'sub feed-wod-date'},'Réalisée le '+cap(fmtShort(dfmt(new Date(e.at)))))),results.length?h('div',{class:'feed-result'},results):h('p',{class:'muted'},'Résultat détaillé non renseigné.'),e.message?h('p',{class:'feed-message',style:'white-space:pre-wrap;overflow-wrap:anywhere;margin:0'},e.message):null,h('div',{class:'rxwrap'},rx,feedPts(w,e))));
   });
   if(posts.length>visiblePosts.length){
     el.append(h('div',{class:'row',style:'justify-content:center'},
