@@ -508,6 +508,11 @@ body.modal-open{overflow:hidden}
 .mbtn{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;text-align:left;background:var(--surface);border:2px solid var(--edge);border-radius:4px;padding:16px;cursor:pointer;min-height:68px}
 .mbtn b{display:block;font-family:var(--f-display);font-weight:400;font-size:22px;letter-spacing:.04em;text-transform:uppercase}
 .mbtn span{color:var(--muted);font-size:13px}
+@keyframes needBlink{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 0 3px var(--accent),0 0 18px 5px var(--accent)}}
+.need-blink{animation:needBlink 1s ease-in-out 3}
+@media (prefers-reduced-motion:reduce){.need-blink{animation:none}}
+.mbtn{position:relative}
+.mbtn .ibdot{top:10px;right:10px}
 .mbtn i{font-style:normal;font-family:var(--f-display);font-size:28px;color:var(--accent)}
 .chk{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
 #main .ibtn{width:44px;height:44px;flex:none;border:2px solid var(--edge);border-radius:4px;background:var(--surface);display:grid;place-items:center;cursor:pointer;color:var(--ink);padding:0}
@@ -2060,7 +2065,7 @@ const typing=()=>{const a=document.activeElement;return a&&main.contains(a)&&/^(
 function scheduleRender(){if(typing()){pending=true;return;}render();}
 document.addEventListener('focusout',()=>{if(!pending)return;setTimeout(()=>{if(!typing()){pending=false;render();}},0);});
 
-function go(tab){closeDrawer(true);S.movBack=null;S.movFocus=null;if(S.coach)S.coach.wodOpen=false;if(tab==='coach'&&S.tab==='coach')S.coach.view=null;S.profView=null;S.viewUser=null;S.tip=null;S.trophOpen='';S.trophSeason='';if(tab==='today'&&S.tab!=='today')S.viewDate=null;S.tab=tab;S.boardDetail=false;S.confirm=null;if(S.entry&&S.entry.coach)S.entry=null;if(S.tab!=='today'){S.entry=null;S.redo=null;}render();window.scrollTo(0,0);}
+function go(tab){closeDrawer(true);S._bk=null;S.movBack=null;S.movFocus=null;if(S.coach)S.coach.wodOpen=false;if(tab==='coach'&&S.tab==='coach')S.coach.view=null;S.profView=null;S.viewUser=null;S.tip=null;S.trophOpen='';S.trophSeason='';if(tab==='today'&&S.tab!=='today')S.viewDate=null;S.tab=tab;S.boardDetail=false;S.confirm=null;if(S.entry&&S.entry.coach)S.entry=null;if(S.tab!=='today'){S.entry=null;S.redo=null;}render();window.scrollTo(0,0);}
 function render(){
   pending=false;S._aw=null;S._ob=null;applyTheme();document.body.classList.remove('modal-open');
   {const tp=document.querySelector('.top');if(tp)document.documentElement.style.setProperty('--toph',tp.offsetHeight+'px');}
@@ -2108,6 +2113,11 @@ function banners(){
     out.push(h('form',{class:'banner warn',onsubmit:e=>{e.preventDefault();const v=inp.value.trim();if(v.length<2){toast('Choisis un pseudo de 2 caractères minimum',true);return;}saveLog({pseudo:v},'Pseudo enregistré');}},
       h('p',{},'Choisis le pseudo qui apparaîtra dans le classement.'),field('Pseudo',inp),
       h('div',{class:'row'},h('button',{class:'btn primary',type:'submit'},'Valider'))));
+  }
+  if(S.tab==='feed'&&!needPseudo()&&profTodo().length&&periodState(selPeriod())!=='done'){
+    out.push(h('div',{class:'banner warn',id:'infos-banner',role:'status'},
+      h('p',{},h('b',{},'Nouvelle saison : compl\u00e8te tes infos. '),'Il manque : '+profTodo().join(', ')+'. Elles servent aux troph\u00e9es (LA GOAT, Seniors / V\u00e9t\u00e9rans, poids / puissance) et \u00e0 l\u2019avatar. Le point rouge reste affich\u00e9 tant que tout n\u2019est pas renseign\u00e9.'),
+      h('div',{class:'row'},h('button',{class:'btn primary',type:'button',onclick:()=>{go('profile');if(infosMissing().length)S.profView='infos';render();window.scrollTo(0,0);}},'Renseigner mes infos'))));
   }
   if(S.uid&&S.coachLoaded&&!S.coachUid)out.push(h('div',{class:'banner warn'},
     h('p',{},'Aucun coach n’est défini. Si c’est toi, deviens coach avant de partager le lien. Pour changer de coach plus tard, il faudra modifier la base dans la console Firebase.'),
@@ -4985,6 +4995,7 @@ function viewProfile(){
   const el=h('div',{class:'stack'});
   if(!S.uid){el.append(h('h1',{class:'day'},'Mon profil'),h('div',{class:'empty'},h('p',{},'Ton profil est privé. Connecte-toi pour le voir.')));return el;}
   if(!ready()){el.append(h('p',{class:'muted'},'Chargement…'));return el;}
+  {const bk=S.tab+'|'+(S.profView||'');if(S._bk!==bk){S._bk=bk;S._bt=Date.now();}}
   const p=selPeriod(),board=computeBoard(p),rank=board.rows.findIndex(r=>r.uid===S.uid);
   const me=board.rows[rank]||{total:0,sessions:0,perfAvg:0,streak:0,items:[]};
   const pseudo=(S.logs[S.uid]&&S.logs[S.uid].pseudo)||'';
@@ -5022,7 +5033,7 @@ function viewProfile(){
         flameBox('fire',fl.fire.cur,'Série en cours','Record : '+(me.flameBest||0),jk('fire')),
         flameBox('plat',fl.top.cur,'Temps au top','Record : '+(me.flameTopBest||0),jk('top')));
     })()));
-  {const gc=goalCard(p);gc.setAttribute('data-tour','goal');el.append(gc);}
+  {const gc=goalCard(p);gc.setAttribute('data-tour','goal');if(goalMissingFor(p))blinkEl(gc);el.append(gc);}
   /* dernières séances */
   const items=me.items.slice().reverse().slice(0,8);
   el.append(h('section',{class:'card'},h('h2',{class:'h2'},'Mes dernières séances'),
@@ -5036,9 +5047,12 @@ function viewProfile(){
   /* informations personnelles */
   const lgMe=S.logs[S.uid]||{};
   const pin=h('input',{id:'pseudo-edit',type:'text',maxlength:'24',value:pseudo});
-  const win=h('input',{id:'weight-edit',type:'text',inputmode:'decimal',placeholder:'83',value:Number(S.prof.weight)>0?String(S.prof.weight).replace('.',','):''});
+  const win=h('input',{id:'weight-edit',type:'text',inputmode:'decimal',placeholder:'',value:Number(S.prof.weight)>0?String(S.prof.weight).replace('.',','):''});
   const bin=h('input',{id:'birth-edit',type:'date',value:S.prof.birth||'',max:todayStr()});
   const sx=sel([['','Non renseigné'],['F','Femme'],['H','Homme']],S.prof.sex||'',v=>{S.prof.sex=v;saveProf();if(S.logs[S.uid])saveLog({sex:v});render();},{id:'sex-select'});
+  if(!(Number(S.prof.weight)>0))blinkEl(win);
+  if(!S.prof.birth||ageCatOf(S.prof.birth)==='')blinkEl(bin);
+  if(!S.prof.sex)blinkEl(sx);
   const infosForm=(h('form',{class:'card',onsubmit:e=>{e.preventDefault();
       const v=pin.value.trim();if(v.length<2){toast('Pseudo de 2 caractères minimum',true);return;}
       const wraw=win.value.trim(),wt=wraw===''?0:parseNum(wraw);
@@ -5058,8 +5072,8 @@ function viewProfile(){
       pv==='infos'?infosForm:pv==='notifs'?notifSection():pv==='badges'?badgesSection():pv==='banner'?bannerSection():pv==='prog'?progSection():prSection());
   }
   const nB=(awards()[S.uid]||[]).length,nP=Object.keys(S.prof.prs||{}).length;
-  const pitems=[['infos','Mes infos',pseudo||'Pseudo, poids, sexe'],['badges','Mes badges',nB+' badge'+(nB>1?'s':'')],['banner','Ma bannière','Identité visuelle'],['prog','Progression','Carnet de PR · '+prEvents(S.uid).length+' record'+(prEvents(S.uid).length>1?'s':'')],['prs','Mes PR',nP+' PR'],['notifs','Notifications',notifStatus()]];
-  el.append(h('div',{class:'stack'},pitems.map(([k,t,sub])=>h('button',{class:'mbtn',type:'button',id:'pm-'+k,onclick:()=>{S.profView=k;render();window.scrollTo(0,0);}},h('div',{},h('b',{},t),h('span',{},sub)),h('i',{},'›')))));
+  const pitems=[['infos','Mes infos',infosDot()?'\u00c0 compl\u00e9ter : '+infosMissing().join(', '):(pseudo||'Pseudo, poids, sexe')],['badges','Mes badges',nB+' badge'+(nB>1?'s':'')],['banner','Ma bannière','Identité visuelle'],['prog','Progression','Carnet de PR · '+prEvents(S.uid).length+' record'+(prEvents(S.uid).length>1?'s':'')],['prs','Mes PR',nP+' PR'],['notifs','Notifications',notifStatus()]];
+  el.append(h('div',{class:'stack'},pitems.map(([k,t,sub])=>blinkIf(k==='infos'&&infosDot(),h('button',{class:'mbtn',type:'button',id:'pm-'+k,onclick:()=>{S.profView=k;render();window.scrollTo(0,0);}},h('div',{},h('b',{},t),h('span',{},sub)),k==='infos'&&infosDot()?h('span',{class:'ibdot','aria-hidden':'true'}):null,h('i',{},'›'))))));
   el.append(h('div',{class:'row'},h('button',{class:'btn',onclick:async()=>{try{await pushForget();}catch(e){}signOut(auth);}},'Se déconnecter')),h('p',{class:'ver'},'Version '+APP_VERSION));
   return el;
 }
@@ -6707,10 +6721,36 @@ function viewHealth(){
 }
 let drawerEl=null;
 const notifDotOn=()=>pushConfigured()&&pushSupported()&&Notification.permission==='default';
-function menuDot(){const a=annActive();return !!((a&&!annIsSeen(a))||notifDotOn()||!rulesSeen()||!healthSeen());}
+/* infos du profil a renseigner (poids, date de naissance, sexe ; pseudo s'il manque) : la pastille reste rouge tant qu'il en manque une */
+function infosMissing(){
+  if(!S.uid||!S.profLoaded||!S.loaded.logs||S.snapMode)return [];
+  const m=[];
+  if(needPseudo())m.push('pseudo');
+  if(!(Number(S.prof.weight)>0))m.push('poids de corps');
+  if(!S.prof.birth||ageCatOf(S.prof.birth)==='')m.push('date de naissance');
+  if(!S.prof.sex)m.push('sexe');
+  return m;
+}
+const infosDot=()=>infosMissing().length>0;
+/* objectif de seances par semaine : a choisir pendant la 1re semaine de la saison (apres, il est verrouille donc plus demande) */
+function goalMissingFor(p){
+  if(!p||p.virtual||!S.uid||!S.loaded.logs||S.snapMode)return false;
+  if(periodState(p)!=='live'||todayStr()>addDays(p.start,6))return false;
+  const lg=S.logs[S.uid]||{};
+  return !(lg.goals&&Number(lg.goals[p.id])>0);
+}
+const goalMissing=()=>goalMissingFor(activePeriod());
+const profDot=()=>infosDot()||goalMissing();
+const profTodo=()=>infosMissing().concat(goalMissing()?['objectif de s\u00e9ances par semaine']:[]);
+/* clignotement de l'encart ou du champ a completer : 3 clignotements a l'ouverture de l'onglet (ou de Mes infos), puis plus.
+   Le profil se redessine souvent : on reprend l'animation la ou elle en etait grace a un delai negatif, elle ne repart pas de zero. */
+const BLINK_MS=3000;
+function blinkEl(el){const ms=Date.now()-(S._bt||0);if(ms<BLINK_MS){el.classList.add('need-blink');el.style.animationDelay='-'+ms+'ms';}return el;}
+const blinkIf=(c,el)=>c?blinkEl(el):el;
+function menuDot(){const a=annActive();return !!((a&&!annIsSeen(a))||notifDotOn()||!rulesSeen()||!healthSeen()||profDot());}
 function drawerItems(){
   const a=annActive(),out=[];
-  out.push({id:'profile',label:'Profil',ico:ICO_USER,cur:S.tab==='profile'&&!S.profView,fn:()=>{S.profView=null;go('profile');}});
+  out.push({id:'profile',label:'Profil',ico:ICO_USER,dot:profDot(),cur:S.tab==='profile'&&!S.profView,fn:()=>{S.profView=null;go('profile');}});
   if(S.owner)out.push({id:'coach',label:'Coach',ico:ICO_COACH,cur:['coach','prefs','stats'].includes(S.tab),fn:()=>go('coach')});
   out.push({id:'notif',label:'Notifications',ico:ICO_BELL,dot:notifDotOn(),cur:S.tab==='profile'&&S.profView==='notifs',fn:()=>{go('profile');S.profView='notifs';render();window.scrollTo(0,0);}});
   if(a)out.push({id:'mail',label:'Message du coach',ico:ICO_MAIL,dot:!annIsSeen(a),fn:()=>openAnnouncement(a,{review:true})});
