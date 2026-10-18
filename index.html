@@ -334,6 +334,8 @@ body.modal-open{overflow:hidden}
 .t-top{--pc:#5B86C9}
 .t-lagoat{--pc:#B5179E}
 .t-lafort{--pc:#8E2C7A}
+.t-tonnage{--pc:#1B1D20}
+.t-latonnage{--pc:#8E2C7A}
 .jcoin{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;border:2px solid #8A5A00;background:radial-gradient(circle at 35% 30%,#FFE98A,#F4C400 60%,#C99700);color:#4A2F00;font-family:var(--f-mono);font-weight:600;font-size:13px;line-height:1;box-shadow:inset 0 0 0 2px rgba(255,255,255,.35)}
 .jcoin.zero{filter:grayscale(1);opacity:.55}
 .jcoin.big{width:64px;height:64px;font-size:28px;border-width:3px}
@@ -915,7 +917,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-18.52';
+const APP_VERSION='2026-10-18.53';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -1477,7 +1479,7 @@ function computeBoard(period){
   return {rows,wods,metconCount,catCount,weekKeys,period};
 }
 const cmpKey=(a,b)=>{for(let i=0;i<a.length;i++){if(a[i]!==b[i])return a[i]-b[i];}return 0;};
-const catTrophy=(id,name,focus,label)=>({id,name,
+const catTrophy=(id,name,focus,label)=>({id,name,cat:true,
   desc:'La meilleure moyenne de points sur les metcons '+label+' (2 metcons minimum).',
   key:r=>[r.cat[focus].n?r.cat[focus].sum/r.cat[focus].n:0,r.cat[focus].n],
   show:r=>fmtN(r.cat[focus].sum/r.cat[focus].n)+' pts par metcon',
@@ -1485,27 +1487,28 @@ const catTrophy=(id,name,focus,label)=>({id,name,
 const multTxt=r=>'x'+fmt2(r.mult);
 /* trophée par ligue : tous les athlètes dont le niveau moyen est le plus proche de ce niveau (de Deb- à Deb+, de Int- à Int+) se disputent les points bruts */
  /* trophée par rythme : athlètes qui ont choisi g séance(s) par semaine comme objectif ; seules leurs meilleures séances comptent (g par semaine de la saison) */
-const goalTrophy=(id,name,g,label)=>({id,name,
+const goalTrophy=(id,name,g,label)=>({id,name,cat:true,
   desc:'Pour les athlètes qui ont choisi '+label+' par semaine comme objectif. On ne compte que leurs meilleures séances, à raison de '+g+' par semaine de la saison (sur 7 semaines : '+(7*g)+' séances), même s’ils en font plus : faire plus que prévu n’est jamais pénalisé. Points de séance + points des metcons pondérés par le niveau moyen, comme Le GOAT.',
   key:r=>[r.goalPts],
   show:r=>fmtN(r.goalPts)+' pts sur '+r.goalN+' séance'+(r.goalN>1?'s':''),
   elig:r=>r.goal===g&&r.goalK>0});
-const leagueTrophy=(id,name,lv,label)=>({id,name,
+const leagueTrophy=(id,name,lv,label)=>({id,name,cat:true,
   desc:'Le plus de points bruts parmi les athlètes de la ligue '+label+' (niveau moyen choisi sur les metcons, de '+LV_ABBR[lv]+'- à '+LV_ABBR[lv]+'+). À points égaux, le niveau moyen le plus haut passe devant.',
   key:r=>[r.total,Math.round(r.lvlAvg*100)/100],
   show:r=>fmtN(r.total)+' pts · niveau '+lvTag(r.lvlAvg),
   elig:r=>r.lvlN>0&&lvNear(r.lvlAvg)===lv});
 const TROPHIES=[
  {id:'goat',name:'Le GOAT',desc:'Points de séance + points des metcons multipliés par le niveau moyen choisi sur les metcons divisé par 2 (Débutant = 2, Intermédiaire = 2,5, Rx = 3 ; niveau moyen 2,6 = x1,3). Seuls les points des metcons sont pondérés, pas ceux de la séance.',key:r=>[r.weighted,r.total],show:r=>fmtN(r.weighted)+' pts pondérés · '+multTxt(r)},
- {id:'lagoat',name:'LA GOAT',desc:'Même calcul que Le GOAT (points pondérés par le niveau moyen), réservé aux athlètes femmes. Le sexe se renseigne dans le profil.',key:r=>[r.weighted,r.total],show:r=>fmtN(r.weighted)+' pts pondérés · '+multTxt(r),elig:r=>r.sex==='F'},
+ {id:'lagoat',cat:true,name:'LA GOAT',desc:'Même calcul que Le GOAT (points pondérés par le niveau moyen), réservé aux athlètes femmes. Le sexe se renseigne dans le profil.',key:r=>[r.weighted,r.total],show:r=>fmtN(r.weighted)+' pts pondérés · '+multTxt(r),elig:r=>r.sex==='F'},
  {id:'points',name:'Le SCRATCH',desc:'Le plus de points bruts sur la saison, sans tenir compte des niveaux.',key:r=>[r.total,r.sessions],show:r=>fmtN(r.total)+' pts'},
  {id:'regulier',name:'Le plus régulier',desc:'Le plus de séances réalisées.',key:r=>[r.sessions,r.streak],show:r=>r.sessions+' séances'},
  {id:'serie',name:'Machine à séries',desc:'Le plus haut score de flamme (série de séances) atteint pendant la saison. Une semaine où l’objectif de séances est tenu ne casse pas la flamme.',key:r=>[r.curBest,r.sessions],show:r=>r.curBest+' d’affilée'},
  {id:'top',name:'Top niveau',desc:'La plus longue série de metcons d’affilée à 90 % ou plus des points possibles de son niveau, quel que soit le niveau choisi, atteinte pendant la saison. Un score sous 90 % remet la série à zéro. (La flamme du profil, elle, continue d’une saison à l’autre.)',key:r=>[r.topBest,r.sessions],show:r=>r.topBest+' metcon'+(r.topBest>1?'s':'')+' d’affilée au top'},
  {id:'perf',name:'Le plus performant',desc:'La meilleure moyenne de points de metcon, pondérée par le niveau moyen choisi (niveau moyen divisé par 2). 3 metcons minimum.',key:r=>[r.perfAvgW],show:r=>fmtN(r.perfAvgW)+' pts par metcon · '+multTxt(r),elig:(r,b)=>r.perfN>=Math.min(3,b.metconCount)},
- {id:'lafort',name:'La plus forte',desc:'Même calcul que Le plus fort (somme des meilleures charges de force), réservé aux athlètes femmes. Le sexe se renseigne dans le profil.',key:r=>[r.strength],show:r=>fmtN(r.strength)+' kg cumulés',elig:r=>r.sex==='F'},
+ {id:'lafort',cat:true,name:'La plus forte',desc:'Même calcul que Le plus fort (somme des meilleures charges de force), réservé aux athlètes femmes. Le sexe se renseigne dans le profil.',key:r=>[r.strength],show:r=>fmtN(r.strength)+' kg cumulés',elig:r=>r.sex==='F'},
  {id:'fort',name:'Le plus fort',desc:'Somme des meilleures charges saisies sur chaque mouvement de force.',key:r=>[r.strength],show:r=>fmtN(r.strength)+' kg cumulés'},
  {id:'tonnage',name:'Roi du tonnage',desc:'Le plus de kilos soulevés sur la saison dans les parties de force : séries × répétitions × charge, additionnés sur toutes les séances. Séries, répétitions et charge sont préremplies d’après la séance et modifiables.',key:r=>[r.tonnage],show:r=>fmtN(r.tonnage)+' kg soulevés'},
+ {id:'latonnage',name:'La reine du tonnage',cat:true,desc:'Même calcul que Roi du tonnage (séries × répétitions × charge, additionnés sur la saison), réservé aux athlètes femmes. Le sexe se renseigne dans le profil.',key:r=>[r.tonnage],show:r=>fmtN(r.tonnage)+' kg soulevés',elig:r=>r.sex==='F'},
  {id:'ratio',name:'Poids / puissance',desc:'Le poids moyen soulevé par rapport à son poids de corps : moyenne des meilleures charges de chaque mouvement de force (hors traction lestée) divisée par le poids de corps. Le poids se renseigne dans le profil.',key:r=>[r.ratio],show:r=>'soulève en moyenne '+fmt2(r.ratio)+' fois son poids'},
  catTrophy('mcardio','Metcon cardio','cardio','cardio'),
  catTrophy('mgym','Metcon gym','gym','gym'),
@@ -1514,13 +1517,27 @@ const TROPHIES=[
  goalTrophy('gsolo','Solo gagnant',1,'1 séance'),
  leagueTrophy('bdeb','Meilleur débutant',0,'Débutant'),
  leagueTrophy('binter','Meilleur intermédiaire',1,'Intermédiaire'),
- {id:'senior',name:'Meilleur Senior',desc:'Le meilleur score pondéré chez les athlètes de 18 à 34 ans : points de séance + points des metcons multipliés par le niveau moyen choisi, comme Le GOAT. La date de naissance se renseigne dans le profil (elle reste privée, seule la catégorie est visible).',key:r=>[r.weighted,r.total],show:r=>fmtN(r.weighted)+' pts pondérés · '+multTxt(r),elig:r=>r.ageCat==='S'},
- {id:'veteran',name:'Meilleur Vétéran',desc:'Le meilleur score pondéré chez les athlètes de 35 ans et plus : points de séance + points des metcons multipliés par le niveau moyen choisi, comme Le GOAT. La date de naissance se renseigne dans le profil (elle reste privée, seule la catégorie est visible).',key:r=>[r.weighted,r.total],show:r=>fmtN(r.weighted)+' pts pondérés · '+multTxt(r),elig:r=>r.ageCat==='V'},
+ {id:'senior',cat:true,name:'Meilleur Senior',desc:'Le meilleur score pondéré chez les athlètes de 18 à 34 ans : points de séance + points des metcons multipliés par le niveau moyen choisi, comme Le GOAT. La date de naissance se renseigne dans le profil (elle reste privée, seule la catégorie est visible).',key:r=>[r.weighted,r.total],show:r=>fmtN(r.weighted)+' pts pondérés · '+multTxt(r),elig:r=>r.ageCat==='S'},
+ {id:'veteran',cat:true,name:'Meilleur Vétéran',desc:'Le meilleur score pondéré chez les athlètes de 35 ans et plus : points de séance + points des metcons multipliés par le niveau moyen choisi, comme Le GOAT. La date de naissance se renseigne dans le profil (elle reste privée, seule la catégorie est visible).',key:r=>[r.weighted,r.total],show:r=>fmtN(r.weighted)+' pts pondérés · '+multTxt(r),elig:r=>r.ageCat==='V'},
  {id:'objectif',name:'Objectif tenu',desc:'Avoir tenu son nombre de séances par semaine, chaque semaine de la saison.',custom:b=>b.rows.filter(r=>r.goalMet),show:r=>r.goal+' séance'+(r.goal>1?'s':'')+' par semaine'}
 ];
+/* Seuil de participants : un trophée « de catégorie » (cat:true) n'est décerné que si la saison a un seuil (per.minElig)
+   et qu'il y a au moins ce nombre d'athlètes éligibles actifs dans le groupe. Les saisons sans per.minElig (dont la Bêta, verrouillée)
+   n'ont aucun seuil : la règle n'est jamais rétroactive. Les nouvelles saisons reçoivent MIN_ELIGIBLE par défaut (modifiable à la création). */
+const MIN_ELIGIBLE=3;
+const minEligOf=per=>{const n=per&&!per.virtual?Number(per.minElig):0;return n>0?n:0;};
+function eligCount(t,board){return board.rows.filter(r=>r.sessions>0&&(!t.elig||t.elig(r,board))).length;}
+/* nombre d'éligibles quand le seuil bloque le trophée, sinon 0 */
+function trophyShort(t,board,gid){
+  if(!t.cat)return 0;
+  const min=minEligOf(board.period);if(!min)return 0;
+  if(gid!==undefined)board=Object.assign({},board,{rows:board.rows.filter(r=>inScope(r.uid,gid,board.period))});
+  const n=eligCount(t,board);return n>0&&n<min?n:0;
+}
 function winners(t,board,gid){
   if(gid!==undefined)board=Object.assign({},board,{rows:board.rows.filter(r=>inScope(r.uid,gid,board.period))});
   if(t.custom)return t.custom(board).filter(r=>r.sessions>0);
+  {const min=t.cat?minEligOf(board.period):0;if(min&&eligCount(t,board)<min)return [];}
   const pool=board.rows.filter(r=>r.sessions>0&&(!t.elig||t.elig(r,board))&&t.key(r)[0]>0);
   if(!pool.length)return [];
   pool.sort((a,b)=>cmpKey(t.key(b),t.key(a)));
@@ -2098,7 +2115,7 @@ const lvPill=r=>r.lvlN?h('span',{class:'chip lv',title:'Niveau moyen choisi sur 
    Il est calculé (jamais stocké) : il est remis à la fin de la saison aux gagnants du trophée. */
 const BADGES={goat:['#1F55D6','#FFFFFF'],lagoat:['#E0489A','#FFFFFF'],points:['#0E8A8A','#FFFFFF'],regulier:['#1E9B4A','#FFFFFF'],serie:['#D8321A','#FFFFFF'],
   top:['#2B3A67','#FFFFFF'],perf:['#F4C400','#14161A'],fort:['#1B1D20','#FFFFFF'],lafort:['#C2368F','#FFFFFF'],ratio:['#B5651D','#FFFFFF'],mcardio:['#F07A18','#FFFFFF'],
-  mgym:['#8B929A','#14161A'],mhaltero:['#F3F3F1','#14161A'],tonnage:['#1B1D20','#F4C400'],objectif:['#7B3FC4','#FFFFFF'],bdeb:['#6CC24A','#14161A'],binter:['#2AA6E0','#FFFFFF'],gsolo:['#FF7F50','#14161A'],gduo:['#5C6BC0','#FFFFFF'],senior:['#1F6FD6','#FFFFFF'],veteran:['#4E8A2E','#FFFFFF']};
+  mgym:['#8B929A','#14161A'],mhaltero:['#F3F3F1','#14161A'],tonnage:['#1B1D20','#F4C400'],latonnage:['#1B1D20','#D86BFF'],objectif:['#7B3FC4','#FFFFFF'],bdeb:['#6CC24A','#14161A'],binter:['#2AA6E0','#FFFFFF'],gsolo:['#FF7F50','#14161A'],gduo:['#5C6BC0','#FFFFFF'],senior:['#1F6FD6','#FFFFFF'],veteran:['#4E8A2E','#FFFFFF']};
 const GOAT='<g transform="translate(-4.8 -5.1) scale(1.15)"><g stroke="#1A1A1A" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">'+
   '<path d="M26 20C19 14 14 9 16 2C24 4 30 11 30 19Z" fill="#D9C28F"/><path d="M38 20C45 14 50 9 48 2C40 4 34 11 34 19Z" fill="#D9C28F"/>'+
   '<path d="M22 25L6 24C3 28 7 32 12 32L23 32Z" fill="#F4E9D0"/><path d="M42 25L58 24C61 28 57 32 52 32L41 32Z" fill="#F4E9D0"/>'+
@@ -2116,6 +2133,7 @@ const ICONS={goat:GOAT,lagoat:GOAT,
   top:'<path d="M3 56L24 20L34 37L42 27L61 56Z" fill="currentColor"/><path d="M24 20V4" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M24 4L39 9L24 15Z" fill="currentColor"/>',
   perf:'<g fill="none" stroke="currentColor" stroke-width="5"><circle cx="32" cy="32" r="26"/><circle cx="32" cy="32" r="14"/></g><circle cx="32" cy="32" r="5" fill="currentColor"/>',
   lafort:'<path d="M20 26C18 6 46 6 44 26" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><circle cx="32" cy="40" r="19" fill="currentColor"/><path d="M32 31L34.5 37.5L41 38L36 42.5L37.6 49L32 45.5L26.4 49L28 42.5L23 38L29.5 37.5Z" fill="%BG%"/>',
+  latonnage:'<g fill="currentColor"><rect x="6" y="44" width="52" height="10" rx="3"/><rect x="12" y="30" width="40" height="10" rx="3"/><rect x="18" y="16" width="28" height="10" rx="3"/></g>',
   tonnage:'<g fill="currentColor"><rect x="6" y="44" width="52" height="10" rx="3"/><rect x="12" y="30" width="40" height="10" rx="3"/><rect x="18" y="16" width="28" height="10" rx="3"/></g>',
   fort:'<path d="M20 26C18 6 46 6 44 26" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round"/><circle cx="32" cy="40" r="19" fill="currentColor"/>',
   ratio:'<g stroke="currentColor" stroke-width="4" stroke-linecap="round" fill="none"><path d="M32 8V54M18 56H46M8 18H56"/><path d="M8 18L2 40M8 18L20 40M56 18L44 40M56 18L62 40" stroke-width="2.5"/></g><path d="M0 40Q11 52 22 40Z M42 40Q53 52 64 40Z" fill="currentColor"/>',
@@ -2149,7 +2167,7 @@ function badgeHTML(tid,label,size){
 /* ---- badges illustrés (saisons suivantes) ----
    Images dans assets/embedded/badge-<trophée>.webp (280 x 300, plaque du bas vide). Le nom de la saison s'écrit sur la plaque ;
    le badge est trop petit pour le lire sous ~100 px : il reste alors dans l'info-bulle. Les saisons Alpha et Bêta gardent les anciens badges dessinés. */
-const BADGE_IMG_Y={senior:0.8793,veteran:0.8793,goat:0.9167,lagoat:0.9167,points:0.92,regulier:0.9167,serie:0.9167,top:0.9167,perf:0.9133,lafort:0.92,fort:0.9325,mcardio:0.9183,mgym:0.9167,mhaltero:0.9167,tonnage:0.955,gduo:0.9067,gsolo:0.9083,bdeb:0.9083,binter:0.9083,objectif:0.9083,ratio:0.9183}; /* hauteur du centre de la plaque, en fraction de l'image */
+const BADGE_IMG_Y={senior:0.8793,veteran:0.8793,goat:0.9167,lagoat:0.9167,points:0.92,regulier:0.9167,serie:0.9167,top:0.9167,perf:0.9133,lafort:0.92,fort:0.9325,mcardio:0.9183,mgym:0.9167,mhaltero:0.9167,tonnage:0.955,latonnage:0.955,gduo:0.9067,gsolo:0.9083,bdeb:0.9083,binter:0.9083,objectif:0.9083,ratio:0.9183}; /* hauteur du centre de la plaque, en fraction de l'image */
 const BADGE_IMG_FILE={}; /* correspondances trophée -> fichier quand ils diffèrent (ex. {ratio:'fort'}) ; chaque trophée a son image badge-<id>.webp */
 const BADGE_LEGACY_RX=/alpha|b[eé]ta/i; /* saisons dont les badges restent inchangés */
 const badgeImgOn=(per,tid)=>!!per&&!!BADGE_IMG_Y[BADGE_IMG_FILE[tid]||tid]&&!BADGE_LEGACY_RX.test(String(per.name||''));
@@ -4012,14 +4030,14 @@ function recentList(t,current){
 }
 
 /* ---------- classement et trophées ---------- */
-function trophyCard(t,ws,p,mine){
+function trophyCard(t,ws,p,mine,short){
   const top=ws[0];
   return h('div',{class:'trophy'+(ws.length?'':' empty')+(mine?' mine':'')},
     trophyIcon(t.id,ws.length>0,periodState(p)==='done'?p:null),
     h('div',{},
       h('div',{class:'ttop'},h('div',{class:'tn'},t.name),ws.length?h('span',{class:'stamp'},seasonTag(p)):null),
       h('div',{class:'td'},t.desc),
-      h('div',{class:'tw'},ws.length?ws.map(r=>r.pseudo).join(', ')+' · '+t.show(top):'Personne pour l’instant')));
+      h('div',{class:'tw'},ws.length?ws.map(r=>r.pseudo).join(', ')+' · '+t.show(top):short?'Pas assez de participants ('+short+' sur '+minEligOf(p)+' minimum)':'Personne pour l’instant')));
 }
 const nameBtn=r=>h('button',{type:'button',class:'link',onclick:()=>openAthlete(r.uid)},r.pseudo+(r.uid===S.uid?' (toi)':''));
 const RX=['👑','😭','👍','💪','😂'];
@@ -4115,7 +4133,7 @@ function viewBoard(){
     h('div',{class:'pts'},fmtN(r.total),h('small',{},'pts'))))));}
   const tg=(gsel!=='all'&&gname(gsel))?gsel:scopeOf(S.uid,p);
   el.append(h('div',{},h('h2',{class:'h2'},'Trophées'+(scopeName(tg,p)?' · '+scopeName(tg,p):'')),gl.length?h('p',{class:'muted'},'Les trophées se jouent à l’intérieur de chaque groupe.'+(snapOf(p)?' Groupes figés à la fin de la saison.':'')):null,h('p',{class:'muted'},st==='done'?'Décernés à la fin de la saison.':st==='soon'?'La saison n’a pas commencé.':'Provisoires, ils sont attribués à la date de fin ('+(p.virtual?'à définir par le coach':fmtShort(p.end))+').')));
-  el.append(h('div',{class:'trophies'},TROPHIES.map(t=>{const ws=winners(t,board,tg);return trophyCard(t,ws,p,ws.some(r=>r.uid===S.uid));})));
+  el.append(h('div',{class:'trophies'},TROPHIES.map(t=>{const ws=winners(t,board,tg);return trophyCard(t,ws,p,ws.some(r=>r.uid===S.uid),ws.length?0:trophyShort(t,board,tg));})));
   el.append(h('div',{class:'row'},h('button',{class:'btn primary','data-tour':'board-detail',onclick:()=>{S.boardDetail=true;render();window.scrollTo(0,0);}},'Voir mon groupe et le détail')));
   return el;
 }
@@ -6434,7 +6452,7 @@ function maybeAvatarUnlockPopup(){
 }
 
 function periodEditor(){
-  if(!S.coach.period)S.coach.period={id:null,num:nextSeasonNum(),name:'',start:todayStr(),end:'',base:'10',av:[],rewards:[]};
+  if(!S.coach.period)S.coach.period={id:null,num:nextSeasonNum(),name:'',start:todayStr(),end:'',base:'10',minElig:String(MIN_ELIGIBLE),av:[],rewards:[]};
   const d=S.coach.period;
   return h('section',{class:'card'},h('h2',{class:'h2'},d.id?'Modifier la saison':'Programmer une saison'),
     h('p',{class:'muted'},'Le classement et les trophées se calculent entre la date de début et la date de fin. Chaque trophée reçoit le numéro de la saison.'),
@@ -6443,7 +6461,8 @@ function periodEditor(){
       field('Nom',tin(d,'name',{id:'per-name',placeholder:'Cycle octobre'})),
       field('Début',h('input',{id:'per-start',type:'date',value:d.start,oninput:e=>{d.start=e.target.value;}})),
       field('Fin',h('input',{id:'per-end',type:'date',value:d.end,oninput:e=>{d.end=e.target.value;}})),
-      field('Points par séance (par défaut)',tin(d,'base',{id:'per-base',inputmode:'numeric'}),'Chaque séance peut avoir ses propres points.')),
+      field('Points par séance (par défaut)',tin(d,'base',{id:'per-base',inputmode:'numeric'}),'Chaque séance peut avoir ses propres points.'),
+      field('Participants minimum par trophée de catégorie',tin(d,'minElig',{id:'per-minelig',inputmode:'numeric',placeholder:'3'}),'Un trophée de catégorie (LA GOAT, Senior, Vétéran, ligues…) n’est décerné que s’il y a au moins ce nombre d’athlètes éligibles. Vide ou 0 = pas de seuil.')),
     avPick(d),
     rewardEditor(d),
     h('div',{class:'row'},
@@ -6452,7 +6471,7 @@ function periodEditor(){
         if(!d.name.trim()||!d.start||!d.end||b===null||b<0||!(n>=1)){toast('Renseigne le numéro, le nom, les deux dates et les points.',true);return;}
         if(d.end<d.start){toast('La fin doit être après le début.',true);return;}
         const col=S.db.collection('periods');const ref=d.id?col.doc(d.id):col.doc();
-        await run(async()=>{await ref.set(Object.assign({num:n,name:d.name.trim(),start:d.start,end:d.end,base:b,avItems:d.av||[],rewards:(d.rewards||[]).map(r=>({id:r.id||('rw'+Date.now().toString(36)),type:r.type||'title',name:String(r.name||'').trim(),xp:Math.max(0,Number(r.xp)||0),asset:r.asset||'',image:String(r.image||'').trim()}))},d.id&&S.periods[d.id]&&S.periods[d.id].locked?{locked:true}:{}));toast('Saison enregistrée');});
+        await run(async()=>{await ref.set(Object.assign({num:n,name:d.name.trim(),start:d.start,end:d.end,base:b,avItems:d.av||[],minElig:(parseInt(d.minElig,10)>0?parseInt(d.minElig,10):0),rewards:(d.rewards||[]).map(r=>({id:r.id||('rw'+Date.now().toString(36)),type:r.type||'title',name:String(r.name||'').trim(),xp:Math.max(0,Number(r.xp)||0),asset:r.asset||'',image:String(r.image||'').trim()}))},d.id&&S.periods[d.id]&&S.periods[d.id].locked?{locked:true}:{}));toast('Saison enregistrée');});
         S.coach.period=null;render();}},d.id?'Enregistrer la saison':'Créer la saison'),
       d.id?h('button',{class:'btn',type:'button',onclick:()=>{S.coach.period=null;render();}},'Annuler'):null));
 }
@@ -6464,7 +6483,7 @@ function periodList(){
       h('div',{class:'row'},
         h('button',{class:'btn sm'+(p.locked?' primary':''),type:'button',id:'lock-'+p.id,onclick:()=>run(async()=>{const d=Object.assign({},S.periods[p.id]);if(p.locked)delete d.locked;else d.locked=true;await S.db.doc('periods/'+p.id).set(d);toast(p.locked?'Saison déverrouillée':'Saison verrouillée');})},p.locked?'Déverrouiller':'Verrouiller'),
         h('button',{class:'btn sm',type:'button',onclick:()=>openCeremony(p.id)},'Aperçu remise'),
-        h('button',{class:'btn sm',onclick:()=>{S.coach.period={id:p.id,num:String(seasonNum(p)),name:p.name,start:p.start,end:p.end,base:String(p.base),av:(p.avItems||[]),rewards:JSON.parse(JSON.stringify(p.rewards||[]))};render();window.scrollTo(0,0);}},'Modifier'),
+        h('button',{class:'btn sm',onclick:()=>{S.coach.period={id:p.id,num:String(seasonNum(p)),name:p.name,start:p.start,end:p.end,base:String(p.base),minElig:p.minElig>0?String(p.minElig):'',av:(p.avItems||[]),rewards:JSON.parse(JSON.stringify(p.rewards||[]))};render();window.scrollTo(0,0);}},'Modifier'),
         S.confirm==='per-'+p.id?h('button',{class:'btn sm danger',onclick:()=>{S.confirm=null;run(async()=>{await S.db.doc('periods/'+p.id).delete();toast('Saison supprimée');});}},'Confirmer')
                                 :h('button',{class:'btn sm danger',onclick:()=>{S.confirm='per-'+p.id;render();}},'Supprimer')));}))
     :h('p',{class:'muted'},'Aucune saison programmée. En attendant, toutes les séances comptent dans une saison unique.'));
@@ -6538,7 +6557,7 @@ const RULES=[
  {t:'Fair-play et confiance',p:['**La triche ne peut pas être contrôlée.** Les résultats sont saisis par les participants eux-mêmes, et personne n’est en mesure de vérifier chaque séance. Cette compétition repose donc entièrement sur la confiance entre participants. En saisissant un résultat, tu certifies sur l’honneur que :'],
   b:['tu as réalisé la séance telle qu’elle a été publiée ;','tu as respecté les standards des mouvements ;','tu as choisi le niveau que tu as réellement fait ;','tu as respecté le time cap et saisi ton vrai temps ou ton vrai score.'],
   after:['Tricher ne trompe personne d’autre que soi-même, et gâche le plaisir de tous.']},
- {t:'Participation',b:['Certains classements demandent des informations dans ton profil : le sexe pour LA GOAT, la date de naissance pour les trophées Seniors et Vétérans, le poids de corps pour « Poids / puissance »…','Le coach organise la compétition, publie les séances et gère les saisons.']},
+ {t:'Participation',b:['Certains classements demandent des informations dans ton profil : le sexe pour LA GOAT, la date de naissance pour les trophées Seniors et Vétérans, le poids de corps pour « Poids / puissance »…','Un trophée réservé à une catégorie (sexe, âge, ligue, rythme de séances, type de metcon) n’est décerné que si assez d’athlètes y participent : le minimum (3 par défaut) est fixé pour chaque saison. Les saisons déjà terminées ne sont pas modifiées.','Le coach organise la compétition, publie les séances et gère les saisons.']},
  {t:'Saisons et séances',b:['La compétition est organisée en saisons. Chaque saison suit le même déroulé :',
   '**Premières semaines :** 2 ou 3 metcons « tests », où il faut se donner à fond.',
   '**Pendant la saison :** on cherche à s’améliorer sur les mouvements de ces metcons tests, sans oublier la variété typique du Crosstraining.',
