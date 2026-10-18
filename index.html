@@ -226,6 +226,10 @@ body.modal-open{overflow:hidden}
 .pedit-head{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .pedit-head select{width:auto;flex:1;min-width:120px}
 .trow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:8px;align-items:center}
+.tgroup{display:grid;gap:6px}
+.trow.pend input:first-child{border-style:dashed;font-style:italic}
+.stepper{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.stepper input{width:88px;flex:0 0 88px;text-align:center}
 .banner{border:2px solid var(--edge);background:var(--surface);border-radius:4px;padding:14px;display:grid;gap:10px;margin-bottom:16px}
 .banner.warn{border-color:var(--accent)}
 .preview{font-family:var(--f-mono);font-size:14px;font-weight:600}
@@ -277,6 +281,8 @@ body.modal-open{overflow:hidden}
 .t-gsolo{--pc:#FF7F50;--pi:#14161A}
 .t-gduo{--pc:#5C6BC0}
 .t-binter{--pc:#2AA6E0;--pi:#14161A}
+.t-senior{--pc:#1F6FD6}
+.t-veteran{--pc:#4E8A2E}
 .t-ratio{--pc:#C2185B}
 .levels{display:grid;gap:8px}
 .lvl{border:1.5px solid var(--line);border-radius:4px;padding:10px;display:grid;gap:6px;background:var(--surface2)}
@@ -1070,6 +1076,16 @@ function periodFor(date){const l=plist();if(!l.length)return ALL;const m=l.filte
 function periodState(p){if(p.virtual)return 'live';const t=todayStr();return t<p.start?'soon':t>p.end?'done':'live';}
 const seasonNum=p=>p.virtual?1:((p.num!==undefined&&p.num!==null&&p.num!=='')?Number(p.num):(plist().findIndex(x=>x.id===p.id)+1));
 const seasonLabel=p=>'Saison '+seasonNum(p);
+/* catégorie d'âge : 'S' = Seniors (moins de 35 ans), 'V' = Vétérans (35 ans et +). La date de naissance reste privée (profil), seule la catégorie est publiée dans le log. */
+function ageCatOf(b){
+  const m=String(b||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);if(!m)return '';
+  const t=new Date();let a=t.getFullYear()-(+m[1]);
+  if(t.getMonth()+1<+m[2]||(t.getMonth()+1===+m[2]&&t.getDate()<+m[3]))a--;
+  if(a<0||a>120)return '';
+  return a>=35?'V':'S';
+}
+/* à côté des badges et trophées : le NOM de la saison (Bêta, Alpha…) ; « Saison N » seulement si elle n'a pas de nom */
+const seasonTag=p=>(p&&!p.virtual&&String(p.name||'').trim())||seasonLabel(p);
 const metconOf=w=>(w.parts||[]).find(p=>p.kind==='metcon');
 const levelsOf=m=>(m&&m.levels&&m.levels.length)?m.levels:[{name:'',tiers:(m&&m.tiers)||[]}];
 const activeLevels=m=>levelsOf(m).map((lv,i)=>[lv,i]).filter(x=>!x[0].off);
@@ -1388,6 +1404,7 @@ function computeBoard(period){
     r.strength=Object.values(best).reduce((a,b)=>a+b,0);
     /* poids / puissance : meilleures charges (hors traction lestée) divisées par le poids de corps */
     r.sex=lg.sex||'';
+    r.ageCat=lg.ageCat||'';
     r.weight=(uid===S.uid&&Number(S.prof.weight)>0)?Number(S.prof.weight):0; /* le poids reste privé : seul le rapport charge ÷ poids est publié (logs/{uid}.ratios) */
     const relL=Object.entries(best).filter(([k])=>!SIGNED.some(s=>norm(s)===k));
     r.strengthRel=relL.reduce((a,x)=>a+x[1],0);r.ratioN=relL.length;
@@ -1492,6 +1509,8 @@ const TROPHIES=[
  goalTrophy('gsolo','Solo gagnant',1,'1 séance'),
  leagueTrophy('bdeb','Meilleur débutant',0,'Débutant'),
  leagueTrophy('binter','Meilleur intermédiaire',1,'Intermédiaire'),
+ {id:'senior',name:'Meilleur Senior',desc:'Le meilleur score pondéré chez les athlètes de 18 à 34 ans : points de séance + points des metcons multipliés par le niveau moyen choisi, comme Le GOAT. La date de naissance se renseigne dans le profil (elle reste privée, seule la catégorie est visible).',key:r=>[r.weighted,r.total],show:r=>fmtN(r.weighted)+' pts pondérés · '+multTxt(r),elig:r=>r.ageCat==='S'},
+ {id:'veteran',name:'Meilleur Vétéran',desc:'Le meilleur score pondéré chez les athlètes de 35 ans et plus : points de séance + points des metcons multipliés par le niveau moyen choisi, comme Le GOAT. La date de naissance se renseigne dans le profil (elle reste privée, seule la catégorie est visible).',key:r=>[r.weighted,r.total],show:r=>fmtN(r.weighted)+' pts pondérés · '+multTxt(r),elig:r=>r.ageCat==='V'},
  {id:'objectif',name:'Objectif tenu',desc:'Avoir tenu son nombre de séances par semaine, chaque semaine de la saison.',custom:b=>b.rows.filter(r=>r.goalMet),show:r=>r.goal+' séance'+(r.goal>1?'s':'')+' par semaine'}
 ];
 function winners(t,board,gid){
@@ -1667,7 +1686,7 @@ function movBackGo(){
 /* ---------- écritures ---------- */
 let chain=Promise.resolve();
 function run(fn){chain=chain.then(fn).catch(e=>{toast(errMsg(e),true);});return chain;}
-const saveProf=()=>run(async()=>{await S.db.doc('users/'+S.uid+'/private/profile').set({prs:S.prof.prs||{},sex:S.prof.sex||'',genEx:S.prof.genEx||null,genAll:S.prof.genAll||null,words:S.prof.words||[],mvcfg:S.prof.mvcfg||{},weight:Number(S.prof.weight)>0?Number(S.prof.weight):0});});
+const saveProf=()=>run(async()=>{await S.db.doc('users/'+S.uid+'/private/profile').set({prs:S.prof.prs||{},sex:S.prof.sex||'',birth:S.prof.birth||'',genEx:S.prof.genEx||null,genAll:S.prof.genAll||null,words:S.prof.words||[],mvcfg:S.prof.mvcfg||{},weight:Number(S.prof.weight)>0?Number(S.prof.weight):0});});
 const needPseudo=()=>S.uid&&S.loaded.logs&&!(S.logs[S.uid]&&S.logs[S.uid].pseudo);
 /* groupes : un seul document config/groups {list:[{id,name}], of:{uid:idDuGroupe}}, écrit par le coach seul */
 const groupsList=()=>(S.groups&&S.groups.list)||[];
@@ -1752,6 +1771,8 @@ function saveLog(patch,msg,uid){
     if(rt&&Object.keys(rt).length)data.ratios=rt; /* rapport charge ÷ poids par saison (le poids, lui, est privé) */
     const sx=patch.sex!==undefined?patch.sex:(cur.sex||(uid===S.uid?S.prof.sex:'')||'');
     if(sx)data.sex=sx;
+    const ac=patch.ageCat!==undefined?patch.ageCat:(cur.ageCat||'');
+    if(ac)data.ageCat=ac;
     const bd=patch.badge!==undefined?patch.badge:cur.badge;
     if(bd)data.badge=bd;
     const av=patch.avatar!==undefined?patch.avatar:cur.avatar;
@@ -2023,6 +2044,8 @@ function render(){
     return;
   }
   if(S.uid&&ready()&&S.logs[S.uid]&&S.prof.sex&&S.logs[S.uid].sex!==S.prof.sex&&S.sexSync!==S.prof.sex){S.sexSync=S.prof.sex;saveLog({sex:S.prof.sex});}
+  /* catégorie d'âge : recalculée à chaque ouverture (un athlète qui fête ses 35 ans passe chez les Vétérans) */
+  if(S.uid&&ready()&&S.profLoaded&&S.logs[S.uid]){const ac=ageCatOf(S.prof.birth);if((S.logs[S.uid].ageCat||'')!==ac&&S.ageSync!==ac){S.ageSync=ac;saveLog({ageCat:ac});}}
   const p=selPeriod();
   $('#hdr-right').replaceChildren(h('span',{class:'chip '+(periodState(p)==='live'?'live':'done'),style:'max-width:40vw;overflow:hidden;text-overflow:ellipsis;display:block'},p.virtual?'Saison en cours':(p.name||seasonLabel(p))),helpBtn());
   const tabs=[['feed','Fil'],['today','Séance'],['board','Classement']];
@@ -2070,7 +2093,7 @@ const lvPill=r=>r.lvlN?h('span',{class:'chip lv',title:'Niveau moyen choisi sur 
    Il est calculé (jamais stocké) : il est remis à la fin de la saison aux gagnants du trophée. */
 const BADGES={goat:['#1F55D6','#FFFFFF'],lagoat:['#E0489A','#FFFFFF'],points:['#0E8A8A','#FFFFFF'],regulier:['#1E9B4A','#FFFFFF'],serie:['#D8321A','#FFFFFF'],
   top:['#2B3A67','#FFFFFF'],perf:['#F4C400','#14161A'],fort:['#1B1D20','#FFFFFF'],lafort:['#C2368F','#FFFFFF'],ratio:['#B5651D','#FFFFFF'],mcardio:['#F07A18','#FFFFFF'],
-  mgym:['#8B929A','#14161A'],mhaltero:['#F3F3F1','#14161A'],tonnage:['#1B1D20','#F4C400'],objectif:['#7B3FC4','#FFFFFF'],bdeb:['#6CC24A','#14161A'],binter:['#2AA6E0','#FFFFFF'],gsolo:['#FF7F50','#14161A'],gduo:['#5C6BC0','#FFFFFF']};
+  mgym:['#8B929A','#14161A'],mhaltero:['#F3F3F1','#14161A'],tonnage:['#1B1D20','#F4C400'],objectif:['#7B3FC4','#FFFFFF'],bdeb:['#6CC24A','#14161A'],binter:['#2AA6E0','#FFFFFF'],gsolo:['#FF7F50','#14161A'],gduo:['#5C6BC0','#FFFFFF'],senior:['#1F6FD6','#FFFFFF'],veteran:['#4E8A2E','#FFFFFF']};
 const GOAT='<g transform="translate(-4.8 -5.1) scale(1.15)"><g stroke="#1A1A1A" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round">'+
   '<path d="M26 20C19 14 14 9 16 2C24 4 30 11 30 19Z" fill="#D9C28F"/><path d="M38 20C45 14 50 9 48 2C40 4 34 11 34 19Z" fill="#D9C28F"/>'+
   '<path d="M22 25L6 24C3 28 7 32 12 32L23 32Z" fill="#F4E9D0"/><path d="M42 25L58 24C61 28 57 32 52 32L41 32Z" fill="#F4E9D0"/>'+
@@ -2080,6 +2103,8 @@ const GOAT='<g transform="translate(-4.8 -5.1) scale(1.15)"><g stroke="#1A1A1A" 
   '<rect x="24.5" y="31.2" width="4" height="1.7" rx=".8" fill="#1A1A1A"/><rect x="35.5" y="31.2" width="4" height="1.7" rx=".8" fill="#1A1A1A"/>'+
   '<ellipse cx="29.6" cy="49.5" rx="1.2" ry="1.7" fill="#1A1A1A"/><ellipse cx="34.4" cy="49.5" rx="1.2" ry="1.7" fill="#1A1A1A"/></g>';
 const ICONS={goat:GOAT,lagoat:GOAT,
+  senior:'<polygon points="32,5 40,24 60,26 45,39 50,59 32,48 14,59 19,39 4,26 24,24" fill="currentColor"/>',
+  veteran:'<polygon points="32,5 40,24 60,26 45,39 50,59 32,48 14,59 19,39 4,26 24,24" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/>',
   points:'<polygon points="32,5 40,24 60,26 45,39 50,59 32,48 14,59 19,39 4,26 24,24" fill="currentColor"/>',
   regulier:'<g fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="14" width="46" height="42" rx="6"/><path d="M9 28H55M20 6V18M44 6V18M21 42L29 50L43 35"/></g>',
   serie:'<g fill="none" stroke="currentColor" stroke-width="6"><rect x="3" y="21" width="35" height="22" rx="11"/><rect x="26" y="21" width="35" height="22" rx="11"/></g>',
@@ -2119,7 +2144,7 @@ function badgeHTML(tid,label,size){
 /* ---- badges illustrés (saisons suivantes) ----
    Images dans assets/embedded/badge-<trophée>.webp (280 x 300, plaque du bas vide). Le nom de la saison s'écrit sur la plaque ;
    le badge est trop petit pour le lire sous ~100 px : il reste alors dans l'info-bulle. Les saisons Alpha et Bêta gardent les anciens badges dessinés. */
-const BADGE_IMG_Y={goat:0.9167,lagoat:0.9167,points:0.92,regulier:0.9167,serie:0.9167,top:0.9167,perf:0.9133,lafort:0.92,fort:0.9325,mcardio:0.9183,mgym:0.9167,mhaltero:0.9167,tonnage:0.955,gduo:0.9067,gsolo:0.9083,bdeb:0.9083,binter:0.9083,objectif:0.9083,ratio:0.9183}; /* hauteur du centre de la plaque, en fraction de l'image */
+const BADGE_IMG_Y={senior:0.8793,veteran:0.8793,goat:0.9167,lagoat:0.9167,points:0.92,regulier:0.9167,serie:0.9167,top:0.9167,perf:0.9133,lafort:0.92,fort:0.9325,mcardio:0.9183,mgym:0.9167,mhaltero:0.9167,tonnage:0.955,gduo:0.9067,gsolo:0.9083,bdeb:0.9083,binter:0.9083,objectif:0.9083,ratio:0.9183}; /* hauteur du centre de la plaque, en fraction de l'image */
 const BADGE_IMG_FILE={}; /* correspondances trophée -> fichier quand ils diffèrent (ex. {ratio:'fort'}) ; chaque trophée a son image badge-<id>.webp */
 const BADGE_LEGACY_RX=/alpha|b[eé]ta/i; /* saisons dont les badges restent inchangés */
 const badgeImgOn=(per,tid)=>!!per&&!!BADGE_IMG_Y[BADGE_IMG_FILE[tid]||tid]&&!BADGE_LEGACY_RX.test(String(per.name||''));
@@ -2169,7 +2194,7 @@ function badgesSection(){
     h('div',{class:'bgrid'},mine.map(a=>{
       const on=!!cur&&cur.id===a.id;
       return h('button',{type:'button',class:'bsel','aria-pressed':on?'true':'false',onclick:()=>saveLog({badge:on?'':a.id},on?'Badge retiré':'Badge choisi')},
-        badgeEl(a.tid,a.per.name,badgeImgOn(a.per,a.tid)?120:84,null,a.per),h('span',{class:'nm'},trophyName(a.tid)),h('span',{class:'sub'},seasonLabel(a.per)+' · '+a.per.name+(scopeName(a.gid,a.per)?' · '+scopeName(a.gid,a.per):'')));
+        badgeEl(a.tid,a.per.name,badgeImgOn(a.per,a.tid)?120:84,null,a.per),h('span',{class:'nm'},trophyName(a.tid)),h('span',{class:'sub'},seasonTag(a.per)+(scopeName(a.gid,a.per)?' · '+scopeName(a.gid,a.per):'')));
     })));
   return sec;
 }
@@ -3868,6 +3893,7 @@ function entryForm(w,date){
   (w.parts||[]).forEach(p=>{
     if(p.kind==='force'){
       if(S.entry.only)return;
+      form.append(h('p',{class:'hint'},h('b',{},'Échauffement : '),'ne le note pas ici. Inscris seulement tes séries de travail, sinon l’échauffement serait compté dans ton tonnage.'));
       const prb=prBox(p,date);
       const fd=(!S.entry.coach&&(S.entry.uid||S.uid)===S.uid)?forceDefault(p):null;
       const signed=SIGNED.includes(p.movement);
@@ -3978,7 +4004,7 @@ function trophyCard(t,ws,p,mine){
   return h('div',{class:'trophy'+(ws.length?'':' empty')+(mine?' mine':'')},
     trophyIcon(t.id,ws.length>0,periodState(p)==='done'?p:null),
     h('div',{},
-      h('div',{class:'ttop'},h('div',{class:'tn'},t.name),ws.length?h('span',{class:'stamp'},seasonLabel(p)):null),
+      h('div',{class:'ttop'},h('div',{class:'tn'},t.name),ws.length?h('span',{class:'stamp'},seasonTag(p)):null),
       h('div',{class:'td'},t.desc),
       h('div',{class:'tw'},ws.length?ws.map(r=>r.pseudo).join(', ')+' · '+t.show(top):'Personne pour l’instant')));
 }
@@ -4903,12 +4929,12 @@ function trophiesSection(uid,title,emptyTxt){
     const body=h('div',{class:'stack',id:'tro-body'});
     if(!earned.length)body.append(h('p',{class:'muted'},emptyTxt));
     else{
-      if(seasons.length>1)body.append(field('Saison',sel([['','Toutes les saisons']].concat(seasons.map(q=>[q.id,seasonLabel(q)+(q.name?' · '+q.name:'')])),pick,v=>{S.trophSeason=v;render();},{id:'tro-season'})));
+      if(seasons.length>1)body.append(field('Saison',sel([['','Toutes les saisons']].concat(seasons.map(q=>[q.id,seasonTag(q)])),pick,v=>{S.trophSeason=v;render();},{id:'tro-season'})));
       seasons.filter(q=>!pick||q.id===pick).forEach(per=>{
-        body.append(h('div',{class:'stack'},h('p',{class:'flabel'},seasonLabel(per)),
+        body.append(h('div',{class:'stack'},h('p',{class:'flabel'},seasonTag(per)),
           h('div',{class:'trophies'},earned.filter(x=>x.per===per).map(x=>h('div',{class:'trophy'+(uid===S.uid?' mine':'')},
             trophyIcon(x.t.id,true,per),
-            h('div',{},h('div',{class:'ttop'},h('div',{class:'tn'},x.t.name),h('span',{class:'stamp'},seasonLabel(per))),
+            h('div',{},h('div',{class:'ttop'},h('div',{class:'tn'},x.t.name),h('span',{class:'stamp'},seasonTag(per))),
               h('div',{class:'td'},'Décerné'),
               h('div',{class:'tw'},x.t.show(x.mine))))))));
       });
@@ -4973,14 +4999,17 @@ function viewProfile(){
   const lgMe=S.logs[S.uid]||{};
   const pin=h('input',{id:'pseudo-edit',type:'text',maxlength:'24',value:pseudo});
   const win=h('input',{id:'weight-edit',type:'text',inputmode:'decimal',placeholder:'83',value:Number(S.prof.weight)>0?String(S.prof.weight).replace('.',','):''});
+  const bin=h('input',{id:'birth-edit',type:'date',value:S.prof.birth||'',max:todayStr()});
   const sx=sel([['','Non renseigné'],['F','Femme'],['H','Homme']],S.prof.sex||'',v=>{S.prof.sex=v;saveProf();if(S.logs[S.uid])saveLog({sex:v});render();},{id:'sex-select'});
   const infosForm=(h('form',{class:'card',onsubmit:e=>{e.preventDefault();
       const v=pin.value.trim();if(v.length<2){toast('Pseudo de 2 caractères minimum',true);return;}
       const wraw=win.value.trim(),wt=wraw===''?0:parseNum(wraw);
       if(wt===null||wt<0||wt>400){toast('Poids illisible. Écris-le en kg, par exemple 83.',true);return;}
-      S.prof.weight=wt;saveProf();saveLog({pseudo:v},'Infos mises à jour');}},
+      const bv=bin.value||'';if(bv&&ageCatOf(bv)===''){toast('Date de naissance illisible.',true);return;}
+      S.prof.weight=wt;S.prof.birth=bv;saveProf();S.ageSync=ageCatOf(bv);saveLog({pseudo:v,ageCat:ageCatOf(bv)},'Infos mises à jour');}},
     h('h2',{class:'h2'},'Mes infos'),field('Pseudo affiché dans le classement',pin),
     field('Poids de corps (kg)',win,'Sert au trophée poids / puissance. Seul ton rapport charge ÷ poids apparaît dans l’appli, jamais ton poids.'),
+    field('Date de naissance',bin,'Sert aux trophées Seniors (18 à 34 ans) et Vétérans (35 ans et +). Seule ta catégorie apparaît dans l’appli, jamais ta date de naissance.'),
     h('div',{class:'row'},h('button',{class:'btn',type:'submit'},'Enregistrer mes infos')),
     field('Sexe',sx,'Sert à afficher la bonne charge dans les metcons et à attribuer le trophée LA GOAT.')));
   const pv=S.profView;
@@ -5486,10 +5515,11 @@ function draftToWod(d){
       const build=(lv,k)=>{
         const name=lv.name.trim()||LEVEL_NAMES[k];
         const tiers=[];
-        for(const r of lv.tiers){
+        for(const [j,r] of lv.tiers.entries()){
+          if(j===lv.pend)continue; /* palier recopié par le bouton +/− mais jamais validé : ignoré */
           if(String(r.t).trim()==='')continue; /* ligne sans temps/score : ignorée, même si les points sont préremplis */
-          const t=p.format==='FT'?parseTime(r.t):(p.format==='EMOM'&&p.deadBy)?parseHold(r.t):parseNum(r.t),pts=parseNum(r.p);
-          if(t===null||pts===null)throw new Error('Palier illisible ('+o.label+', '+name+')'+(p.format==='FT'?' : écris le temps comme 12:00.':(p.format==='EMOM'&&p.deadBy)?' : écris le temps tenu comme 14:00 (ou 14 pour 14 minutes).':' : écris un nombre de tours.'));
+          const t=p.format==='FT'?parseTime(r.t):(p.format==='EMOM'&&p.deadBy)?parseHold(r.t):tierRounds({format:p.format,content:p.content,repsRound:o.repsRound||0},r.t),pts=parseNum(r.p);
+          if(t===null||pts===null)throw new Error('Palier illisible ('+o.label+', '+name+')'+(p.format==='FT'?' : écris le temps comme 12:00.':(p.format==='EMOM'&&p.deadBy)?' : écris le temps tenu comme 14:00 (ou 14 pour 14 minutes).':' : écris un nombre de tours (ou « tours+reps », par exemple 6+7, si « Reps par tour » est renseigné).'));
           tiers.push({t,p:pts});
         }
         tiers.sort((a,b)=>p.format==='FT'?a.t-b.t:b.t-a.t);
@@ -5513,7 +5543,7 @@ function draftToWod(d){
         if(k===2)return rx;
         const name=lv.name.trim()||LEVEL_NAMES[k];
         if(lv.mode==='off')return {name,off:true,tiers:[]};
-        if(lv.mode==='custom')return build(p.syncTiers?Object.assign({},lv,{tiers:p.levels[2].tiers,capTiers:p.levels[2].capTiers}):lv,k);
+        if(lv.mode==='custom')return build(p.syncTiers?Object.assign({},lv,{tiers:p.levels[2].tiers,capTiers:p.levels[2].capTiers,pend:p.levels[2].pend}):lv,k);
         return Object.assign({},rx,{name,tiers:rx.tiers.map(t=>({t:t.t,p:t.p})),capTiers:(rx.capTiers||[]).map(t=>({t:t.t,p:t.p}))});
       });
     }
@@ -5770,15 +5800,114 @@ function mvCfgSection(){
     h('p',{class:'hint'},'N’oublie pas d’enregistrer : la configuration est gardée dans ton profil de coach et sert seulement à préremplir l’éditeur de WOD. Les séances déjà publiées ne changent pas.'));
   return el;
 }
+/* ---------- réglage rapide des paliers ----------
+   - le premier palier saisi se recopie sur le palier suivant (vide) ; le bouton +/− applique l'intervalle puis descend d'un palier ;
+   - changer l'intervalle ne touche pas aux paliers déjà remplis ;
+   - un palier ajouté dans le désordre (le 18 oublié entre le 19 et le 17) se range tout seul : les scores glissent d'un cran, les POINTS restent à leur place. */
+const tierKind=p=>p.format==='FT'?'ft':isDead(p)?'dead':'amrap';
+const amrapModel=p=>({format:p.format,content:p.content,repsRound:Number(p.repsRound)||0});
+/* score d'un palier en tours : « 8 », « 6,5 » ou « 6+7 » (6 tours + 7 reps, si « Reps par tour » est connu) */
+function tierRounds(m,s){
+  const t=String(s).trim(),x=t.match(/^(\d+)\s*\+\s*(\d+)$/);
+  if(x){const tot=roundTotal(m);if(!(tot>0)||+x[2]>=tot)return null;return Math.round((+x[1]+fracOf(m,+x[2]))*10000)/10000;}
+  return parseNum(t);
+}
+const tierParse=(p,s)=>{const k=tierKind(p);return k==='ft'?parseTime(s):k==='dead'?parseHold(s):tierRounds(amrapModel(p),s);};
+function stepDefault(p){
+  const k=tierKind(p);
+  if(k==='ft')return '0:15';
+  if(k==='dead')return fmtTime((Number(String(p.interval).replace(',','.'))||1)*60);
+  return roundTotal(amrapModel(p))>0?'0+5':'1';
+}
+function stepParse(p,s){
+  const k=tierKind(p),t=String(s).trim();
+  if(k==='amrap'){
+    const x=t.match(/^(\d+)?\s*\+\s*(\d+)$/);
+    if(x)return roundTotal(amrapModel(p))>0?{tours:+(x[1]||0),reps:+x[2]}:null;
+    return /^\d+$/.test(t)?{tours:+t,reps:0}:null;
+  }
+  let v=parseTime(t);
+  if(v===null&&/^\d+$/.test(t))v=k==='dead'?+t*60:+t;
+  return v>0?{sec:v}:null;
+}
+/* applique l'intervalle au score du palier : For Time = on ajoute du temps ; Dead by et AMRAP = le palier suivant est moins bon, on retire */
+function stepApply(p,txt,st){
+  const k=tierKind(p);
+  if(k==='ft'){const v=parseTime(txt);return v===null?null:fmtTime(v+st.sec);}
+  if(k==='dead'){const v=parseHold(txt);if(v===null)return null;const n=v-st.sec;return n<0?null:fmtTime(n);}
+  const m=amrapModel(p),tot=roundTotal(m)||0,t=String(txt).trim(),x=t.match(/^(\d+)\s*\+\s*(\d+)$/);
+  let T,R;
+  if(x){T=+x[1];R=+x[2];}
+  else{const v=parseNum(t);if(v===null||v<0)return null;T=Math.floor(v+1e-9);R=tot>0?repsOf(m,v-T):0;if(tot===0&&v-T>1e-9)return null;}
+  if(tot>0){
+    const n=T*tot+R-(st.tours*tot+st.reps);if(n<0)return null;
+    const nt=Math.floor(n/tot),nr=n%tot;return nr?nt+'+'+nr:String(nt);
+  }
+  const n=T-st.tours;return n<0?null:String(n);
+}
+/* points du palier suivant : même écart que les deux derniers (1 par défaut) */
+function nextPoints(rows,idx){
+  if(idx<1)return '';
+  const a=parseNum(rows[idx-1].p);if(a===null)return '';
+  const b=idx>=2?parseNum(rows[idx-2].p):null,d=(b!==null&&b>a)?b-a:1,v=a-d;
+  return v>0?String(Math.round(v*100)/100).replace('.',','):'';
+}
+/* range les scores dans l'ordre (meilleur en haut) sans toucher aux points : retourne true si quelque chose a bougé */
+function reslotTiers(rows,parse,asc){
+  const idx=[],vals=[];
+  for(let j=0;j<rows.length;j++){
+    const s=String(rows[j].t).trim();if(s==='')continue;
+    const v=parse(s);if(v===null)return false;
+    idx.push(j);vals.push({s:rows[j].t,v,n:vals.length});
+  }
+  const sorted=vals.slice().sort((x,y)=>((asc?x.v-y.v:y.v-x.v)||x.n-y.n));
+  let changed=false;
+  idx.forEach((j,n)=>{if(rows[j].t!==sorted[n].s){rows[j].t=sorted[n].s;changed=true;}});
+  return changed;
+}
+function tierAfterEdit(p,lv,j){
+  const parse=s=>tierParse(p,s);
+  if(reslotTiers(lv.tiers,parse,p.format==='FT')){lv.pend=null;render();return;}
+  const r=lv.tiers[j];
+  if(r&&String(r.t).trim()!==''&&parse(r.t)!==null&&j+1<lv.tiers.length&&String(lv.tiers[j+1].t).trim()===''){
+    lv.tiers[j+1].t=r.t;lv.pend=j+1;render(); /* le palier suivant reprend le même score, en attente du bouton */
+  }
+}
+function tierStep(p,lv,j){
+  const k=tierKind(p),st=stepParse(p,lv.step||stepDefault(p));
+  if(!st){toast(k==='amrap'?'Intervalle illisible : écris « 0+5 » (tours + reps, « Reps par tour » doit être renseigné) ou un nombre de tours.':'Intervalle illisible : écris-le comme 0:15.',true);return;}
+  const row=lv.tiers[j],nt=stepApply(p,row.t,st);
+  if(nt===null){toast('Impossible d’appliquer l’intervalle à ce palier.',true);return;}
+  row.t=nt;lv.pend=null;
+  if(j+1>=lv.tiers.length)lv.tiers.push({t:'',p:nextPoints(lv.tiers,j+1)});
+  const nx=lv.tiers[j+1];
+  if(String(nx.t).trim()===''){nx.t=nt;lv.pend=j+1;}
+  render();
+}
+function tierAdd(p,lv){
+  const n=lv.tiers.length,last=n?lv.tiers[n-1]:null;
+  const ok=!!last&&lv.pend==null&&String(last.t).trim()!==''&&tierParse(p,last.t)!==null;
+  lv.tiers.push({t:ok?last.t:'',p:nextPoints(lv.tiers,n)});
+  if(ok)lv.pend=n;
+  render();
+}
 function tiersEditor(p,lv,i,k){
-  const ft=p.format==='FT',dd=isDead(p),tm=ft||dd;
+  const ft=p.format==='FT',dd=isDead(p),kind=tierKind(p),pend=(lv.pend===undefined||lv.pend===null)?-1:lv.pend;
+  const stepper=j=>h('div',{class:'stepper'},
+    h('button',{class:'btn sm primary',type:'button','aria-label':kind==='ft'?'Ajouter l’intervalle à ce palier':'Retirer l’intervalle à ce palier',onclick:()=>tierStep(p,lv,j)},kind==='ft'?'+':'−'),
+    h('input',{type:'text','aria-label':'Intervalle entre deux paliers',value:lv.step||stepDefault(p),oninput:e=>{lv.step=e.target.value;}}),
+    h('span',{class:'hint'},'intervalle (touche-le pour le changer)'));
   return h('div',{class:'stack'},
     h('div',{class:'flabel'},ft?'Paliers de temps : temps inférieur ou égal au palier':dd?'Paliers de temps tenu : temps tenu supérieur ou égal au palier (plus on tient, plus on marque)':'Paliers de tours : score supérieur ou égal au palier'),
-    lv.tiers.map((r,j)=>h('div',{class:'trow'},
-      h('input',{id:'p'+i+'-l'+k+'-t'+j,type:'text','aria-label':ft?'Temps du palier':dd?'Temps tenu du palier':'Tours du palier',value:r.t,placeholder:ft?'12:00':dd?'15:00':'8',oninput:e=>{r.t=e.target.value;}}),
-      h('input',{id:'p'+i+'-l'+k+'-p'+j,type:'text',inputmode:'numeric','aria-label':'Points du palier',value:r.p,placeholder:'points',oninput:e=>{r.p=e.target.value;}}),
-      h('button',{class:'btn sm',type:'button','aria-label':'Retirer le palier',onclick:()=>{lv.tiers.splice(j,1);render();}},'✕'))),
-    h('div',{class:'row'},h('button',{class:'btn sm',type:'button',onclick:()=>{lv.tiers.push({t:'',p:''});render();}},'Ajouter un palier')));
+    kind==='amrap'?h('p',{class:'hint'},'Tu peux écrire « 6+7 » (6 tours + 7 reps) quand « Reps par tour » est renseigné.'):null,
+    lv.tiers.map((r,j)=>{
+      const row=h('div',{class:'trow'+(j===pend?' pend':'')},
+        h('input',{id:'p'+i+'-l'+k+'-t'+j,type:'text','aria-label':ft?'Temps du palier':dd?'Temps tenu du palier':'Tours du palier',value:r.t,placeholder:ft?'12:00':dd?'15:00':'8',oninput:e=>{r.t=e.target.value;if(lv.pend===j)lv.pend=null;},onchange:()=>tierAfterEdit(p,lv,j)}),
+        h('input',{id:'p'+i+'-l'+k+'-p'+j,type:'text',inputmode:'numeric','aria-label':'Points du palier',value:r.p,placeholder:'points',oninput:e=>{r.p=e.target.value;}}),
+        h('button',{class:'btn sm',type:'button','aria-label':'Retirer le palier',onclick:()=>{lv.tiers.splice(j,1);if(lv.pend===j)lv.pend=null;else if(lv.pend>j)lv.pend--;render();}},'✕'));
+      return j===pend?h('div',{class:'tgroup'},row,stepper(j)):row;
+    }),
+    h('div',{class:'row'},h('button',{class:'btn sm',type:'button',onclick:()=>tierAdd(p,lv)},'Ajouter un palier')));
 }
 function capTiersEditor(p,lv,i,k){
   const pl=planOf({format:p.format,content:p.content,repsRound:Number(p.repsRound)||0,lineRounds:p.format==='FT'&&!!p.lineRounds});
@@ -5795,7 +5924,7 @@ function capTiersEditor(p,lv,i,k){
     h('div',{class:'flabel'},'Si le time cap arrête l’athlète : score supérieur ou égal au palier'),
     h('p',{class:'hint'},info),
     lv.capTiers.map((r,j)=>h('div',{class:'trow'},
-      h('input',{id:'p'+i+'-l'+k+'-ct'+j,type:'text','aria-label':'Score au time cap du palier',value:r.t,placeholder:pl?'5+4':'81',oninput:e=>{r.t=e.target.value;}}),
+      h('input',{id:'p'+i+'-l'+k+'-ct'+j,type:'text','aria-label':'Score au time cap du palier',value:r.t,placeholder:pl?'5+4':'81',oninput:e=>{r.t=e.target.value;},onchange:()=>{const cm={format:p.format,content:p.content,repsRound:Number(p.repsRound)||0,lineRounds:p.format==='FT'&&!!p.lineRounds};if(reslotTiers(lv.capTiers,x=>parseCap(cm,x),false))render();}}),
       h('input',{id:'p'+i+'-l'+k+'-cp'+j,type:'text',inputmode:'numeric','aria-label':'Points du palier time cap',value:r.p,placeholder:'points',oninput:e=>{r.p=e.target.value;}}),
       h('button',{class:'btn sm',type:'button','aria-label':'Retirer le palier',onclick:()=>{lv.capTiers.splice(j,1);render();}},'✕'))),
     h('div',{class:'row'},h('button',{class:'btn sm',type:'button',onclick:()=>{lv.capTiers.push({t:'',p:''});render();}},'Ajouter un palier time cap')));
@@ -5938,7 +6067,7 @@ function wodEditor(modal){
     box.append(h('div',{class:'pedit-head'},
       sel([['force','Force'],['renfo','Renforcement'],['metcon','Metcon (rapporte des points)'],['autre','Autre']],p.kind,v=>{
         p.kind=v;
-        if(v==='metcon'&&p.format==='EMOM'&&!p.deadBy){p.deadBy=true;p.levels.forEach(lv=>{lv.tiers=blankTiers();lv.capTiers=blankCapTiers();});}
+        if(v==='metcon'&&p.format==='EMOM'&&!p.deadBy){p.deadBy=true;p.levels.forEach(lv=>{lv.tiers=blankTiers();lv.capTiers=blankCapTiers();lv.pend=null;lv.step='';});}
         if(v==='metcon')d.parts.forEach((q,j)=>{if(j!==i&&q.kind==='metcon')q.kind='autre';});
         render();},{id:'p'+i+'-kind','aria-label':'Type de la partie'}),
       h('button',{class:'btn sm',type:'button','aria-label':'Monter',disabled:i===0,onclick:()=>{d.parts.splice(i-1,0,d.parts.splice(i,1)[0]);render();}},'↑'),
@@ -5954,7 +6083,7 @@ function wodEditor(modal){
     if(metcon){
       const md=roundModel({format:p.format,content:p.content});
       box.append(h('div',{class:'grid2'},
-        field('Format',sel([['FT','For Time'],['AMRAP','AMRAP'],['DEAD','EMOM Dead by (E1MOM, E2MOM…)']].concat((p.format==='EMOM'&&!p.deadBy)?[['EMOM','EMOM ancien (tours réussis)']]:[]),p.format==='EMOM'?(p.deadBy?'DEAD':'EMOM'):p.format,v=>{if(v==='DEAD'){p.format='EMOM';p.deadBy=true;}else{p.format=v;p.deadBy=false;}p.levels.forEach(lv=>{lv.tiers=blankTiers();lv.capTiers=blankCapTiers();});render();},{id:'p'+i+'-fmt'}),'En metcon, l’EMOM est toujours un Dead by (il rapporte des points). Changer le format efface les paliers. Pour un EMOM sans points, choisis Renforcement.'),
+        field('Format',sel([['FT','For Time'],['AMRAP','AMRAP'],['DEAD','EMOM Dead by (E1MOM, E2MOM…)']].concat((p.format==='EMOM'&&!p.deadBy)?[['EMOM','EMOM ancien (tours réussis)']]:[]),p.format==='EMOM'?(p.deadBy?'DEAD':'EMOM'):p.format,v=>{if(v==='DEAD'){p.format='EMOM';p.deadBy=true;}else{p.format=v;p.deadBy=false;}p.levels.forEach(lv=>{lv.tiers=blankTiers();lv.capTiers=blankCapTiers();lv.pend=null;lv.step='';});render();},{id:'p'+i+'-fmt'}),'En metcon, l’EMOM est toujours un Dead by (il rapporte des points). Changer le format efface les paliers. Pour un EMOM sans points, choisis Renforcement.'),
         field('Détail (time cap, durée)',tin(p,'detail',{id:'p'+i+'-detail',placeholder:'Time cap 15 min'})),
         field('Durée / time cap (min)',tin(p,'dur',{id:'p'+i+'-dur',inputmode:'numeric',placeholder:'15'}),'Le minuteur s’arrête tout seul à cette durée. Prioritaire sur le champ Détail.'),
         field('Type de metcon (trophées)',sel([['','Choisir']].concat(Object.entries(FOCUS)),p.focus||'',v=>{p.focus=v;},{id:'p'+i+'-focus'}),'Obligatoire : détermine les trophées Metcon cardio, gym ou haltéro.'),
@@ -6367,7 +6496,7 @@ const RULES=[
  {t:'Fair-play et confiance',p:['**La triche ne peut pas être contrôlée.** Les résultats sont saisis par les participants eux-mêmes, et personne n’est en mesure de vérifier chaque séance. Cette compétition repose donc entièrement sur la confiance entre participants. En saisissant un résultat, tu certifies sur l’honneur que :'],
   b:['tu as réalisé la séance telle qu’elle a été publiée ;','tu as respecté les standards des mouvements ;','tu as choisi le niveau que tu as réellement fait ;','tu as respecté le time cap et saisi ton vrai temps ou ton vrai score.'],
   after:['Tricher ne trompe personne d’autre que soi-même, et gâche le plaisir de tous.']},
- {t:'Participation',b:['Certains classements demandent des informations dans ton profil : le sexe pour LA GOAT, le poids de corps pour « Poids / puissance »…','Le coach organise la compétition, publie les séances et gère les saisons.']},
+ {t:'Participation',b:['Certains classements demandent des informations dans ton profil : le sexe pour LA GOAT, la date de naissance pour les trophées Seniors et Vétérans, le poids de corps pour « Poids / puissance »…','Le coach organise la compétition, publie les séances et gère les saisons.']},
  {t:'Saisons et séances',b:['La compétition est organisée en saisons. Chaque saison suit le même déroulé :',
   '**Premières semaines :** 2 ou 3 metcons « tests », où il faut se donner à fond.',
   '**Pendant la saison :** on cherche à s’améliorer sur les mouvements de ces metcons tests, sans oublier la variété typique du Crosstraining.',
@@ -6903,7 +7032,7 @@ function startFirebase(){
     unsubs.push(S.db.collection('comments').onSnapshot(sn=>{S.comments=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));if(S.cerRefresh)S.cerRefresh();},()=>{}));
     /* réactions emoji : si les règles ne sont pas publiées, on ignore l'erreur */
     unsubs.push(S.db.collection('reactions').onSnapshot(sn=>{S.reactions=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));scheduleRender();},()=>{}));
-    unsubs.push(S.db.doc('users/'+S.uid+'/private/profile').onSnapshot(sn=>{const d=sn.exists?sn.data():null;S.prof={prs:(d&&d.prs)?JSON.parse(JSON.stringify(d.prs)):{},sex:(d&&d.sex)||'',genEx:(d&&Array.isArray(d.genEx))?d.genEx:null,genAll:(d&&Array.isArray(d.genAll))?d.genAll:null,words:(d&&Array.isArray(d.words))?d.words:[],mvcfg:(d&&d.mvcfg&&typeof d.mvcfg==='object')?JSON.parse(JSON.stringify(d.mvcfg)):{},weight:(d&&Number(d.weight)>0)?Number(d.weight):0};S.profLoaded=true;scheduleRender();selfSync();},fail));
+    unsubs.push(S.db.doc('users/'+S.uid+'/private/profile').onSnapshot(sn=>{const d=sn.exists?sn.data():null;S.prof={prs:(d&&d.prs)?JSON.parse(JSON.stringify(d.prs)):{},sex:(d&&d.sex)||'',birth:(d&&typeof d.birth==='string')?d.birth:'',genEx:(d&&Array.isArray(d.genEx))?d.genEx:null,genAll:(d&&Array.isArray(d.genAll))?d.genAll:null,words:(d&&Array.isArray(d.words))?d.words:[],mvcfg:(d&&d.mvcfg&&typeof d.mvcfg==='object')?JSON.parse(JSON.stringify(d.mvcfg)):{},weight:(d&&Number(d.weight)>0)?Number(d.weight):0};S.profLoaded=true;scheduleRender();selfSync();},fail));
     render();
   });
 }
