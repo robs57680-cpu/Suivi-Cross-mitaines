@@ -3204,6 +3204,7 @@ function partCard(p,w,date){
     h('div',{class:'phead'},h('h3',{},p.name||KIND[p.kind]||'Partie'),
       h('span',{class:'chip'+(metcon?' live':'')},metcon?'Metcon · points au classement':(KIND[p.kind]||'Autre')),
       metcon&&p.focus&&FOCUS[p.focus]?h('span',{class:'chip'},FOCUS[p.focus]):null,
+      metcon&&INTENS[p.intensity]?h('span',{class:'chip',title:INTENS[p.intensity].d},'Intensité : '+INTENS[p.intensity].l):null,
       metcon&&p.redo===false?h('span',{class:'chip miss'},'Pas de REDO'):null,
       p.kind==='force'&&p.movement?h('span',{class:'chip'},p.movement):null),
     fmtId?h('div',{class:'fmt'},h('button',{type:'button',class:'fmtbtn tipbtn','aria-expanded':S.tip===fmtId?'true':'false',onclick:()=>toggleTip(fmtId)},fmtLabel(p)),
@@ -5554,6 +5555,116 @@ function generateMetcon(){
   const focus=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a])[0];
   return Object.assign(blankPart('metcon'),{name:'Metcon',content,format:fmt,detail,repsRound,dur:String(durMin),focus,levels},fmt==='EMOM'?{interval:String(ivN),deadBy:true}:{});
 }
+
+/* ---------- intensité du metcon et calcul automatique des paliers ---------- */
+/* f = multiplicateur appliqué au temps « pur » (reps x secondes par rep) : transitions, fatigue, respirations */
+const INTENS={max:{l:'À fond',f:1.2,d:'Tu pousses du début à la fin.'},allure:{l:'Gestion d’allure',f:1.45,d:'Tu gardes un rythme régulier, sans te vider.'},cool:{l:'Pas à fond',f:1.8,d:'Séance tranquille : tu gardes de la marge.'}};
+const SEC_EXTRA={'Back Squat':3.5,'Bench Press':3,'Shoulder Press':3,'Jerk':4,'Down Up':3,'Crunch mains sur les cuisses':2,'Sauts sans corde':.5,'Pompes sur genoux':2,'Snatch':4,'Clean':4};
+const SEC_MAP={'Snatch':'Power Snatch','Row (rameur)':'Rameur'};
+let _secAl=null;
+function secAliases(){
+  if(_secAl)return _secAl;
+  const out=[];
+  GEN.forEach(x=>{const n=norm(x[0]);out.push([n,x[5],x[0]],[n+'s',x[5],x[0]]);});
+  GLOSS_AL.forEach(([al,gi])=>{
+    const nm=GLOSS[gi][0],g=GEN.find(x=>x[0]===(SEC_MAP[nm]||nm));
+    if(g)out.push([al,g[5],nm]);else if(SEC_EXTRA[nm]!==undefined)out.push([al,SEC_EXTRA[nm],nm]);
+  });
+  return _secAl=out.sort((a,b)=>b[0].length-a[0].length);
+}
+/* secondes par rep d'une ligne de mouvement (null si le mouvement n'est pas reconnu) */
+function secOf(txt){
+  const t=norm(txt);
+  for(const [al,sec,nm] of secAliases()){
+    const i=t.indexOf(al);if(i<0)continue;
+    const e=i+al.length;
+    if((i===0||!/[a-z0-9]/.test(t[i-1]))&&(e>=t.length||!/[a-z0-9]/.test(t[e])))return {sec,nm};
+  }
+  return null;
+}
+/* lit le contenu d'un metcon : temps « pur » de tout le travail, reps totales, temps d'un tour */
+function metEstimate(p){
+  const lines=String(p.content||'').split('\n').map(s=>s.replace(WTAG,'').trim()).filter(Boolean);
+  let rounds=1,nums=null;const items=[],unknown=[];
+  for(const s of lines){
+    if(LADDER.test(s)){nums=s.match(/^\d+(?:\s*[-–]\s*\d+)+/)[0].match(/\d+/g).map(Number);continue;}
+    const rm=s.match(/^(\d+)\s*(?:rounds?|tours?|rft)\b/i);
+    if(rm){rounds=+rm[1];continue;}
+    if(NOT_REPS.test(s))continue;
+    const dm=s.match(/^(\d+(?:[.,]\d+)?)\s*(km|m)\b\s*(.*)$/i);
+    let n=null,txt=s,sec=null,nm=s;
+    if(dm){ /* distance : course 0,3 s/m, rameur 0,25 s/m */
+      const meters=parseNum(dm[1])*(dm[2].toLowerCase()==='km'?1000:1);
+      const row=/ram|row|ski/i.test(dm[3]);
+      items.push({n:1,sec:meters*(row?.25:.3),nm:dm[3]||'Distance',fixed:true});continue;
+    }
+    const m=s.match(/^(\d+)\s*(?:x\s*)?(.+)$/i);
+    if(m){n=+m[1];txt=m[2];}
+    else if(!nums)continue; /* ligne sans nombre hors schéma : titre ou consigne */
+    const f=secOf(txt);
+    if(f){sec=f.sec;nm=f.nm;}else{sec=3;unknown.push(txt);}
+    items.push({n,sec,nm});
+  }
+  if(!items.length)return null;
+  let T=0,R=0,roundTime=0,roundReps=0;
+  if(nums){
+    const sum=nums.reduce((a,b)=>a+b,0);
+    items.forEach(it=>{
+      if(it.fixed){T+=it.sec*nums.length;R+=nums.length;}
+      else if(it.n===null){T+=sum*it.sec;R+=sum;}
+      else{T+=nums.length*it.n*it.sec;R+=nums.length*it.n;}
+    });
+    roundTime=T/nums.length;roundReps=R/nums.length;
+  }else{
+    items.forEach(it=>{const n=it.fixed?1:it.n;roundTime+=n*it.sec;roundReps+=n;});
+    T=roundTime*rounds;R=roundReps*rounds;
+  }
+  return {T,R,roundTime,roundReps,rounds,unknown};
+}
+/* remplit les paliers du metcon (Rx, puis les autres niveaux adaptés) à partir de l'intensité choisie */
+function calcTiers(p){
+  if(p.format==='EMOM'){toast('Dead by : le palier max est de tenir tout le time cap, rien à calculer.',true);return;}
+  const I=INTENS[p.intensity];
+  if(!I){toast('Choisis d’abord l’intensité du metcon.',true);return;}
+  const e=metEstimate(p);
+  if(!e||!(e.T>0)){toast('Je ne trouve pas de reps ni de mouvement dans le contenu.',true);return;}
+  const ft=p.format==='FT',dur=parseNum(p.dur||'');
+  if(!ft&&!(dur>0)){toast('Indique la durée de l’AMRAP (min) pour calculer les paliers.',true);return;}
+  const scale=[1.25,1.1,1];
+  const build=k=>{
+    const out=[],seen=new Set();
+    if(ft){
+      const base=e.T*I.f*scale[k];
+      for(let j=0;j<10;j++){
+        const t=Math.max(5,Math.round(base*(1+.6*j/9)/5)*5);
+        if(dur>0&&t>dur*60)break;
+        if(!seen.has(t)){seen.add(t);out.push({t:fmtTime(t),p:String(10-out.length)});}
+      }
+      if(!out.length)out.push({t:fmtTime(Math.round(dur*60)),p:'10'});
+    }else{
+      const est=dur*60/(e.roundTime*I.f*scale[k]);
+      for(let j=0;j<10;j++){
+        const v=Math.round(est*(1-.4*j/9)*4)/4;
+        if(v>0&&!seen.has(v)){seen.add(v);out.push({t:String(v).replace('.',','),p:String(10-out.length)});}
+      }
+    }
+    return out;
+  };
+  p.levels.forEach((lv,k)=>{
+    if(k<2&&(lv.mode==='off'||lv.mode==='same'||p.syncTiers))return;
+    lv.tiers=build(k);lv.pend=null;
+  });
+  p.levels[2].tiers=build(2);p.levels[2].pend=null;
+  if(ft&&p.levels[2].capTiers.every(c=>!String(c.t).trim()&&!String(c.p).trim())){
+    const ct=[[.9,'1'],[.7,'0,5']].map(([m,pt])=>({t:String(Math.max(1,Math.round(e.R*m))),p:pt}));
+    p.levels.forEach((lv,k)=>{if(k===2||(lv.mode==='custom'&&!p.syncTiers))lv.capTiers=blankCapTiers().map((c,i)=>ct[i]||c);});
+  }
+  const top=p.levels[2].tiers[0];
+  p.estInfo=(ft?'Palier max (10 pts) : '+top.t+' pour le niveau Rx, '+I.l.toLowerCase()+'.':'Palier max (10 pts) : '+top.t+' tours pour le niveau Rx, '+I.l.toLowerCase()+'.')
+    +' Temps pur estimé '+fmtTime(Math.round(e.T))+' ('+fmtN(Math.round(e.R))+' reps)'+(ft?'':' par tour : '+fmtTime(Math.round(e.roundTime)))
+    +(e.unknown.length?' · Mouvement non reconnu (3 s par rep supposées) : '+e.unknown.join(', '):'')+'. À ajuster à ta façon de coacher.';
+  render();
+}
 function genIntoDraft(d){
   const p=generateMetcon();if(!p)return;
   const i=d.parts.findIndex(x=>x.kind==='metcon');
@@ -5642,7 +5753,7 @@ function parseCap(m,s){
   return null;
 }
 const blankLevels=()=>LEVEL_NAMES.map((n,k)=>({name:n,loadF:'',loadH:'',note:'',vars:{},tiers:blankTiers(),capTiers:blankCapTiers(),mode:k<2?'same':'custom',touched:false}));
-const blankPart=k=>({kind:k,name:'',content:'',movement:'',format:'FT',detail:'',repsRound:'',dur:'',interval:'1',deadBy:false,focus:'',syncTiers:true,word:'',lineRounds:false,redo:true,levels:blankLevels()});
+const blankPart=k=>({kind:k,name:'',content:'',movement:'',format:'FT',detail:'',repsRound:'',dur:'',interval:'1',deadBy:false,focus:'',intensity:'',syncTiers:true,word:'',lineRounds:false,redo:true,levels:blankLevels()});
 function blankWod(){return {date:todayStr(),title:'',base:'',parts:[Object.assign(blankPart('force'),{name:'Force'}),Object.assign(blankPart('renfo'),{name:'Renforcement'}),Object.assign(blankPart('metcon'),{name:'Metcon'})]};}
 function wodToDraft(w){
   return {date:w.date,title:w.title||'',base:(w.base!==undefined&&w.base!==null)?String(w.base):'',
@@ -5653,7 +5764,7 @@ function wodToDraft(w){
         capTiers:(l.capTiers&&l.capTiers.length)?l.capTiers.map(t=>({t:capInput(cm,tierCum(p,t.t)),p:String(t.p)})):blankCapTiers()}));
       while(lv.length<3)lv.push({mode:lv.length<2?'off':'custom',touched:false,name:LEVEL_NAMES[lv.length],loadF:'',loadH:'',note:'',vars:{},tiers:blankTiers(),capTiers:blankCapTiers()});
       const sk=l=>JSON.stringify([l.loadF,l.loadH,l.note,l.vars,l.tiers,l.capTiers]);lv.forEach((l,k)=>{if(k<2&&l.mode==='custom'&&sk(l)===sk(lv[2]))l.mode='same';});
-      return {kind:p.kind||'autre',name:p.name||'',content:p.content||'',movement:p.movement||'',format:fmt,detail:p.detail||'',repsRound:p.repsRound?String(p.repsRound):'',word:p.word||'',lineRounds:!!p.lineRounds,redo:p.redo!==false,customLvl:p.customLvl!==false,dur:p.dur?String(p.dur):'',interval:p.interval?String(p.interval).replace('.',','):'1',deadBy:!!p.deadBy,focus:FOCUS[p.focus]?p.focus:'',levels:lv,syncTiers:(()=>{const k=l=>JSON.stringify([l.tiers,l.capTiers]);return lv.every((l,j)=>j===2||l.mode==='off'||k(l)===k(lv[2]));})()};
+      return {kind:p.kind||'autre',name:p.name||'',content:p.content||'',movement:p.movement||'',format:fmt,detail:p.detail||'',repsRound:p.repsRound?String(p.repsRound):'',word:p.word||'',lineRounds:!!p.lineRounds,redo:p.redo!==false,customLvl:p.customLvl!==false,dur:p.dur?String(p.dur):'',interval:p.interval?String(p.interval).replace('.',','):'1',deadBy:!!p.deadBy,focus:FOCUS[p.focus]?p.focus:'',intensity:INTENS[p.intensity]?p.intensity:'',levels:lv,syncTiers:(()=>{const k=l=>JSON.stringify([l.tiers,l.capTiers]);return lv.every((l,j)=>j===2||l.mode==='off'||k(l)===k(lv[2]));})()};
     })};
 }
 function draftToWod(d){
@@ -5684,7 +5795,7 @@ function draftToWod(d){
           o.deadBy=true;
         }
       }
-      o.format=p.format;o.detail=p.detail.trim();o.focus=p.focus;o.capV=2; /* capV 2 : paliers time cap en reps cumulées */
+      o.format=p.format;o.detail=p.detail.trim();o.focus=p.focus;if(INTENS[p.intensity])o.intensity=p.intensity;o.capV=2; /* capV 2 : paliers time cap en reps cumulées */
       if(String(p.repsRound||'').trim()!==''){const n=parseNum(p.repsRound);if(n===null||n<=0||n%1)throw new Error('Reps par tour illisibles ('+o.label+').');o.repsRound=n;}
       /* si des reps équivalentes sont définies dans le contenu, le total de reps réelles du tour s'en déduit */
       if(p.format==='FT'&&p.lineRounds)delete o.repsRound;
@@ -6307,6 +6418,11 @@ function wodEditor(modal){
         const wta=h('textarea',{id:'p'+i+'-word',rows:'2',maxlength:'200',placeholder:'Ex : Reste régulier sur les premiers tours !',value:p.word||'',oninput:e=>{p.word=e.target.value;}});
         box.append(field('Mot du coach (affiché près du metcon et pendant les 10 s de préparation)',wta),
           words.length?h('div',{class:'chips'},words.map(wd=>h('button',{type:'button',class:'chip load',style:'cursor:pointer',title:wd,onclick:()=>{p.word=wd;wta.value=wd;}},trunc(wd,32)))):h('p',{class:'hint'},'Enregistre des mots prédéfinis dans Préférences (roue dentée).'));}
+      box.append(h('div',{class:'field'},h('span',{class:'flabel'},'Intensité du metcon'),
+        h('div',{class:'seg',role:'group','aria-label':'Intensité du metcon'},Object.entries(INTENS).map(([k,v])=>h('button',{type:'button',class:'btn sm','aria-pressed':p.intensity===k?'true':'false',title:v.d,onclick:()=>{p.intensity=(p.intensity===k?'':k);p.estInfo='';render();}},v.l))),
+        h('p',{class:'hint'},p.intensity?INTENS[p.intensity].d+' L’intensité est affichée aux athlètes.':'Précise aux athlètes s’il faut y aller à fond, en gestion d’allure ou pas à fond. Elle sert aussi à calculer les paliers.')),
+        h('div',{class:'row'},h('button',{class:'btn',type:'button',id:'p'+i+'-calc',onclick:()=>calcTiers(p)},'Calculer les paliers')),
+        h('p',{class:'hint'},p.estInfo||'Lit les mouvements, les reps et les tours du contenu, estime le temps selon l’intensité choisie et remplit les 10 paliers (10 points pour le palier max). Remplace les paliers déjà saisis.'));
       const tab=p.lvTab===undefined?2:p.lvTab;
       box.append(h('div',{class:'field'},h('span',{class:'flabel'},'Niveaux · remplis d’abord Rx (niveau 3)'),
         h('div',{class:'seg',role:'tablist'},[0,1,2].map(k=>h('button',{type:'button',class:'btn sm',role:'tab','aria-pressed':tab===k?'true':'false',onclick:()=>{p.lvTab=k;render();}},(p.levels[k].name.trim()||LEVEL_NAMES[k])+(k<2&&p.levels[k].mode==='off'?' (off)':''))))));
