@@ -1612,10 +1612,10 @@ function renderLine(text){
 /* séries × reps prévues par la séance (ex. « 5 x 5 Back Squat à 75 % ») : préremplissent le formulaire, modifiables */
 function forceSchema(p){
   if(!p||p.kind!=='force')return null;
-  const re=/(\d{1,2})\s*(?:x|×|\*)\s*(\d{1,3})(?!\d)/i;let first=null;
+  const re=/(\d{1,2})\s*(?:x|×|\*)\s*(?:(\d{1,3})(?!\d)|max\b)/i;let first=null; /* « 1 x max » : 1 série, reps libres (r = null) */
   for(const raw of String(p.content||'').split('\n')){
     const m=raw.match(re);if(!m)continue;
-    const o={s:+m[1],r:+m[2]};
+    const o={s:+m[1],r:m[2]?+m[2]:null};
     const canon=findMove(raw);
     if(p.movement&&canon===p.movement)return o;
     if(!first)first=o;
@@ -4016,7 +4016,7 @@ function openEntry(w,date,uid,coach){
   /* séries et reps prévues par la séance, modifiables */
   for(const p of (w.parts||[])){
     if(p.kind!=='force'||S.entry.sets[p.label])continue;
-    const sc=forceSchema(p);if(sc)S.entry.sets[p.label]={s:String(sc.s),r:String(sc.r)};
+    const sc=forceSchema(p);if(sc)S.entry.sets[p.label]={s:String(sc.s),r:sc.r?String(sc.r):''};
   }
   /* la charge prévue par les pourcentages apparaît d'office dans la partie force (modifiable) */
   if(!coach&&uid===S.uid)for(const p of (w.parts||[])){
@@ -4220,7 +4220,7 @@ function submitEntryNow(w){
     if(p.kind!=='force'||SIGNED.includes(p.movement)||loads[p.label]===undefined)continue;
     const sx=S.entry.sets&&S.entry.sets[p.label],sc=forceSchema(p);
     let n=sc?sc.s:(sx&&String(sx.s).trim()!==''?parseInt(sx.s,10):NaN),rr=sx&&String(sx.r).trim()!==''?parseInt(sx.r,10):(sc?sc.r:NaN);
-    if(!(n>0&&n<=99&&rr>0&&rr<=999)){if(sx&&(String(sx.s).trim()!==''||String(sx.r).trim()!=='')){toast('Séries et reps illisibles pour '+p.label,true);return;}continue;}
+    if(!(n>0&&n<=99&&rr>0&&rr<=999)){const typed=sx&&(sc?String(sx.r).trim()!=='':(String(sx.s).trim()!==''||String(sx.r).trim()!==''));if(typed){toast('Séries et reps illisibles pour '+p.label,true);return;}continue;}
     setsO[p.label]={s:n,r:rr};
   }
   if(Object.keys(setsO).length)e.sets=setsO;
