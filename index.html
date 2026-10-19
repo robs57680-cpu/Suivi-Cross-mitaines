@@ -1726,7 +1726,7 @@ function movBackGo(){
 /* ---------- écritures ---------- */
 let chain=Promise.resolve();
 function run(fn){chain=chain.then(fn).catch(e=>{toast(errMsg(e),true);});return chain;}
-const saveProf=()=>run(async()=>{await S.db.doc('users/'+S.uid+'/private/profile').set({prs:S.prof.prs||{},sex:S.prof.sex||'',birth:S.prof.birth||'',genEx:S.prof.genEx||null,genAll:S.prof.genAll||null,words:S.prof.words||[],mvcfg:S.prof.mvcfg||{},weight:Number(S.prof.weight)>0?Number(S.prof.weight):0});});
+const saveProf=()=>run(async()=>{await S.db.doc('users/'+S.uid+'/private/profile').set({prs:S.prof.prs||{},sex:S.prof.sex||'',birth:S.prof.birth||'',genEx:S.prof.genEx||null,genAll:S.prof.genAll||null,words:S.prof.words||[],mvcfg:S.prof.mvcfg||{},revd:S.prof.revd||{},weight:Number(S.prof.weight)>0?Number(S.prof.weight):0});});
 const needPseudo=()=>S.uid&&S.loaded.logs&&!(S.logs[S.uid]&&S.logs[S.uid].pseudo);
 /* groupes : un seul document config/groups {list:[{id,name}], of:{uid:idDuGroupe}}, écrit par le coach seul */
 const groupsList=()=>(S.groups&&S.groups.list)||[];
@@ -2073,7 +2073,7 @@ document.addEventListener('focusout',()=>{if(!pending)return;setTimeout(()=>{if(
 
 function go(tab){closeDrawer(true);S._bk=null;S.movBack=null;S.movFocus=null;if(S.coach)S.coach.wodOpen=false;if(tab==='coach'&&S.tab==='coach')S.coach.view=null;S.profView=null;S.viewUser=null;S.tip=null;S.trophOpen='';S.trophSeason='';if(tab==='today'&&S.tab!=='today')S.viewDate=null;S.tab=tab;S.boardDetail=false;S.confirm=null;if(S.entry&&S.entry.coach)S.entry=null;if(S.tab!=='today'){S.entry=null;S.redo=null;}render();window.scrollTo(0,0);}
 function render(){
-  pending=false;S._aw=null;S._ob=null;applyTheme();document.body.classList.remove('modal-open');
+  pending=false;S._un=null;S._aw=null;S._ob=null;applyTheme();document.body.classList.remove('modal-open');
   {const tp=document.querySelector('.top');if(tp)document.documentElement.style.setProperty('--toph',tp.offsetHeight+'px');}
   if(!S.uid){
     $('#tabs').replaceChildren();$('#hdr-right').replaceChildren(S.authReady&&S.db?helpBtn():null);
@@ -4052,8 +4052,10 @@ function entryForm(w,date){
       const signed=SIGNED.includes(p.movement);
       if(!signed){
         const sx=S.entry.sets[p.label]||(S.entry.sets[p.label]={s:'',r:''});
+        const sch=forceSchema(p); /* séries demandées par la séance : fixes, non modifiables */
+        if(sch)sx.s=String(sch.s);
         form.append(h('div',{class:'grid2'},
-          field(p.label+' · '+(p.movement||p.name||'Force')+' : séries',h('input',{id:'sets-'+p.label,type:'text',inputmode:'numeric',placeholder:'séries',value:sx.s,oninput:e=>{sx.s=e.target.value;}})),
+          field(p.label+' · '+(p.movement||p.name||'Force')+' : séries',h('input',{id:'sets-'+p.label,type:'text',inputmode:'numeric',placeholder:'séries',value:sx.s,readonly:!!sch,'aria-readonly':sch?'true':'false',style:sch?'opacity:.7':'',oninput:e=>{if(!sch)sx.s=e.target.value;}}),sch?'Fixé par la séance.':null),
           field('Répétitions par série',h('input',{id:'reps-'+p.label,type:'text',inputmode:'numeric',placeholder:'reps',value:sx.r,oninput:e=>{sx.r=e.target.value;}}))));
       }
       form.append(field((signed?p.label+' · '+(p.movement||p.name||'Force')+' : charge la plus lourde (kg)':'Charge utilisée (kg)'),
@@ -4074,6 +4076,116 @@ function entryForm(w,date){
 function submitEntry(w){
   if(needConfirm(metconOf(w),S.entry)){const en=S.entry;confirmLevel(metconOf(w),en,()=>{if(S.entry===en)submitEntryNow(w);});return;}
   submitEntryNow(w);
+}
+/* ---------- résultats inhabituels ----------
+   Metcon : points à plus de 30 % de l'écart avec ses habitudes sur le même niveau (3 résultats minimum), ou passage à un niveau supérieur
+   en marquant autant de points ou plus que d'habitude. Force : charge en hausse de plus de 25 % sur son record dans la saisie, charge ou reps absurdes.
+   Seuls les résultats antérieurs à la séance servent de référence. */
+const UN_DAYS=45,UN_MIN=3;
+const r1=x=>Math.round(x*10)/10;
+function metHistory(lg){
+  const out=[];
+  for(const [d,ent] of Object.entries((lg&&lg.entries)||{})){
+    const w=S.wods[d],m=w&&metconOf(w);
+    if(!m||!ent||!hasScore(ent))continue;
+    let pts=0;try{pts=perfOf(m,ent);}catch(x){continue;}
+    out.push({d,m,e:ent,pts,lv:lvVal(ent,m),lvl:ent.level||0,kg:kgOf(ent)});
+  }
+  return out.sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);
+}
+const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
+function metFlags(hist,cur,athlete){
+  const prior=hist.filter(x=>x.d<cur.d),out=[];
+  if(prior.length<UN_MIN)return out;
+  const same=prior.filter(x=>x.lvl===cur.lvl&&x.kg===cur.kg);
+  if(same.length>=UN_MIN){
+    const avg=mean(same.map(x=>x.pts)),diff=cur.pts-avg;
+    if(avg>0&&Math.abs(diff)>.3*avg&&Math.abs(diff)>=1.5)
+      out.push({t:'pts',msg:'Points '+(diff>0?'bien au-dessus':'bien en dessous')+' de ses habitudes : '+fmtN(r1(cur.pts))+' pts contre '+fmtN(r1(avg))+' en moyenne au niveau '+lvTag(cur.lv)+' ('+(diff>0?'+':'−')+Math.round(Math.abs(diff)/avg*100)+' %).'});
+  }
+  if(!athlete){ /* l'athlète n'est pas interrogé sur un changement de niveau (il le confirme déjà) */
+    const cnt={};prior.slice(-5).forEach(x=>{const k=Math.round(x.lv*4)/4;cnt[k]=(cnt[k]||0)+1;});
+    const usual=Object.keys(cnt).map(Number).sort((a,b)=>cnt[b]-cnt[a]||b-a)[0];
+    if(cur.lv-usual>=.45){
+      const old=prior.filter(x=>Math.abs(x.lv-usual)<.13),avg=mean(old.map(x=>x.pts));
+      if(cur.pts>=avg*.95-1e-9)
+        out.push({t:'lvl',msg:'Passe de '+lvTag(usual)+' à '+lvTag(cur.lv)+' en marquant autant de points ou plus que d’habitude : '+fmtN(r1(cur.pts))+' pts contre '+fmtN(r1(avg))+' en moyenne au niveau précédent.'});
+    }
+  }
+  return out;
+}
+function forceFlags(lg,date,w,e){
+  const out=[];
+  for(const p of (w.parts||[])){
+    if(p.kind!=='force')continue;
+    const ld=e.loads&&e.loads[p.label],sx=e.sets&&e.sets[p.label];
+    if(sx&&Number(sx.r)>100)out.push({t:'force',msg:p.label+' : '+sx.r+' répétitions par série, c’est improbable.'});
+    if(ld===undefined||ld===null)continue;
+    const kg=Number(ld);if(!isFinite(kg))continue;
+    if(kg>400)out.push({t:'force',msg:p.label+' : charge de '+fmtN(kg)+' kg, vérifie qu’il n’y a pas d’erreur de saisie.'});
+    else if(p.movement&&!SIGNED.includes(p.movement)){
+      let best=0;
+      for(const [d,pe] of Object.entries((lg&&lg.entries)||{})){
+        if(d>=date||!pe||!pe.loads)continue;
+        const pw=S.wods[d];if(!pw)continue;
+        for(const q of (pw.parts||[]))if(q.kind==='force'&&q.movement===p.movement&&pe.loads[q.label]!==undefined)best=Math.max(best,Number(pe.loads[q.label])||0);
+      }
+      if(best>0&&kg>1.25*best)out.push({t:'force',msg:p.label+' · '+p.movement+' : '+fmtN(kg)+' kg contre '+fmtN(best)+' kg au plus lourd avant (+'+Math.round((kg/best-1)*100)+' %).'});
+    }
+  }
+  return out;
+}
+function unusualOne(uid,date,hist,e0){
+  const lg=S.logs[uid],e=e0||(lg&&lg.entries&&lg.entries[date]),w=S.wods[date];
+  if(!lg||!e||!w)return [];
+  const out=[],m=metconOf(w);
+  if(m&&hasScore(e)){
+    const h0=hist||metHistory(lg);
+    const cur=h0.find(x=>x.d===date)||(()=>{try{return {d:date,m,e,pts:perfOf(m,e),lv:lvVal(e,m),lvl:e.level||0,kg:kgOf(e)};}catch(x){return null;}})();
+    if(cur)out.push(...metFlags(h0,cur));
+  }
+  out.push(...forceFlags(lg,date,w,e));
+  return out;
+}
+const unRevd=(uid,d)=>!!(S.prof&&S.prof.revd&&S.prof.revd[uid+'|'+d]);
+/* tous les résultats à vérifier (coach seulement) : séances des UN_DAYS derniers jours, pas encore marquées « vérifié » */
+function unusualAll(){
+  if(!S.owner)return [];
+  if(S._un)return S._un;
+  const cut=addDays(todayStr(),-UN_DAYS),out=[];
+  for(const [uid,lg] of Object.entries(S.logs)){
+    if(!lg||!lg.entries)continue;
+    const hist=metHistory(lg);
+    for(const d of Object.keys(lg.entries)){
+      if(d<cut||unRevd(uid,d))continue;
+      const fl=unusualOne(uid,d,hist);
+      if(fl.length)out.push({uid,date:d,flags:fl});
+    }
+  }
+  out.sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:0);
+  return S._un=out;
+}
+function markReviewed(uid,d){
+  S.prof.revd=Object.assign({},S.prof.revd||{},{[uid+'|'+d]:1});
+  saveProf();render();
+}
+/* confirmation côté athlète avant d'enregistrer un résultat inhabituel */
+function unusualConfirm(msgs,go,back){
+  const old=document.getElementById('un-ov');if(old)old.remove();
+  const esc=e=>{if(e.key==='Escape'){e.stopPropagation();close();}};
+  const close=()=>{ov.remove();document.removeEventListener('keydown',esc,true);document.body.classList.remove('modal-open');};
+  const ov=h('div',{class:'ov',id:'un-ov',style:'z-index:60'},
+    h('div',{class:'sheet lvc',role:'dialog','aria-modal':'true','aria-label':'Résultat inhabituel'},
+      h('div',{class:'ov-h'},h('span',{class:'ov-t'},'Résultat inhabituel'),h('button',{type:'button',class:'ov-x','aria-label':'Fermer',onclick:close},'✕')),
+      h('p',{},'Ce résultat est inhabituel par rapport à tes séances précédentes :'),
+      h('div',{class:'lvc-lines'},msgs.map(x=>h('div',{},'• '+x))),
+      h('p',{class:'hint'},'Vérifie ta saisie (virgule, unité, nombre de reps). Si tout est correct, tu peux valider.'),
+      h('div',{class:'row'},
+        h('button',{type:'button',class:'btn primary',id:'un-ok',onclick:()=>{close();go();}},'Oui, c’est correct'),
+        h('button',{type:'button',class:'btn',id:'un-back',onclick:()=>{close();if(back)back();}},'Corriger ma saisie'))));
+  document.body.append(ov);document.body.classList.add('modal-open');
+  document.addEventListener('keydown',esc,true);
+  try{document.getElementById('un-ok').focus();}catch(x){}
 }
 function submitEntryNow(w){
   if(!S.entry.coach&&lockedDate(S.entry.date)){toast(LOCKMSG,true);return;}
@@ -4107,7 +4219,7 @@ function submitEntryNow(w){
   for(const p of (w.parts||[])){
     if(p.kind!=='force'||SIGNED.includes(p.movement)||loads[p.label]===undefined)continue;
     const sx=S.entry.sets&&S.entry.sets[p.label],sc=forceSchema(p);
-    let n=sx&&String(sx.s).trim()!==''?parseInt(sx.s,10):(sc?sc.s:NaN),rr=sx&&String(sx.r).trim()!==''?parseInt(sx.r,10):(sc?sc.r:NaN);
+    let n=sc?sc.s:(sx&&String(sx.s).trim()!==''?parseInt(sx.s,10):NaN),rr=sx&&String(sx.r).trim()!==''?parseInt(sx.r,10):(sc?sc.r:NaN);
     if(!(n>0&&n<=99&&rr>0&&rr<=999)){if(sx&&(String(sx.s).trim()!==''||String(sx.r).trim()!=='')){toast('Séries et reps illisibles pour '+p.label,true);return;}continue;}
     setsO[p.label]={s:n,r:rr};
   }
@@ -4122,6 +4234,10 @@ function submitEntryNow(w){
   if(Object.keys(prs).length)e.prs=prs;
   const lp=S.entry.laps!==undefined?S.entry.laps:(prevE&&prevE.laps);
   if(lp&&lp.length)e.laps=lp;
+  if(!coach&&uid===S.uid&&!S.entry.unOk){
+    const fl=unusualOne(uid,S.entry.date,null,e).filter(x=>x.t!=='lvl').map(x=>x.msg);
+    if(fl.length){const en=S.entry;unusualConfirm(fl,()=>{if(S.entry===en){en.unOk=true;submitEntryNow(w);}});return;}
+  }
   const message=String(S.entry.message||'').trim().slice(0,180);if(message)e.message=message;
   const date=S.entry.date;const cur=S.logs[uid]||{};
   S.entry=null;
@@ -5720,13 +5836,13 @@ function coachMenu(){
   const nA=Object.values(S.logs).filter(l=>l&&l.pseudo).length;
   const items=[['wod','Entrer un WOD',pl_(Object.keys(S.wods).length,'séance')+' publiée'+(Object.keys(S.wods).length>1?'s':'')],
     ['groups','Gérer les groupes',pl_(groupsList().length,'groupe')],
-    ['results','Gérer les résultats',pl_(nA,'athlète')],
+    ['results','Gérer les résultats',pl_(nA,'athlète')+(unusualAll().length?' · '+unusualAll().length+' à vérifier':'')],
     ['seasons','Gérer les saisons',pl_(plist().length,'saison')],
     ['avatar','Objets secrets',pl_(AV_ITEMS.length,'objet')+' d’avatar à débloquer'],
     ['mvcfg','Configurer les mouvements',pl_(mvCfgCount(),'mouvement')+' configuré'+(mvCfgCount()>1?'s':'')],
     ['warmup','Gérer l’échauffement',pl_(wuItems().length,'exercice')],
     ['message','Message aux athlètes',annActive()?'Un message est en ligne':'Aucun message en ligne']];
-  return h('div',{class:'stack'},items.map(([k,t,sub])=>h('button',{class:'mbtn',type:'button',id:'cm-'+k,onclick:()=>{if(k==='warmup'){openWarmupEdit();return;}S.coach.view=k;render();window.scrollTo(0,0);}},h('div',{},h('b',{},t),h('span',{},sub)),h('i',{},'›'))));
+  return h('div',{class:'stack'},items.map(([k,t,sub])=>h('button',{class:'mbtn',type:'button',id:'cm-'+k,onclick:()=>{if(k==='warmup'){openWarmupEdit();return;}S.coach.view=k;render();window.scrollTo(0,0);}},h('div',{},h('b',{},t),h('span',{},sub)),k==='results'&&unusualAll().length?h('span',{class:'ibdot','aria-hidden':'true'}):null,h('i',{},'›'))));
 }
 
 /* ---------- coach ---------- */
@@ -6495,6 +6611,15 @@ function resultsSection(){
   const date=S.coach.resDate,w=S.wods[date],m=metconOf(w),per=periodFor(date)||ALL;
   sec.append(field('Séance',sel(ws.slice(0,40).map(x=>[x.date,cap(fmtShort(x.date))+' · '+x.title]),date,v=>{S.coach.resDate=v;S.entry=null;S.confirm=null;render();},{id:'res-date'})));
   if(S.entry&&S.entry.coach&&S.entry.date===date){sec.append(entryForm(w,date));return sec;}
+  const todo=unusualAll();
+  if(todo.length){
+    sec.append(h('div',{class:'flabel'},'⚠ À vérifier ('+todo.length+')'),
+      h('ul',{class:'list'},todo.map(x=>{const lg=S.logs[x.uid]||{};return h('li',{},
+        h('div',{class:'l'},h('div',{class:'nm'},(lg.pseudo||'Athlète')+' · '+cap(fmtShort(x.date))),x.flags.map(f=>h('div',{class:'sub'},f.msg))),
+        h('div',{class:'row'},
+          h('button',{class:'btn sm',type:'button',onclick:()=>{S.coach.resDate=x.date;S.entry=null;S.confirm=null;render();}},'Voir'),
+          h('button',{class:'btn sm',type:'button',onclick:()=>markReviewed(x.uid,x.date)},'Vérifié')));})));
+  }
   const rows=Object.entries(S.logs).map(([uid,lg])=>({uid,lg})).sort((a,b)=>(a.lg.pseudo||'').localeCompare(b.lg.pseudo||''));
   const done=rows.filter(r=>r.lg.entries&&r.lg.entries[date]).length;
   sec.append(h('p',{class:'hint'},done+' athlète'+(done>1?'s':'')+' sur '+rows.length+' ont validé cette séance. Une modification s’applique tout de suite au classement.'));
@@ -6503,11 +6628,13 @@ function resultsSection(){
     const e=lg.entries&&lg.entries[date];
     const pts=e?wodPoints(w,e,per):null;
     const key='cres-'+uid+date;
+    const fl=(e&&!unRevd(uid,date))?unusualOne(uid,date):[];
     const detail=!e?'Pas de résultat'
       :fmtN(pts.total)+' pts'+(m?(hasScore(e)?' · '+lvlLab(m,e)+' · '+scoreText(m,e.score,e):(e.level!==undefined?' · '+lvlLab(m,e)+' · sans score':'')):'');
     return h('li',{},
-      h('div',{class:'l'},h('div',{class:'nm'},(lg.pseudo||'Athlète')+(uid===S.uid?' (toi)':'')),h('div',{class:'sub'},detail+grpTxt(uid))),
+      h('div',{class:'l'},h('div',{class:'nm'},(lg.pseudo||'Athlète')+(uid===S.uid?' (toi)':'')+(fl.length?' ':''),fl.length?h('span',{class:'chip miss',title:fl.map(f=>f.msg).join(' ')},'⚠ À vérifier'):null),h('div',{class:'sub'},detail+grpTxt(uid)),fl.map(f=>h('div',{class:'sub'},f.msg))),
       h('div',{class:'row'},
+        fl.length?h('button',{class:'btn sm',type:'button',onclick:()=>markReviewed(uid,date)},'Vérifié'):null,
         h('button',{class:'btn sm',onclick:()=>openEntry(w,date,uid,true)},e?'Modifier':'Saisir'),
         e?(S.confirm===key
           ?h('button',{class:'btn sm danger',onclick:()=>removeSession(date,uid)},'Confirmer')
@@ -6988,11 +7115,11 @@ const profTodo=()=>infosMissing().concat(goalMissing()?['objectif de s\u00e9ance
 const BLINK_MS=3000;
 function blinkEl(el){const ms=Date.now()-(S._bt||0);if(ms<BLINK_MS){el.classList.add('need-blink');el.style.animationDelay='-'+ms+'ms';}return el;}
 const blinkIf=(c,el)=>c?blinkEl(el):el;
-function menuDot(){const a=annActive();return !!((a&&!annIsSeen(a))||notifDotOn()||!rulesSeen()||!healthSeen()||profDot());}
+function menuDot(){const a=annActive();return !!((a&&!annIsSeen(a))||notifDotOn()||unusualAll().length>0||!rulesSeen()||!healthSeen()||profDot());}
 function drawerItems(){
   const a=annActive(),out=[];
   out.push({id:'profile',label:'Profil',ico:ICO_USER,dot:profDot(),cur:S.tab==='profile'&&!S.profView,fn:()=>{S.profView=null;go('profile');}});
-  if(S.owner)out.push({id:'coach',label:'Coach',ico:ICO_COACH,cur:['coach','prefs','stats'].includes(S.tab),fn:()=>go('coach')});
+  if(S.owner)out.push({id:'coach',label:'Coach',ico:ICO_COACH,dot:unusualAll().length>0,cur:['coach','prefs','stats'].includes(S.tab),fn:()=>go('coach')});
   out.push({id:'notif',label:'Notifications',ico:ICO_BELL,dot:notifDotOn(),cur:S.tab==='profile'&&S.profView==='notifs',fn:()=>{go('profile');S.profView='notifs';render();window.scrollTo(0,0);}});
   if(a)out.push({id:'mail',label:'Message du coach',ico:ICO_MAIL,dot:!annIsSeen(a),fn:()=>openAnnouncement(a,{review:true})});
   out.push({id:'rules',label:'Règlement',ico:ICO_RULES,dot:!rulesSeen(),cur:S.tab==='rules',fn:()=>{rulesMark();S.rulesI=0;go('rules');}});
@@ -7381,7 +7508,7 @@ function startFirebase(){
     unsubs.push(S.db.collection('comments').onSnapshot(sn=>{S.comments=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));if(S.cerRefresh)S.cerRefresh();},()=>{}));
     /* réactions emoji : si les règles ne sont pas publiées, on ignore l'erreur */
     unsubs.push(S.db.collection('reactions').onSnapshot(sn=>{S.reactions=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));scheduleRender();},()=>{}));
-    unsubs.push(S.db.doc('users/'+S.uid+'/private/profile').onSnapshot(sn=>{const d=sn.exists?sn.data():null;S.prof={prs:(d&&d.prs)?JSON.parse(JSON.stringify(d.prs)):{},sex:(d&&d.sex)||'',birth:(d&&typeof d.birth==='string')?d.birth:'',genEx:(d&&Array.isArray(d.genEx))?d.genEx:null,genAll:(d&&Array.isArray(d.genAll))?d.genAll:null,words:(d&&Array.isArray(d.words))?d.words:[],mvcfg:(d&&d.mvcfg&&typeof d.mvcfg==='object')?JSON.parse(JSON.stringify(d.mvcfg)):{},weight:(d&&Number(d.weight)>0)?Number(d.weight):0};S.profLoaded=true;scheduleRender();selfSync();},fail));
+    unsubs.push(S.db.doc('users/'+S.uid+'/private/profile').onSnapshot(sn=>{const d=sn.exists?sn.data():null;S.prof={prs:(d&&d.prs)?JSON.parse(JSON.stringify(d.prs)):{},sex:(d&&d.sex)||'',birth:(d&&typeof d.birth==='string')?d.birth:'',genEx:(d&&Array.isArray(d.genEx))?d.genEx:null,genAll:(d&&Array.isArray(d.genAll))?d.genAll:null,words:(d&&Array.isArray(d.words))?d.words:[],mvcfg:(d&&d.mvcfg&&typeof d.mvcfg==='object')?JSON.parse(JSON.stringify(d.mvcfg)):{},revd:(d&&d.revd&&typeof d.revd==='object')?JSON.parse(JSON.stringify(d.revd)):{},weight:(d&&Number(d.weight)>0)?Number(d.weight):0};S.profLoaded=true;scheduleRender();selfSync();},fail));
     render();
   });
 }
