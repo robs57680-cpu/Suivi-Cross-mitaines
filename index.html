@@ -1844,15 +1844,16 @@ function saveLog(patch,msg,uid){
    L'enveloppe s'ouvre seulement au lancement de l'appli (jamais en direct, jamais pendant le minuteur) ;
    la lettre du fil permet de le relire. */
 const annKey=()=>'bs-ann-'+S.uid;
-/* adresses https:// d'un message du coach : cliquables (ouvertes dans un nouvel onglet) ; le reste reste du texte brut */
+/* adresses http(s):// ou www. d'un message du coach : cliquables (ouvertes dans un nouvel onglet) ; le reste reste du texte brut */
 function linkText(text){
-  const out=[],re=/https:\/\/[^\s<>"']+/g;let last=0,m;
+  const out=[],re=/(?:https?:\/\/|www\.)[^\s<>"']+|\b(?:[a-z0-9-]+\.)+(?:com|fr|org|net|io|dev|app|be|ch|ca|eu|info|me|co|uk|de|es|it|tv|pages\.dev)\b(?:\/[^\s<>"']*)?/gi;let last=0,m;
   const s=String(text||'');
   while((m=re.exec(s))){
+    if(m.index>0&&s[m.index-1]==='@')continue;
     let url=m[0],tail='';
     const t=url.match(/[.,;:!?)\]]+$/);if(t){tail=t[0];url=url.slice(0,-tail.length);}
     if(m.index>last)out.push(s.slice(last,m.index));
-    out.push(h('a',{href:url,target:'_blank',rel:'noopener noreferrer',style:'text-decoration:underline;overflow-wrap:anywhere'},url));
+    out.push(h('a',{href:/^https?:\/\//i.test(url)?url:'https://'+url,target:'_blank',rel:'noopener noreferrer',style:'text-decoration:underline;overflow-wrap:anywhere'},url));
     if(tail)out.push(tail);
     last=m.index+m[0].length;
   }
@@ -2874,7 +2875,7 @@ function openTimer(w,date,m){
   function showPrep(){
     numEl=h('div',{class:'tm-time'},String(PREP));
     ov.className='tm prep';
-    ov.replaceChildren(topBar(),h('div',{class:'tm-mid'},h('p',{class:'eyebrow tm-eb'},'Prépare-toi'),numEl,h('p',{class:'tm-sub'},info),m.word?h('div',{class:'tm-word'},h('span',{class:'flabel tm-eb'},'Mot du coach'),h('p',{},m.word)):null,dur?null:h('p',{class:'tm-sub'},'Aucune durée détectée pour ce metcon : le chrono ne s’arrêtera pas tout seul.')),h('div',{class:'tm-bot'}));
+    ov.replaceChildren(topBar(),h('div',{class:'tm-mid'},h('p',{class:'eyebrow tm-eb'},'Prépare-toi'),numEl,h('p',{class:'tm-sub'},info),m.word?h('div',{class:'tm-word'},h('span',{class:'flabel tm-eb'},'Mot du coach'),h('p',{},linkText(m.word))):null,dur?null:h('p',{class:'tm-sub'},'Aucune durée détectée pour ce metcon : le chrono ne s’arrêtera pas tout seul.')),h('div',{class:'tm-bot'}));
   }
   function lap(){
     if(st.phase!=='run')return;
@@ -3227,7 +3228,7 @@ function partCard(p,w,date){
     (fmtId&&S.tip===fmtId)?h('div',{class:'tip',role:'dialog'},fmtExplain(p).map((t,k)=>k===0?h('b',{},t):h('p',{},t))):null,
     lvOpen?h('div',{class:'varnote'},'Version '+levelName(p,lvOpen[1])+' : les variantes remplacent les mouvements en surbrillance.'):null,
     h('div',{class:'lines'},lines.map(metcon?metL:renderLine)),
-    (metcon&&p.word)?h('div',{class:'cword'},h('span',{class:'flabel'},'Mot du coach'),h('p',{},p.word)):null,
+    (metcon&&p.word)?h('div',{class:'cword'},h('span',{class:'flabel'},'Mot du coach'),h('p',{},linkText(p.word))):null,
     metcon?levelsBlock(p):null,
     (metcon&&w&&timerOk(date))?h('div',{class:'row'},h('button',{class:'btn primary btn-block',type:'button','data-tour':'start-metcon',onclick:()=>openTimer(w,date,p)},'Démarrer le metcon')):null);
   return h('article',{class:'part'+(metcon?' metcon':'')},h('div',{class:'plabel'},p.label),body);
