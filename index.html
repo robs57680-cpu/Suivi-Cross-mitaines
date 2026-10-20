@@ -6907,6 +6907,29 @@ function authErr(e){
   if(c==='auth/operation-not-allowed')return 'Cette méthode de connexion n’est pas activée dans Firebase.';
   return 'Connexion impossible, réessaie.';
 }
+/* présentation du coach, de la méthode et des tarifs, affichée sous le formulaire de connexion */
+function loginPitch(){
+  const ul=(...items)=>h('ul',{style:'margin:0;padding-left:20px;display:grid;gap:4px'},items.map(t=>h('li',{},t)));
+  const offer=(label,price,sub)=>h('div',{style:'border:2px solid var(--edge);border-radius:4px;padding:10px 12px;display:grid;gap:2px'},
+    h('span',{class:'flabel'},label),h('b',{style:'font-size:20px'},price),sub?h('span',{class:'hint'},sub):null);
+  return h('div',{class:'card',id:'login-pitch'},
+    h('p',{class:'eyebrow'},'Le programme'),
+    h('h2',{class:'wtitle'},'Progresse en force, en intensité et en régularité'),
+    h('div',{},h('b',{},'Qui est le coach ?'),
+      h('p',{},'Professeur d’EPS et pratiquant de CrossFit, je propose aux athlètes volontaires de progresser grâce à mon programme. Un effort mérite une récompense, et le lien social aide à rester régulier.')),
+    h('div',{},h('b',{},'La saison, en bref'),
+      h('p',{},'On démarre par des metcons test. Ensuite, le programme travaille ta force sur les mouvements, puis ton niveau sur ceux des tests. Le cardio progresse tout au long de la saison. En enchaînant les saisons, tu progresses de façon régulière et variée sur un large éventail de mouvements.')),
+    h('div',{},h('b',{},'Dans l’appli'),
+      ul('Un programme de coach avec une progression d’une séance à l’autre',
+         'Un classement de saison, des trophées et des badges',
+         'Une communauté pour te comparer et t’encourager',
+         'Une appli personnalisable : avatar, niveaux et variantes adaptées')),
+    h('div',{style:'display:grid;gap:8px'},h('b',{},'Essaie 2 semaines gratuitement, puis choisis :'),
+      offer('Abonnement','8,99 € / 4 semaines','Renouvelé toutes les 4 semaines.'),
+      offer('Saison','19,99 € / saison','Une saison dure 10 semaines, soit environ 8 € par 4 semaines. Renouvelé à chaque nouvelle saison.'),
+      h('p',{class:'hint'},'Résiliation possible à tout moment. TVA non applicable, art. 293 B du CGI.')),
+    h('p',{class:'hint'},'Cette appli ne remplace pas un avis médical. Consulte un médecin avant de commencer ou de reprendre une activité intense.'));
+}
 function loginView(){
   const email=h('input',{id:'auth-email',type:'email',autocomplete:'email',placeholder:'toi@exemple.fr'});
   const pw=h('input',{id:'auth-pw',type:'password',autocomplete:'current-password',placeholder:'6 caractères minimum'});
@@ -6935,6 +6958,7 @@ function loginView(){
           if(!email.value.trim()){msg.textContent='Écris ton e-mail ci-dessus, puis clique à nouveau.';return;}
           await sendPasswordResetEmail(auth,email.value.trim());msg.textContent='Si ce compte existe, un e-mail de réinitialisation vient d’être envoyé.';})},'Mot de passe oublié'),
         h('button',{class:'link',type:'button',onclick:()=>attempt(()=>signInWithPopup(auth,new GoogleAuthProvider()))},'Continuer avec Google'))),
+    loginPitch(),
     h('p',{class:'ver'},'Version '+APP_VERSION));
 }
 
