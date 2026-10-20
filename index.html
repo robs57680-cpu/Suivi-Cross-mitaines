@@ -1844,6 +1844,21 @@ function saveLog(patch,msg,uid){
    L'enveloppe s'ouvre seulement au lancement de l'appli (jamais en direct, jamais pendant le minuteur) ;
    la lettre du fil permet de le relire. */
 const annKey=()=>'bs-ann-'+S.uid;
+/* adresses https:// d'un message du coach : cliquables (ouvertes dans un nouvel onglet) ; le reste reste du texte brut */
+function linkText(text){
+  const out=[],re=/https:\/\/[^\s<>"']+/g;let last=0,m;
+  const s=String(text||'');
+  while((m=re.exec(s))){
+    let url=m[0],tail='';
+    const t=url.match(/[.,;:!?)\]]+$/);if(t){tail=t[0];url=url.slice(0,-tail.length);}
+    if(m.index>last)out.push(s.slice(last,m.index));
+    out.push(h('a',{href:url,target:'_blank',rel:'noopener noreferrer',style:'text-decoration:underline;overflow-wrap:anywhere'},url));
+    if(tail)out.push(tail);
+    last=m.index+m[0].length;
+  }
+  if(last<s.length)out.push(s.slice(last));
+  return out;
+}
 function annIsSeen(a){
   if(!a)return true;
   if(((S.logs[S.uid]||{}).annSeen||[]).includes(a.id))return true;
@@ -1880,7 +1895,7 @@ function openAnnouncement(a,opt){
     preview?h('span',{class:'chip live'},'Aperçu coach · rien n’est publié'):null,
     h('p',{class:'eyebrow'},when||'Message du coach'),
     h('h2',{class:'wtitle'},a.title||'Message du coach'),
-    h('p',{class:'ann-text'},a.text),
+    h('p',{class:'ann-text'},linkText(a.text)),
     h('div',{class:'row'},h('button',{class:'btn primary',type:'button',id:'ann-vu',onclick:()=>{if(!preview&&!already)annMarkSeen(a);close();}},preview?'Fermer l’aperçu':already?'Fermer':'Vu')));
   const showLetter=()=>{stage.replaceChildren(letter);letter.classList.add('ann-in');const b=document.getElementById('ann-vu');if(b)b.focus();};
   if(review){stage.append(letter);letter.classList.add('ann-in');}
@@ -1919,7 +1934,7 @@ function annCoach(){
   const athletes=Object.values(S.logs).filter(l=>l&&l.pseudo),nSeen=cur?athletes.filter(l=>(l.annSeen||[]).includes(cur.id)).length:0;
   el.append(h('p',{class:'muted'},'Le message s’affiche à chaque athlète, sous forme d’enveloppe, à l’ouverture de l’appli. Quand il appuie sur « Vu », il ne revient plus jamais pour lui. Il n’interrompt jamais un minuteur de metcon en cours : il apparaît au prochain lancement de l’appli. Les athlètes peuvent le relire avec la petite lettre en haut du fil.'));
   if(cur)el.append(h('div',{class:'banner'},h('div',{class:'row'},h('span',{class:'chip live'},'Message en ligne'),h('span',{class:'sub'},'Publié le '+fmtShort(String(cur.at||todayStr()).slice(0,10))+' · vu par '+nSeen+' athlète'+(nSeen>1?'s':'')+' sur '+athletes.length)),
-    h('p',{style:'white-space:pre-wrap;overflow-wrap:anywhere'},(cur.title?cur.title+'\n':'')+cur.text)));
+    h('p',{style:'white-space:pre-wrap;overflow-wrap:anywhere'},(cur.title?cur.title+'\n':''),linkText(cur.text))));
   else el.append(h('div',{class:'empty'},h('p',{},'Aucun message en ligne pour l’instant.')));
   const ta=h('textarea',{id:'ann-text',rows:'6',maxlength:'600',placeholder:'Ex : Les séances de la semaine du 26 octobre seront en costume !',value:d.text,oninput:e=>{d.text=e.target.value;cnt.textContent=e.target.value.length+'/600';}});
   const cnt=h('span',{class:'hint','aria-live':'polite'},d.text.length+'/600');
