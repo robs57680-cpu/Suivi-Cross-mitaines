@@ -996,6 +996,43 @@ body.board-lock{overflow:hidden;padding-block-end:0}
 .tr-hero .ar-cup{pointer-events:none}
 .tr-hero .ar-title{font-size:30px}
 .tr-hero .ar-tag{margin:2px 0 0}
+
+/* séances en cartes */
+.car-page{overflow:hidden}
+.car-track{display:flex;gap:14px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-inline:-16px;padding:14px 11% 26px;overscroll-behavior-x:contain;touch-action:pan-x pan-y}
+.car-track::-webkit-scrollbar{display:none}
+.car-slot{flex:0 0 78%;max-width:420px;scroll-snap-align:center;filter:drop-shadow(0 10px 14px rgba(0,0,0,.28));transform:scale(.93) rotate(1.4deg);opacity:.82;transform-origin:50% 60%}
+.car-slot:nth-child(even){transform:scale(.93) rotate(-1.4deg)}
+.car-slot.cur{transform:none;opacity:1}
+@media (prefers-reduced-motion:no-preference){.car-slot{transition:transform .28s ease,opacity .28s ease}}
+.car-card{position:relative;min-height:430px;height:100%;display:flex;flex-direction:column;gap:10px;padding:18px 16px 16px;color:#fff;cursor:pointer;border-radius:14px;
+  background:radial-gradient(120% 70% at 100% 0,rgba(255,255,255,.22),transparent 55%),repeating-linear-gradient(135deg,rgba(255,255,255,.05) 0 2px,transparent 2px 10px),linear-gradient(155deg,var(--c1),var(--c2));
+  clip-path:polygon(0 0,calc(100% - 38px) 0,100% 38px,100% 100%,0 100%);-webkit-tap-highlight-color:transparent}
+.car-card::after{content:"";position:absolute;top:0;right:0;width:38px;height:38px;background:linear-gradient(225deg,transparent 50%,rgba(255,255,255,.4) 50%,rgba(0,0,0,.25) 100%);border-bottom-left-radius:8px}
+.car-card:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.car-card.done{filter:saturate(.7)}
+.cc-top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-right:34px}
+.cc-n{font-family:var(--f-mono);font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;opacity:.92}
+.cc-done{font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:#fff;color:#14161A;border-radius:2px;padding:1px 7px;transform:rotate(-4deg)}
+.cc-title{font-family:var(--f-display);font-weight:400;font-size:34px;line-height:1.02;text-transform:uppercase;text-wrap:balance;overflow-wrap:anywhere;text-shadow:0 2px 0 rgba(0,0,0,.18)}
+.cc-meta{display:flex;flex-wrap:wrap;gap:6px}
+.cc-meta span{font-family:var(--f-mono);font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;background:rgba(0,0,0,.28);border-radius:2px;padding:2px 8px}
+.cc-parts{display:grid;gap:8px;margin-top:4px;align-content:start}
+.cc-part{display:grid;grid-template-columns:38px minmax(0,1fr);gap:10px;align-items:start;background:rgba(0,0,0,.24);border:1.5px solid rgba(255,255,255,.22);border-radius:6px;padding:8px 10px 8px 8px}
+.cc-part.met{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.55)}
+.cc-lab{font-family:var(--f-display);font-size:20px;line-height:1;display:grid;place-items:center;height:32px;background:#fff;color:#14161A;border-radius:3px}
+.cc-name{font-weight:700;font-size:15px;line-height:1.25;display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center}
+.cc-rx,.cc-fmt{font-family:var(--f-mono);font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:2px;padding:0 6px;line-height:1.6}
+.cc-rx{background:#fff;color:#14161A}
+.cc-fmt{border:1.5px solid rgba(255,255,255,.7)}
+.cc-lines{font-size:13px;line-height:1.35;opacity:.95;margin-top:2px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.cc-load{font-family:var(--f-mono);font-size:11px;font-weight:600;margin-top:3px;opacity:.9}
+.cc-go{margin-top:auto;padding-top:6px;font-family:var(--f-mono);font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;text-align:right;opacity:.95}
+.car-dots{display:flex;justify-content:center;flex-wrap:wrap;gap:7px;margin-top:-8px}
+.car-dots i{width:8px;height:8px;border-radius:50%;background:var(--line);cursor:pointer;transition:transform .2s,background .2s}
+.car-dots i.on{background:var(--accent);transform:scale(1.5)}
+.back-row{margin-bottom:-4px}
+.back-btn{justify-self:start}
 </style>
 </head>
 <body>
@@ -2211,7 +2248,7 @@ const typing=()=>{const a=document.activeElement;return a&&main.contains(a)&&/^(
 function scheduleRender(){if(typing()){pending=true;return;}render();}
 document.addEventListener('focusout',()=>{if(!pending)return;setTimeout(()=>{if(!typing()){pending=false;render();}},0);});
 
-function go(tab){closeDrawer(true);S._bk=null;S.movBack=null;S.movFocus=null;if(S.coach)S.coach.wodOpen=false;if(tab==='coach'&&S.tab==='coach')S.coach.view=null;S.profView=null;S.viewUser=null;S.tip=null;S.trophOpen='';S.trophSeason='';if(tab==='today'&&S.tab!=='today')S.viewDate=null;S.tab=tab;S.boardDetail=false;S.confirm=null;if(S.entry&&S.entry.coach)S.entry=null;if(S.tab!=='today'){S.entry=null;S.redo=null;}render();window.scrollTo(0,0);}
+function go(tab){closeDrawer(true);S._bk=null;S.movBack=null;S.movFocus=null;if(S.coach)S.coach.wodOpen=false;if(tab==='coach'&&S.tab==='coach')S.coach.view=null;S.profView=null;S.viewUser=null;S.tip=null;S.trophOpen='';S.trophSeason='';if(tab==='today'){if(S.tab==='today'&&S.viewDate)S.carDate=S.viewDate;S.viewDate=null;}S.tab=tab;S.boardDetail=false;S.confirm=null;if(S.entry&&S.entry.coach)S.entry=null;if(S.tab!=='today'){S.entry=null;S.redo=null;}render();window.scrollTo(0,0);}
 function render(){
   pending=false;S._un=null;S._aw=null;S._ob=null;applyTheme();document.body.classList.remove('modal-open');document.body.classList.remove('board-lock');
   {const tp=document.querySelector('.top');if(tp)document.documentElement.style.setProperty('--toph',tp.offsetHeight+'px');}
@@ -3363,10 +3400,13 @@ function partCard(p,w,date){
 /* séance affichée à l'ouverture : celle du jour si elle n'est pas déjà faite, sinon la première séance de la semaine pas encore faite */
 function defaultDate(){
   const t=todayStr(),mine=(S.logs[S.uid]&&S.logs[S.uid].entries)||{};
-  if(S.wods[t]&&!mine[t])return t;
-  const mon=mondayOf(t);
-  const wk=Object.keys(S.wods).filter(d=>d>=mon&&d<=addDays(mon,6)).sort();
-  return wk.find(d=>!mine[d])||(S.wods[t]?t:(wk[0]||t));
+  const mon=mondayOf(t),sun=addDays(mon,6);
+  const all=Object.keys(S.wods).sort();
+  const wk=all.filter(d=>d>=mon&&d<=sun);
+  /* première séance non faite de la semaine en cours (la 1 faite → la 2 ; la 3 faite mais ni la 1 ni la 2 → la 1) */
+  return wk.find(d=>!mine[d])
+    ||all.find(d=>d>sun&&!mine[d])   /* semaine terminée : la prochaine séance à venir */
+    ||wk[0]||(S.wods[t]?t:(all.filter(d=>d<mon).pop()||t));
 }
 function upcomingList(t,current){
   const ws=Object.values(S.wods).filter(w=>w.date>t).sort((a,b)=>a.date<b.date?-1:1).slice(0,12);
@@ -3691,11 +3731,118 @@ function viewFeed(){
   }
   return el;
 }
+/* ---------- séances en cartes : on glisse pour changer, on touche pour ouvrir ---------- */
+const CARD_PAL=[['#FF5A36','#C81E5A'],['#1F55D6','#5B2BD6'],['#1E9B4A','#0E6B6B'],['#E07B00','#C2341A'],['#7B3FC4','#C2368F'],['#0E8A8A','#1F55D6'],['#D92B1F','#7A1020'],['#2B3A67','#1F6FD6'],['#B5179E','#5C2BD6'],['#4E8A2E','#0E7A5A']];
+S.cardCol=S.cardCol||{};
+function cardColor(date,prev,next){
+  if(S.cardCol[date]===undefined){
+    const bad=[prev,next].map(d=>d&&S.cardCol[d]).filter(x=>x!==undefined&&x!==null);
+    const ok=CARD_PAL.map((_,i)=>i).filter(i=>!bad.includes(i));
+    S.cardCol[date]=ok[Math.floor(Math.random()*ok.length)];
+  }
+  return CARD_PAL[S.cardCol[date]];
+}
+function weekRel(date,t){
+  const n=Math.round((dparse(mondayOf(date))-dparse(mondayOf(t)))/604800000);
+  return n===0?'Cette semaine':n===1?'Semaine prochaine':n===-1?'Semaine passée':n>1?'Dans '+n+' semaines':'Il y a '+(-n)+' semaines';
+}
+function weekRange(date){const m=mondayOf(date);return 'Du '+fmtShort(m)+' au '+fmtShort(addDays(m,6));}
+const short1=(t,n)=>{t=String(t||'').replace(/\s+/g,' ').trim();return t.length>n?t.slice(0,n-1).trimEnd()+'…':t;};
+/* une ligne de la carte : P1 / P2 / metcon en Rx, sans le détail (pas de liens, pas de niveaux) */
+function cardPart(p){
+  const metcon=p.kind==='metcon';
+  const lines=(p.content||'').split('\n').map(x=>x.trim()).filter(Boolean).map(x=>{try{return tagShow(x);}catch(e){return x;}});
+  const top=metcon?(activeLevels(p).slice(-1)[0]||[null,0]):null;
+  const ld=top&&top[0]?loadsText(top[0]):'';
+  return h('div',{class:'cc-part'+(metcon?' met':'')},
+    h('div',{class:'cc-lab'},p.label||'•'),
+    h('div',{class:'cc-body'},
+      h('div',{class:'cc-name'},p.name||KIND[p.kind]||'Partie',
+        metcon?h('span',{class:'cc-rx'},'Rx'):null,
+        metcon&&p.format?h('span',{class:'cc-fmt'},fmtLabel(p)):null,
+        (!metcon&&p.kind==='force'&&p.movement)?h('span',{class:'cc-fmt'},p.movement):null),
+      lines.length?h('div',{class:'cc-lines'},short1(lines.slice(0,metcon?4:3).join(' · '),metcon?150:110)):null,
+      ld?h('div',{class:'cc-load'},ld):null));
+}
+function sessionCard(w,i,n,mine,prev,next){
+  const date=w.date,col=cardColor(date,prev,next),done=!!mine[date],per=periodFor(date);
+  const parts=(w.parts||[]);
+  const shown=parts.length>4?parts.filter((p,k)=>k<3||p.kind==='metcon').slice(0,4):parts;
+  const open=()=>{S.viewDate=date;S.entry=null;S.redo=null;S.tip=null;render();window.scrollTo(0,0);};
+  const card=h('div',{class:'car-card'+(done?' done':''),role:'button',tabindex:'0','aria-label':'Ouvrir la séance du '+fmtDate(date)+' : '+w.title,
+      style:'--c1:'+col[0]+';--c2:'+col[1],onclick:open,onkeydown:e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}}},
+    h('div',{class:'cc-top'},
+      h('span',{class:'cc-n'},'Séance '+(i+1)+' / '+n),
+      done?h('span',{class:'cc-done'},'✓ Faite'):null),
+    h('h2',{class:'cc-title'},w.title),
+    h('div',{class:'cc-meta'},h('span',{},cap(fmtShort(date))),h('span',{},basePts(w,per)+' pts'+(metconOf(w)?' + metcon':''))),
+    h('div',{class:'cc-parts'},shown.map(cardPart)),
+    h('div',{class:'cc-go'},'Touche pour ouvrir ',h('b',{},'→')));
+  return h('div',{class:'car-slot','data-date':date},card);
+}
+function viewCards(){
+  const t=todayStr(),el=h('div',{class:'stack car-page'});
+  if(!ready()){el.append(h('p',{class:'muted'},'Chargement…'));return el;}
+  const mine=(S.logs[S.uid]&&S.logs[S.uid].entries)||{};
+  /* séances des 4 dernières semaines et à venir, par semaine puis par date */
+  const from=addDays(mondayOf(t),-28);
+  const ws=Object.values(S.wods).filter(w=>w.date>=from).sort((a,b)=>a.date<b.date?-1:1);
+  if(!ws.length){
+    el.append(h('div',{},h('p',{class:'eyebrow'},'Séances'),h('h1',{class:'day'},'Aucune séance')),
+      h('div',{class:'empty'},h('p',{},'Aucune séance publiée pour le moment.'),
+        S.owner?h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{go('coach');S.coach.view='wod';openWodWindow(t);}},'Publier une séance')):null));
+    return el;
+  }
+  /* numéro de la séance dans sa semaine */
+  const byWeek={};ws.forEach(w=>{(byWeek[mondayOf(w.date)]=byWeek[mondayOf(w.date)]||[]).push(w.date);});
+  let cur=S.carDate&&S.wods[S.carDate]&&S.carDate>=from?S.carDate:defaultDate();
+  if(!ws.some(w=>w.date===cur))cur=ws[0].date;
+  S.carDate=cur;
+  const eb=h('p',{class:'eyebrow'}),day=h('h1',{class:'day'}),sub=h('p',{class:'hint'});
+  const paint=d=>{
+    eb.textContent=weekRel(d,t);day.textContent=weekRange(d);
+    sub.textContent='À réaliser n’importe quel jour de la semaine, du lundi au dimanche.';
+  };
+  paint(cur);
+  el.append(h('div',{},eb,day,sub));
+  const track=h('div',{class:'car-track',role:'list','aria-label':'Séances, fais glisser pour changer'},
+    ws.map((w,k)=>{const wk=byWeek[mondayOf(w.date)];return sessionCard(w,wk.indexOf(w.date),wk.length,mine,ws[k-1]&&ws[k-1].date,ws[k+1]&&ws[k+1].date);}));
+  const dots=h('div',{class:'car-dots','aria-hidden':'true'},ws.map(w=>h('i',{'data-d':w.date})));
+  el.append(track,dots);
+  const slots=[...track.children];
+  const mark=d=>{
+    slots.forEach(sl=>sl.classList.toggle('cur',sl.getAttribute('data-date')===d));
+    [...dots.children].forEach(x=>x.classList.toggle('on',x.getAttribute('data-d')===d));
+  };
+  const center=(d,smooth)=>{const sl=slots.find(x=>x.getAttribute('data-date')===d);if(!sl)return;
+    track.scrollTo({left:sl.offsetLeft-(track.clientWidth-sl.offsetWidth)/2,behavior:smooth?'smooth':'auto'});};
+  mark(cur);
+  [...dots.children].forEach(x=>x.addEventListener('click',()=>center(x.getAttribute('data-d'),true)));
+  let raf=0;
+  track.addEventListener('scroll',()=>{
+    if(raf)return;
+    raf=requestAnimationFrame(()=>{
+      raf=0;
+      const mid=track.scrollLeft+track.clientWidth/2;
+      let best=null,bd=1e9;
+      slots.forEach(sl=>{const dd=Math.abs(sl.offsetLeft+sl.offsetWidth/2-mid);if(dd<bd){bd=dd;best=sl;}});
+      if(!best)return;
+      const d=best.getAttribute('data-date');
+      if(d!==S.carDate){S.carDate=d;paint(d);mark(d);}
+    });
+  },{passive:true});
+  /* le conteneur n'est dans la page qu'après render : on centre la carte courante juste après */
+  const place=()=>{if(track.isConnected)center(cur,false);};
+  requestAnimationFrame(place);setTimeout(place,60);
+  return el;
+}
+function backToCards(){S.carDate=S.viewDate||S.carDate;S.viewDate=null;S.entry=null;S.redo=null;S.tip=null;S.confirm=null;render();window.scrollTo(0,0);}
 function viewToday(){
+  if(!S.viewDate)return viewCards();
   const t=todayStr(),date=S.viewDate||defaultDate(),w=S.wods[date];
   const el=h('div',{class:'stack'});
+  el.append(h('div',{class:'row back-row'},h('button',{class:'btn sm back-btn',type:'button',onclick:backToCards},'← Retour aux séances')));
   el.append(h('div',{},h('p',{class:'eyebrow'},date===t?'Aujourd’hui':date<t?'Séance passée':'Séance à venir'),h('h1',{class:'day'},cap(fmtDate(date)))));
-  if(S.viewDate&&S.viewDate!==defaultDate())el.append(h('div',{class:'row'},h('button',{class:'btn sm',onclick:()=>{S.viewDate=null;S.entry=null;S.redo=null;render();}},'Revenir à la séance du jour')));
   el.append(warmupCard());
   if(!ready()){el.append(h('p',{class:'muted'},'Chargement…'));return el;}
   if(!w){
@@ -7600,7 +7747,7 @@ const tourKey=t=>'bs-tour-'+(t==='login'?'login':(S.uid||'anon')+'-'+t)+(TOUR_VE
 const tourSeen=t=>{try{return localStorage.getItem(tourKey(t))==='1';}catch(e){return true;}}; /* stockage indisponible : on n'insiste pas */
 const tourMark=t=>{try{localStorage.setItem(tourKey(t),'1');}catch(e){}};
 const tourBusy=()=>!!document.querySelector('.ov,.cer,.tm,.avfs,.ann,.reward-pop,#tm-ov');
-const curTourId=()=>!S.uid?((S.authReady&&S.db)?'login':null):((S.viewUser||S.boardDetail)?null:(TOURS[S.tab]?S.tab:null));
+const curTourId=()=>!S.uid?((S.authReady&&S.db)?'login':null):((S.viewUser||S.boardDetail||(S.tab==='today'&&!S.viewDate))?null:(TOURS[S.tab]?S.tab:null));
 function helpBtn(){return h('button',{class:'help-btn',id:'tour-help',type:'button','aria-label':'Afficher le guide de cet écran',title:'Guide de cet écran',onclick:()=>{const t=curTourId();if(t)startTour(TOURS[t]());}},'?');}
 function maybeTour(){
   if(tourEl)return;
