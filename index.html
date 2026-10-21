@@ -394,8 +394,8 @@ body.modal-open{overflow:hidden}
 /* badge « accroché » en haut à droite d'une publication du fil, en diagonale */
 section.feed-card{position:relative}
 section.feed-card>.feed-badge{position:absolute!important;top:8px;right:12px;z-index:6!important;transform:rotate(12deg);transform-origin:50% 50%;filter:drop-shadow(3px 5px 4px rgba(0,0,0,.6));pointer-events:auto}
-.feed-card>.bn.has-badge{min-height:96px}
-.feed-card>.bn.has-badge .feed-meta{padding-right:104px}
+.feed-card>.bn.has-badge{min-height:112px}
+.feed-card>.bn.has-badge .feed-meta{padding-right:116px}
 .bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
 .bsel{display:grid;justify-items:center;align-content:start;gap:4px;padding:12px 8px;border:2px solid var(--line);border-radius:4px;background:var(--surface2);color:var(--ink);cursor:pointer;text-align:center;min-width:0}
 .bsel{position:relative}
@@ -703,16 +703,26 @@ html[data-hal] .top{border-bottom-color:#E8710A}
 .bn-bg-alpha .bn-title{color:#f5a623;letter-spacing:.14em;text-shadow:0 1px 3px rgba(0,0,0,.9)}
 .bn.bn-bg-alpha .feed-av{box-shadow:0 0 0 2px #f5a623,0 0 0 4px rgba(0,0,0,.55)}
 /* fond Angry Pumpkin : visuel complet (cadre qui dégouline, citrouille, chauves-souris) ; zone centrale sombre réservée au pseudo */
-.bn-bg-angrypumpkin{background-color:#070b14;background-image:linear-gradient(90deg,rgba(0,0,0,.18),rgba(0,0,0,.35) 45%,rgba(0,0,0,0) 80%),url('assets/embedded/banniere-box-score-angry-pumpkin.webp');background-size:cover;background-position:center 35%;background-repeat:no-repeat;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.85);border-color:#1b2a4a;padding-left:min(22%,84px)}
+.bn-bg-angrypumpkin{background-color:#070b14;background-image:url('assets/embedded/cadre-halloween-entete.webp');background-size:cover;background-position:left center;background-repeat:no-repeat;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.85);border-color:#1b2a4a;padding-left:min(22%,84px)}
 .bn-bg-angrypumpkin .nm,.bn-bg-angrypumpkin .link,.bn-bg-angrypumpkin h1,.bn-bg-angrypumpkin .sub,.bn-bg-angrypumpkin .eyebrow{color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.85)}
 .bn-bg-angrypumpkin .bn-title,.bn-bg-angrypumpkin .eyebrow{color:#ff8a2a}
 /* carte du fil habillée Angry Pumpkin : sans contour, le haut du visuel est le haut de la carte et les gouttes du bas en sont le bas */
-.feed-card.th-angrypumpkin{--pk-h:clamp(98px,27vw,170px);--pk-b:clamp(34px,9vw,58px);position:relative;overflow:hidden;background:#090d17;border:0;border-radius:0;color:#f2f4f8;padding-bottom:calc(var(--pk-b) - 4px)}
-.feed-card.th-angrypumpkin::before{content:'';position:absolute;left:0;right:0;top:0;height:var(--pk-h);background:url('assets/embedded/banniere-box-score-angry-pumpkin.webp') center top/cover no-repeat;pointer-events:none;z-index:0}
-.feed-card.th-angrypumpkin::after{content:'';position:absolute;left:0;right:0;bottom:0;height:var(--pk-b);background:url('assets/embedded/banniere-box-score-angry-pumpkin-bas.webp') center bottom/100% 100% no-repeat;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);pointer-events:none;z-index:0}
+/* publication « Angry Pumpkin » : le cadre de lave EST le bord de la publication (aucun encadré derrière).
+   Deux images à fond transparent : assets/embedded/cadre-halloween-entete.webp (bandeau avec le rond de l'avatar)
+   et assets/embedded/cadre-halloween-corps.webp (cadre du bas, étiré en 9 zones). Tailles en cqw = % de la largeur de la carte. */
+.feed-card.th-angrypumpkin{container-type:inline-size;position:relative;overflow:visible;background:none;border:0;border-radius:0;box-shadow:none;color:#f2f4f8;padding-bottom:30px}
+.feed-card.th-angrypumpkin::before{content:'';position:absolute;left:0;right:0;top:19.4cqw;bottom:0;box-sizing:border-box;border-style:solid;border-width:3.4cqw 3.4cqw 5.8cqw 3.4cqw;border-image:url('assets/embedded/cadre-halloween-corps.webp') 40 40 70 40 fill/3.4cqw 3.4cqw 5.8cqw 3.4cqw stretch;pointer-events:none;z-index:0}
 .feed-card.th-angrypumpkin>*{position:relative;z-index:1}
-.feed-card.th-angrypumpkin>.bn{background:none;border:0;box-shadow:none;border-radius:0;display:flex;align-items:center;min-height:var(--pk-h);padding:calc(var(--pk-h)*.08) 14px calc(var(--pk-h)*.08) min(22%,84px)}
-.feed-card.th-angrypumpkin>.bn>.feed-head{flex:1;min-width:0}
+.feed-card.th-angrypumpkin>.bn{z-index:3;align-self:start;background:url('assets/embedded/cadre-halloween-entete.webp') 0 0/100% 100% no-repeat;border:0;box-shadow:none;border-radius:0;display:block;overflow:visible;padding:0;min-height:0;aspect-ratio:1200/270}
+.feed-card.th-angrypumpkin>.bn.has-badge{min-height:0}
+.feed-card.th-angrypumpkin>.bn>.feed-head{position:absolute;left:17.05cqw;top:7.55cqw;width:52cqw;height:10.3cqw;gap:2.2cqw}
+.feed-card.th-angrypumpkin>.bn.has-badge .feed-meta{padding-right:0}
+.feed-card.th-angrypumpkin .feed-av{width:10.3cqw;height:10.3cqw;box-shadow:none}
+.feed-card.th-angrypumpkin .feed-av .av{width:10.3cqw!important;height:20.77cqw!important;min-width:0!important}
+.feed-card.th-angrypumpkin .avf{width:10.3cqw;height:10.3cqw}
+.feed-card.th-angrypumpkin .avf>.avf-img{width:15.9cqw;height:15.9cqw}
+.feed-card.th-angrypumpkin>.bn .nm{font-size:clamp(13px,4.2cqw,20px);line-height:1.1}
+.feed-card.th-angrypumpkin>.bn .bn-title{font-size:clamp(8px,2.6cqw,11px);line-height:1.2}
 .feed-card.th-angrypumpkin .wtitle{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.8)}
 .feed-card.th-angrypumpkin .sub{color:#9aa6bf}
 .feed-card.th-angrypumpkin .feed-metric{background:rgba(14,22,40,.78);border-color:#1f3157}
@@ -1024,6 +1034,9 @@ body.board-lock{overflow:hidden;padding-block-end:0}
 .car-card::after{content:"";position:absolute;top:0;right:0;width:38px;height:38px;background:linear-gradient(225deg,transparent 50%,rgba(255,255,255,.4) 50%,rgba(0,0,0,.25) 100%);border-bottom-left-radius:8px}
 .car-card:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 .car-card.done{filter:saturate(.7)}
+.cc-flags{display:flex;flex-wrap:wrap;gap:6px}
+.cc-tag{font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:#fff;color:#14161A;border-radius:2px;padding:2px 8px;box-shadow:0 1px 2px rgba(0,0,0,.35)}
+.cc-tag.deload{background:#14161A;color:#F4C400;letter-spacing:.16em;padding:3px 10px}
 .cc-top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-right:34px}
 .cc-n{font-family:var(--f-mono);font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;opacity:.92}
 .cc-done{font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:#fff;color:#14161A;border-radius:2px;padding:1px 7px;transform:rotate(-4deg)}
@@ -2457,8 +2470,8 @@ function badgeImgHTML(tid,label,size){
   const name=String(label||'').toUpperCase(),short=(name.length>16?name.slice(0,15)+'…':name).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
   let g='<svg viewBox="0 0 280 300" aria-hidden="true"><image href="assets/embedded/badge-'+key+'.webp" x="0" y="0" width="280" height="300"/>';
   if(size>=100&&short){
-    const fs=short.length<=8?16:short.length<=11?14:12;
-    g+='<text x="140" y="'+(ty*300+fs*.36).toFixed(1)+'" text-anchor="middle" fill="#FFFFFF"'+(short.length*fs*.62>100?' textLength="100" lengthAdjust="spacingAndGlyphs"':'')+' style="font-family:var(--f-display);font-size:'+fs+'px;letter-spacing:.05em">'+short+'</text>';
+    const fs=(short.length<=8?16:short.length<=11?14:12)+(size<150?2:0);
+    g+='<text x="140" y="'+(ty*300+fs*.36).toFixed(1)+'" text-anchor="middle" fill="#FFFFFF"'+(short.length*fs*.62>108?' textLength="108" lengthAdjust="spacingAndGlyphs"':'')+' style="font-family:var(--f-display);font-size:'+fs+'px;letter-spacing:.05em">'+short+'</text>';
   }
   return g+'</svg>';
 }
@@ -3463,6 +3476,7 @@ function partCard(p,w,date){
       h('span',{class:'chip'+(metcon?' live':'')},metcon?'Metcon · points au classement':(KIND[p.kind]||'Autre')),
       metcon&&p.focus&&FOCUS[p.focus]?h('span',{class:'chip'},FOCUS[p.focus]):null,
       metcon&&INTENS[p.intensity]?h('span',{class:'chip',title:INTENS[p.intensity].d},'Intensité : '+INTENS[p.intensity].l):null,
+      metcon&&p.test?h('span',{class:'chip live'},'TEST'):null,
       metcon&&p.redo===false?h('span',{class:'chip miss'},'Pas de REDO'):null,
       p.kind==='force'&&p.movement?h('span',{class:'chip'},p.movement):null),
     fmtId?h('div',{class:'fmt'},h('button',{type:'button',class:'fmtbtn tipbtn','aria-expanded':S.tip===fmtId?'true':'false',onclick:()=>toggleTip(fmtId)},fmtLabel(p)),
@@ -3487,7 +3501,7 @@ function defaultDate(){
     ||wk[0]||(S.wods[t]?t:(all.filter(d=>d<mon).pop()||t));
 }
 function upcomingList(t,current){
-  const ws=Object.values(S.wods).filter(w=>w.date>t).sort((a,b)=>a.date<b.date?-1:1).slice(0,12);
+  const ws=Object.values(S.wods).filter(w=>w.date>t&&!wodInDoneSeason(w.date)).sort((a,b)=>a.date<b.date?-1:1).slice(0,12);
   if(!ws.length)return h('div');
   const nowWk=mondayOf(t),mine=(S.logs[S.uid]&&S.logs[S.uid].entries)||{};
   return h('section',{class:'card'},h('h2',{class:'h2'},'Séances à venir'),
@@ -3795,7 +3809,7 @@ function viewFeed(){
     const head=bannerEl(uid,[h('div',{class:'feed-head'},avwrap,h('div',{class:'feed-meta'},h('div',{class:'nm'},h('button',{class:'link',type:'button',onclick:()=>openAthlete(uid)},lg.pseudo||'Athlète')),bannerTitle(uid)))],false,true);
     /* badge choisi : accroché en haut à droite de la publication, en diagonale */
     const fb=badgeOf(uid);let fbEl=null;
-    if(fb){fbEl=badgeEl(fb.tid,fb.per.name,96,trophyName(fb.tid)+' · '+fb.per.name,fb.per);fbEl.classList.add('feed-badge');head.classList.add('has-badge');}
+    if(fb){fbEl=badgeEl(fb.tid,fb.per.name,108,trophyName(fb.tid)+' · '+fb.per.name,fb.per);fbEl.classList.add('feed-badge');head.classList.add('has-badge');}
     const results=[];
     (w.parts||[]).filter(p=>p.kind==='force').forEach(p=>{const kg=e.loads&&e.loads[p.label];if(kg!==undefined)results.push(h('div',{class:'feed-metric'},h('b',{},fmtKg(kg)),h('span',{},p.movement||p.name||'Force')));});
     if(m&&hasScore(e))results.push(h('div',{class:'feed-metric'},h('b',{},scoreText(m,e.score,e)),h('span',{},'Metcon · '+(m.format==='FT'?'Temps':m.format==='AMRAP'?'Tours / reps':isDead(m)?'Dead by':'Tours'))));
@@ -3852,22 +3866,26 @@ function sessionCard(w,i,n,mine,prev,next){
   const open=()=>{S.viewDate=date;S.entry=null;S.redo=null;S.tip=null;render();window.scrollTo(0,0);};
   const card=h('div',{class:'car-card'+(done?' done':''),role:'button',tabindex:'0','aria-label':'Ouvrir la séance du '+fmtDate(date)+' : '+w.title,
       style:'--c1:'+col[0]+';--c2:'+col[1],onclick:open,onkeydown:e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}}},
+    w.deload?h('div',{class:'cc-flags'},h('span',{class:'cc-tag deload'},'DELOAD')):null,
     h('div',{class:'cc-top'},
       h('span',{class:'cc-n'},'Séance '+(i+1)+' / '+n),
       done?h('span',{class:'cc-done'},'✓ Faite'):null),
     h('h2',{class:'cc-title'},w.title),
+    (()=>{const m=metconOf(w),tags=[];if(m&&m.test)tags.push(h('span',{class:'cc-tag'},'TEST'));if(m&&m.redo!==false&&!lockedDate(date))tags.push(h('span',{class:'cc-tag'},'RE DO'));return tags.length?h('div',{class:'cc-flags'},tags):null;})(),
     h('div',{class:'cc-meta'},h('span',{},cap(fmtShort(date))),h('span',{},basePts(w,per)+' pts'+(metconOf(w)?' + metcon':''))),
     h('div',{class:'cc-parts'},shown.map(cardPart)),
     h('div',{class:'cc-go'},'Touche pour ouvrir ',h('b',{},'→')));
   return h('div',{class:'car-slot','data-date':date},card);
 }
+/* une séance d'une saison terminée n'apparaît plus dans l'onglet Séance */
+const wodInDoneSeason=d=>{const per=periodFor(d);return !!per&&!per.virtual&&periodState(per)==='done';};
 function viewCards(){
   const t=todayStr(),el=h('div',{class:'stack car-page'});
   if(!ready()){el.append(h('p',{class:'muted'},'Chargement…'));return el;}
   const mine=(S.logs[S.uid]&&S.logs[S.uid].entries)||{};
   /* séances des 4 dernières semaines et à venir, par semaine puis par date */
   const from=addDays(mondayOf(t),-28);
-  const ws=Object.values(S.wods).filter(w=>w.date>=from).sort((a,b)=>a.date<b.date?-1:1);
+  const ws=Object.values(S.wods).filter(w=>w.date>=from&&!wodInDoneSeason(w.date)).sort((a,b)=>a.date<b.date?-1:1);
   if(!ws.length){
     el.append(h('div',{},h('p',{class:'eyebrow'},'Séances'),h('h1',{class:'day'},'Aucune séance')),
       h('div',{class:'empty'},h('p',{},'Aucune séance publiée pour le moment.'),
@@ -3926,7 +3944,7 @@ function viewToday(){
   const el=h('div',{class:'stack'+(col?' themed':'')});
   if(col)el.setAttribute('style','--c1:'+col[0]+';--c2:'+col[1]+';--accent:'+col[0]+';--accent-ink:#fff;--tint:color-mix(in srgb,'+col[0]+' 16%,var(--surface))');
   el.append(h('div',{class:'row back-row'},h('button',{class:'btn sm back-btn',type:'button',onclick:backToCards},'← Retour aux séances')));
-  el.append(h('div',{class:col?'sess-hero':''},h('p',{class:'eyebrow'},date===t?'Aujourd’hui':date<t?'Séance passée':'Séance à venir'),h('h1',{class:'day'},cap(fmtDate(date)))));
+  el.append(h('div',{class:col?'sess-hero':''},h('p',{class:'eyebrow'},date===t?'Aujourd’hui':date<t?'Séance passée':'Séance à venir'),w&&w.deload?h('div',{class:'row'},h('span',{class:'chip live'},'DELOAD')):null,h('h1',{class:'day'},cap(fmtDate(date)))));
   el.append(warmupCard());
   if(!ready()){el.append(h('p',{class:'muted'},'Chargement…'));return el;}
   if(!w){
@@ -4644,6 +4662,7 @@ function submitEntryNow(w){
 }
 function recentList(t,current){
   const per=periodFor(t)||activePeriod(); /* les séances des saisons précédentes n'apparaissent pas */
+  if(!per.virtual&&periodState(per)==='done')return h('div');
   const ws=Object.values(S.wods).filter(w=>w.date<=t&&inP(w.date,per)).sort((a,b)=>a.date<b.date?1:-1).slice(0,12);
   if(!ws.length)return h('div');
   const mine=(S.logs[S.uid]&&S.logs[S.uid].entries)||{};
@@ -5469,7 +5488,7 @@ const avfSrc=r=>(AVF[r.asset]||AVF.gold).src;
 /* fonds de bannière à image (dossier assets/embedded). Pour en ajouter : déposer l'image, ajouter une ligne ici et le CSS .bn-bg-<id> */
 const BG_ASSETS={
   alpha:{name:'Box Score Alpha',cls:'bn-bg-alpha',src:'assets/embedded/banniere-box-score-Alpha.png'},
-  angrypumpkin:{name:'Angry Pumpkin',cls:'bn-bg-angrypumpkin',src:'assets/embedded/banniere-box-score-angry-pumpkin.webp'}
+  angrypumpkin:{name:'Angry Pumpkin',cls:'bn-bg-angrypumpkin',src:'assets/embedded/cadre-halloween-entete.webp'}
 };
 /* fond Halloween retiré : une ancienne récompense qui l'utiliserait n'est plus proposée aux athlètes ni au coach */
 const bgRemoved=r=>r.type==='bg'&&r.asset==='halloween';
@@ -6407,10 +6426,10 @@ function parseCap(m,s){
   return null;
 }
 const blankLevels=()=>LEVEL_NAMES.map((n,k)=>({name:n,loadF:'',loadH:'',note:'',vars:{},tiers:blankTiers(),capTiers:blankCapTiers(),mode:k<2?'same':'custom',touched:false}));
-const blankPart=k=>({kind:k,name:'',content:'',movement:'',format:'FT',detail:'',repsRound:'',dur:'',interval:'1',deadBy:false,focus:'',intensity:'',syncTiers:true,word:'',lineRounds:false,redo:true,levels:blankLevels()});
-function blankWod(){return {date:todayStr(),title:'',base:'',parts:[Object.assign(blankPart('force'),{name:'Force'}),Object.assign(blankPart('renfo'),{name:'Renforcement'}),Object.assign(blankPart('metcon'),{name:'Metcon'})]};}
+const blankPart=k=>({kind:k,name:'',content:'',movement:'',format:'FT',detail:'',repsRound:'',dur:'',interval:'1',deadBy:false,focus:'',intensity:'',syncTiers:true,word:'',lineRounds:false,redo:true,test:false,levels:blankLevels()});
+function blankWod(){return {date:todayStr(),title:'',base:'',deload:false,parts:[Object.assign(blankPart('force'),{name:'Force'}),Object.assign(blankPart('renfo'),{name:'Renforcement'}),Object.assign(blankPart('metcon'),{name:'Metcon'})]};}
 function wodToDraft(w){
-  return {date:w.date,title:w.title||'',base:(w.base!==undefined&&w.base!==null)?String(w.base):'',
+  return {date:w.date,title:w.title||'',base:(w.base!==undefined&&w.base!==null)?String(w.base):'',deload:!!w.deload,
     parts:(w.parts||[]).map(p=>{
       const fmt=p.format||'FT';const cm={format:fmt,content:p.content||'',repsRound:p.repsRound||0,lineRounds:!!p.lineRounds};
       const lv=(p.kind==='metcon'?levelsOf(p):blankLevels()).slice(0,3).map((l,i)=>({mode:l.mode||(l.off?'off':'custom'),touched:l.touched!==undefined?l.touched:!l.off,name:l.name||LEVEL_NAMES[i],loadF:l.loadF||'',loadH:l.loadH||'',note:l.note||'',vars:mvVarsOf(l),
@@ -6418,7 +6437,7 @@ function wodToDraft(w){
         capTiers:(l.capTiers&&l.capTiers.length)?l.capTiers.map(t=>({t:capInput(cm,tierCum(p,t.t)),p:String(t.p)})):blankCapTiers()}));
       while(lv.length<3)lv.push({mode:lv.length<2?'off':'custom',touched:false,name:LEVEL_NAMES[lv.length],loadF:'',loadH:'',note:'',vars:{},tiers:blankTiers(),capTiers:blankCapTiers()});
       const sk=l=>JSON.stringify([l.loadF,l.loadH,l.note,l.vars,l.tiers,l.capTiers]);lv.forEach((l,k)=>{if(k<2&&l.mode==='custom'&&sk(l)===sk(lv[2]))l.mode='same';});
-      return {kind:p.kind||'autre',name:p.name||'',content:p.content||'',movement:p.movement||'',format:fmt,detail:p.detail||'',repsRound:p.repsRound?String(p.repsRound):'',word:p.word||'',lineRounds:!!p.lineRounds,redo:p.redo!==false,customLvl:p.customLvl!==false,dur:p.dur?String(p.dur):'',interval:p.interval?String(p.interval).replace('.',','):'1',deadBy:!!p.deadBy,focus:FOCUS[p.focus]?p.focus:'',intensity:INTENS[p.intensity]?p.intensity:'',levels:lv,syncTiers:(()=>{const k=l=>JSON.stringify([l.tiers,l.capTiers]);return lv.every((l,j)=>j===2||l.mode==='off'||k(l)===k(lv[2]));})()};
+      return {kind:p.kind||'autre',name:p.name||'',content:p.content||'',movement:p.movement||'',format:fmt,detail:p.detail||'',repsRound:p.repsRound?String(p.repsRound):'',word:p.word||'',lineRounds:!!p.lineRounds,redo:p.redo!==false,test:!!p.test,customLvl:p.customLvl!==false,dur:p.dur?String(p.dur):'',interval:p.interval?String(p.interval).replace('.',','):'1',deadBy:!!p.deadBy,focus:FOCUS[p.focus]?p.focus:'',intensity:INTENS[p.intensity]?p.intensity:'',levels:lv,syncTiers:(()=>{const k=l=>JSON.stringify([l.tiers,l.capTiers]);return lv.every((l,j)=>j===2||l.mode==='off'||k(l)===k(lv[2]));})()};
     })};
 }
 function draftToWod(d){
@@ -6438,6 +6457,7 @@ function draftToWod(d){
       if(String(p.dur||'').trim()!==''){const dn=parseNum(p.dur);if(dn===null||dn<=0)throw new Error('Durée / time cap illisible ('+o.label+').');o.dur=dn;}
       if(String(p.word||'').trim())o.word=p.word.trim();
       if(p.redo===false)o.redo=false;
+      if(p.test)o.test=true;
       if(p.customLvl===false)o.customLvl=false;
       if(p.format==='FT'&&p.lineRounds)o.lineRounds=true;
       if(p.format==='EMOM'){
@@ -6493,6 +6513,7 @@ function draftToWod(d){
     return o;
   });
   const out={date:d.date,title:d.title.trim(),parts};
+  if(d.deload)out.deload=true;
   if(String(d.base).trim()!==''){const b=parseNum(d.base);if(b===null||b<0)throw new Error('Points de la séance illisibles.');out.base=b;}
   return out;
 }
@@ -7052,6 +7073,8 @@ function wodEditor(modal){
     field('Date',h('input',{id:'w-date',type:'date',value:d.date,onchange:e=>{d.date=e.target.value;render();}}),'Visible dès la publication. Les athlètes la font n’importe quel jour de cette semaine, du lundi au dimanche.'),
     field('Titre',tin(d,'title',{id:'w-title',placeholder:'Jeudi lourd'})),
     field('Points de la séance',tin(d,'base',{id:'w-base',inputmode:'numeric',placeholder:'par défaut : '+per.base}),'Une séance plus dure peut rapporter plus. Les points du metcon s’y ajoutent.')));
+  sec.append(h('label',{class:'chk'},h('input',{type:'checkbox',id:'w-deload',checked:!!d.deload,onchange:e=>{d.deload=e.target.checked;}}),h('span',{},'Séance DELOAD (semaine allégée)')),
+    h('p',{class:'hint'},'La mention DELOAD apparaît en haut de la carte de la séance chez les athlètes.'));
   if(!S.coach.editing&&S.wods[d.date])sec.append(h('p',{class:'hint'},'Une séance existe déjà à cette date : elle sera remplacée.'));
   d.parts.forEach((p,i)=>{
     const metcon=p.kind==='metcon';
@@ -7092,6 +7115,8 @@ function wodEditor(modal){
         h('p',{class:'hint'},'Chaque ligne d’exercice compte pour un tour (ex. demi Murph = 5 tours). Paliers time cap : « 4+60 » = 4 lignes terminées + 60 reps équivalentes sur la ligne suivante (600 m avec {10=1}).'));
       box.append(h('label',{class:'chk'},h('input',{type:'checkbox',id:'p'+i+'-redo',checked:p.redo!==false,onchange:e=>{p.redo=e.target.checked;}}),h('span',{},'Le REDO rapporte des points sur ce metcon')),
         h('p',{class:'hint'},'À décocher pour un metcon court ou volontairement léger (gestion, récupération) qu’on ne veut pas voir refaire pour entasser des points : le REDO n’est alors plus proposé. Coché : un REDO rapporte 1 point s’il est moins bon que le premier résultat, 2 s’il marque autant de points, 3 s’il l’améliore (niveau et points de metcon).'));
+      box.append(h('label',{class:'chk'},h('input',{type:'checkbox',id:'p'+i+'-test',checked:!!p.test,onchange:e=>{p.test=e.target.checked;}}),h('span',{},'Metcon TEST')),
+        h('p',{class:'hint'},'Coché : la mention TEST apparaît sur la carte de la séance et sur le metcon, pour signaler un metcon test de la saison.'));
       box.append(h('label',{class:'chk'},h('input',{type:'checkbox',id:'p'+i+'-custlvl',checked:p.customLvl!==false,onchange:e=>{p.customLvl=e.target.checked;}}),h('span',{},'Autoriser le niveau personnalisé sur ce metcon')),
         h('p',{class:'hint'},'Coché : les athlètes peuvent choisir un niveau personnalisé (Rx +10 kg, etc.). Décoché : seuls les niveaux prévus (Débutant, Intermédiaire, Rx) sont proposés, et le bouton « Niveau personnalisé » disparaît pour ce metcon. Les résultats déjà saisis avec un niveau personnalisé sont conservés.'));
       {const words=S.prof.words||[];
