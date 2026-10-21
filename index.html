@@ -395,6 +395,8 @@ body.modal-open{overflow:hidden}
 section.feed-card{position:relative}
 section.feed-card>.feed-badge{position:absolute!important;top:8px;right:12px;z-index:6!important;transform:rotate(12deg);transform-origin:50% 50%;filter:drop-shadow(3px 5px 4px rgba(0,0,0,.6));pointer-events:auto}
 .feed-card>.bn.has-badge{min-height:112px}
+.feed-card.feed-has-badge .feed-wod-head{flex-direction:column;align-items:flex-start;gap:2px;padding-right:112px}
+.feed-card.feed-has-badge .feed-wod-date{white-space:normal}
 .feed-card>.bn.has-badge .feed-meta{padding-right:116px}
 .bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
 .bsel{display:grid;justify-items:center;align-content:start;gap:4px;padding:12px 8px;border:2px solid var(--line);border-radius:4px;background:var(--surface2);color:var(--ink);cursor:pointer;text-align:center;min-width:0}
@@ -715,7 +717,7 @@ html[data-hal] .top{border-bottom-color:#E8710A}
 .feed-card.th-angrypumpkin>*{position:relative;z-index:1}
 .feed-card.th-angrypumpkin>.bn{z-index:3;align-self:start;background:url('assets/embedded/cadre-halloween-entete.webp') 0 0/100% 100% no-repeat;border:0;box-shadow:none;border-radius:0;display:block;overflow:visible;padding:0;min-height:0;aspect-ratio:1200/270}
 .feed-card.th-angrypumpkin>.bn.has-badge{min-height:0}
-.feed-card.th-angrypumpkin>.bn>.feed-head{position:absolute;left:17.05cqw;top:7.55cqw;width:52cqw;height:10.3cqw;gap:2.2cqw}
+.feed-card.th-angrypumpkin>.bn>.feed-head{position:absolute;left:calc(22.2% - 5.15cqw);top:56.5%;transform:translateY(-50%);width:52cqw;gap:2.2cqw}
 .feed-card.th-angrypumpkin>.bn.has-badge .feed-meta{padding-right:0}
 .feed-card.th-angrypumpkin .feed-av{width:10.3cqw;height:10.3cqw;box-shadow:none}
 .feed-card.th-angrypumpkin .feed-av .av{width:10.3cqw!important;height:20.77cqw!important;min-width:0!important}
@@ -3818,7 +3820,7 @@ function viewFeed(){
       const n=Object.values(S.reactions).filter(r=>r&&r.to===uid&&r.date===date&&r.emoji===em).length;
       return h('button',{type:'button',class:'rxb','aria-pressed':mine===em?'true':'false','aria-label':RXN[em],onclick:()=>reactTo(uid,date,em)},em,n?h('small',{},n):null);
     }));
-    el.append(h('section',{class:'card feed-card'+cardTheme(uid)},head,fbEl,h('div',{class:'feed-wod-head'},h('h2',{class:'wtitle',style:'font-size:24px;margin:0'},w.title,feedLvBadge(m,e)),h('span',{class:'sub feed-wod-date'},'Réalisée le '+cap(fmtShort(dfmt(new Date(e.at)))))),results.length?h('div',{class:'feed-result'},results):h('p',{class:'muted'},'Résultat détaillé non renseigné.'),e.message?h('p',{class:'feed-message',style:'white-space:pre-wrap;overflow-wrap:anywhere;margin:0'},e.message):null,h('div',{class:'rxwrap'},rx,feedPts(w,e))));
+    el.append(h('section',{class:'card feed-card'+cardTheme(uid)+(fb?' feed-has-badge':'')},head,fbEl,h('div',{class:'feed-wod-head'},h('h2',{class:'wtitle',style:'font-size:24px;margin:0'},w.title,feedLvBadge(m,e)),h('span',{class:'sub feed-wod-date'},'Réalisée le '+cap(fmtShort(dfmt(new Date(e.at)))))),results.length?h('div',{class:'feed-result'},results):h('p',{class:'muted'},'Résultat détaillé non renseigné.'),e.message?h('p',{class:'feed-message',style:'white-space:pre-wrap;overflow-wrap:anywhere;margin:0'},e.message):null,h('div',{class:'rxwrap'},rx,feedPts(w,e))));
   });
   if(posts.length>visiblePosts.length){
     el.append(h('div',{class:'row',style:'justify-content:center'},
