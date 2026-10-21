@@ -877,6 +877,8 @@ html[data-hal] .top{border-bottom-color:#E8710A}
 .tour .bub p.tx{margin:0;font-size:15px;line-height:1.45}
 .tour .bub .ft{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px}
 .tour .bub .nx{font-weight:700;font-size:14px;color:var(--accent)}
+.tour .bub .tact{display:block;width:100%;box-sizing:border-box;margin-top:12px;min-height:44px;border:2px solid var(--accent);border-radius:4px;background:var(--accent);color:var(--accent-ink);font:700 14px var(--f-body,inherit);letter-spacing:.04em;text-transform:uppercase;cursor:pointer}
+.tour .bub .tact[disabled]{opacity:.65;cursor:default}
 .tour .bub .sk{background:none;border:0;color:var(--muted);font-size:13px;text-decoration:underline;cursor:pointer;padding:6px 0}
 .tour .dots{display:flex;gap:5px}.tour .dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}.tour .dots i.on{background:var(--accent)}
 @media (prefers-reduced-motion:reduce){.tour .bub,.tour.go .bub{transition:none;transform:none}.tour .arr.line{stroke-dashoffset:0;transition:none!important}.tour .arr.head{opacity:1;transition:none!important}}
@@ -7842,6 +7844,19 @@ function viewShare(){
 }
 
 /* ---------- didacticiel : flèches qui se dessinent, texte par-dessus la page, un clic = une étape ---------- */
+/* ---------- installation sur l'écran d'accueil (boutons du didacticiel) ---------- */
+let installEv=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEv=e;}); /* Android / Chrome : on garde l'invite pour la déclencher au clic */
+window.addEventListener('appinstalled',()=>{installEv=null;});
+const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const isAndroid=()=>/android/i.test(navigator.userAgent);
+/* iOS ne permet pas d'ajouter l'icône par code : le bouton ouvre la feuille de partage, où il reste à toucher « Sur l'écran d'accueil » */
+const installActIOS=()=>(isIOS()&&!isStandalone()&&navigator.share)?{label:'Ouvrir le menu Partager',run:async()=>{try{await navigator.share({title:'Box Score',url:location.href.split('#')[0]});}catch(e){}}}:null;
+const installActAndroid=()=>(isAndroid()&&!isStandalone()&&installEv)?{label:'Installer l’appli',run:async(btn)=>{
+  const ev=installEv;if(!ev)return;installEv=null;
+  try{ev.prompt();const c=await ev.userChoice;if(c&&c.outcome==='accepted'){btn.textContent='Installée ✓';btn.disabled=true;return;}}catch(e){}
+  btn.textContent='Pas installée : réessaie via les trois points';btn.disabled=true;
+}}:null;
 const TOUR_STEPS={
   loginEmail:{sel:'#auth-email',title:'Ton e-mail',text:'Commence par écrire ton adresse e-mail ici.'},
   loginPw:{sel:'#auth-pw',title:'Ton mot de passe',text:'Choisis un mot de passe de 6 caractères minimum.'},
@@ -7855,8 +7870,8 @@ const TOURS={
     TOUR_STEPS.loginEmail,TOUR_STEPS.loginPw,TOUR_STEPS.loginCreate,
     {sel:'#tour-help',title:'Besoin d’un rappel ?',text:'Ce bouton « ? » te remet ce guide quand tu veux.'}],
   feed:()=>[
-    {title:'Mettre l’appli sur l’écran d’accueil : iPhone',text:'Ouvre l’appli dans Safari, touche le bouton Partager (le carré avec une flèche vers le haut), fais défiler et choisis « Sur l’écran d’accueil », puis « Ajouter ». Sur iPhone, les notifications ne marchent que depuis cette icône.'},
-    {title:'Mettre l’appli sur l’écran d’accueil : Android',text:'Ouvre l’appli dans Chrome, touche les trois points en haut à droite, puis « Ajouter à l’écran d’accueil » (ou « Installer l’application ») et confirme. L’icône apparaît comme une appli classique.'},
+    {act:installActIOS,title:'Mettre l’appli sur l’écran d’accueil : iPhone',text:'Ouvre l’appli dans Safari, touche le bouton Partager (le carré avec une flèche vers le haut), fais défiler et choisis « Sur l’écran d’accueil », puis « Ajouter ». Sur iPhone, les notifications ne marchent que depuis cette icône.'},
+    {act:installActAndroid,title:'Mettre l’appli sur l’écran d’accueil : Android',text:'Ouvre l’appli dans Chrome, touche les trois points en haut à droite, puis « Ajouter à l’écran d’accueil » (ou « Installer l’application ») et confirme. L’icône apparaît comme une appli classique.'},
     {sel:'main .day',title:'Le fil d’actualité',text:'Ici apparaissent les séances validées par les athlètes du groupe, de la plus récente à la plus ancienne.'},
     {sel:'.rv',title:'Tes actualités de la semaine',text:'Cette carte te parle de ta saison : rivalités avec les athlètes proches de toi au classement, objectif de séances, prochaine récompense. Touche son en-tête pour la déplier ou la replier.'},
     {sel:'.feed-card',title:'Une séance publiée',text:'Le pseudo, le titre de la séance et les résultats. Touche un pseudo pour ouvrir le profil de l’athlète.'},
@@ -7954,6 +7969,7 @@ function startTour(steps,opts){
   T._steps=list;T._i=-1;T._onEnd=opts&&opts.onEnd;
   T._lay=()=>{clearTimeout(T._lt);T._lt=setTimeout(tourLayout,30);};
   T._key=e=>{
+    if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.closest&&e.target.closest('.tact'))return;
     if(e.key==='Escape'){e.preventDefault();stopTour();}
     else if(e.key==='Enter'||e.key===' '||e.key==='ArrowRight'){e.preventDefault();e.stopPropagation();tourNext();}
   };
@@ -7985,6 +8001,7 @@ function tourLayout(fresh){
   const last=T._i>=n-1;
   const bub=h('div',{class:'bub',tabindex:'-1'},
     h('p',{class:'eb'},'Étape '+(T._i+1)+' sur '+n),h('h3',{},st.title),h('p',{class:'tx'},st.text),
+    (()=>{const a=st.act&&st.act();if(!a)return null;const b=h('button',{class:'tact',type:'button',onclick:e=>{e.stopPropagation();a.run(b);}},a.label);return b;})(),
     h('div',{class:'ft'},h('div',{class:'dots','aria-hidden':'true'},steps2dots(n,T._i)),
       h('span',{class:'nx'},last?'Compris !':'Touche pour continuer ›')),
     h('div',{style:'text-align:right'},last?null:h('button',{class:'sk',type:'button',onclick:e=>{e.stopPropagation();stopTour();}},'Passer le guide')));
