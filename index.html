@@ -877,6 +877,8 @@ section.feed-card.th-angrypumpkin>.feed-badge::after{content:'';position:absolut
 .env.open .env-flap{transform:rotateX(180deg);z-index:1}
 .env.away{opacity:0;transform:translateY(24px) scale(.9)}
 .ann-letter{width:100%;background:#FBF7EC;color:#1B1B1B;border-radius:6px;padding:22px 20px 18px;display:grid;gap:12px;box-shadow:0 18px 44px rgba(0,0,0,.55);max-height:82vh;overflow:auto;text-align:center;justify-items:center}
+.ann-letter,.ann-letter *{text-shadow:none}
+.cword,.cword *{text-shadow:none}
 .ann-letter .eyebrow{color:#6B665A}
 .ann-letter .wtitle{color:#1B1B1B}
 .ann-text{white-space:pre-wrap;overflow-wrap:anywhere;font-size:17px;line-height:1.5;text-align:left;width:100%}
@@ -6382,22 +6384,48 @@ function capTierValue(p,e,pct){
   return String(v);
 }
 /* ---------- paliers : toujours 10 paliers, de 10 à 1 point, points entiers (jamais de 0,5) ---------- */
-function spreadTimes(lo,hi){ /* 10 temps croissants, multiples de 5 s */
-  lo=Math.max(5,Math.round(lo/5)*5);hi=Math.floor(hi/5)*5;
-  if(hi-lo<45)lo=Math.max(5,hi-45);
+/* arrondi des temps de palier : 5 s (par défaut) ou 1 s, réglable dans l'éditeur de paliers */
+const tierGrain=()=>{try{return +localStorage.getItem('bs-tier-grain')===1?1:5;}catch(e){return 5;}};
+const setTierGrain=v=>{try{localStorage.setItem('bs-tier-grain',String(+v===1?1:5));}catch(e){}};
+const roundG=(v,g)=>Math.round(v/g)*g;
+/* base du calcul en % : « top » = % du palier à 10 pts (écart régulier, défaut) ; « prev » = % du palier précédent (écart qui grandit) */
+const tierMode=()=>{try{return localStorage.getItem('bs-tier-mode')==='prev'?'prev':'top';}catch(e){return 'top';}};
+const setTierMode=v=>{try{localStorage.setItem('bs-tier-mode',v==='prev'?'prev':'top');}catch(e){}};
+const tierModeSel=()=>sel([['top','Base : palier à 10 pts'],['prev','Base : palier précédent']],tierMode(),v=>{setTierMode(v);},{'aria-label':'Base du calcul des paliers'});
+const tierGrainSel=()=>sel([['5','Arrondi 5 s'],['1','Arrondi 1 s']],String(tierGrain()),v=>{setTierGrain(v);},{'aria-label':'Arrondi des temps de palier'});
+function spreadTimes(lo,hi){ /* 10 temps croissants, arrondis à 5 s (ou 1 s), écart régulier */
+  const g=tierGrain();
+  lo=Math.max(g,roundG(lo,g));hi=Math.floor(hi/g)*g;
+  if(hi-lo<45)lo=Math.max(g,hi-45);
   if(hi-lo<45)hi=lo+45;
-  const st=Math.max(5,Math.floor((hi-lo)/9/5)*5);
-  return Array.from({length:10},(_,j)=>lo+j*st);
+  const st=(hi-lo)/9,out=[];
+  for(let j=0;j<10;j++){let t=roundG(lo+j*st,g);if(j&&t<=out[j-1])t=out[j-1]+g;out.push(t);}
+  return out;
 }
-function spreadRounds(top,bottom){ /* 10 nombres de tours décroissants, au quart de tour */
+/* For Time : chaque palier = temps du palier à 10 pts x (1 + j x pct %), ex. 5:40 à 5 % : 5:40, 5:57, 6:14… ; plafonné au time cap */
+function spreadTimesPct(base,pct,cap){
+  const g=tierGrain(),geo=tierMode()==='prev';
+  let b=base,hi=geo?base*Math.pow(1+pct/100,9):base*(1+9*pct/100);
+  if(cap>0){hi=Math.min(hi,cap);if(b+45>cap)b=Math.max(g,cap-45);}
+  if(hi-b<45)hi=b+45;
+  const out=[];
+  for(let j=0;j<10;j++){const raw=geo?b*Math.pow(hi/b,j/9):b+j*(hi-b)/9;let t=roundG(raw,g);if(t<g)t=g;if(j&&t<=out[j-1])t=out[j-1]+g;out.push(t);}
+  return out;
+}
+function spreadRounds(top,bottom,pct){ /* 10 nombres de tours décroissants, au quart de tour */
+  if(pct>0&&tierMode()==='prev'){ /* chaque palier = x % de moins que le précédent */
+    const t0=Math.max(2.5,Math.round(top*4)/4),o=[];
+    for(let j=0;j<10;j++){let v=Math.round(t0*Math.pow(1-pct/100,j)*4)/4;if(j&&v>=o[j-1])v=o[j-1]-.25;o.push(Math.max(.25,v));}
+    return o;
+  }
   const t=Math.max(2.5,Math.round(top*4)/4),st=Math.max(.25,Math.round((t-bottom)/9*4)/4);
   return Array.from({length:10},(_,j)=>t-j*st);
 }
 const tourTxt=v=>String(v).replace('.',',');
 /* AMRAP : 10 paliers en reps entières. Le palier à 10 points = tours estimés (au quart de tour) en reps, puis chaque palier est x % plus bas que le palier à 10 points, arrondi à la rep (ex. 247 reps, puis 235 à 5 %). */
 function amrapRepTiers(est,pct,rr){
-  const top=Math.max(1,Math.floor(Math.max(2.5,Math.round(est*4)/4)*rr+1e-9)),stp=top*pct/100,out=[];let prev=Infinity;
-  for(let j=0;j<10;j++){let v=Math.round(top-j*stp);if(v>=prev)v=prev-1;if(v<1)break;out.push(v);prev=v;}
+  const top=Math.max(1,Math.floor(Math.max(2.5,Math.round(est*4)/4)*rr+1e-9)),stp=top*pct/100,out=[],geo=tierMode()==='prev';let prev=Infinity;
+  for(let j=0;j<10;j++){let v=Math.round(geo?top*Math.pow(1-pct/100,j):top-j*stp);if(v>=prev)v=prev-1;if(v<1)break;out.push(v);prev=v;}
   return out;
 }
 const repsTxt=(v,tot)=>{const q=Math.floor(v/tot),r=v%tot;return r?q+'+'+r:String(q);};
@@ -6498,13 +6526,13 @@ function calcTiers(p){
     const out=[];
     if(ft){
       const base=e.T*I.f,cap=dur>0?dur*60:0;
-      spreadTimes(base,cap>0?Math.min(base*(1+9*spreadPct('FT')/100),cap):base*(1+9*spreadPct('FT')/100)).forEach((t,j)=>out.push({t:fmtTime(t),p:String(10-j)}));
+      spreadTimesPct(base,spreadPct('FT'),cap).forEach((t,j)=>out.push({t:fmtTime(t),p:String(10-j)}));
     }else{
       const est=dur*60/(e.roundTime*I.f);
       const tot=eqTotal(amrapModel(p)),rr=(tot>0)?tot:e.roundReps;
       if(rr>0&&Number.isInteger(rr)){ /* paliers calculés en reps entières : même écart en % entre chaque palier, arrondi à la rep près */
         amrapRepTiers(est,spreadPct('AMRAP'),rr).forEach((v,j)=>out.push({t:(tot>0&&Number.isInteger(tot))?repsTxt(v,tot):tourTxt(Math.round(v/rr*100)/100),p:String(10-j)}));
-      }else spreadRounds(est,est*(1-9*spreadPct('AMRAP')/100)).forEach((v,j)=>out.push({t:tourTxt(v),p:String(10-j)}));
+      }else spreadRounds(est,est*(1-9*spreadPct('AMRAP')/100),spreadPct('AMRAP')).forEach((v,j)=>out.push({t:tourTxt(v),p:String(10-j)}));
     }
     return out;
   };
@@ -6936,6 +6964,8 @@ function spreadCard(){
   S.prof.spread=S.prof.spread||{};
   const box=h('section',{class:'card'},h('h2',{class:'h2'},'Écart entre les paliers'),
     h('p',{class:'muted'},'Réglé par type de metcon, utilisé par « Calculer les paliers ». Les paliers vont toujours de 10 à 1 point, et sont les mêmes pour tous les niveaux. Vide = valeur par défaut.'));
+  box.append(field('Base du calcul en % (For Time et AMRAP)',tierModeSel(),'« Palier à 10 pts » : écart régulier (5 % de 5:40 = 17 s à chaque palier). « Palier précédent » : chaque palier est x % au-delà du précédent, l’écart grandit. Réglage de cet appareil.'));
+  box.append(field('Arrondi des temps For Time',tierGrainSel(),'Les temps de palier sont arrondis à 5 s (défaut) ou à la seconde. Réglage de cet appareil.'));
   Object.keys(SPREAD).forEach(k=>{
     const D=SPREAD[k];
     box.append(field(D.l+' (%)',h('input',{id:'spread-'+k,type:'text',inputmode:'decimal',value:S.prof.spread[k]??'',placeholder:D.d===null?'auto':String(D.d).replace('.',','),'aria-label':'Écart '+D.l,oninput:ev=>{S.prof.spread[k]=ev.target.value;}}),D.h+(D.d===null?' Défaut : auto.':' Défaut : '+String(D.d).replace('.',',')+' %.')));
@@ -7016,27 +7046,46 @@ function tierRounds(m,s){
 const tierParse=(p,s)=>{const k=tierKind(p);return k==='ft'?parseTime(s):k==='dead'?parseHold(s):tierRounds(amrapModel(p),s);};
 function stepDefault(p){
   const k=tierKind(p);
-  if(k==='ft')return '0:15';
+  if(k==='ft')return '5%';
   if(k==='dead')return fmtTime((Number(String(p.interval).replace(',','.'))||1)*60);
-  return roundTotal(amrapModel(p))>0?'0+5':'1';
+  return '5%';
 }
 function stepParse(p,s){
   const k=tierKind(p),t=String(s).trim();
   if(k==='amrap'){
+    const pc=t.match(/^(\d+(?:[.,]\d+)?)\s*%$/);if(pc){const q=parseFloat(pc[1].replace(',','.'));return q>0?{pct:q}:null;}
     const x=t.match(/^(\d+)?\s*\+\s*(\d+)$/);
     if(x)return roundTotal(amrapModel(p))>0?{tours:+(x[1]||0),reps:+x[2]}:null;
     return /^\d+$/.test(t)?{tours:+t,reps:0}:null;
   }
+  if(k==='ft'){const pc=t.match(/^(\d+(?:[.,]\d+)?)\s*%$/);if(pc){const q=parseFloat(pc[1].replace(',','.'));return q>0?{pct:q}:null;}}
   let v=parseTime(t);
   if(v===null&&/^\d+$/.test(t))v=k==='dead'?+t*60:+t;
   return v>0?{sec:v}:null;
 }
 /* applique l'intervalle au score du palier : For Time = on ajoute du temps ; Dead by et AMRAP = le palier suivant est moins bon, on retire */
-function stepApply(p,txt,st){
-  const k=tierKind(p);
-  if(k==='ft'){const v=parseTime(txt);return v===null?null:fmtTime(v+st.sec);}
+function stepApply(p,txt,st,base,idx){
+  const k=tierKind(p),geo=tierMode()==='prev';
+  if(k==='ft'){
+    const v=parseTime(txt);if(v===null)return null;
+    if(st.pct){ /* % du palier à 10 pts (écart régulier) ou du palier précédent, arrondi à 5 s ou 1 s, toujours plus long que le palier précédent */
+      const g=tierGrain(),hasB=base>0;
+      let n=geo?roundG(v*(1+st.pct/100),g):roundG((hasB?base:v)*(1+(hasB?idx:1)*st.pct/100),g);
+      if(n<=v)n=v+g;
+      return fmtTime(n);
+    }
+    return fmtTime(v+st.sec);
+  }
   if(k==='dead'){const v=parseHold(txt);if(v===null)return null;const n=v-st.sec;return n<0?null:fmtTime(n);}
   const m=amrapModel(p),tot=eqTotal(m)||0,t=String(txt).trim(),x=t.match(/^(\d+)\s*\+\s*(\d+)$/);
+  if(st.pct){ /* AMRAP en % : x % de moins que le palier à 10 pts (écart régulier) ou que le palier précédent */
+    const cur=tierRounds(m,t);if(cur===null||cur<0)return null;
+    const hasB=base>0,b=hasB?base:cur,i=hasB?idx:1;
+    const nv=geo?cur*(1-st.pct/100):b*(1-i*st.pct/100);
+    if(!(nv>0))return null;
+    if(tot>0&&Number.isInteger(tot)){const c=Math.round(cur*tot);let nr=Math.round(nv*tot);if(nr>=c)nr=c-1;return nr<1?null:repsTxt(nr,tot);}
+    let q=Math.round(nv*4)/4;if(q>=cur)q=cur-.25;return q>0?tourTxt(q):null;
+  }
   let T,R;
   if(x){T=+x[1];R=+x[2];}
   else{const v=parseNum(t);if(v===null||v<0)return null;T=Math.floor(v+1e-9);R=tot>0?repsOf(m,v-T):0;if(tot===0&&v-T>1e-9)return null;}
@@ -7088,7 +7137,7 @@ function tierAfterPoints(p,lv,j){
   const n=lv.tiers.length;
   if(n>=2){
     const a=lv.tiers[n-2],b=lv.tiers[n-1],st=stepParse(p,lv.step||stepDefault(p));
-    if(st&&String(b.t).trim()!==''&&String(a.t).trim()===String(b.t).trim()){const nt=stepApply(p,b.t,st);if(nt!==null)b.t=nt;}
+    if(st&&String(b.t).trim()!==''&&String(a.t).trim()===String(b.t).trim()){const nt=stepApply(p,b.t,st,tierParse(p,lv.tiers[0].t),n-1);if(nt!==null)b.t=nt;}
   }
   render();
 }
@@ -7104,8 +7153,8 @@ function tierAfterEdit(p,lv,j){
 }
 function tierStep(p,lv,j){
   const k=tierKind(p),st=stepParse(p,lv.step||stepDefault(p));
-  if(!st){toast(k==='amrap'?'Intervalle illisible : écris « 0+5 » (tours + reps, « Reps par tour » doit être renseigné) ou un nombre de tours.':'Intervalle illisible : écris-le comme 0:15.',true);return;}
-  const row=lv.tiers[j],nt=stepApply(p,row.t,st);
+  if(!st){toast(k==='amrap'?'Intervalle illisible : écris-le en pourcentage (5%), « 0+5 » (tours + reps, « Reps par tour » doit être renseigné) ou un nombre de tours.':k==='ft'?'Intervalle illisible : écris-le en pourcentage (5%) ou en temps (0:15).':'Intervalle illisible : écris-le comme 0:15.',true);return;}
+  const row=lv.tiers[j],nt=stepApply(p,row.t,st,tierParse(p,lv.tiers[0].t),j+1);
   if(nt===null){toast('Impossible d’appliquer l’intervalle à ce palier.',true);return;}
   row.t=nt;lv.pend=null;
   if(j+1>=lv.tiers.length)lv.tiers.push({t:'',p:nextPoints(lv.tiers,j+1)});
@@ -7125,7 +7174,9 @@ function tiersEditor(p,lv,i,k){
   const stepper=j=>h('div',{class:'stepper'},
     h('button',{class:'btn sm primary',type:'button','aria-label':kind==='ft'?'Ajouter l’intervalle à ce palier':'Retirer l’intervalle à ce palier',onclick:()=>tierStep(p,lv,j)},kind==='ft'?'+':'−'),
     h('input',{type:'text','aria-label':'Intervalle entre deux paliers',value:lv.step||stepDefault(p),oninput:e=>{lv.step=e.target.value;}}),
-    h('span',{class:'hint'},'intervalle (touche-le pour le changer)'));
+    h('span',{class:'hint'},kind==='ft'?'intervalle en % (5%) ou en temps (0:15)':kind==='amrap'?'intervalle en % (5%) ou en tours (0+5)':'intervalle (touche-le pour le changer)'),
+    (kind==='ft'||kind==='amrap')?tierModeSel():null,
+    kind==='ft'?tierGrainSel():null);
   return h('div',{class:'stack'},
     h('div',{class:'flabel'},ft?'Paliers de temps : temps inférieur ou égal au palier':dd?'Paliers de temps tenu : temps tenu supérieur ou égal au palier (plus on tient, plus on marque)':'Paliers de tours : score supérieur ou égal au palier'),
     kind==='amrap'?h('p',{class:'hint'},'Tu peux écrire « 6+7 » (6 tours + 7 reps) quand « Reps par tour » est renseigné.'):null,
