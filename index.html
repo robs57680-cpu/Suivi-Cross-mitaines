@@ -14,8 +14,8 @@
 <title>Box Score</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@500;600&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<noscript><link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@500;600&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@500;600&family=Work+Sans:wght@400;500;600;700&family=Permanent+Marker&family=Rubik+Distressed&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@500;600&family=Work+Sans:wght@400;500;600;700&family=Permanent+Marker&family=Rubik+Distressed&display=swap" rel="stylesheet"></noscript>
 <style>
 /* Layout: a gym whiteboard column. Barbell wordmark on top, scoreboard panel for stats, weight plates as ranks and trophies.
    Light = concrete floor, dark = rubber floor. Anton for headings and numerals, Work Sans for text, Plex Mono for scores. */
@@ -732,6 +732,30 @@ html[data-hal] .top{border-bottom-color:#E8710A}
 .feed-card.th-angrypumpkin .feed-metric span{color:#8e9bb7}
 .feed-card.th-angrypumpkin .rxb{background:rgba(14,22,40,.78);border-color:#1f3157}
 .feed-card.th-angrypumpkin .rxb[aria-pressed="true"]{border-color:#ff8a2a;background:rgba(255,138,42,.18)}
+/* Angry Pumpkin, habillage « maquette » : cadres de sang, icônes, badge, pastille RX, sang du score, polices.
+   Fichiers dans assets/embedded : cadre-halloween-resultat, icone-halloween-haltere, icone-halloween-chrono,
+   sang-halloween-points, sang-halloween-pastille, gouttes-halloween-badge (.webp) */
+.feed-card.th-angrypumpkin .nm,.feed-card.th-angrypumpkin .wtitle,.feed-card.th-angrypumpkin .feed-metric b{font-family:'Rubik Distressed','Anton',Impact,sans-serif;letter-spacing:.02em}
+.feed-card.th-angrypumpkin>.bn .bn-title{font-family:var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:#ff5a2a}
+.feed-card.th-angrypumpkin .feed-message{font-family:'Permanent Marker','Comic Sans MS',cursive;font-size:21px;line-height:1.3;color:#fff;transform:rotate(-2deg);transform-origin:left center;text-shadow:0 2px 3px #000}
+.feed-card.th-angrypumpkin .feed-result{gap:16px;padding-bottom:6px}
+.feed-card.th-angrypumpkin .feed-metric{background:rgba(10,7,7,.88);border:0 solid transparent;border-width:7px 7px 20px 7px;border-image:url('assets/embedded/cadre-halloween-resultat.webp') 26 26 74 26/7px 7px 20px 7px stretch;border-radius:0;padding:8px 8px 0;overflow:visible}
+.feed-card.th-angrypumpkin .feed-metric.fm-force,.feed-card.th-angrypumpkin .feed-metric.fm-mc{display:grid;grid-template-columns:44px 1fr;column-gap:10px;align-items:center}
+.feed-card.th-angrypumpkin .feed-metric.fm-force::before,.feed-card.th-angrypumpkin .feed-metric.fm-mc::before{content:'';grid-row:1/3;width:44px;height:44px;background:url('assets/embedded/icone-halloween-haltere.webp') center/contain no-repeat}
+.feed-card.th-angrypumpkin .feed-metric.fm-mc::before{background-image:url('assets/embedded/icone-halloween-chrono.webp')}
+.feed-card.th-angrypumpkin .feed-metric.fm-force>*,.feed-card.th-angrypumpkin .feed-metric.fm-mc>*{grid-column:2}
+.feed-card.th-angrypumpkin .feed-metric b{color:#fff;text-shadow:0 2px 3px #000}
+.feed-card.th-angrypumpkin .feed-metric span{color:#a8a3b8}
+.feed-card.th-angrypumpkin .rxb{background:rgba(10,7,7,.88);border:0 solid transparent;border-width:5px 5px 10px 5px;border-image:url('assets/embedded/cadre-halloween-resultat.webp') 26 26 74 26/5px 5px 10px 5px stretch;border-radius:0}
+.feed-card.th-angrypumpkin .rxb[aria-pressed="true"]{background:rgba(255,90,30,.2);box-shadow:0 0 12px rgba(255,90,30,.75)}
+.feed-card.th-angrypumpkin .rxb small{color:#fff}
+.feed-card.th-angrypumpkin .feed-pts{isolation:isolate;font-family:'Rubik Distressed','Anton',Impact,sans-serif;font-size:32px;-webkit-text-stroke:0;color:#fff;text-shadow:0 2px 4px rgba(0,0,0,.7);padding:6px 8px 0}
+.feed-card.th-angrypumpkin .feed-pts::before{content:'';position:absolute;z-index:-1;inset:-42% -34% -78% -30%;background:url('assets/embedded/sang-halloween-points.webp') center/100% 100% no-repeat}
+.feed-card.th-angrypumpkin .lvsh{clip-path:none;background:url('assets/embedded/sang-halloween-pastille.webp') center/100% 100% no-repeat;padding:9px 16px;margin-left:12px;font-family:'Rubik Distressed','Anton',Impact,sans-serif;font-size:15px;letter-spacing:.04em;color:#fff;text-shadow:0 1px 2px #000}
+.feed-card.th-angrypumpkin .lvsh.l0{filter:hue-rotate(100deg)}
+.feed-card.th-angrypumpkin .lvsh.l1{filter:hue-rotate(190deg)}
+section.feed-card.th-angrypumpkin>.feed-badge{filter:drop-shadow(0 0 8px rgba(255,50,0,.8)) drop-shadow(3px 5px 4px rgba(0,0,0,.6))}
+section.feed-card.th-angrypumpkin>.feed-badge::after{content:'';position:absolute;left:-4%;right:-4%;bottom:-17px;height:40px;background:url('assets/embedded/gouttes-halloween-badge.webp') center top/100% 100% no-repeat;pointer-events:none}
 /* carte du fil habillée Alpha : la bannière Alpha reste en haut, le reste de la carte est noir avec des coups de pinceau dorés */
 .feed-card.th-alpha{position:relative;overflow:hidden;background:#0a0a0b;border-color:#3b3a3d;color:#f2f2f2}
 .feed-card.th-alpha::after{content:'';position:absolute;right:0;bottom:0;width:26%;aspect-ratio:312/317;background:url('assets/embedded/alpha-coin-bas-droit.webp') right bottom/100% 100% no-repeat;pointer-events:none;z-index:0}
@@ -3815,8 +3839,8 @@ function viewFeed(){
     const fb=badgeOf(uid);let fbEl=null;
     if(fb){fbEl=badgeEl(fb.tid,fb.per.name,108,trophyName(fb.tid)+' · '+fb.per.name,fb.per);fbEl.classList.add('feed-badge');head.classList.add('has-badge');}
     const results=[];
-    (w.parts||[]).filter(p=>p.kind==='force').forEach(p=>{const kg=e.loads&&e.loads[p.label];if(kg!==undefined)results.push(h('div',{class:'feed-metric'},h('b',{},fmtKg(kg)),h('span',{},p.movement||p.name||'Force')));});
-    if(m&&hasScore(e))results.push(h('div',{class:'feed-metric'},h('b',{},scoreText(m,e.score,e)),h('span',{},'Metcon · '+(m.format==='FT'?'Temps':m.format==='AMRAP'?'Tours / reps':isDead(m)?'Dead by':'Tours'))));
+    (w.parts||[]).filter(p=>p.kind==='force').forEach(p=>{const kg=e.loads&&e.loads[p.label];if(kg!==undefined)results.push(h('div',{class:'feed-metric fm-force'},h('b',{},fmtKg(kg)),h('span',{},p.movement||p.name||'Force')));});
+    if(m&&hasScore(e))results.push(h('div',{class:'feed-metric fm-mc'},h('b',{},scoreText(m,e.score,e)),h('span',{},'Metcon · '+(m.format==='FT'?'Temps':m.format==='AMRAP'?'Tours / reps':isDead(m)?'Dead by':'Tours'))));
     else if(m&&e.noMetcon)results.push(h('div',{class:'feed-metric'},h('b',{},'Metcon non réalisé'),h('span',{},'Pas de points de metcon')));
     const rx=h('div',{class:'rxrow'},RX.map(em=>{
       const n=Object.values(S.reactions).filter(r=>r&&r.to===uid&&r.date===date&&r.emoji===em).length;
