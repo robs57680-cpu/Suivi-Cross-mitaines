@@ -613,6 +613,8 @@ input[type=checkbox]{width:24px;height:24px;padding:0;accent-color:var(--accent)
 .kbs svg{display:block}
 .kbpick{display:flex;gap:6px;flex-wrap:wrap}
 .kbpick button{width:52px;height:52px;border:2px solid var(--edge);border-radius:8px;background:var(--surface2);color:var(--muted);cursor:pointer;display:grid;place-items:center;padding:0}
+.kbpick button svg{pointer-events:none}
+.kbpick button{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .kbpick button.on{color:var(--accent);border-color:var(--accent);background:var(--tint)}
 .avis-top{background:var(--surface);border:2px solid var(--edge);border-radius:6px;padding:14px 16px;display:grid;gap:8px;overflow:hidden}
 .avis-top[hidden]{display:none}
@@ -1248,7 +1250,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-21.54';
+const APP_VERSION='2026-10-21.55';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -8057,9 +8059,9 @@ function viewAvis(){
   el.append(h('div',{},h('p',{class:'eyebrow'},'Ton avis compte'),h('h1',{class:'day'},'Avis')));
   if(!S.avisLoaded&&!S.avisLoading)loadMyAvis();
   const picks=[];
-  const paint=()=>picks.forEach((b,i)=>{const on=i<S.avisRating;b.className=on?'on':'';b.setAttribute('aria-checked',(i+1===S.avisRating)?'true':'false');b.innerHTML=kbSvg(on,30);});
+  const paint=()=>picks.forEach((b,i)=>{const on=i<S.avisRating;b.className=on?'on':'';b.setAttribute('aria-checked',(i+1===S.avisRating)?'true':'false');const sv=b.firstChild;if(sv&&sv.setAttribute)sv.setAttribute('fill',on?'currentColor':'none');else b.innerHTML=kbSvg(on,30);});
   const row=h('div',{class:'kbpick',role:'radiogroup','aria-label':'Ta note sur 5 kettlebells'});
-  for(let i=1;i<=5;i++){const b=h('button',{type:'button',role:'radio','aria-label':i+' kettlebell'+(i>1?'s':''),onclick:()=>{S.avisRating=i;paint();}});picks.push(b);row.append(b);}
+  for(let i=1;i<=5;i++){const b=h('button',{type:'button',role:'radio','aria-label':i+' kettlebell'+(i>1?'s':''),onclick:e=>{e.preventDefault();e.stopPropagation();S.avisRating=i;paint();}});picks.push(b);row.append(b);}
   paint();
   const cnt=h('span',{class:'hint'},(S.avisText||'').length+' / 200');
   const ta=h('textarea',{id:'avis-text',rows:'4',maxlength:'200',placeholder:'Un petit mot sur l’appli : ce qui te plaît, ce qui t’aide…','aria-label':'Ton petit mot',value:S.avisText||'',oninput:e=>{S.avisText=e.target.value;cnt.textContent=e.target.value.length+' / 200';}});
@@ -8073,7 +8075,7 @@ function viewAvis(){
   });
   el.append(h('section',{class:'card'},h('h2',{class:'h2'},S.myAvis?'Ton avis':'Note l’appli'),
     S.avisErr?h('p',{class:'muted'},S.avisErr):null,
-    field('Ta note',row,null),field('Ton petit mot',ta,null),cnt,
+    h('div',{class:'field'},h('span',{class:'flabel'},'Ta note'),row),field('Ton petit mot',ta,null),cnt,
     h('div',{class:'row'},send),
     h('p',{class:'hint'},'Tu as un seul avis, que tu peux modifier quand tu veux. Seul le coach peut le lire. S’il est affiché sur l’écran de connexion, ce sont ton pseudo, ta note et ton mot qui apparaissent.')));
   if(S.owner)el.append(avisCoachSection());
