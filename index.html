@@ -1210,14 +1210,14 @@ body[data-tab=today] .themed .card{background:color-mix(in srgb,var(--c1) 18%,va
 <script type="module">
 /* Le SDK Firebase est chargé en dynamique : la page s'affiche tout de suite, même si le réseau est lent.
    Au bout de 3 s sans réponse, l'appli bascule en mode cache (dernières données enregistrées sur l'appareil). */
-let firebaseConfig=null,initializeApp,getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup,getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc,disableNetwork,enableNetwork;
+let firebaseConfig=null,initializeApp,getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup,getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc,disableNetwork,enableNetwork,query,orderBy,limit,getDocs;
 const FB_URL='https://www.gstatic.com/firebasejs/10.14.1/';
 const sdkPromise=(async()=>{
   const [cfg,a,u,f]=await Promise.all([import('./firebase-config.js').catch(()=>({})),import(FB_URL+'firebase-app.js'),import(FB_URL+'firebase-auth.js'),import(FB_URL+'firebase-firestore.js')]);
   firebaseConfig=cfg.firebaseConfig||null;
   ({initializeApp}=a);
   ({getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup}=u);
-  ({getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc,disableNetwork,enableNetwork}=f);
+  ({getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc,disableNetwork,enableNetwork,query,orderBy,limit,getDocs}=f);
 })();
 sdkPromise.catch(()=>{});
 
@@ -1241,16 +1241,24 @@ function makeDb(fdb){
     onSnapshot:(n,e)=>onSnapshot(r,s=>n({exists:s.exists(),data:()=>s.data(),fromCache:!!(s.metadata&&s.metadata.fromCache)}),e)});
   return {
     doc:p=>wrapDoc(doc(fdb,p)),
-    collection:p=>({
+    collection:p=>{
+      const mk=cons=>({
+        orderBy:(f,d)=>mk(cons.concat([orderBy(f,d||'asc')])),
+        limit:n=>mk(cons.concat([limit(n)])),
+        get:()=>getDocs(cons.length?query(collection(fdb,p),...cons):collection(fdb,p)).then(s=>({docs:s.docs.map(d=>({id:d.id,data:()=>d.data()}))}))
+      });
+      return Object.assign(mk([]),{
+      add:d=>wrapDoc(doc(collection(fdb,p))).set(d),
       onSnapshot:(n,e,meta)=>onSnapshot(collection(fdb,p),meta?{includeMetadataChanges:true}:{},s=>n({docs:s.docs.map(d=>({id:d.id,data:()=>d.data()})),fromCache:!!(s.metadata&&s.metadata.fromCache)}),e),
       doc:id=>wrapDoc(id?doc(fdb,p+'/'+id):doc(collection(fdb,p)))
-    })
+      });
+    }
   };
 }
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-21.55';
+const APP_VERSION='2026-10-21.56';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -8121,10 +8129,12 @@ function avisTop(){
   if(S.pubAvisState===2){paintAvisTop(box);return box;}
   if(!S.db||S.pubAvisState===1)return box;
   S.pubAvisState=1;
+  try{
   S.db.collection('avisPublic').orderBy('at','desc').limit(10).get().then(sn=>{
     S.pubAvis=sn.docs.map(d=>d.data()).filter(a=>a&&a.text&&a.rating>=1);S.pubAvisState=2;
     const b=document.getElementById('avis-top');if(b)paintAvisTop(b);
   }).catch(()=>{S.pubAvis=[];S.pubAvisState=2;});
+  }catch(e){S.pubAvis=[];S.pubAvisState=2;}
   return box;
 }
 /* ---------- abonnement : tarifs (repris sur la page de connexion) ---------- */
