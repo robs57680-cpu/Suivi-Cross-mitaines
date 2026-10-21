@@ -6358,7 +6358,7 @@ const SPREAD={
   FT:{l:'For Time',d:6,min:1,max:30,h:'Écart entre deux paliers consécutifs, en % du temps du palier à 10 points. 6 % : 10:00 devient 10:36, puis 11:12…'},
   AMRAP:{l:'AMRAP',d:4,min:1,max:10,h:'Écart entre deux paliers consécutifs, en % du palier à 10 points, arrondi à la rep près. 5 % : 247 reps, puis 235, 222…'},
   DEAD:{l:'EMOM Dead by',d:null,min:1,max:50,h:'Écart entre deux paliers consécutifs, en % du time cap (arrondi à l’intervalle). Vide = un intervalle par point, ou plusieurs si le cap en compte plus de 10.'},
-  CAP:{l:'For Time : palier time cap',d:90,min:10,max:100,h:'Pourcentage des reps totales à atteindre au time cap pour marquer 1 point (arrondi à la fin d’un exercice).'}
+  CAP:{l:'For Time : palier time cap',d:90,min:10,max:100,h:'Pourcentage des reps totales à atteindre au time cap pour marquer 1 point (arrondi à la fin d’un exercice, sauf si cela ferait baisser le palier de plus de 5 % du total : dans ce cas, à la rep près).'}
 };
 const spreadPct=k=>{const D=SPREAD[k],v=parseNum(String(((S.prof&&S.prof.spread)||{})[k]??''));return(v!==null&&v>=D.min&&v<=D.max)?v:D.d;};
 /* repères d'un time cap : reps cumulées (réelles) à la fin de chaque exercice, dans l'ordre où l'athlète les enchaîne */
@@ -6379,8 +6379,11 @@ function capTierValue(p,e,pct){
   const cm={format:p.format,content:p.content,repsRound:Number(p.repsRound)||0,lineRounds:p.format==='FT'&&!!p.lineRounds};
   const b=capBoundaries(cm,e);
   if(!b.length)return String(Math.max(1,Math.round(e.R*pct/100)));
-  const target=b[b.length-1]*pct/100;let v=b[0];
+  const total=b[b.length-1],target=total*pct/100;let v=b[0];
   for(const x of b)if(x<=target+1e-9)v=x;
+  /* peu de repères (ex. 3 tours) : arrondir à la fin d'exercice précédente ferait trop chuter le palier (2 tours sur 3 au lieu de 90 %).
+     Si le repère est à plus de 5 % du total sous la cible, on garde la cible, à la rep près. */
+  if(v<=target&&target-v>total*0.05+1e-9)v=Math.max(1,Math.floor(target+1e-9));
   return String(v);
 }
 /* ---------- paliers : toujours 10 paliers, de 10 à 1 point, points entiers (jamais de 0,5) ---------- */
