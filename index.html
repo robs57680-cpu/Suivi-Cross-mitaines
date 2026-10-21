@@ -1156,6 +1156,12 @@ body.board-lock{overflow:hidden;padding-block-end:0}
 @keyframes prdraw{to{stroke-dashoffset:0}}
 @keyframes prfade{to{opacity:1}}
 @keyframes prpop{from{opacity:0;transform:scale(.2)}to{opacity:1;transform:none}}
+.prslides{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;overscroll-behavior-x:contain}
+.prslides::-webkit-scrollbar{display:none}
+.prslide{flex:0 0 100%;min-width:0;box-sizing:border-box;scroll-snap-align:center;scroll-snap-stop:always;display:grid;gap:12px;align-content:start;padding:0 2px}
+.prnav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.prnav-t{flex:1;min-width:0;text-align:center;display:grid;gap:2px}
+.prnav-t .h2{margin:0;overflow-wrap:anywhere}
 .prleg{display:flex;flex-wrap:wrap;gap:8px}
 .prleg button{display:inline-flex;align-items:center;gap:6px;border:2px solid var(--edge);border-radius:999px;background:var(--surface);padding:4px 12px 4px 8px;min-height:36px;font-family:var(--f-mono);font-size:12px;font-weight:600;cursor:pointer}
 .prleg button[aria-pressed="false"]{opacity:.45;border-style:dashed}
@@ -6021,7 +6027,7 @@ function prSmooth(P){
   return d;
 }
 /* series : [{reps, evs}] ; toutes les courbes partagent les mêmes axes (kg en hauteur, dates en largeur) */
-function prChartMulti(series,mvName){
+function prChartMulti(series,mvName,animOverride){
   const W=340,H=250,L=46,R=20,T=30,B=34,id='prg'+(++_prUid);
   const all=series.flatMap(x=>x.evs);
   const ts=all.map(e=>dparse(e.date).getTime()),t0=Math.min(...ts),t1=Math.max(...ts);
@@ -6030,7 +6036,7 @@ function prChartMulti(series,mvName){
   const X=t=>L+(t1===t0?(W-L-R)/2:(t-t0)/(t1-t0)*(W-L-R)),Y=v=>T+(1-(v-y0)/(y1-y0))*(H-T-B);
   const tx='style="font:600 10px var(--f-mono);fill:var(--muted)"';
   const key=series.map(x=>x.reps+':'+x.evs.length).join('|')+'|'+(mvName||'');
-  const anim=PROG._k!==key;PROG._k=key;
+  const anim=animOverride===false?false:PROG._k!==key;if(animOverride!==false)PROG._k=key;
   let g='<defs>'+series.map(({reps})=>'<linearGradient id="'+id+'-'+reps+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+prColor(reps)+'" stop-opacity=".38"/><stop offset="1" stop-color="'+prColor(reps)+'" stop-opacity="0"/></linearGradient>').join('')+'</defs>';
   const rawStep=(y1-y0)/4,mag=Math.pow(10,Math.floor(Math.log10(rawStep))),step=[1,2,2.5,5,10].map(k=>k*mag).find(k=>k>=rawStep)||10*mag;
   g+='<text x="'+(L-6)+'" y="'+(T-14)+'" text-anchor="end" '+tx+'>kg</text>';
@@ -6100,7 +6106,7 @@ function progSection(){
       h('span',{class:'chip live'},'PR'))))));
   /* filtres */
   el.append(h('section',{class:'card'},h('h2',{class:'h2'},'Filtrer'),h('div',{class:'grid2'},
-    field('Exercice',sel([['all','Tous les exercices']].concat(exs),PROG.ex,v=>{PROG.ex=v;render();},{id:'prog-ex'})),
+    field('Exercice',sel([['all','Tous les exercices']].concat(exs),PROG.ex,v=>{PROG.ex=v;if(v!=='all')PROG.slide=v;render();},{id:'prog-ex'})),
     field('Période',sel([['all','Depuis le début'],['30','30 derniers jours'],['90','90 derniers jours'],['365','12 derniers mois']],PROG.range,v=>{PROG.range=v;render();},{id:'prog-range'})))));
   if(!flt.length){el.append(h('div',{class:'empty'},h('p',{},'Aucun PR pour ce filtre.')));return el;}
   /* évolution sur la période, par catégorie */
@@ -6110,29 +6116,57 @@ function progSection(){
       const a=g[0],b=g[g.length-1],start=a.prevKg!==null?a.prevKg:a.kg,gain=Math.round((b.kg-start)*100)/100;
       const txt=(a.prevKg===null&&g.length===1)?'premier PR : '+prKg(b.kg):prKg(start)+' → '+prKg(b.kg)+' ('+(gain>0?'+':'')+fmtN(gain)+' kg)';
       return h('li',{},h('div',{class:'l'},h('div',{class:'nm'},a.mv+' · '+prType(a.reps)),h('div',{class:'sub'},txt+' · '+g.length+' PR')));}))));
-  /* graphique : toutes les répétitions (1, 3, 5, 10 RM) d'un même exercice, une couleur chacune, avec légende */
-  const cx=PROG.ex!=='all'?PROG.ex:norm(last.mv),cxName=(exs.find(x=>x[0]===cx)||['',last.mv])[1];
-  const cats=new Map();all.filter(ev=>norm(ev.mv)===cx).forEach(ev=>{if(!cats.has(ev.reps))cats.set(ev.reps,[]);cats.get(ev.reps).push(ev);});
-  const order=[...cats.keys()].sort((a,b)=>a-b);
-  const sheet=h('section',{class:'card'},h('h2',{class:'h2'},'Évolution · '+cxName));
-  const withPts=order.filter(r=>cats.get(r).some(ev=>!from||ev.date>=from));
-  if(!withPts.length)sheet.append(h('p',{class:'hint'},'Aucun PR de cet exercice sur la période.'));
+  /* graphiques en diaporama : une diapo par exercice (toutes les répétitions 1, 3, 5, 10 RM, une couleur chacune, avec légende) ; on fait glisser pour passer à un autre exercice */
+  const inPer=ev=>!from||ev.date>=from;
+  const slideEx=exs.filter(([k])=>all.some(ev=>norm(ev.mv)===k&&inPer(ev)));
+  const sheet=h('section',{class:'card'});
+  if(!slideEx.length){sheet.append(h('h2',{class:'h2'},'Évolution'),h('p',{class:'hint'},'Aucun PR sur la période.'));}
   else{
-    const leg=h('div',{class:'prleg',role:'group','aria-label':'Légende : afficher ou masquer chaque nombre de répétitions'});
-    withPts.forEach(r=>{
-      const b=h('button',{type:'button','aria-pressed':PROG.hide[r]?'false':'true',onclick:()=>{PROG.hide[r]=!PROG.hide[r];render();}},prType(r));
-      b.insertAdjacentHTML('afterbegin',prLegendIcon(r));
-      leg.append(b);
+    const want=PROG.slide||(PROG.ex!=='all'?PROG.ex:norm(last.mv));
+    let cur=Math.max(0,slideEx.findIndex(x=>x[0]===want));
+    PROG.slide=slideEx[cur][0];
+    const slides=slideEx.map(([k,name],si)=>{
+      const cats=new Map();all.filter(ev=>norm(ev.mv)===k).forEach(ev=>{if(!cats.has(ev.reps))cats.set(ev.reps,[]);cats.get(ev.reps).push(ev);});
+      const order=[...cats.keys()].sort((a,b)=>a-b);
+      const withPts=order.filter(r=>cats.get(r).some(inPer));
+      const sl=h('div',{class:'prslide','aria-label':name});
+      const leg=h('div',{class:'prleg',role:'group','aria-label':'Légende : afficher ou masquer chaque nombre de répétitions'});
+      withPts.forEach(r=>{
+        const bt=h('button',{type:'button','aria-pressed':PROG.hide[r]?'false':'true',onclick:()=>{PROG.hide[r]=!PROG.hide[r];render();}},prType(r));
+        bt.insertAdjacentHTML('afterbegin',prLegendIcon(r));
+        leg.append(bt);
+      });
+      sl.append(leg);
+      const vis=withPts.filter(r=>!PROG.hide[r]).map(r=>({reps:r,evs:cats.get(r).filter(inPer)}));
+      sl.append(vis.length?prChartMulti(vis,name,si===cur?undefined:false):h('p',{class:'hint'},'Touche une légende pour afficher sa courbe.'));
+      sl.append(h('ul',{class:'list'},withPts.map(r=>{
+        const evs=cats.get(r),best=evs.reduce((m,e)=>e.kg>m.kg?e:m,evs[0]);
+        return h('li',{},h('div',{class:'l prsum'},h('i',{style:'background:'+prColor(r)}),h('div',{},h('div',{class:'nm'},prType(r)),h('div',{class:'sub'},'Atteint le '+fmtShort(best.date)+' · '+evs.length+' PR enregistré'+(evs.length>1?'s':'')))),
+          h('span',{class:'chip ok'},'Meilleur PR : '+prKg(best.kg)));})));
+      return sl;
     });
-    sheet.append(leg);
-    const vis=withPts.filter(r=>!PROG.hide[r]).map(r=>({reps:r,evs:cats.get(r).filter(ev=>!from||ev.date>=from)}));
-    sheet.append(vis.length?prChartMulti(vis,cxName):h('p',{class:'hint'},'Touche une légende pour afficher sa courbe.'));
-    if(PROG.ex==='all'&&exs.length>1)sheet.append(h('p',{class:'hint'},'Exercice affiché : le dernier travaillé. Choisis-en un autre dans le filtre « Exercice ».'));
-    sheet.append(h('ul',{class:'list'},order.map(r=>{
-      const evs=cats.get(r),best=evs.reduce((m,e)=>e.kg>m.kg?e:m,evs[0]);
-      const li=h('li',{},h('div',{class:'l prsum'},h('i',{style:'background:'+prColor(r)}),h('div',{},h('div',{class:'nm'},prType(r)),h('div',{class:'sub'},'Atteint le '+fmtShort(best.date)+' · '+evs.length+' PR enregistré'+(evs.length>1?'s':'')))),
-        h('span',{class:'chip ok'},'Meilleur PR : '+prKg(best.kg)));return li;})));
-    sheet.append(h('p',{class:'hint'},'Chaque séance de force à 1, 3, 5 ou 10 reps ajoute un point, même si la charge est plus basse que la fois d’avant.'));
+    const multi=slideEx.length>1;
+    const ttl=h('div',{class:'prnav-t'});
+    const setTtl=i=>ttl.replaceChildren(h('h2',{class:'h2'},'Évolution · '+slideEx[i][1]),multi?h('span',{class:'hint'},(i+1)+' / '+slideEx.length):null);
+    setTtl(cur);
+    const track=h('div',{class:'prslides',role:'region','aria-label':'Graphiques par exercice : fais glisser pour changer d’exercice',tabindex:'0'},slides);
+    const goTo=i=>track.scrollTo({left:Math.max(0,Math.min(slideEx.length-1,i))*track.clientWidth,behavior:'smooth'});
+    const dots=slideEx.map(([,name],i)=>h('button',{type:'button',class:'plan-dot','aria-label':name,'aria-current':i===cur?'true':null,onclick:()=>goTo(i)}));
+    track.addEventListener('scroll',()=>{
+      const i=Math.max(0,Math.min(slideEx.length-1,Math.round(track.scrollLeft/(track.clientWidth||1))));
+      if(i===cur)return;
+      cur=i;PROG.slide=slideEx[i][0];setTtl(i);
+      dots.forEach((d,j)=>{if(j===i)d.setAttribute('aria-current','true');else d.removeAttribute('aria-current');});
+    },{passive:true});
+    sheet.append(h('div',{class:'prnav'},
+      multi?h('button',{class:'btn sm',type:'button','aria-label':'Exercice précédent',onclick:()=>goTo(cur-1)},'‹'):null,
+      ttl,
+      multi?h('button',{class:'btn sm',type:'button','aria-label':'Exercice suivant',onclick:()=>goTo(cur+1)},'›'):null),
+      track,
+      multi?h('div',{class:'plan-dots'},...dots):null,
+      multi?h('p',{class:'hint',style:'text-align:center'},'Fais glisser le graphique pour passer à un autre exercice.'):null,
+      h('p',{class:'hint'},'Chaque séance de force à 1, 3, 5 ou 10 reps ajoute un point, même si la charge est plus basse que la fois d’avant.'));
+    setTimeout(()=>{track.scrollLeft=cur*track.clientWidth;},0);
   }
   el.append(sheet);
   /* historique */
