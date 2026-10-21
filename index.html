@@ -2008,7 +2008,7 @@ function movBackGo(){
 /* ---------- écritures ---------- */
 let chain=Promise.resolve();
 function run(fn){chain=chain.then(fn).catch(e=>{toast(errMsg(e),true);});return chain;}
-const saveProf=()=>run(async()=>{await S.db.doc('users/'+S.uid+'/private/profile').set({prs:S.prof.prs||{},sex:S.prof.sex||'',birth:S.prof.birth||'',genEx:S.prof.genEx||null,genAll:S.prof.genAll||null,words:S.prof.words||[],mvcfg:S.prof.mvcfg||{},revd:S.prof.revd||{},intf:S.prof.intf||{},weight:Number(S.prof.weight)>0?Number(S.prof.weight):0});});
+const saveProf=()=>run(async()=>{await S.db.doc('users/'+S.uid+'/private/profile').set({prs:S.prof.prs||{},sex:S.prof.sex||'',birth:S.prof.birth||'',genEx:S.prof.genEx||null,genAll:S.prof.genAll||null,words:S.prof.words||[],mvcfg:S.prof.mvcfg||{},revd:S.prof.revd||{},intf:S.prof.intf||{},pace:S.prof.pace||{},spread:S.prof.spread||{},weight:Number(S.prof.weight)>0?Number(S.prof.weight):0});});
 const needPseudo=()=>S.uid&&S.loaded.logs&&!(S.logs[S.uid]&&S.logs[S.uid].pseudo);
 /* groupes : un seul document config/groups {list:[{id,name}], of:{uid:idDuGroupe}}, écrit par le coach seul */
 const groupsList=()=>(S.groups&&S.groups.list)||[];
@@ -6233,23 +6233,13 @@ function generateMetcon(){
   }
   /* paliers : 10 points pour le meilleur, puis 9, 8… 1 ; jamais de doublon */
   const mkTiers=()=>{
-    const out=[],seen=new Set();
-    if(fmt==='EMOM'){ /* temps tenu : time cap = 10 pts, un intervalle de moins = 1 pt de moins */
-      const cnt=Math.min(10,Math.floor(D/ivN));
-      for(let j=0;j<cnt;j++)out.push({t:fmtTime((D-j*ivN)*60),p:String(10-j)});
-      return out;
-    }
-    if(fmt==='FT'){
-      const base=capMin?capMin*60:T/.75; /* 55 % du cap = 10 pts, 95 % du cap = 1 pt */
-      for(let j=0;j<10;j++){const t=r5(base*(.55+.4*j/9));if(!seen.has(t)){seen.add(t);out.push({t:fmtTime(t),p:String(10-out.length)});}}
-    }else{
-      for(let j=0;j<10;j++){const t=Math.round(est*(1.3-.6*j/9)*2)/2;if(t>0&&!seen.has(t)){seen.add(t);out.push({t:String(t).replace('.',','),p:String(10-out.length)});}}
-    }
-    return out;
+    if(fmt==='EMOM')return deadTiers(D,ivN);
+    if(fmt==='FT'){const b=capMin?capMin*60:T/.75;return spreadTimes(b*.55,b*.95).map((t,j)=>({t:fmtTime(t),p:String(10-j)}));}
+    return spreadRounds(est*1.3,est*.7).map((v,j)=>({t:tourTxt(v),p:String(10-j)}));
   };
   const levels=[0,1,2].map(k=>{
     let capTiers=blankCapTiers();
-    if(fmt==='FT')capTiers=[[.9,'1'],[.7,'0,5']].map(([m,p])=>({t:String(Math.max(1,Math.round(R*m))),p})); /* sous le dernier palier terminé (1 pt) */
+    if(fmt==='FT')capTiers=[[.9,'1']].map(([m,p])=>({t:String(Math.max(1,Math.round(R*m))),p})); /* sous le dernier palier terminé (1 pt) */
     return Object.assign({mode:'custom',touched:true,name:LEVEL_NAMES[k],note:'',vars:{},tiers:mkTiers(),capTiers},genLoads(mv,k));
   });
   const cnt={};mv.forEach(x=>{const g=x[1]==='corps'?'cardio':x[1];cnt[g]=(cnt[g]||0)+1;});
@@ -6258,6 +6248,62 @@ function generateMetcon(){
 }
 
 /* ---------- intensité du metcon et calcul automatique des paliers ---------- */
+/* allures des distances (réglages du coach) et écarts entre paliers par type de metcon */
+const PACE_DEF={row:125,run:300},PACE_UNIT={row:500,run:1000};
+function paceSpm(kind){
+  const raw=String(((S.prof&&S.prof.pace)||{})[kind]??'').trim();let v=null;
+  if(raw){v=parseTime(raw);if(v===null){const n=parseNum(raw);if(n!==null&&n>0)v=n;}}
+  if(!(v>=20&&v<=1800))v=PACE_DEF[kind];
+  return v/PACE_UNIT[kind];
+}
+const SPREAD={
+  FT:{l:'For Time',d:6,min:1,max:30,h:'Écart entre deux paliers consécutifs, en % du temps du palier à 10 points. 6 % : 10:00 devient 10:36, puis 11:12…'},
+  AMRAP:{l:'AMRAP',d:4,min:1,max:10,h:'Écart entre deux paliers consécutifs, en % du nombre de tours du palier à 10 points. 4 % : 10 tours, puis 9,6…'},
+  DEAD:{l:'EMOM Dead by',d:null,min:1,max:50,h:'Écart entre deux paliers consécutifs, en % du time cap (arrondi à l’intervalle). Vide = un intervalle par point, ou plusieurs si le cap en compte plus de 10.'},
+  CAP:{l:'For Time : palier time cap',d:90,min:10,max:100,h:'Pourcentage des reps totales à atteindre au time cap pour marquer 1 point (arrondi à la fin d’un exercice).'}
+};
+const spreadPct=k=>{const D=SPREAD[k],v=parseNum(String(((S.prof&&S.prof.spread)||{})[k]??''));return(v!==null&&v>=D.min&&v<=D.max)?v:D.d;};
+/* repères d'un time cap : reps cumulées (réelles) à la fin de chaque exercice, dans l'ordre où l'athlète les enchaîne */
+function capBoundaries(cm,e){
+  const pl=planOf(cm),b=[];
+  if(pl&&pl.lines&&pl.sizes){let c=0;pl.sizes.forEach(n=>{c+=n;b.push(c);});return b;}
+  if(pl&&pl.nums){let c=0;pl.nums.forEach(n=>{for(let j=0;j<pl.k;j++){c+=n;b.push(c);}});return b;}
+  const sizes=capLines(cm).map(x=>x.n),sum=sizes.reduce((a,x)=>a+x,0),round=pl&&pl.size?pl.size:sum,rounds=Math.max(1,(e&&e.rounds)||1);
+  if(!(round>0))return b;
+  for(let r=0;r<rounds;r++){
+    let c=r*round;
+    if(sizes.length>1&&Math.abs(sum-round)<1e-9)sizes.forEach(n=>{c+=n;b.push(c);});else b.push((r+1)*round);
+  }
+  return b;
+}
+/* palier time cap : pct % des reps totales, arrondi à la fin du dernier exercice terminé, dans l'unité du score des athlètes */
+function capTierValue(p,e,pct){
+  const cm={format:p.format,content:p.content,repsRound:Number(p.repsRound)||0,lineRounds:p.format==='FT'&&!!p.lineRounds};
+  const b=capBoundaries(cm,e);
+  if(!b.length)return String(Math.max(1,Math.round(e.R*pct/100)));
+  const target=b[b.length-1]*pct/100;let v=b[0];
+  for(const x of b)if(x<=target+1e-9)v=x;
+  return String(v);
+}
+/* ---------- paliers : toujours 10 paliers, de 10 à 1 point, points entiers (jamais de 0,5) ---------- */
+function spreadTimes(lo,hi){ /* 10 temps croissants, multiples de 5 s */
+  lo=Math.max(5,Math.round(lo/5)*5);hi=Math.floor(hi/5)*5;
+  if(hi-lo<45)lo=Math.max(5,hi-45);
+  if(hi-lo<45)hi=lo+45;
+  const st=Math.max(5,Math.floor((hi-lo)/9/5)*5);
+  return Array.from({length:10},(_,j)=>lo+j*st);
+}
+function spreadRounds(top,bottom){ /* 10 nombres de tours décroissants, au quart de tour */
+  const t=Math.max(2.5,Math.round(top*4)/4),st=Math.max(.25,Math.round((t-bottom)/9*4)/4);
+  return Array.from({length:10},(_,j)=>t-j*st);
+}
+const tourTxt=v=>String(v).replace('.',',');
+function deadTiers(D,iv,pct){ /* Dead by : temps tenu décroissant depuis le time cap ; les points s'étalent de 10 à 1 */
+  const n=Math.max(1,Math.floor(D/iv)),k=pct?Math.max(1,Math.round(D*pct/100/iv)):Math.ceil(n/10),times=[];
+  for(let j=0;j<10;j++){const t=D-j*k*iv;if(t<=0)break;times.push(t);}
+  const c=times.length;
+  return times.map((t,j)=>({t:fmtTime(Math.round(t*60)),p:String(c>1?Math.round(10-9*j/(c-1)):10)}));
+}
 /* f = multiplicateur appliqué au temps « pur » (reps x secondes par rep) : transitions, fatigue, respirations */
 const INTENS={max:{l:'À fond',f:1.2,d:'Tu pousses du début à la fin.'},allure:{l:'Gestion d’allure',f:1.45,d:'Tu gardes un rythme régulier, sans te vider.'},cool:{l:'Pas à fond',f:1.8,d:'Séance tranquille : tu gardes de la marge.'}};
 const intF=k=>{const v=parseNum(String((S.prof&&S.prof.intf&&S.prof.intf[k])??''));return (v!==null&&v>=0.5&&v<=5)?v:INTENS[k].f;};
@@ -6299,10 +6345,10 @@ function metEstimate(p){
     if(NOT_REPS.test(s))continue;
     const dm=s.match(/^(\d+(?:[.,]\d+)?)\s*(km|m)\b\s*(.*)$/i);
     let n=null,txt=s,sec=null,nm=s;
-    if(dm){ /* distance : course 0,3 s/m, rameur 0,25 s/m */
+    if(dm){ /* distance : allures réglables (défaut rameur 2:05 aux 500 m, course 5:00 au km) */
       const meters=parseNum(dm[1])*(dm[2].toLowerCase()==='km'?1000:1);
       const row=/ram|row|ski/i.test(dm[3]);
-      items.push({n:1,sec:meters*(row?.25:.3),nm:dm[3]||'Distance',fixed:true});continue;
+      items.push({n:1,sec:meters*paceSpm(row?'row':'run'),nm:dm[3]||'Distance',fixed:true});continue;
     }
     const m=s.match(/^(\d+)\s*(?:x\s*)?(.+)$/i);
     if(m){n=+m[1];txt=m[2];}
@@ -6329,30 +6375,30 @@ function metEstimate(p){
 }
 /* remplit les paliers du metcon (Rx, puis les autres niveaux adaptés) à partir de l'intensité choisie */
 function calcTiers(p){
-  if(p.format==='EMOM'){toast('Dead by : le palier max est de tenir tout le time cap, rien à calculer.',true);return;}
+  if(p.format==='EMOM'){
+    const D=parseNum(p.dur||''),iv=parseNum(String(p.interval||'1'))||1;
+    if(!(D>0)){toast('Indique le time cap (min) pour calculer les paliers.',true);return;}
+    const tiers=deadTiers(D,iv,spreadPct('DEAD'));
+    p.levels.forEach((lv,k)=>{if(k<2&&(lv.mode==='off'||lv.mode==='same'||p.syncTiers))return;lv.tiers=tiers.map(x=>({...x}));lv.pend=null;});
+    p.levels[2].tiers=tiers.map(x=>({...x}));p.levels[2].pend=null;
+    p.estInfo='Palier max (10 pts) : tenir '+tiers[0].t+' (tout le time cap), 1 point pour '+tiers[tiers.length-1].t+'. Mêmes paliers pour tous les niveaux.';
+    render();return;
+  }
   const I0=INTENS[p.intensity],I=I0?Object.assign({},I0,{f:intF(p.intensity)}):I0;
   if(!I){toast('Choisis d’abord l’intensité du metcon.',true);return;}
   const e=metEstimate(p);
   if(!e||!(e.T>0)){toast('Je ne trouve pas de reps ni de mouvement dans le contenu.',true);return;}
   const ft=p.format==='FT',dur=parseNum(p.dur||'');
   if(!ft&&!(dur>0)){toast('Indique la durée de l’AMRAP (min) pour calculer les paliers.',true);return;}
-  const scale=[1.25,1.1,1];
+  /* mêmes paliers pour tous les niveaux : ce sont les variantes d'exercices qui font la différence */
   const build=k=>{
-    const out=[],seen=new Set();
+    const out=[];
     if(ft){
-      const base=e.T*I.f*scale[k];
-      for(let j=0;j<10;j++){
-        const t=Math.max(5,Math.round(base*(1+.6*j/9)/5)*5);
-        if(dur>0&&t>dur*60)break;
-        if(!seen.has(t)){seen.add(t);out.push({t:fmtTime(t),p:String(10-out.length)});}
-      }
-      if(!out.length)out.push({t:fmtTime(Math.round(dur*60)),p:'10'});
+      const base=e.T*I.f,cap=dur>0?dur*60:0;
+      spreadTimes(base,cap>0?Math.min(base*(1+9*spreadPct('FT')/100),cap):base*(1+9*spreadPct('FT')/100)).forEach((t,j)=>out.push({t:fmtTime(t),p:String(10-j)}));
     }else{
-      const est=dur*60/(e.roundTime*I.f*scale[k]);
-      for(let j=0;j<10;j++){
-        const v=Math.round(est*(1-.4*j/9)*4)/4;
-        if(v>0&&!seen.has(v)){seen.add(v);out.push({t:String(v).replace('.',','),p:String(10-out.length)});}
-      }
+      const est=dur*60/(e.roundTime*I.f);
+      spreadRounds(est,est*(1-9*spreadPct('AMRAP')/100)).forEach((v,j)=>out.push({t:tourTxt(v),p:String(10-j)}));
     }
     return out;
   };
@@ -6361,12 +6407,12 @@ function calcTiers(p){
     lv.tiers=build(k);lv.pend=null;
   });
   p.levels[2].tiers=build(2);p.levels[2].pend=null;
-  if(ft&&p.levels[2].capTiers.every(c=>!String(c.t).trim()&&!String(c.p).trim())){
-    const ct=[[.9,'1'],[.7,'0,5']].map(([m,pt])=>({t:String(Math.max(1,Math.round(e.R*m))),p:pt}));
+  if(ft){ /* palier time cap recalculé, comme les autres paliers, dans l'unité des scores (reps réelles cumulées) */
+    const ct=[{t:capTierValue(p,e,spreadPct('CAP')),p:'1'}];
     p.levels.forEach((lv,k)=>{if(k===2||(lv.mode==='custom'&&!p.syncTiers))lv.capTiers=blankCapTiers().map((c,i)=>ct[i]||c);});
   }
   const top=p.levels[2].tiers[0];
-  p.estInfo=(ft?'Palier max (10 pts) : '+top.t+' pour le niveau Rx, '+I.l.toLowerCase()+'.':'Palier max (10 pts) : '+top.t+' tours pour le niveau Rx, '+I.l.toLowerCase()+'.')
+  p.estInfo=(ft?'Palier max (10 pts) : '+top.t+' pour tous les niveaux, '+I.l.toLowerCase()+'.':'Palier max (10 pts) : '+top.t+' tours pour tous les niveaux, '+I.l.toLowerCase()+'.')
     +' Temps pur estimé '+fmtTime(Math.round(e.T))+' ('+fmtN(Math.round(e.R))+' reps)'+(ft?'':' par tour : '+fmtTime(Math.round(e.roundTime)))
     +(e.unknown.length?' · Mouvement non reconnu (3 s par rep supposées) : '+e.unknown.join(', '):'')+'. À ajuster à ta façon de coacher.';
   render();
@@ -6754,6 +6800,12 @@ function mvCfgSave(){
   const fi=S.prof.intf||{};
   for(const k of Object.keys(INTENS)){const fv=parseNum(String(fi[k]??''));if(fv!==null&&fv>=0.5&&fv<=5)fi[k]=Math.round(fv*100)/100;else delete fi[k];}
   S.prof.intf=fi;
+  const pc=S.prof.pace||{};
+  for(const k of ['row','run']){const raw=String(pc[k]??'').trim();let v=raw?parseTime(raw):null;if(raw&&v===null){const n=parseNum(raw);if(n!==null&&n>0)v=n;}if(v!==null&&v>=20&&v<=1800)pc[k]=fmtTime(Math.round(v));else delete pc[k];}
+  S.prof.pace=pc;
+  const sp=S.prof.spread||{};
+  for(const k of Object.keys(SPREAD)){const v=parseNum(String(sp[k]??''));if(v!==null&&v>=SPREAD[k].min&&v<=SPREAD[k].max)sp[k]=Math.round(v*10)/10;else delete sp[k];}
+  S.prof.spread=sp;
   S.prof.mvcfg=c;saveProf();toast('Configuration des mouvements enregistrée');render();
 }
 const mvDefaultSec=name=>{const g=(SEC_EXTRA[name]!==undefined)?SEC_EXTRA[name]:null;if(g!==null)return g;for(const [al,sec,nm] of secAliases())if(nm===name)return sec;return null;};
@@ -6765,6 +6817,24 @@ function mvSecField(name){
     if(!S.prof.mvcfg[name])S.prof.mvcfg[name]={lv:[{f:'',h:'',v:[]},{f:'',h:'',v:[]},{f:'',h:'',v:[]}]};
     S.prof.mvcfg[name].sec=ev.target.value;}});
   return field('Temps par répétition (secondes)',inp,d!==null?'Vide = valeur par défaut ('+String(d).replace('.',',')+' s). Sert au calcul automatique des paliers.':'Sert au calcul automatique des paliers du metcon.');
+}
+function paceCard(){
+  S.prof.pace=S.prof.pace||{};
+  const box=h('section',{class:'card'},h('h2',{class:'h2'},'Allures rameur et course'),
+    h('p',{class:'muted'},'Servent à estimer le temps des distances (ex. 250 m Rameur) dans le calcul des paliers. Vide = valeur par défaut.'));
+  [['row','Rameur et ski : temps pour 500 m','2:05'],['run','Course et autres distances : temps pour 1 km','5:00']].forEach(([k,l,ph])=>
+    box.append(field(l,h('input',{id:'pace-'+k,type:'text',value:S.prof.pace[k]??'',placeholder:ph,'aria-label':l,oninput:ev=>{S.prof.pace[k]=ev.target.value;}}),'Écris 2:05 ou 125 (secondes). Défaut : '+ph+'.')));
+  return box;
+}
+function spreadCard(){
+  S.prof.spread=S.prof.spread||{};
+  const box=h('section',{class:'card'},h('h2',{class:'h2'},'Écart entre les paliers'),
+    h('p',{class:'muted'},'Réglé par type de metcon, utilisé par « Calculer les paliers ». Les paliers vont toujours de 10 à 1 point, et sont les mêmes pour tous les niveaux. Vide = valeur par défaut.'));
+  Object.keys(SPREAD).forEach(k=>{
+    const D=SPREAD[k];
+    box.append(field(D.l+' (%)',h('input',{id:'spread-'+k,type:'text',inputmode:'decimal',value:S.prof.spread[k]??'',placeholder:D.d===null?'auto':String(D.d).replace('.',','),'aria-label':'Écart '+D.l,oninput:ev=>{S.prof.spread[k]=ev.target.value;}}),D.h+(D.d===null?' Défaut : auto.':' Défaut : '+String(D.d).replace('.',',')+' %.')));
+  });
+  return box;
 }
 function intensCard(){
   const keys=Object.keys(INTENS);
@@ -6813,6 +6883,8 @@ function mvCfgSection(){
   nw.addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();addNew();}});
   el.append(h('div',{class:'row',style:'flex-wrap:nowrap'},h('div',{style:'flex:1;min-width:0'},nw),h('button',{class:'btn',type:'button',onclick:addNew},'Ajouter')));
   el.append(intensCard());
+  el.append(paceCard());
+  el.append(spreadCard());
   MV_ORDER.forEach(cat=>{
     const items=names.filter(n=>mvGroup(n)===cat).sort((a,b)=>a.localeCompare(b,'fr',{sensitivity:'base'}));
     if(!items.length)return;
@@ -8170,7 +8242,7 @@ function startFirebase(){
     unsubs.push(S.db.collection('comments').onSnapshot(sn=>{S.comments=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));if(S.cerRefresh)S.cerRefresh();},()=>{}));
     /* réactions emoji : si les règles ne sont pas publiées, on ignore l'erreur */
     unsubs.push(S.db.collection('reactions').onSnapshot(sn=>{S.reactions=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));scheduleRender();},()=>{}));
-    unsubs.push(S.db.doc('users/'+S.uid+'/private/profile').onSnapshot(sn=>{const d=sn.exists?sn.data():null;S.prof={prs:(d&&d.prs)?JSON.parse(JSON.stringify(d.prs)):{},sex:(d&&d.sex)||'',birth:(d&&typeof d.birth==='string')?d.birth:'',genEx:(d&&Array.isArray(d.genEx))?d.genEx:null,genAll:(d&&Array.isArray(d.genAll))?d.genAll:null,words:(d&&Array.isArray(d.words))?d.words:[],mvcfg:(d&&d.mvcfg&&typeof d.mvcfg==='object')?JSON.parse(JSON.stringify(d.mvcfg)):{},revd:(d&&d.revd&&typeof d.revd==='object')?JSON.parse(JSON.stringify(d.revd)):{},intf:(d&&d.intf&&typeof d.intf==='object')?JSON.parse(JSON.stringify(d.intf)):{},weight:(d&&Number(d.weight)>0)?Number(d.weight):0};S.profLoaded=true;scheduleRender();selfSync();},fail));
+    unsubs.push(S.db.doc('users/'+S.uid+'/private/profile').onSnapshot(sn=>{const d=sn.exists?sn.data():null;S.prof={prs:(d&&d.prs)?JSON.parse(JSON.stringify(d.prs)):{},sex:(d&&d.sex)||'',birth:(d&&typeof d.birth==='string')?d.birth:'',genEx:(d&&Array.isArray(d.genEx))?d.genEx:null,genAll:(d&&Array.isArray(d.genAll))?d.genAll:null,words:(d&&Array.isArray(d.words))?d.words:[],mvcfg:(d&&d.mvcfg&&typeof d.mvcfg==='object')?JSON.parse(JSON.stringify(d.mvcfg)):{},revd:(d&&d.revd&&typeof d.revd==='object')?JSON.parse(JSON.stringify(d.revd)):{},intf:(d&&d.intf&&typeof d.intf==='object')?JSON.parse(JSON.stringify(d.intf)):{},pace:(d&&d.pace&&typeof d.pace==='object')?JSON.parse(JSON.stringify(d.pace)):{},spread:(d&&d.spread&&typeof d.spread==='object')?JSON.parse(JSON.stringify(d.spread)):{},weight:(d&&Number(d.weight)>0)?Number(d.weight):0};S.profLoaded=true;scheduleRender();selfSync();},fail));
     render();
   });
 }
