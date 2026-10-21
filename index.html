@@ -749,8 +749,13 @@ html[data-hal] .top{border-bottom-color:#E8710A}
 .feed-card.th-angrypumpkin .rxb{background:rgba(10,7,7,.88);border:0 solid transparent;border-width:5px 5px 10px 5px;border-image:url('assets/embedded/cadre-halloween-resultat.webp') 26 26 74 26/5px 5px 10px 5px stretch;border-radius:0}
 .feed-card.th-angrypumpkin .rxb[aria-pressed="true"]{background:rgba(255,90,30,.2);box-shadow:0 0 12px rgba(255,90,30,.75)}
 .feed-card.th-angrypumpkin .rxb small{color:#fff}
-.feed-card.th-angrypumpkin .feed-pts{isolation:isolate;font-family:'Rubik Distressed','Anton',Impact,sans-serif;font-size:32px;-webkit-text-stroke:0;color:#fff;text-shadow:0 2px 4px rgba(0,0,0,.7);padding:6px 8px 0}
-.feed-card.th-angrypumpkin .feed-pts::before{content:'';position:absolute;z-index:-1;inset:-42% -34% -78% -30%;background:url('assets/embedded/sang-halloween-points.webp') center/100% 100% no-repeat}
+.feed-card.th-angrypumpkin .rxwrap{padding-right:94px}
+/* Angry Pumpkin : lune dans l'en-tête et décor en fond de publication (decor-halloween-lune / -cimetiere / -salle) */
+.feed-card.th-angrypumpkin>.bn::after{content:'';position:absolute;z-index:0;left:60%;top:26%;width:17%;height:52%;background:url('assets/embedded/decor-halloween-lune.webp') center/100% 100% no-repeat;pointer-events:none}
+.feed-card.th-angrypumpkin>.bn>.feed-head{z-index:1}
+.feed-card.th-angrypumpkin::after{content:'';position:absolute;z-index:0;left:3.4cqw;right:3.4cqw;top:20cqw;bottom:5.8cqw;pointer-events:none;background:url('assets/embedded/decor-halloween-cimetiere.webp') right 2cqw top 5cqw/56cqw auto no-repeat,url('assets/embedded/decor-halloween-salle.webp') right 0 bottom 24cqw/78cqw auto no-repeat}
+.feed-card.th-angrypumpkin .feed-pts{isolation:isolate;font-family:'Rubik Distressed','Anton',Impact,sans-serif;font-size:23px;-webkit-text-stroke:0;color:#fff;text-shadow:0 2px 4px rgba(0,0,0,.7);padding:0;right:16px;bottom:14px;transform:rotate(-8deg);transform-origin:center}
+.feed-card.th-angrypumpkin .feed-pts::before{content:'';position:absolute;z-index:-1;inset:auto;left:50%;top:50%;width:92px;height:100px;transform:translate(-50%,-34%);background:url('assets/embedded/sang-halloween-points.webp') center/100% 100% no-repeat}
 .feed-card.th-angrypumpkin .lvsh{clip-path:none;background:url('assets/embedded/sang-halloween-pastille.webp') center/100% 100% no-repeat;padding:9px 16px;margin-left:12px;font-family:'Rubik Distressed','Anton',Impact,sans-serif;font-size:15px;letter-spacing:.04em;color:#fff;text-shadow:0 1px 2px #000}
 .feed-card.th-angrypumpkin .lvsh.l0{filter:hue-rotate(100deg)}
 .feed-card.th-angrypumpkin .lvsh.l1{filter:hue-rotate(190deg)}
