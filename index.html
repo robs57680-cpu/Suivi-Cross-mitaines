@@ -8088,6 +8088,8 @@ const appUrl=()=>location.href.split(/[?#]/)[0].replace(/index\.html$/,'');
    Le coach choisit les avis à publier (4 kettlebells minimum) ; ils défilent en haut de l'écran de connexion. */
 const kbSvg=(on,sz)=>'<svg viewBox="0 0 24 24" width="'+sz+'" height="'+sz+'" aria-hidden="true" fill="'+(on?'currentColor':'none')+'" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8.4 9.8C7.6 6 9.1 3 12 3s4.4 3 3.6 6.8" fill="none"/><circle cx="12" cy="15" r="6.2"/></svg>';
 const ICO_KB='<svg '+SVGA+'><path d="M8.4 9.8C7.6 6 9.1 3 12 3s4.4 3 3.6 6.8"/><circle cx="12" cy="15" r="6.2"/></svg>';
+/* texte d'un avis : jamais « null », « undefined » ou « NaN » affichés tels quels */
+const cleanTxt=v=>{const t=String(v==null?'':v).trim();return /^(null|undefined|nan)$/i.test(t)?'':t;};
 function kbRow(n,sz){
   const el=h('span',{class:'kbs',role:'img','aria-label':n+' kettlebell'+(n>1?'s':'')+' sur 5'});
   el.innerHTML=[1,2,3,4,5].map(i=>kbSvg(i<=n,sz||18)).join('');
@@ -8132,7 +8134,7 @@ function viewAvis(){
     const text=(S.avisText||'').trim();
     if(!(S.avisRating>=1)){toast('Choisis ta note en touchant les kettlebells.',true);return;}
     if(text.length<5){toast('Écris un petit mot (5 caractères minimum).',true);return;}
-    const d={uid:S.uid,pseudo:((S.logs[S.uid]||{}).pseudo||S.meName||'Athlète').slice(0,24),rating:S.avisRating,text:text.slice(0,200),at:new Date().toISOString()};
+    const d={uid:S.uid,pseudo:(cleanTxt((S.logs[S.uid]||{}).pseudo)||cleanTxt(S.meName)||'Athlète').slice(0,24),rating:S.avisRating,text:text.slice(0,200),at:new Date().toISOString()};
     run(async()=>{await S.db.doc('avis/'+S.uid).set(d);S.myAvis=d;toast('Merci pour ton avis !');render();});
   });
   el.append(h('section',{class:'card'},h('h2',{class:'h2'},S.myAvis?'Ton avis':'Note l’appli'),
@@ -8154,7 +8156,7 @@ function avisCoachSection(){
   const list=S.avisAll.slice().sort((a,b)=>(b.rating-a.rating)||String(b.at).localeCompare(String(a.at)));
   sec.append(h('ul',{class:'list'},list.map(a=>{
     const pub=S.avisPub&&S.avisPub[a.id],stale=pub&&(pub.text!==a.text||pub.rating!==a.rating||pub.pseudo!==a.pseudo);
-    const doPub=()=>run(async()=>{const d={pseudo:a.pseudo,rating:a.rating,text:a.text,at:a.at};await S.db.doc('avisPublic/'+a.id).set(d);S.avisPub=Object.assign({},S.avisPub,{[a.id]:d});S.pubAvis=null;S.pubAvisState=0;toast('Avis publié sur l’écran de connexion');render();});
+    const doPub=()=>run(async()=>{const d={pseudo:cleanTxt(a.pseudo)||'Athlète',rating:a.rating,text:a.text,at:a.at};await S.db.doc('avisPublic/'+a.id).set(d);S.avisPub=Object.assign({},S.avisPub,{[a.id]:d});S.pubAvis=null;S.pubAvisState=0;toast('Avis publié sur l’écran de connexion');render();});
     const doUnpub=()=>run(async()=>{await S.db.doc('avisPublic/'+a.id).delete();const n=Object.assign({},S.avisPub);delete n[a.id];S.avisPub=n;S.pubAvis=null;S.pubAvisState=0;toast('Avis retiré de l’écran de connexion');render();});
     const act=pub?h('div',{class:'row'},stale?h('button',{class:'btn sm primary',type:'button',onclick:doPub},'Mettre à jour'):null,h('button',{class:'btn sm danger',type:'button',onclick:doUnpub},'Retirer'))
       :(a.rating>=AVIS_MIN_PUB?h('button',{class:'btn sm primary',type:'button',onclick:doPub},'Publier'):h('span',{class:'chip'},'Moins de '+AVIS_MIN_PUB+' : non publiable'));
@@ -8172,7 +8174,7 @@ function paintAvisTop(box){
   if(!list.length){box.hidden=true;return;}
   box.hidden=false;
   let cur=0;
-  const slides=list.map((a,i)=>h('figure',{class:'avis-sl'+(i?'':' on')},kbRow(a.rating,20),h('blockquote',{},'« '+a.text+' »'),h('figcaption',{},a.pseudo||'Athlète')));
+  const slides=list.map((a,i)=>h('figure',{class:'avis-sl'+(i?'':' on')},kbRow(a.rating,20),h('blockquote',{},'« '+cleanTxt(a.text)+' »'),h('figcaption',{},cleanTxt(a.pseudo)||'Athlète')));
   const dots=list.map((_,i)=>h('button',{type:'button',class:'plan-dot','aria-label':'Avis '+(i+1),'aria-current':i?null:'true',onclick:()=>show(i)}));
   const show=i=>{cur=i;slides.forEach((s2,k)=>s2.classList.toggle('on',k===i));dots.forEach((d,k)=>{if(k===i)d.setAttribute('aria-current','true');else d.removeAttribute('aria-current');});};
   box.append(h('p',{class:'eyebrow'},'Ce qu’en disent les athlètes'),h('div',{class:'avis-stage'},...slides),list.length>1?h('div',{class:'plan-dots'},...dots):null);
@@ -8185,7 +8187,7 @@ function avisTop(){
   S.pubAvisState=1;
   try{
   S.db.collection('avisPublic').orderBy('at','desc').limit(10).get().then(sn=>{
-    S.pubAvis=sn.docs.map(d=>d.data()).filter(a=>a&&a.text&&a.rating>=1);S.pubAvisState=2;
+    S.pubAvis=sn.docs.map(d=>d.data()).filter(a=>a&&cleanTxt(a.text)&&a.rating>=1);S.pubAvisState=2;
     const b=document.getElementById('avis-top');if(b)paintAvisTop(b);
   }).catch(()=>{S.pubAvis=[];S.pubAvisState=2;});
   }catch(e){S.pubAvis=[];S.pubAvisState=2;}
