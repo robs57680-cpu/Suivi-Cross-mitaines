@@ -7796,7 +7796,8 @@ function loginPitch(){
          'Une appli personnalisable : avatar, niveaux et variantes adaptées')),
     h('div',{style:'display:grid;gap:8px'},h('b',{},'Les forfaits'),
       plansCarousel(),
-      h('p',{class:'hint'},'Résiliation possible à tout moment. TVA non applicable, art. 293 B du CGI.')),
+      h('p',{class:'hint'},'Résiliation possible à tout moment. TVA non applicable, art. 293 B du CGI.'),
+      cgvButton()),
     h('p',{class:'hint'},'Cette appli ne remplace pas un avis médical. Consulte un médecin avant de commencer ou de reprendre une activité intense.'));
 }
 function loginView(){
@@ -8253,6 +8254,81 @@ function plansCarousel(){
   track.addEventListener('scroll',()=>{const mx=track.scrollWidth-track.clientWidth,i=mx>0&&track.scrollLeft>mx/2?1:0;dots.forEach((d,k)=>{if(k===i)d.setAttribute('aria-current','true');else d.removeAttribute('aria-current');});},{passive:true});
   return h('div',{class:'plans-wrap'},track,h('div',{class:'plan-dots'},...dots),h('p',{class:'hint',style:'text-align:center'},'Fais glisser pour comparer les deux forfaits.'));
 }
+/* ---------- CGV : conditions générales de vente (bouton sous les forfaits, ouvre une fenêtre) ---------- */
+const CGV_VERSION='22 octobre 2026';
+/* À COMPLÉTER avant d’ouvrir les paiements : ces informations s’affichent dans les articles 1 et 13 des CGV */
+const CGV_INFO={
+  nom:'[nom ou dénomination à compléter]',
+  statut:'[statut à compléter, par exemple entrepreneur individuel]',
+  siret:'[SIRET à compléter]',
+  adresse:'[adresse à compléter]',
+  email:'[e-mail de contact à compléter]',
+  mediateur:'[médiateur de la consommation à compléter : nom, adresse postale et site internet]'
+};
+function cgvSections(){
+  const n4=SEASON_WEEKS/4,per4=PRICE_SEASON/n4,I=CGV_INFO;
+  return [
+    {t:'1. Éditeur et contact',p:[
+      'Box Score est éditée par '+I.nom+' ('+I.statut+'), SIRET '+I.siret+', '+I.adresse+'. Contact : '+I.email+'.',
+      'Dans ces conditions, « l’éditeur » désigne l’éditeur de Box Score, qui est aussi le coach, et « tu » ou « l’athlète » désigne toute personne qui crée un compte.']},
+    {t:'2. Objet',p:[
+      'Ces conditions générales de vente (CGV) encadrent la vente des abonnements qui donnent accès à Box Score : le programme de Crosstraining du coach, le classement de saison, les trophées, les badges et la communauté.',
+      'Créer un compte et choisir un forfait vaut acceptation des CGV. Elles sont consultables à tout moment sous les forfaits.',
+      'L’abonnement est réservé aux personnes majeures. Un mineur doit avoir l’autorisation de son représentant légal, qui réalise le paiement.']},
+    {t:'3. Forfaits et prix',p:[
+      'Forfait 4 semaines : '+eur(PRICE_4W)+' toutes les 4 semaines.',
+      'Forfait saison : '+eur(PRICE_SEASON)+' pour une saison de '+SEASON_WEEKS+' semaines, soit '+eur(per4)+' par 4 semaines.',
+      'Les prix sont en euros. TVA non applicable, art. 293 B du CGI.',
+      'L’éditeur peut modifier ses prix. Le nouveau prix ne s’applique qu’au renouvellement suivant, après une information envoyée au moins 30 jours avant. Tu peux résilier avant son entrée en vigueur.']},
+    {t:'4. Essai gratuit',p:[
+      'Les 2 premières semaines sont offertes à l’inscription. L’essai est limité à une fois par personne : créer plusieurs comptes pour renouveler l’essai est interdit et peut entraîner la suspension des comptes concernés.',
+      'À la fin de l’essai, l’accès aux séances est réservé aux athlètes abonnés. Si tu as enregistré un moyen de paiement pendant l’essai, le forfait choisi démarre automatiquement à la fin de l’essai, sauf résiliation avant.']},
+    {t:'5. Paiement et renouvellement',p:[
+      'Le paiement se fait en ligne par carte bancaire, via Stripe, prestataire de paiement sécurisé. L’éditeur ne voit pas et ne conserve pas tes coordonnées bancaires.',
+      'Le montant est dû au début de chaque période. L’abonnement est renouvelé automatiquement à chaque échéance (toutes les 4 semaines, ou à chaque nouvelle saison pour le forfait saison) jusqu’à ta résiliation.',
+      'En cas d’échec de paiement, l’accès peut être suspendu jusqu’à la régularisation. Un reçu est envoyé par e-mail à chaque paiement.']},
+    {t:'6. Accès au service',p:[
+      'L’accès est personnel : ne communique pas tes identifiants. Il commence à la création du compte (essai) puis au paiement du forfait.',
+      'Le coach publie les séances, tu les réalises quand tu veux dans la semaine et tu notes ton résultat.',
+      'L’éditeur peut offrir un accès gratuit à certaines personnes, à titre gracieux. Cet accès peut être retiré et n’ouvre aucun droit pour l’avenir.']},
+    {t:'7. Droit de rétractation',p:[
+      'Si tu es consommateur, tu disposes de 14 jours à compter de la souscription pour te rétracter, sans motif.',
+      'En créant ton compte et en utilisant l’appli, tu demandes que le service commence immédiatement. Si tu te rétractes, tu paies uniquement la part du service déjà fourni jusqu’à ta demande. L’essai gratuit n’entraîne aucun paiement.',
+      'Pour te rétracter, envoie une demande claire par e-mail à '+I.email+'. Le remboursement éventuel est effectué dans les 14 jours, par le même moyen de paiement.']},
+    {t:'8. Résiliation',p:[
+      'Tu peux résilier à tout moment, sans motif ni pénalité, depuis la gestion de ton abonnement dans l’appli ou par e-mail à '+I.email+'.',
+      'La résiliation prend effet à la fin de la période déjà payée (4 semaines ou saison en cours) : tu gardes l’accès jusque-là. La période commencée n’est pas remboursée, sauf cas prévu par la loi.',
+      'L’éditeur peut suspendre ou résilier un compte en cas de non-respect des CGV ou du règlement (triche, propos injurieux, comptes multiples), après t’avoir informé.']},
+    {t:'9. Santé et pratique sportive',p:[
+      'Box Score ne remplace pas un avis médical. Consulte un médecin avant de commencer ou de reprendre une activité physique intense.',
+      'Tu choisis ton niveau et tu restes attentif à tes sensations. Lis la page « Santé et sécurité » et le règlement de l’appli. L’éditeur ne garantit aucun résultat sportif. Cet article ne limite pas les droits que la loi te reconnaît.']},
+    {t:'10. Disponibilité de l’appli',p:[
+      'L’éditeur met tout en œuvre pour que l’appli soit accessible, mais il ne peut pas garantir un accès sans interruption : maintenance, panne d’un prestataire, problème de connexion internet de ton côté.']},
+    {t:'11. Propriété intellectuelle',p:[
+      'Les programmes, textes, images, vidéos, badges, trophées et le nom Box Score sont protégés. Ton abonnement te donne un droit d’usage personnel : tu ne peux pas les copier, les diffuser ou les revendre sans l’accord de l’éditeur.']},
+    {t:'12. Données personnelles',p:[
+      'Pour fournir le service, l’éditeur traite ton e-mail, ton pseudo, les informations de ton profil, tes résultats et l’état de ton abonnement. Ces données ne sont pas vendues. Elles sont hébergées par des prestataires techniques (dont Firebase et Stripe pour le paiement).',
+      'Tu disposes d’un droit d’accès, de rectification, d’effacement, d’opposition et de portabilité de tes données : écris à '+I.email+'. Tu peux aussi saisir la CNIL.']},
+    {t:'13. Réclamations, médiation et loi applicable',p:[
+      'Pour toute réclamation, écris d’abord à '+I.email+'. À défaut de solution amiable, tu peux saisir gratuitement le médiateur de la consommation : '+I.mediateur+'.',
+      'Les CGV sont soumises au droit français. En cas de litige, les tribunaux compétents sont ceux déterminés par la loi, et un consommateur peut saisir le tribunal de son domicile.']},
+    {t:'14. Modification des CGV',p:[
+      'L’éditeur peut modifier les CGV. La version applicable est celle en vigueur à ta souscription ou à ton renouvellement. Tu es informé de toute modification importante avant qu’elle s’applique.']}
+  ];
+}
+function openCGV(){
+  const esc=e=>{if(e.key==='Escape')close();};
+  const close=()=>{ov.remove();document.removeEventListener('keydown',esc);};
+  const ov=h('div',{class:'ov',id:'cgv-ov',style:'z-index:70',onclick:e=>{if(e.target===ov)close();}},
+    h('div',{class:'sheet',role:'dialog','aria-modal':'true','aria-label':'Conditions générales de vente'},
+      h('p',{class:'eyebrow'},'Box Score'),
+      h('h2',{class:'wtitle'},'Conditions générales de vente'),
+      h('p',{class:'hint'},'Version du '+CGV_VERSION),
+      ...cgvSections().map(s=>h('section',{style:'display:grid;gap:6px'},h('b',{},s.t),...s.p.map(x=>h('p',{style:'margin:0'},x)))),
+      h('button',{class:'btn primary',type:'button',id:'cgv-close',onclick:close},'Fermer')));
+  document.body.append(ov);document.addEventListener('keydown',esc);
+}
+const cgvButton=()=>h('button',{class:'btn',type:'button',id:'cgv-btn',style:'width:100%',onclick:openCGV},'Conditions générales de vente');
 function viewSub(){
   const gains=['Un programme avec des niveaux de pratique adaptés à chacun',
     'Un système motivant qui booste ta régularité et ton dépassement de soi : classement de saison, trophées, badges, flamme',
@@ -8263,7 +8339,8 @@ function viewSub(){
     h('section',{class:'card'},h('h2',{class:'h2'},'Ce que tu y gagnes'),
       h('ul',{style:'margin:0;padding-left:20px;display:grid;gap:6px'},gains.map(t=>h('li',{},t)))),
     plansCarousel(),
-    h('p',{class:'hint'},'Résiliation possible à tout moment. TVA non applicable, art. 293 B du CGI.'));
+    h('p',{class:'hint'},'Résiliation possible à tout moment. TVA non applicable, art. 293 B du CGI.'),
+    cgvButton());
 }
 function viewShare(){
   const url=appUrl();
