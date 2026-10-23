@@ -5235,11 +5235,12 @@ const RC_DOWN='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20l-8-9h
 const RC_FLAT='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h16v2.6H4zM4 13.4h16V16H4z" fill="currentColor"/></svg>';
 const ICO_RECAP='<svg '+SVGB+'><path d="M3 20h18"/><path d="M5 15l4-5 3.5 3L19 5"/><path d="M15 5h4v4"/></svg>';
 /* ---------- la piste ----------
-   Piste verticale : départ à 0 point en bas, un échelon tous les 20 points sur le côté gauche, un couloir par athlète.
+   Piste verticale : départ à 0 point en bas, un échelon tous les 10 points sur le côté gauche, 10 couloirs au maximum (un par athlète tant qu'ils sont 10 ou moins).
    Chaque pastille (avatar, pseudo au-dessus) monte d'un point toutes les 0,2 s (RT.STEP) puis s'arrête à son total de points
    de fin de semaine ; la caméra suit la pastille la plus haute. Ensuite la piste se fait défiler à la main et la pastille de
-   l'athlète est en surbrillance. Plein écran à la réception (rcOpenIntro), puis visible dans l'onglet résumé (rcTrackCard). */
-const RT={PX:4,RAIL:44,PADT:96,PADB:84,STEP:200,RUNG:20};
+   l'athlète est en surbrillance. Au-delà de 10 athlètes, certains partent superposés sur le même couloir ; pendant la course, chaque pastille
+   change de couloir pour rester seule dans le sien dès que c'est possible. Plein écran à la réception (rcOpenIntro), puis visible dans l'onglet résumé (rcTrackCard). */
+const RT={PX:4,RAIL:44,PADT:96,PADB:84,STEP:200,RUNG:10,LANES:10};
 const rtReduced=()=>!!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
 function rcTrackRows(D){
   const sn=D.snaps[D.last],s0=D.snaps[0];
@@ -5254,9 +5255,10 @@ function rcTrackBuild(D,meUid,o){
   const maxT=Math.max(1,...rows.map(r=>r.total));
   const maxSteps=Math.ceil(Math.max(0,...rows.map(r=>r.total-r.from))); /* nombre de pas de 0,2 s : le plus gros gain de la semaine */
   const topRung=Math.ceil(maxT/RT.RUNG)*RT.RUNG+RT.RUNG;
-  const laneW=Math.max(38,Math.min(64,Math.floor(((o.width||360)-RT.RAIL-8)/Math.max(n,1))));
+  const L=Math.max(1,Math.min(n,RT.LANES)); /* nombre de couloirs : 10 au maximum */
+  const laneW=Math.max(38,Math.min(64,Math.floor(((o.width||360)-RT.RAIL-8)/L)));
   const size=Math.max(30,Math.min(44,laneW-8));
-  const W=RT.RAIL+n*laneW+8,H=RT.PADT+topRung*RT.PX+RT.PADB;
+  const W=RT.RAIL+L*laneW+8,H=RT.PADT+topRung*RT.PX+RT.PADB;
   const Y=p=>RT.PADT+(topRung-p)*RT.PX;
   const X=i=>RT.RAIL+4+i*laneW;
   const off=17+size/2; /* du haut de la pastille au centre de l'avatar */
@@ -5264,7 +5266,7 @@ function rcTrackBuild(D,meUid,o){
   const world=h('div',{class:'rt-world'+(o.animate?'':' nt'+(meRow>=0?' done':'')),style:'width:'+W+'px;height:'+H+'px'});
   const rail=h('div',{class:'rt-rail','aria-hidden':'true',style:'height:'+H+'px'});
   world.append(rail);
-  rows.forEach((r,i)=>world.append(h('i',{class:'rt-lane'+(i%2?' alt':''),style:'left:'+X(i)+'px;width:'+laneW+'px'})));
+  for(let l=0;l<L;l++)world.append(h('i',{class:'rt-lane'+(l%2?' alt':''),style:'left:'+X(l)+'px;width:'+laneW+'px'}));
   for(let p=0;p<=topRung;p+=RT.RUNG){
     const big=p%100===0;
     world.append(h('i',{class:'rt-rung'+(big?' big':'')+(p===0?' start':''),style:'top:'+Y(p)+'px'}));
@@ -5275,19 +5277,47 @@ function rcTrackBuild(D,meUid,o){
     const txt=r.pseudo.length>maxChars?r.pseudo.slice(0,maxChars-1)+'…':r.pseudo;
     const pt=h('span',{class:'rt-pt'},'0');
     const pick=o.onPick?{role:'button',tabindex:0,'aria-label':r.pseudo,onclick:()=>o.onPick(r.uid),onkeydown:e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();o.onPick(r.uid);}}}:{};
-    const el=h('div',Object.assign({class:'rt-pill'+(me?' me':''),'data-uid':r.uid,style:'--s:'+size+'px;width:'+laneW+'px;left:'+X(i)+'px'},pick),
+    const el=h('div',Object.assign({class:'rt-pill'+(me?' me':''),'data-uid':r.uid,style:'--s:'+size+'px;width:'+laneW+'px;left:0'},pick),
       h('span',{class:'rt-nm'},txt),arAvatar(r.uid,rk,false,size),pt);
     world.append(el);
     return {el,pt,total:r.total,from:r.from};
   });
   /* t = nombre de pas écoulés : chacun part de son total d'avant et monte d'un point par pas jusqu'à son total actuel */
   const pts=pills.map(pl=>pl.from);
-  const step=t=>pills.forEach((pl,i)=>{
-    const p=Math.min(pl.total,pl.from+t);
-    pts[i]=p;
-    pl.el.style.transform='translate3d(0,'+(Y(p)-off)+'px,0)';
-    pl.pt.textContent=p>=pl.total?fmtPts(pl.total):String(Math.floor(p));
-  });
+  /* couloirs : au départ, les athlètes sont répartis dans l'ordre (les plus nombreux que les couloirs se superposent).
+     À chaque pas, une pastille qui est seule dans son couloir y reste ; une pastille qui en chevauche une autre (moins de
+     une hauteur de pastille d'écart) va dans le couloir libre le plus proche, ta pastille d'abord, puis les plus hautes.
+     Si aucun couloir n'est libre, elle prend celui où l'écart est le plus grand. */
+  const lane=rows.map((r,i)=>i%L);
+  const pillH=size+32; /* hauteur d'une pastille : pseudo + avatar + points */
+  const assignLanes=()=>{
+    const placed=new Array(n).fill(-1),rest=[];
+    const near=(a,b)=>Math.abs(pts[a]-pts[b])*RT.PX<pillH;
+    for(let i=0;i<n;i++){
+      let alone=true;
+      for(let j=0;j<n;j++)if(j!==i&&lane[j]===lane[i]&&near(i,j)){alone=false;break;}
+      if(alone)placed[i]=lane[i];else rest.push(i);
+    }
+    rest.sort((a,b)=>(b===meRow)-(a===meRow)||pts[b]-pts[a]||a-b);
+    const gapIn=(i,l)=>{let g=Infinity;for(let j=0;j<n;j++)if(placed[j]===l)g=Math.min(g,Math.abs(pts[i]-pts[j])*RT.PX);return g;};
+    rest.forEach(i=>{
+      const order=[];for(let l=0;l<L;l++)order.push(l);
+      order.sort((a,b)=>Math.abs(a-lane[i])-Math.abs(b-lane[i])||a-b);
+      let best=order[0],bg=-1;
+      for(const l of order){const g=gapIn(i,l);if(g>=pillH){best=l;break;}if(g>bg){bg=g;best=l;}}
+      placed[i]=best;
+    });
+    for(let i=0;i<n;i++)lane[i]=placed[i];
+  };
+  const step=t=>{
+    pills.forEach((pl,i)=>{pts[i]=Math.min(pl.total,pl.from+t);});
+    assignLanes();
+    pills.forEach((pl,i)=>{
+      const p=pts[i];
+      pl.el.style.transform='translate3d('+X(lane[i])+'px,'+(Y(p)-off)+'px,0)';
+      pl.pt.textContent=p>=pl.total?fmtPts(pl.total):String(Math.floor(p));
+    });
+  };
   step(o.animate?0:Infinity);
   const focusIdx=()=>{if(meRow>=0)return meRow;let b=0;pts.forEach((v,i)=>{if(v>pts[b])b=i;});return b;};
   const focusP=()=>pts[focusIdx()]||0;
@@ -5307,27 +5337,29 @@ function rcTrackBuild(D,meUid,o){
   const scroll=h('div',{class:'rt-scroll'+(o.animate?' anim':''),role:'region',tabindex:o.animate?null:0,'aria-label':'Piste des points, à faire défiler'},world);
   const maxTop=()=>Math.max(0,H-scroll.clientHeight);
   const clampTop=t=>Math.max(0,Math.min(maxTop(),t));
-  const leftFor=()=>meRow<0?0:Math.max(0,Math.min(W-scroll.clientWidth,X(meRow)+laneW/2-scroll.clientWidth/2));
+  const leftFor=()=>meRow<0?0:Math.max(0,Math.min(W-scroll.clientWidth,X(lane[meRow])+laneW/2-scroll.clientWidth/2));
   const focusMe=smooth=>{
     const top=meRow<0?maxTop():clampTop(Y(rows[meRow].total)-scroll.clientHeight/2);
     scroll.scrollTo({top,left:leftFor(),behavior:smooth?'smooth':'auto'});
   };
   /* caméra : défilement vertical lissé qui suit la pastille la plus haute */
-  let raf=0,camTarget=0;
+  let raf=0,camTarget=0,camLeft=0;
   const loop=()=>{
     const d=camTarget-scroll.scrollTop;
     if(Math.abs(d)>.5){let st=d*.12;if(Math.abs(st)<1)st=Math.sign(d);scroll.scrollTop+=st;}
+    const dx=camLeft-scroll.scrollLeft; /* la caméra suit aussi ta pastille quand elle change de couloir */
+    if(Math.abs(dx)>.5){let sx=dx*.12;if(Math.abs(sx)<1)sx=Math.sign(dx);scroll.scrollLeft+=sx;}
     raf=requestAnimationFrame(loop);
   };
   requestAnimationFrame(()=>{
     if(!scroll.isConnected)return;
-    if(o.animate){scroll.scrollLeft=leftFor();camTarget=clampTop(Y(focusP())-scroll.clientHeight*.5);scroll.scrollTop=camTarget;}
+    if(o.animate){scroll.scrollLeft=camLeft=leftFor();camTarget=clampTop(Y(focusP())-scroll.clientHeight*.5);scroll.scrollTop=camTarget;}
     else if(o.restore)scroll.scrollTo({top:o.restore.top,left:o.restore.left});
     else focusMe(false);
   });
   return {el:scroll,maxT,maxSteps,rows,pts,meRow,step,focusMe,flash,moves,
     label:()=>pills[focusIdx()].pt.textContent,
-    follow:()=>{camTarget=clampTop(Y(focusP())-scroll.clientHeight*.5);}, /* la caméra suit ta pastille (ou la plus haute si tu n'es pas classé) */
+    follow:()=>{camTarget=clampTop(Y(focusP())-scroll.clientHeight*.5);camLeft=leftFor();}, /* la caméra suit ta pastille (ou la plus haute si tu n'es pas classé) */
     startCam:()=>{if(!raf)raf=requestAnimationFrame(loop);},
     stopCam:()=>{if(raf){cancelAnimationFrame(raf);raf=0;}},
     instant:()=>world.classList.add('nt'),
