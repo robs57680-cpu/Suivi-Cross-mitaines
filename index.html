@@ -1384,7 +1384,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-23.61';
+const APP_VERSION='2026-10-23.62';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -5557,7 +5557,9 @@ function viewRecap(){
   let viewUid=S.uid,asCoach=false;
   if(S.owner){
     asCoach=true;
-    const ids=Object.keys(S.logs).filter(u=>(S.logs[u].pseudo||'')&&u!==S.uid).sort((a,b)=>(S.logs[a].pseudo||'').localeCompare(S.logs[b].pseudo||'','fr'));
+    /* le coach figure aussi dans la liste (en premier, « Moi ») pour voir son propre résumé */
+    const others=Object.keys(S.logs).filter(u=>(S.logs[u].pseudo||'')&&u!==S.uid).sort((a,b)=>(S.logs[a].pseudo||'').localeCompare(S.logs[b].pseudo||'','fr'));
+    const ids=[S.uid].concat(others);
     viewUid=ids.includes(R.as)?R.as:((DG.spot&&DG.spot.uid)||(DG.leaders[0]&&DG.leaders[0].uid)||ids[0]||null);
     R.asIds=ids;
   }
@@ -5579,7 +5581,7 @@ function viewRecap(){
       h('span',{},wk.released?'Tu vois ce que les athlètes ont reçu.':'Les athlètes le recevront lundi '+fmtShort(addDays(mon,7))+' à '+RC_HOUR+' h, avec une notification.'));
     sec.append(pv);
     if(R.asIds&&R.asIds.length)sec.append(h('label',{class:'rc-as'},h('span',{},'Voir comme'),
-      sel(R.asIds.map(u=>[u,S.logs[u].pseudo||'Athlète']),viewUid,v=>{R.as=v;render();},{id:'rc-as','aria-label':'Voir le résumé comme'})));
+      sel(R.asIds.map(u=>[u,u===S.uid?'Moi'+((S.logs[u]||{}).pseudo?' ('+S.logs[u].pseudo+')':''):((S.logs[u]||{}).pseudo||'Athlète')]),viewUid,v=>{R.as=v;render();},{id:'rc-as','aria-label':'Voir le résumé comme'})));
   }
 
   /* Global / Groupe */
@@ -5601,7 +5603,7 @@ function viewRecap(){
     h('div',{},h('b',{},fmtPts(st.pts)),h('span',{},'points marqués'))));
 
   /* bilan personnel, graphique, progression, leaders */
-  if(viewUid)sec.append(rcMeCard(DG,viewUid,asCoach));
+  if(viewUid)sec.append(rcMeCard(DG,viewUid,asCoach&&viewUid!==S.uid));
   else if(asCoach)sec.append(h('div',{class:'rc-card'},h('p',{class:'rc-txt'},'Aucun athlète à afficher pour l’instant.')));
   sec.append(rcTrackCard(DG,viewUid,wk.mon,R));
   sec.append(rcSpotCard(DG));
