@@ -1191,6 +1191,107 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;op
 .tab[aria-current="page"]::after{content:"";position:absolute;left:18%;right:18%;bottom:3px;height:3px;background:var(--accent);pointer-events:none;clip-path:polygon(0 50%,25% 0,60% 80%,100% 20%,100% 100%,0 100%)}
 /* page séance : les encadrés prennent aussi la couleur de la carte ouverte */
 .themed .card{border-color:var(--c1);background:color-mix(in srgb,var(--c1) 14%,var(--cardbg,var(--surface)));box-shadow:inset 0 3px 0 var(--c1),var(--cardsh,none)}
+/* ===== Résumé de la semaine : même thème sombre braise que le classement, identique en clair et en sombre ===== */
+.rc{--ar-ember:#FF5A36;--ar-gold:#FFC857;--ar-steel:#9CC2FF;--ar-copper:#F29A5B;--ar-ink:#F6F2EA;--ar-mute:#9097A6;--ar-line:rgba(255,255,255,.09);--rc-up:#4FE3A0;--rc-down:#FF6B6B;--s1:60px;--s2:46px;--s3:46px;
+  position:relative;display:flex;flex-direction:column;gap:12px;padding:14px 12px 16px;border-radius:18px;overflow:hidden;color:var(--ar-ink);isolation:isolate;
+  background:radial-gradient(120% 40% at 50% -6%,rgba(255,90,54,.30),transparent 62%),radial-gradient(55% 30% at 0% 22%,rgba(255,150,40,.10),transparent 70%),radial-gradient(55% 30% at 100% 22%,rgba(255,150,40,.10),transparent 70%),linear-gradient(180deg,#0E1018,#07080C 70%);
+  box-shadow:0 0 0 1px rgba(255,120,70,.35),0 0 26px rgba(255,90,54,.16),inset 0 1px 0 rgba(255,255,255,.08)}
+.rc::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:.5;background:repeating-linear-gradient(115deg,rgba(255,255,255,.025) 0 2px,transparent 2px 14px)}
+.rc .ar-title{font-size:25px}
+.rc-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.rc-nav{display:flex;gap:6px;flex:none}
+.rc-nb{width:38px;height:38px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:#0D0F16;color:var(--ar-ink);font-size:22px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0 0 3px}
+.rc-nb:disabled{opacity:.3;cursor:default}
+.rc-nb:not(:disabled):active{transform:scale(.94)}
+.rc-prev{display:flex;flex-direction:column;gap:2px;padding:9px 12px;border-radius:12px;border:1px dashed rgba(255,200,87,.6);background:rgba(255,200,87,.08);font-size:12px;color:var(--ar-mute);line-height:1.35}
+.rc-prev b{color:var(--ar-gold);font-family:var(--f-display);font-size:13px;letter-spacing:.08em;text-transform:uppercase;font-weight:400}
+.rc-as{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--ar-mute)}
+.rc-as select{flex:1;min-width:0;height:38px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:#0D0F16;color:var(--ar-ink);padding:0 10px;font-size:14px}
+.rc-as select option{color:#111;background:#fff}
+.rc-ctl{display:flex;align-items:center;gap:8px}
+.rc .ar-grp{padding:0}
+.rc .ar-sec{padding:2px 0 0}
+.rc-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.rc-tiles>div{display:flex;flex-direction:column;align-items:center;gap:1px;padding:9px 4px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid var(--ar-line)}
+.rc-tiles b{font-family:var(--f-display);font-size:22px;letter-spacing:.03em;font-weight:400;color:#fff;line-height:1.1}
+.rc-tiles span{font-size:10.5px;color:var(--ar-mute);text-align:center;line-height:1.2}
+.rc-card{position:relative;padding:12px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid var(--ar-line);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.rc-ctitle{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px}
+.rc-ctitle b{font-family:var(--f-display);font-size:14px;letter-spacing:.1em;text-transform:uppercase;font-weight:400;color:#E9DCCB}
+.rc-ctitle span{font-size:11px;color:var(--ar-mute);text-align:right}
+.rc-txt{margin:8px 0 0;font-size:13px;line-height:1.45;color:#D9D5CC}
+/* bilan personnel */
+.rc-me.up{border-color:rgba(79,227,160,.45);box-shadow:0 0 18px rgba(79,227,160,.12),inset 0 1px 0 rgba(255,255,255,.06)}
+.rc-me.down{border-color:rgba(255,107,107,.4);box-shadow:0 0 18px rgba(255,107,107,.1),inset 0 1px 0 rgba(255,255,255,.06)}
+.rc-me.new{border-color:rgba(255,200,87,.45)}
+.rc-melead{display:flex;align-items:center;gap:14px}
+.rc-big{flex:none;display:flex;align-items:center;gap:4px;min-width:84px;justify-content:center;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.06);color:var(--ar-steel)}
+.rc-big .ic{display:grid;width:22px;height:22px}.rc-big .ic svg{width:22px;height:22px}
+.rc-big b{font-family:var(--f-display);font-size:34px;line-height:1;font-weight:400;letter-spacing:.02em}
+.rc-me.up .rc-big{color:var(--rc-up);background:rgba(79,227,160,.1);text-shadow:0 0 12px rgba(79,227,160,.5)}
+.rc-me.down .rc-big{color:var(--rc-down);background:rgba(255,107,107,.1);text-shadow:0 0 12px rgba(255,107,107,.45)}
+.rc-me.new .rc-big{color:var(--ar-gold);background:rgba(255,200,87,.1)}
+.rc-me.new .rc-big b{font-size:26px}
+.rc-mt{font-weight:700;font-size:16px;line-height:1.25;color:#fff}
+.rc-ms{margin-top:2px;font-size:13px;color:var(--ar-mute)}
+.rc-facts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.rc-facts .f{padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.07);border:1px solid var(--ar-line);font-size:12px;color:#D9D5CC}
+.rc-facts .f b{color:#fff}
+/* graphique */
+.rc-svgbox{margin:0 -4px}
+.rc-svg{display:block;width:100%;height:auto;overflow:visible;-webkit-tap-highlight-color:transparent}
+.rc-grid{stroke:rgba(255,255,255,.07);stroke-width:1;stroke-dasharray:2 4}
+.rc-rk{fill:var(--ar-mute);font-size:10px;font-family:var(--f-mono)}
+.rc-ln{fill:none;stroke:rgba(255,255,255,.16);stroke-width:1.5;stroke-linecap:round}
+.rc-ln.hl{filter:drop-shadow(0 0 4px currentColor)}
+.rc-lb{font-size:10.5px;font-weight:700;font-family:var(--f-body);pointer-events:none}
+.rc-dn{fill:var(--ar-mute);font-size:10px;font-family:var(--f-mono);letter-spacing:.04em;transition:fill .2s}
+.rc-dn.on{fill:#fff;font-weight:700}
+.rc-dn.off{opacity:.35}
+.rc-cur{stroke:rgba(255,255,255,.5);stroke-width:1.2;stroke-dasharray:3 3;pointer-events:none}
+.rc-mk{pointer-events:none;transform-origin:0 0}
+.rc-mk circle{stroke:#0D0F16;stroke-width:1.5;filter:drop-shadow(0 0 5px rgba(255,255,255,.55))}
+.rc-mk text{font-size:10px;font-weight:800;fill:#fff;font-family:var(--f-mono)}
+.rc-hit{fill:transparent;cursor:pointer;outline:none}
+.rc-hit:focus-visible{fill:rgba(255,255,255,.07)}
+.rc-ready .rc-mk,.rc-ready .rc-cur{transition:transform .6s cubic-bezier(.3,.8,.3,1),opacity .3s}
+.rc-legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin:2px 0 6px;font-size:11px;color:var(--ar-mute)}
+.rc-legend span{display:inline-flex;align-items:center;gap:6px}
+.rc-legend i{width:16px;height:4px;border-radius:2px;display:inline-block}
+.rc-dayhead{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding-top:8px;border-top:1px solid var(--ar-line)}
+.rc-dayhead b{font-family:var(--f-display);font-size:14px;letter-spacing:.08em;font-weight:400;text-transform:uppercase;color:#fff}
+.rc-dayhead span{font-size:11px;color:var(--ar-mute)}
+.rc-dl{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:5px}
+.rc-dr{display:flex;align-items:center;gap:9px;padding:6px 8px;border-radius:10px;background:rgba(255,255,255,.04);cursor:pointer}
+.rc-dr.me{background:rgba(255,90,54,.16);box-shadow:inset 0 0 0 1px rgba(255,120,70,.55)}
+.rc-dr .hex{width:26px;height:30px;font-size:14px}
+.rc-dr .nm{flex:1;min-width:0;font-weight:600;font-size:13.5px;color:#fff;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rc-dr .pt{flex:none;font-family:var(--f-display);font-size:15px;letter-spacing:.03em;color:var(--ar-gold)}
+.rc-dr .pt small{font-family:var(--f-mono);font-size:9px;margin-left:3px;color:var(--ar-mute)}
+.rc-mv{flex:none;min-width:30px;text-align:right;font-family:var(--f-mono);font-size:11px;color:var(--ar-mute)}
+.rc-mv.up{color:var(--rc-up)}.rc-mv.down{color:var(--rc-down)}.rc-mv.new{color:var(--ar-gold)}
+.rc-gap{text-align:center;color:var(--ar-mute);font-size:12px;letter-spacing:.2em;list-style:none}
+.rc-play{margin-top:10px;width:100%;height:40px;border-radius:10px;border:1px solid rgba(255,120,70,.6);background:rgba(255,90,54,.14);color:#fff;font-family:var(--f-display);font-size:14px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+.rc-play:active{transform:scale(.98)}
+/* plus grosse progression */
+.rc-spot{cursor:pointer;border-color:rgba(79,227,160,.4);background:linear-gradient(135deg,rgba(79,227,160,.14),rgba(255,255,255,.04) 60%);box-shadow:0 0 20px rgba(79,227,160,.12),inset 0 1px 0 rgba(255,255,255,.06)}
+.rc-spot.none{cursor:default;border-color:var(--ar-line);background:rgba(255,255,255,.05);box-shadow:none}
+.rc-sp{display:flex;align-items:center;gap:12px}
+.rc-spav{flex:none}
+.rc-spn{display:flex;align-items:center;gap:6px;font-weight:700;font-size:15px;color:#fff;min-width:0}
+.rc-sps{font-size:12.5px;color:#D9D5CC;line-height:1.4}
+.rc-spg{flex:none;font-family:var(--f-display);font-size:24px;letter-spacing:.03em;color:var(--rc-up);text-shadow:0 0 12px rgba(79,227,160,.55);white-space:nowrap}
+.rc-spg.pts{font-size:20px}
+/* leaders */
+.rc-lead .pod{padding:6px 0 0}
+.rc-wk{color:var(--rc-up)}
+.rc-note{margin:0;font-size:11px;line-height:1.45;color:var(--ar-mute);text-align:center}
+@media (prefers-reduced-motion:no-preference){
+  .rc-draw{stroke-dasharray:1;stroke-dashoffset:1;animation:rcDraw 1.1s cubic-bezier(.3,.7,.2,1) forwards}
+}
+@keyframes rcDraw{to{stroke-dashoffset:0}}
+@media (prefers-reduced-motion:reduce){.rc-ready .rc-mk,.rc-ready .rc-cur{transition:none}}
+
 /* Séance, Profil, Coach : encadrés et onglets transparents, contour « trait de crayon » (double trait légèrement tremblé) */
 :root{--glass:rgba(10,11,13,.46);--sk:rgba(232,232,230,.82)}
 .themed{--sk:color-mix(in srgb,var(--c1) 70%,#fff)}
@@ -1269,7 +1370,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-23.57';
+const APP_VERSION='2026-10-23.58';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -2167,6 +2268,8 @@ function saveLog(patch,msg,uid){
     if(bn&&Object.keys(bn).length)data.banner=bn;
     const annS=patch.annSeen!==undefined?patch.annSeen:cur.annSeen;
     if(Array.isArray(annS)&&annS.length)data.annSeen=annS;
+    const rcS=patch.recapSeen!==undefined?patch.recapSeen:cur.recapSeen;
+    if(typeof rcS==='string'&&rcS)data.recapSeen=rcS; /* dernière semaine dont le résumé a été ouvert (lundi, AAAA-MM-JJ) */
     const seen=patch.rewardSeen!==undefined?patch.rewardSeen:cur.rewardSeen;
     if(Array.isArray(seen))data.rewardSeen=seen;
     const owned=patch.rewardOwned!==undefined?patch.rewardOwned:cur.rewardOwned;
@@ -2375,8 +2478,8 @@ function notifSection(){
   draw();
   return sec;
 }
-/* ouverture depuis une notification : ?go=today|feed|board|profile, ou message du service worker si l'appli est déjà ouverte */
-const GO_TABS=['feed','today','board','profile'];
+/* ouverture depuis une notification : ?go=today|feed|board|profile|recap, ou message du service worker si l'appli est déjà ouverte */
+const GO_TABS=['feed','today','board','profile','recap'];
 let initialTab=(()=>{try{const g=new URLSearchParams(location.search).get('go');return GO_TABS.includes(g)?g:null;}catch(e){return null;}})();
 function takeInitialTab(){
   const t=initialTab||'feed';initialTab=null;
@@ -2456,14 +2559,14 @@ function render(){
   const tabs=[['feed','Fil'],['today','Séance'],['board','Classement']];
   const tabEls=tabs.map(([k,l])=>{const b=h('button',{class:'tab','data-tour':'tab-'+k,'aria-current':S.tab===k?'page':null,onclick:()=>go(k)});b.innerHTML=TAB_ICO[k]+'<span>'+l+'</span>';return b;});
   {
-    const activeExtra=['profile','coach','prefs','stats','share','rules','health','bug','moves','sub','avis'].includes(S.tab);
+    const activeExtra=['profile','coach','prefs','stats','share','rules','health','bug','moves','sub','avis','recap'].includes(S.tab);
     const bb=h('button',{class:'tab tab-burger','data-tour':'tab-menu','aria-current':activeExtra?'page':null,'aria-haspopup':'dialog','aria-expanded':drawerEl?'true':'false','aria-label':'Menu',title:'Menu',onclick:()=>{drawerEl?closeDrawer():openDrawer();}});
     bb.innerHTML=ICO_MENU;if(menuDot())bb.append(h('span',{class:'ibdot','aria-hidden':'true'}));
     tabEls.push(bb);
   }
   $('#tabs').classList.remove('coach-tabs');
   $('#tabs').replaceChildren(...tabEls);
-  const view={feed:viewFeed,today:viewToday,board:viewBoard,profile:viewProfile,coach:viewCoach,stats:viewStats,prefs:viewPrefs,share:viewShare,sub:viewSub,avis:viewAvis,rules:viewRules,health:viewHealth,bug:viewBug,moves:viewMoves}[S.tab]||viewFeed;
+  const view={feed:viewFeed,today:viewToday,board:viewBoard,profile:viewProfile,coach:viewCoach,stats:viewStats,prefs:viewPrefs,share:viewShare,sub:viewSub,avis:viewAvis,rules:viewRules,health:viewHealth,bug:viewBug,moves:viewMoves,recap:viewRecap}[S.tab]||viewFeed;
   const _esc=document.querySelector('.entry-sheet'),_escTop=_esc?_esc.scrollTop:0;
   const _arl=document.querySelector('.ar-list'),_arlTop=_arl?_arl.scrollTop:0,_arlKey=_arl?_arl.dataset.key:'';
   main.replaceChildren(...banners(),view());
@@ -2493,6 +2596,7 @@ function banners(){
       h('p',{},h('b',{},'Nouvelle saison : compl\u00e8te tes infos. '),'Il manque : '+profTodo().join(', ')+'. Elles servent aux troph\u00e9es (LA GOAT, Seniors / V\u00e9t\u00e9rans, poids / puissance) et \u00e0 l\u2019avatar. Le point rouge reste affich\u00e9 tant que tout n\u2019est pas renseign\u00e9.'),
       h('div',{class:'row'},h('button',{class:'btn primary',type:'button',onclick:()=>{go('profile');if(infosMissing().length)S.profView='infos';render();window.scrollTo(0,0);}},'Renseigner mes infos'))));
   }
+  {const rb=recapBanner();if(rb)out.push(rb);}
   if(S.uid&&S.coachLoaded&&!S.coachUid)out.push(h('div',{class:'banner warn'},
     h('p',{},'Aucun coach n’est défini. Si c’est toi, deviens coach avant de partager le lien. Pour changer de coach plus tard, il faudra modifier la base dans la console Firebase.'),
     h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>run(async()=>{await S.db.doc('config/coach').set({uid:S.uid});toast('Tu es le coach');})},'Devenir coach'))));
@@ -4823,7 +4927,7 @@ function openAthlete(uid){S.viewUser=uid;render();window.scrollTo(0,0);}
 /* profil public d'un athlète : avatar, stats, dernière séance, récompenses. Ni PR ni poids. */
 function viewAthlete(uid){
   const el=h('div',{class:'stack'});
-  el.append(h('div',{class:'row'},h('button',{class:'btn sm',type:'button',onclick:()=>{S.viewUser=null;render();window.scrollTo(0,0);}},S.tab==='feed'?'← Fil':'← Classement')));
+  el.append(h('div',{class:'row'},h('button',{class:'btn sm',type:'button',onclick:()=>{S.viewUser=null;render();window.scrollTo(0,0);}},S.tab==='feed'?'← Fil':S.tab==='recap'?'← Résumé':'← Classement')));
   const p=selPeriod(),board=computeBoard(p),rank=board.rows.findIndex(r=>r.uid===uid),me=board.rows[rank];
   if(!me){el.append(h('div',{class:'empty'},h('p',{},'Athlète introuvable.')));return el;}
   const asx=((S.logs[uid]||{}).sex==='F')?'f':'h';
@@ -4997,6 +5101,418 @@ function viewBoard(){
 
   el.append(h('section',{class:'arena','aria-label':'Classement'},...deco,head,ctl,chips,sec,pod,list,foot));
   return el;
+}
+
+/* ===== Résumé de la semaine =====
+   Chaque lundi à 5 h (heure de l'appareil), le résumé de la semaine écoulée (lundi → dimanche) devient disponible pour les athlètes :
+   graphique d'évolution du classement jour par jour (un point par fin de journée, le départ = le dimanche d'avant), bilan personnel
+   (places gagnées ou perdues), plus grosse progression, leaders actuels. Bascule Global / Groupe.
+   Un résultat compte le jour où il a été validé (au plus tôt le jour de la séance) : le dernier point du graphique est donc le classement
+   de la fin de semaine, calculé avec les mêmes règles que l'onglet Classement (points, puis niveau moyen, puis pseudo).
+   Le coach voit aussi la semaine en cours en aperçu (rien n'est publié) et peut regarder le résumé « comme » n'importe quel athlète.
+   La notification du lundi 5 h part du serveur (voir notify-weekly-recap.mjs) et ouvre l'appli sur ?go=recap. */
+const RC_HOUR=5;
+const rcReleaseAt=mon=>new Date(addDays(mon,7)+'T0'+RC_HOUR+':00:00').getTime();
+const rcReleased=mon=>Date.now()>=rcReleaseAt(mon);
+const rcOrd=n=>n===1?'1er':n+'e';
+const rcPl=(n,w)=>n+' '+w+(n>1?'s':'');
+/* jour où un résultat compte : celui de la validation, jamais avant le jour de la séance */
+const rcDay=(w,e)=>{const t=e&&e.at?Date.parse(e.at):NaN;if(isNaN(t))return w.date;const d=dfmt(new Date(t));return d<w.date?w.date:d;};
+/* saison d'une semaine : celle qui contient le plus de séances de cette semaine */
+function rcPeriodOf(mon){
+  const l=plist();if(!l.length)return ALL;
+  const end=addDays(mon,6),ws=Object.values(S.wods).filter(w=>w.date>=mon&&w.date<=end);
+  let best=null,bn=0;
+  for(const p of l){const n=ws.filter(w=>inP(w.date,p)).length;if(n>bn){bn=n;best=p;}}
+  return best;
+}
+/* dernière semaine publiée (celle de la notification du lundi 5 h) */
+function rcLatest(){
+  const cur=mondayOf(todayStr());let m=addDays(cur,-7);
+  if(!rcReleased(m))m=addDays(m,-7);
+  return rcPeriodOf(m)?m:null;
+}
+const recapDot=()=>{if(S.owner||!S.uid||!ready()||!S.logs[S.uid])return false;const m=rcLatest();return !!m&&(S.logs[S.uid].recapSeen||'')<m;};
+/* semaines consultables, de la plus ancienne à la plus récente : les athlètes seulement les semaines publiées, le coach aussi la semaine en cours */
+function rcWeeks(){
+  const ds=Object.values(S.wods).map(w=>w.date).sort();
+  if(!ds.length)return [];
+  const cur=mondayOf(todayStr()),out=[];
+  for(let m=mondayOf(ds[0]);m<=cur;m=addDays(m,7)){
+    if(!rcPeriodOf(m))continue;
+    const rel=rcReleased(m);
+    if(rel||S.owner)out.push({mon:m,released:rel});
+  }
+  return out;
+}
+/* classement à la fin de chaque jour de la semaine (indice 0 = dimanche précédent, 1 à 7 = lundi à dimanche) */
+function rcCompute(mon,per,gsel){
+  const days=[addDays(mon,-1)];for(let i=0;i<7;i++)days.push(addDays(mon,i));
+  const t=todayStr();
+  let last=7;while(last>0&&days[last]>t)last--;
+  const wods=Object.values(S.wods).filter(w=>inP(w.date,per));
+  const ev={};
+  for(const [uid,lg] of Object.entries(S.logs)){
+    if(gsel!=='all'&&scopeOf(uid,per)!==gsel)continue;
+    const a=[];
+    for(const w of wods){
+      const e=lg.entries&&lg.entries[w.date];if(!e)continue;
+      const m=metconOf(w),pts=wodPoints(w,e,per);
+      a.push({d:rcDay(w,e),pts:pts.total,lv:(m&&e.level!==undefined)?lvVal(e,m):null,s:1});
+    }
+    for(const [wd,x] of Object.entries(lg.redos||{})){
+      const rw=S.wods[wd],rm=rw&&metconOf(rw);
+      if(!rm||!(lg.entries&&lg.entries[wd])||!inP(x.on,per))continue;
+      a.push({d:x.on,pts:redoPts(rm,lg.entries[wd],x),lv:null,s:0});
+    }
+    if(a.length)ev[uid]=a;
+  }
+  const snaps=days.map((D,i)=>{
+    if(i>last)return null;
+    const rows=[];
+    for(const [uid,a] of Object.entries(ev)){
+      let total=0,ls=0,ln=0,ss=0;
+      for(const x of a)if(x.d<=D){total+=x.pts;ss+=x.s;if(x.lv!==null){ls+=x.lv;ln++;}}
+      if(ss>0)rows.push({uid,pseudo:(S.logs[uid]||{}).pseudo||'Athlète',total,lvlAvg:ln?ls/ln:0,sessions:ss});
+    }
+    rows.sort(rowCmp);
+    const ps=posList(rows),rank={},pts={};
+    rows.forEach((r,i2)=>{rank[r.uid]=ps[i2];pts[r.uid]=r.total;});
+    return {rank,pts,rows,pos:ps,n:rows.length};
+  });
+  /* activité de la semaine */
+  const sess={},gain={};let tSess=0,tPts=0;const active=new Set();
+  for(const [uid,a] of Object.entries(ev))for(const x of a)if(x.d>days[0]&&x.d<=days[last]){
+    sess[uid]=(sess[uid]||0)+x.s;gain[uid]=(gain[uid]||0)+x.pts;tSess+=x.s;tPts+=x.pts;active.add(uid);
+  }
+  const s0=snaps[0],sN=snaps[last];
+  /* plus grosse progression : places gagnées (un nouvel entrant part de la dernière place), puis points gagnés */
+  const mv=Object.keys(sN.rank).map(uid=>{
+    const a=s0.rank[uid]||(s0.n+1),b=sN.rank[uid];
+    return {uid,from:s0.rank[uid]||0,to:b,gain:a-b,pts:(sN.pts[uid]||0)-(s0.pts[uid]||0)};
+  });
+  mv.sort((x,y)=>y.gain-x.gain||y.pts-x.pts||x.to-y.to);
+  let spot=null;
+  if(mv.length&&mv[0].gain>0)spot=Object.assign({kind:'rank'},mv[0]);
+  else{const bp=mv.slice().sort((x,y)=>y.pts-x.pts||x.to-y.to)[0];if(bp&&bp.pts>0)spot=Object.assign({kind:'pts'},bp);}
+  const leaders=sN.rows.slice(0,3).map((r,i)=>({uid:r.uid,pseudo:r.pseudo,total:r.total,pos:sN.pos[i],week:gain[r.uid]||0,sessions:r.sessions,lvlAvg:r.lvlAvg}));
+  return {mon,per,gsel,days,last,snaps,sess,gain,spot,leaders,stats:{sess:tSess,pts:tPts,active:active.size,n:sN.n}};
+}
+/* bilan personnel d'un athlète sur la semaine */
+function rcPersonal(D,uid){
+  const s0=D.snaps[0],sN=D.snaps[D.last];
+  const a=s0.rank[uid]||0,b=sN.rank[uid]||0;
+  const o={uid,from:a,to:b,pts:(sN.pts[uid]||0)-(s0.pts[uid]||0),sess:D.sess[uid]||0,delta:0,kind:'none'};
+  if(!b)return o;
+  if(!a)o.kind='new';else{o.delta=a-b;o.kind=o.delta>0?'up':o.delta<0?'down':'flat';}
+  let best=Infinity;
+  for(let i=0;i<=D.last;i++){const r=D.snaps[i].rank[uid];if(r)best=Math.min(best,r);}
+  o.best=best;
+  let jump=0,jd=0;
+  for(let i=1;i<=D.last;i++){const pv=D.snaps[i-1].rank[uid]||(D.snaps[i-1].n+1),cu=D.snaps[i].rank[uid];if(cu&&pv-cu>jump){jump=pv-cu;jd=i;}}
+  o.jump=jump;o.jumpDay=jd;
+  const ix=sN.rows.findIndex(r=>r.uid===uid);
+  o.above=ix>0?sN.rows[ix-1]:null;o.below=(ix>=0&&ix<sN.rows.length-1)?sN.rows[ix+1]:null;
+  o.total=sN.rows[ix].total;
+  return o;
+}
+const RC_UP='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l8 9h-5v7H9v-7H4z" fill="currentColor"/></svg>';
+const RC_DOWN='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20l-8-9h5V4h6v7h5z" fill="currentColor"/></svg>';
+const RC_FLAT='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h16v2.6H4zM4 13.4h16V16H4z" fill="currentColor"/></svg>';
+const ICO_RECAP='<svg '+SVGB+'><path d="M3 20h18"/><path d="M5 15l4-5 3.5 3L19 5"/><path d="M15 5h4v4"/></svg>';
+const rcSv=(tag,attrs,...kids)=>{
+  const el=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  if(attrs)for(const [k,v] of Object.entries(attrs)){if(v===undefined||v===null||v===false)continue;if(k.startsWith('on'))el.addEventListener(k.slice(2),v);else el.setAttribute(k,v);}
+  for(const c of kids.flat(Infinity)){if(c===null||c===undefined||c===false)continue;el.append(c.nodeType?c:document.createTextNode(String(c)));}
+  return el;
+};
+let rcTimer=null;
+const rcStop=()=>{if(rcTimer){clearInterval(rcTimer);rcTimer=null;}};
+const RC_DN=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+const RC_COL={me:'#FF5A36',spot:'#4FE3A0',l1:'#FFC857',l2:'#9CC2FF',l3:'#F29A5B'};
+
+/* graphique « bump chart » : une ligne par athlète, rang 1 en haut ; lignes mises en avant = toi, plus grosse progression, leaders ;
+   toucher un jour (ou ▶) fait avancer le curseur et met à jour le classement du jour */
+function rcChart(D,meUid,animate){
+  const n=Math.max(2,...D.snaps.slice(0,D.last+1).map(s=>s.n));
+  const W=360,padL=26,padR=86,padT=16,padB=26;
+  const step=Math.min(34,280/(n-1)),innerH=step*(n-1),H=padT+innerH+padB,innerW=W-padL-padR;
+  const X=i=>padL+i*innerW/7,Y=r=>padT+(r-1)*step;
+  /* lignes mises en avant, par ordre de priorité (la dernière dessinée est au-dessus) */
+  const hl=new Map();
+  D.leaders.forEach((l,i)=>hl.set(l.uid,{color:RC_COL['l'+(i+1)],w:2.6}));
+  if(D.spot)hl.set(D.spot.uid,{color:RC_COL.spot,w:3});
+  if(meUid&&D.snaps[D.last].rank[meUid])hl.set(meUid,{color:RC_COL.me,w:3.6,me:true});
+  const uids=[...new Set(D.snaps.slice(0,D.last+1).flatMap(s=>Object.keys(s.rank)))];
+  const pathOf=uid=>{
+    const pts=[];for(let i=0;i<=D.last;i++){const r=D.snaps[i].rank[uid];if(r)pts.push([X(i),Y(r)]);}
+    if(!pts.length)return null;
+    if(pts.length===1)return {d:null,pts};
+    let d='M'+pts[0][0]+' '+pts[0][1];
+    for(let k=1;k<pts.length;k++){const [x0,y0]=pts[k-1],[x1,y1]=pts[k],mx=(x0+x1)/2;d+=' C'+mx+' '+y0+' '+mx+' '+y1+' '+x1+' '+y1;}
+    return {d,pts};
+  };
+  const svg=rcSv('svg',{viewBox:'0 0 '+W+' '+H,class:'rc-svg',role:'img','aria-label':'Évolution du classement jour par jour'});
+  /* repères : colonnes de jours et numéros de rang */
+  for(let i=0;i<=7;i++)svg.append(rcSv('line',{x1:X(i),x2:X(i),y1:padT-6,y2:padT+innerH+4,class:'rc-grid'}));
+  for(let r=1;r<=n;r++){
+    const show=step>=16||r===1||r%5===0;
+    if(show)svg.append(rcSv('text',{x:padL-9,y:Y(r)+3.5,class:'rc-rk','text-anchor':'end'},r));
+  }
+  /* lignes de fond puis lignes mises en avant */
+  const draw=(uid,cls,color,w,delay)=>{
+    const p=pathOf(uid);if(!p)return;
+    if(p.d)svg.append(rcSv('path',{d:p.d,class:cls+(animate?' rc-draw':''),pathLength:'1',style:(color?'stroke:'+color+';color:'+color+';':'')+(w?'stroke-width:'+w+';':'')+(animate?'animation-delay:'+delay+'ms;':'')}));
+    else svg.append(rcSv('circle',{cx:p.pts[0][0],cy:p.pts[0][1],r:(w||1.6)*.9,style:'fill:'+(color||'rgba(255,255,255,.3)')}));
+  };
+  uids.filter(u=>!hl.has(u)).forEach(u=>draw(u,'rc-ln'));
+  const order=[...hl.entries()].sort((a,b)=>(a[1].me?1:0)-(b[1].me?1:0));
+  order.forEach(([u,o],i)=>draw(u,'rc-ln hl',o.color,o.w,200+i*160));
+  /* étiquettes à droite (sans chevauchement) */
+  const labs=order.map(([u,o])=>({u,o,y:Y(D.snaps[D.last].rank[u]||1)+3.5})).sort((a,b)=>a.y-b.y);
+  for(let i=1;i<labs.length;i++)if(labs[i].y-labs[i-1].y<11)labs[i].y=labs[i-1].y+11;
+  labs.forEach(({u,o,y})=>{
+    const nm=o.me?'Toi':(((S.logs[u]||{}).pseudo)||'Athlète');
+    svg.append(rcSv('text',{x:X(D.last)+10,y,class:'rc-lb'+(o.me?' me':''),style:'fill:'+o.color},nm.length>11?nm.slice(0,10)+'…':nm));
+  });
+  /* curseur du jour et marqueurs */
+  const cur=rcSv('line',{x1:0,x2:0,y1:padT-8,y2:padT+innerH+6,class:'rc-cur'});svg.append(cur);
+  const mks=[...hl.entries()].map(([u,o])=>{
+    const g=rcSv('g',{class:'rc-mk'+(o.me?' me':'')},rcSv('circle',{r:o.me?9:5.5,style:'fill:'+o.color}),o.me?rcSv('text',{y:3.6,'text-anchor':'middle'},''):null);
+    svg.append(g);return {u,g,t:g.querySelector('text')};
+  });
+  /* jours : libellés et zones tactiles */
+  const lbs=[],hits=[];
+  for(let i=0;i<=7;i++){
+    const ok=i<=D.last,txt=i===0?'Dép.':RC_DN[i-1];
+    const l=rcSv('text',{x:X(i),y:H-8,class:'rc-dn'+(ok?'':' off'),'text-anchor':'middle'},txt);lbs.push(l);svg.append(l);
+    if(ok){const r=rcSv('rect',{x:X(i)-innerW/14,y:0,width:innerW/7,height:H,class:'rc-hit',tabindex:0,role:'button','aria-label':i===0?'Départ de la semaine':fmtDate(D.days[i],{weekday:'long',day:'numeric',month:'long'}),onclick:()=>setDay(i),onkeydown:e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setDay(i);}}});hits.push(r);svg.append(r);}
+  }
+  /* panneau : classement à la fin du jour choisi */
+  const head=h('div',{class:'rc-dayhead'});
+  const list=h('ol',{class:'rc-dl'});
+  const playBtn=h('button',{class:'rc-play',type:'button',onclick:()=>play()},'▶ Rejouer la semaine');
+  const wrap=h('div',{class:'rc-card rc-chart'},
+    h('div',{class:'rc-ctitle'},h('b',{},'Évolution jour par jour')),
+    h('div',{class:'rc-svgbox'},svg),
+    h('div',{class:'rc-legend'},
+      meUid&&hl.has(meUid)?h('span',{},h('i',{style:'background:'+RC_COL.me}),'Toi'):null,
+      D.spot?h('span',{},h('i',{style:'background:'+RC_COL.spot}),'Plus grosse progression'):null,
+      h('span',{},h('i',{style:'background:'+RC_COL.l1}),'Leaders')),
+    head,list,playBtn);
+  let day=D.last;
+  function setDay(i){
+    day=i;
+    const sn=D.snaps[i];
+    cur.style.transform='translate('+X(i)+'px,0)';
+    lbs.forEach((l,k)=>l.classList.toggle('on',k===i));
+    mks.forEach(m=>{const r=sn.rank[m.u];if(!r){m.g.style.opacity='0';return;}m.g.style.opacity='1';m.g.style.transform='translate('+X(i)+'px,'+Y(r)+'px)';if(m.t)m.t.textContent=r;});
+    head.replaceChildren(h('b',{},i===0?'Départ de la semaine':cap(fmtDate(D.days[i],{weekday:'long',day:'numeric',month:'long'}))),
+      h('span',{},i===0?'dimanche soir':'fin de journée'));
+    const prev=i>0?D.snaps[i-1]:null,rows=[];
+    const rowOf=(uid,pos,total)=>{
+      const pr=prev?prev.rank[uid]:undefined;
+      let mv='';
+      if(prev){if(pr===undefined)mv=h('span',{class:'rc-mv new'},'new');else if(pr-pos>0)mv=h('span',{class:'rc-mv up'},'▲'+(pr-pos));else if(pr-pos<0)mv=h('span',{class:'rc-mv down'},'▼'+(pos-pr));else mv=h('span',{class:'rc-mv'},'=');}
+      return h('li',{class:'rc-dr'+(uid===meUid?' me':''),role:'button',tabindex:0,onclick:()=>openAthlete(uid),onkeydown:e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openAthlete(uid);}}},
+        arHex(pos,Math.min(pos,3)),h('span',{class:'nm'},((S.logs[uid]||{}).pseudo||'Athlète')+(uid===meUid?' (toi)':'')),mv,h('span',{class:'pt'},fmtPts(total),h('small',{},'pts')));
+    };
+    sn.rows.slice(0,5).forEach((r,k)=>rows.push(rowOf(r.uid,sn.pos[k],r.total)));
+    const mi=meUid?sn.rows.findIndex(r=>r.uid===meUid):-1;
+    if(mi>=5){rows.push(h('li',{class:'rc-gap','aria-hidden':'true'},'···'));rows.push(rowOf(meUid,sn.pos[mi],sn.rows[mi].total));}
+    if(!rows.length)rows.push(h('li',{class:'rc-gap'},'Personne n’est encore classé.'));
+    list.replaceChildren(...rows);
+  }
+  function play(){
+    rcStop();
+    if(D.last<1)return;
+    let i=0;setDay(0);
+    rcTimer=setInterval(()=>{
+      if(!wrap.isConnected){rcStop();return;}
+      i++;setDay(i);if(i>=D.last)rcStop();
+    },900);
+  }
+  /* les marqueurs doivent être placés avant d'activer les transitions (pas de glissement depuis le coin) */
+  setDay(D.last);
+  requestAnimationFrame(()=>svg.classList.add('rc-ready'));
+  return wrap;
+}
+
+function rcMeCard(D,uid,asCoach){
+  const lg=S.logs[uid]||{},who=lg.pseudo||'Athlète';
+  const P=rcPersonal(D,uid);
+  const card=h('div',{class:'rc-card rc-me '+P.kind});
+  const inScope=D.gsel==='all'||scopeOf(uid,D.per)===D.gsel;
+  if(!inScope){
+    card.append(h('div',{class:'rc-ctitle'},h('b',{},asCoach?'Vue de '+who:'Ton résumé')),
+      h('p',{class:'rc-txt'},(asCoach?who+' ne fait':'Tu ne fais')+' pas partie de ce groupe. Passe en Global pour voir '+(asCoach?'sa':'ton')+' évolution.'));
+    return card;
+  }
+  const big={up:'+'+P.delta,down:String(P.delta),flat:'=',new:'NEW',none:'–'}[P.kind];
+  const icon={up:RC_UP,down:RC_DOWN,flat:RC_FLAT,new:RC_UP,none:RC_FLAT}[P.kind];
+  const title={
+    up:(asCoach?who+' gagne ':'Tu gagnes ')+rcPl(P.delta,'place'),
+    down:(asCoach?who+' perd ':'Tu perds ')+rcPl(-P.delta,'place'),
+    flat:asCoach?who+' garde sa place':'Tu gardes ta place',
+    new:asCoach?who+' entre au classement':'Tu entres au classement',
+    none:asCoach?who+' n’est pas encore classé':'Tu n’es pas encore classé'
+  }[P.kind];
+  const sub={
+    up:rcOrd(P.from)+' → '+rcOrd(P.to),
+    down:rcOrd(P.from)+' → '+rcOrd(P.to),
+    flat:'toujours '+rcOrd(P.to),
+    new:'directement '+rcOrd(P.to),
+    none:'Aucune séance validée pour l’instant.'
+  }[P.kind];
+  card.append(
+    h('div',{class:'rc-ctitle'},h('b',{},asCoach?'Vue de '+who:'Ton résumé'),h('span',{},'vs semaine d’avant')),
+    h('div',{class:'rc-melead'},
+      h('div',{class:'rc-big'},(()=>{const s=h('span',{class:'ic'});s.innerHTML=icon;return s;})(),h('b',{},big)),
+      h('div',{style:'min-width:0'},h('div',{class:'rc-mt'},title),h('div',{class:'rc-ms'},sub))));
+  if(P.kind!=='none'){
+    const facts=[h('span',{class:'f'},h('b',{},(P.pts>0?'+':'')+fmtPts(P.pts)),' pts'),h('span',{class:'f'},h('b',{},P.sess),' séance'+(P.sess>1?'s':''))];
+    facts.push(h('span',{class:'f'},'rang ',h('b',{},rcOrd(P.to)),' · ',fmtPts(P.total),' pts'));
+    card.append(h('div',{class:'rc-facts'},facts));
+    const lines=[];
+    if(P.best<P.to)lines.push('Ton meilleur rang de la semaine : '+rcOrd(P.best)+'.');
+    if(P.jump>=2)lines.push('Plus belle remontée : +'+P.jump+' places le '+fmtDate(D.days[P.jumpDay],{weekday:'long'})+'.');
+    const gap=P.above?P.above.total-P.total:0;
+    if((P.kind==='down'||P.kind==='flat')&&P.above&&gap>0)lines.push('Il '+(asCoach?'lui ':'te ')+'manque '+fmtN(gap)+' pt'+(gap>1?'s':'')+' pour passer devant '+P.above.pseudo+'.');
+    else if((P.kind==='up'||P.kind==='new')&&P.below){const g2=P.total-P.below.total;if(g2>=0)lines.push(P.below.pseudo+' est '+(g2===0?'à égalité de points, départagé au niveau moyen':'à '+fmtN(g2)+' pt'+(g2>1?'s':'')+' derrière')+'.');}
+    if(P.to===1)lines.push((asCoach?who+' est':'Tu es')+' en tête du classement.');
+    if(lines.length)card.append(h('p',{class:'rc-txt'},lines.join(' ')));
+  }
+  return card;
+}
+
+function rcSpotCard(D){
+  const s=D.spot;
+  if(!s)return h('div',{class:'rc-card rc-spot none'},h('div',{class:'rc-ctitle'},h('b',{},'Plus grosse progression')),h('p',{class:'rc-txt'},'Aucun mouvement au classement cette semaine : tout reste à jouer.'));
+  const nm=(S.logs[s.uid]||{}).pseudo||'Athlète';
+  const me=s.uid===S.uid;
+  return h('div',{class:'rc-card rc-spot','data-uid':s.uid,role:'button',tabindex:0,onclick:()=>openAthlete(s.uid),onkeydown:e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openAthlete(s.uid);}}},
+    h('div',{class:'rc-ctitle'},h('b',{},s.kind==='rank'?'Plus grosse progression':'Meilleure semaine'),h('span',{},s.kind==='rank'?'places gagnées':'points marqués')),
+    h('div',{class:'rc-sp'},
+      h('div',{class:'rc-spav',style:'--s:56px'},arAvatar(s.uid,0,true,56)),
+      h('div',{style:'min-width:0;flex:1'},
+        h('div',{class:'rc-spn'},nm+(me?' (toi)':''),badgeMini(s.uid,22)),
+        s.kind==='rank'
+          ?h('div',{class:'rc-sps'},(s.from?rcOrd(s.from)+' → ':'entre à la ')+(s.from?rcOrd(s.to):rcOrd(s.to)+' place'))
+          :h('div',{class:'rc-sps'},'rang '+rcOrd(s.to)),
+        h('div',{class:'rc-sps'},'+'+fmtPts(s.pts)+' pts cette semaine')),
+      s.kind==='rank'?h('div',{class:'rc-spg'},'▲ +'+s.gain):h('div',{class:'rc-spg pts'},'+'+fmtPts(s.pts))));
+}
+
+function rcLeaders(D){
+  const ls=D.leaders;
+  if(!ls.length)return null;
+  const glob=D.gsel==='all',gl=gListFor(D.per);
+  const slot=k=>{
+    const r=ls[k-1],size=k===1?60:46;
+    if(!r)return h('div',{class:'pod-c p'+k+' empty'},h('div',{class:'pod-av'},h('div',{class:'pav'},h('div',{class:'pav-c'},h('div',{class:'noav-dot'},'–')))),h('div',{class:'pod-base'},h('div',{class:'pod-nm'},'—'),h('div',{class:'pod-sub'},'place libre')));
+    const rk=Math.min(r.pos,3),g=(glob&&gl.length)?scopeName(scopeOf(r.uid,D.per),D.per):'';
+    return h('div',{class:'pod-c p'+k,role:'button',tabindex:0,'data-uid':r.uid,onclick:()=>openAthlete(r.uid),onkeydown:e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openAthlete(r.uid);}}},
+      h('div',{class:'pod-av'},k===1?svgOf(ICO_CROWN):null,arAvatar(r.uid,rk,true,size),h('div',{class:'medal'},arHex(r.pos,rk))),
+      h('div',{class:'pod-base'},
+        h('div',{class:'pod-nm'},r.pseudo+(r.uid===S.uid?' (toi)':'')),
+        g?h('div',{class:'pod-sub'},g):null,
+        h('div',{class:'pod-pts'},svgOf(ICO_STAR),fmtPts(r.total),h('small',{},'pts')),
+        h('div',{class:'pod-sub rc-wk'},(r.week>0?'+'+fmtPts(r.week)+' cette semaine':'pas de points cette semaine'))));
+  };
+  return h('div',{class:'rc-lead'},h('div',{class:'rc-ctitle'},h('b',{},ls.length>1?'Les leaders':'Le leader'),h('span',{},'classement actuel')),
+    h('div',{class:'pod'},slot(2),slot(1),slot(3)));
+}
+
+function viewRecap(){
+  const el=h('div',{class:'stack'});
+  if(!ready()){el.append(h('p',{class:'muted'},'Chargement…'));return el;}
+  if(S.viewUser)return viewAthlete(S.viewUser);
+  rcStop();
+  const R=S.rc||(S.rc={});
+  const weeks=rcWeeks();
+  if(!weeks.length){
+    el.append(h('div',{class:'empty'},h('p',{},'Ton premier résumé de la semaine arrive lundi à '+RC_HOUR+' h, dès qu’une semaine d’entraînement est terminée.')));
+    return el;
+  }
+  let wk=weeks.find(x=>x.mon===R.week);
+  if(!wk){const rel=weeks.filter(x=>x.released);wk=rel.length?rel[rel.length-1]:weeks[weeks.length-1];R.week=wk.mon;}
+  const wi=weeks.indexOf(wk),per=rcPeriodOf(wk.mon);
+  const gl=gListFor(per),mineG=scopeOf(S.uid,per);
+  let gsel=R.group!==undefined?R.group:(mineG||'all');
+  if(gsel!=='all'&&!gl.some(g=>g.id===gsel))gsel='all';
+  const isGroup=gsel!=='all';
+  const DG=rcCompute(wk.mon,per,gsel);
+  /* regard : l'athlète connecté ; le coach choisit un athlète (par défaut celui qui a le plus progressé) */
+  let viewUid=S.uid,asCoach=false;
+  if(S.owner){
+    asCoach=true;
+    const ids=Object.keys(S.logs).filter(u=>(S.logs[u].pseudo||'')&&u!==S.uid).sort((a,b)=>(S.logs[a].pseudo||'').localeCompare(S.logs[b].pseudo||'','fr'));
+    viewUid=ids.includes(R.as)?R.as:((DG.spot&&DG.spot.uid)||(DG.leaders[0]&&DG.leaders[0].uid)||ids[0]||null);
+    R.asIds=ids;
+  }
+  const mon=wk.mon,sun=addDays(mon,6);
+  const range=fmtShort(mon)+' → '+fmtShort(sun);
+
+  /* en-tête : semaine, navigation */
+  const nav=h('div',{class:'rc-nav'},
+    h('button',{class:'rc-nb',type:'button','aria-label':'Semaine précédente',disabled:wi<=0,onclick:()=>{R.week=weeks[wi-1].mon;render();}},'‹'),
+    h('button',{class:'rc-nb',type:'button','aria-label':'Semaine suivante',disabled:wi>=weeks.length-1,onclick:()=>{R.week=weeks[wi+1].mon;render();}},'›'));
+  const head=h('div',{class:'rc-head'},
+    h('div',{style:'min-width:0'},h('div',{class:'ar-title'},asCoach?'La semaine':'Ma semaine'),h('div',{class:'ar-tag'},'Résumé · '+range+(per.virtual?'':' · '+seasonLabel(per)))),nav);
+  const sec=h('section',{class:'rc','aria-label':'Résumé de la semaine'},head);
+
+  /* aperçu coach */
+  if(asCoach){
+    const pv=h('div',{class:'rc-prev'},
+      h('b',{},wk.released?'Aperçu coach':'Aperçu coach · pas encore publié'),
+      h('span',{},wk.released?'Tu vois ce que les athlètes ont reçu.':'Les athlètes le recevront lundi '+fmtShort(addDays(mon,7))+' à '+RC_HOUR+' h, avec une notification.'));
+    sec.append(pv);
+    if(R.asIds&&R.asIds.length)sec.append(h('label',{class:'rc-as'},h('span',{},'Voir comme'),
+      sel(R.asIds.map(u=>[u,S.logs[u].pseudo||'Athlète']),viewUid,v=>{R.as=v;render();},{id:'rc-as','aria-label':'Voir le résumé comme'})));
+  }
+
+  /* Global / Groupe */
+  if(gl.length){
+    sec.append(h('div',{class:'rc-ctl'},
+      h('div',{class:'ar-pills'},
+        h('button',{class:'ar-pill',type:'button','aria-pressed':String(!isGroup),onclick:()=>{R.group='all';render();}},svgOf(ICO_GLOBE),h('span',{},'Global')),
+        h('button',{class:'ar-pill',type:'button','aria-pressed':String(isGroup),onclick:()=>{R.group=(isGroup?gsel:(mineG||gl[0].id));render();}},svgOf(ICO_GROUP),h('span',{},'Groupe')))));
+    if(isGroup&&gl.length>1)sec.append(h('div',{class:'ar-grp'},gl.map(g=>h('button',{type:'button','aria-pressed':String(g.id===gsel),onclick:()=>{R.group=g.id;render();}},g.name))));
+  }
+  const scopeTxt=isGroup?(gl.find(g=>g.id===gsel)||{}).name:'Tous les athlètes';
+  sec.append(h('div',{class:'ar-sec'},h('span',{},scopeTxt||'Tous les athlètes')));
+
+  /* chiffres de la semaine */
+  const st=DG.stats;
+  sec.append(h('div',{class:'rc-tiles'},
+    h('div',{},h('b',{},st.active),h('span',{},'athlète'+(st.active>1?'s':'')+' actif'+(st.active>1?'s':''))),
+    h('div',{},h('b',{},st.sess),h('span',{},'séance'+(st.sess>1?'s':''))),
+    h('div',{},h('b',{},fmtPts(st.pts)),h('span',{},'points marqués'))));
+
+  /* bilan personnel, graphique, progression, leaders */
+  if(viewUid)sec.append(rcMeCard(DG,viewUid,asCoach));
+  else if(asCoach)sec.append(h('div',{class:'rc-card'},h('p',{class:'rc-txt'},'Aucun athlète à afficher pour l’instant.')));
+  const key=wk.mon+'|'+gsel+'|'+(viewUid||'');
+  const animate=R.animKey!==key;R.animKey=key;
+  sec.append(rcChart(DG,viewUid,animate));
+  sec.append(rcSpotCard(DG));
+  const ld=rcLeaders(DG);if(ld)sec.append(ld);
+  sec.append(h('p',{class:'rc-note'},'Un résultat compte le jour où il est validé. Le dernier point du graphique est le classement de fin de semaine : points, puis niveau moyen à égalité.'));
+  el.append(sec);
+
+  /* marque la semaine comme lue (athlètes, semaine la plus récente publiée) : enlève le point rouge et la bannière */
+  if(!asCoach&&wk.released&&S.logs[S.uid]&&(S.logs[S.uid].recapSeen||'')<wk.mon&&!R.marking){
+    R.marking=true;
+    setTimeout(()=>{saveLog({recapSeen:wk.mon});setTimeout(()=>{R.marking=false;},2000);},900);
+  }
+  return el;
+}
+/* bannière du Fil : le résumé de la semaine est disponible (athlètes, tant qu'il n'a pas été ouvert) */
+function recapBanner(){
+  if(S.tab!=='feed'||!recapDot())return null;
+  return h('div',{class:'banner',id:'recap-banner',role:'status'},
+    h('p',{},h('b',{},'Ton résumé de la semaine est disponible. '),'Découvre comment le classement a bougé cette semaine.'),
+    h('div',{class:'row'},h('button',{class:'btn primary',type:'button',onclick:()=>{const m=rcLatest();if(m)(S.rc||(S.rc={})).week=m;go('recap');}},'Voir mon résumé')));
 }
 
 function groupSection(board,scope){
@@ -8029,11 +8545,12 @@ const profTodo=()=>infosMissing().concat(goalMissing()?['objectif de s\u00e9ance
 const BLINK_MS=3000;
 function blinkEl(el){const ms=Date.now()-(S._bt||0);if(ms<BLINK_MS){el.classList.add('need-blink');el.style.animationDelay='-'+ms+'ms';}return el;}
 const blinkIf=(c,el)=>c?blinkEl(el):el;
-function menuDot(){const a=annActive();return !!((a&&!annIsSeen(a))||notifDotOn()||unusualAll().length>0||!rulesSeen()||!healthSeen()||profDot());}
+function menuDot(){const a=annActive();return !!((a&&!annIsSeen(a))||recapDot()||notifDotOn()||unusualAll().length>0||!rulesSeen()||!healthSeen()||profDot());}
 function drawerItems(){
   const a=annActive(),out=[];
   out.push({id:'profile',label:'Profil',ico:ICO_USER,dot:profDot(),cur:S.tab==='profile'&&!S.profView,fn:()=>{S.profView=null;go('profile');}});
   if(S.owner)out.push({id:'coach',label:'Coach',ico:ICO_COACH,dot:unusualAll().length>0,cur:['coach','prefs','stats'].includes(S.tab),fn:()=>go('coach')});
+  out.push({id:'recap',label:'Résumé de la semaine',ico:ICO_RECAP,dot:recapDot(),cur:S.tab==='recap',fn:()=>{const m=rcLatest();if(m&&!S.owner)(S.rc||(S.rc={})).week=m;go('recap');}});
   out.push({id:'notif',label:'Notifications',ico:ICO_BELL,dot:notifDotOn(),cur:S.tab==='profile'&&S.profView==='notifs',fn:()=>{go('profile');S.profView='notifs';render();window.scrollTo(0,0);}});
   if(a)out.push({id:'mail',label:'Message du coach',ico:ICO_MAIL,dot:!annIsSeen(a),fn:()=>openAnnouncement(a,{review:true})});
   out.push({id:'rules',label:'Règlement',ico:ICO_RULES,dot:!rulesSeen(),cur:S.tab==='rules',fn:()=>{rulesMark();S.rulesI=0;go('rules');}});
