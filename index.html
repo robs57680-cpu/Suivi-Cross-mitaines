@@ -1273,7 +1273,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;op
 .rt-pill{position:absolute;top:0;z-index:3;display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;will-change:transform;transition:transform .2s linear;-webkit-tap-highlight-color:transparent}
 .rt-pill[role=button]{cursor:pointer}
 .rt-world.nt .rt-pill{transition:none}
-.rt-nm{box-sizing:border-box;height:14px;max-width:calc(100% + 4px);padding:0 5px;border-radius:999px;background:rgba(8,10,16,.85);border:1px solid rgba(255,255,255,.16);font:700 9.5px/12px var(--f-body);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rt-nm{box-sizing:border-box;margin-bottom:9px;height:14px;max-width:calc(100% + 4px);padding:0 5px;border-radius:999px;background:rgba(8,10,16,.85);border:1px solid rgba(255,255,255,.16);font:700 9.5px/12px var(--f-body);color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rt-pt{padding:0 4px;border-radius:6px;background:rgba(8,10,16,.8);font:700 10px/12px var(--f-mono);color:var(--ar-gold)}
 .rt-pill.me{z-index:5}
 .rt-pill.me .rt-nm{background:var(--rt-me);border-color:#fff;box-shadow:0 0 12px rgba(255,90,54,.85)}
@@ -1384,7 +1384,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-23.62';
+const APP_VERSION='2026-10-23.63';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -5261,7 +5261,7 @@ function rcTrackBuild(D,meUid,o){
   const W=RT.RAIL+L*laneW+8,H=RT.PADT+topRung*RT.PX+RT.PADB;
   const Y=p=>RT.PADT+(topRung-p)*RT.PX;
   const X=i=>RT.RAIL+4+i*laneW;
-  const off=17+size/2; /* du haut de la pastille au centre de l'avatar */
+  const off=26+size/2; /* du haut de la pastille au centre de l'avatar (pseudo 14 + marge 9 + écart 3) */
   const maxChars=Math.max(5,Math.floor(laneW/6.4));
   const world=h('div',{class:'rt-world'+(o.animate?'':' nt'+(meRow>=0?' done':'')),style:'width:'+W+'px;height:'+H+'px'});
   const rail=h('div',{class:'rt-rail','aria-hidden':'true',style:'height:'+H+'px'});
@@ -5289,7 +5289,7 @@ function rcTrackBuild(D,meUid,o){
      une hauteur de pastille d'écart) va dans le couloir libre le plus proche, ta pastille d'abord, puis les plus hautes.
      Si aucun couloir n'est libre, elle prend celui où l'écart est le plus grand. */
   const lane=rows.map((r,i)=>i%L);
-  const pillH=size+32; /* hauteur d'une pastille : pseudo + avatar + points */
+  const pillH=size+41; /* hauteur d'une pastille : pseudo + marge + avatar + points */
   const assignLanes=()=>{
     const placed=new Array(n).fill(-1),rest=[];
     const near=(a,b)=>Math.abs(pts[a]-pts[b])*RT.PX<pillH;
