@@ -1384,7 +1384,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-23.63';
+const APP_VERSION='2026-10-23.64';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -5429,13 +5429,16 @@ function rcOpenIntro(D,meUid,mon,o){
     const before=T.pts.slice();
     T.step(cur);T.follow();
     cnt.textContent=T.label();
-    /* dépassements qui te concernent : flèche verte si tu passes devant quelqu'un, rouge si quelqu'un te passe devant */
-    const m=T.meRow;
-    if(m>=0){
-      const up=[],down=[];
-      T.pts.forEach((v,j)=>{if(j===m)return;const was=before[j]>before[m],is=v>T.pts[m];if(was&&!is)up.push(j);else if(!was&&is)down.push(j);});
-      if(up.length){T.flash(m,'up',up.length);up.forEach(j=>T.flash(j,'down',1,true));}
-      if(down.length){T.flash(m,'down',down.length);down.forEach(j=>T.flash(j,'up',1,true));}
+    /* dépassements de tout le monde : flèche verte sur la pastille qui rattrape ou double, rouge sur celle qui se fait rejoindre ou doubler
+       (×n s'il y en a plusieurs sur le même pas) ; les flèches de l'athlète mis en avant sont plus grosses */
+    const m=T.meRow,nn=T.pts.length,upN=new Array(nn).fill(0),downN=new Array(nn).fill(0);
+    for(let a=0;a<nn;a++)for(let b=0;b<nn;b++){
+      if(a===b)continue;
+      if(before[b]>before[a]&&!(T.pts[b]>T.pts[a])){upN[a]++;downN[b]++;}
+    }
+    for(let i=0;i<nn;i++){
+      if(upN[i])T.flash(i,'up',upN[i],i!==m);
+      if(downN[i])T.flash(i,'down',downN[i],i!==m);
     }
     if(cur>=maxStep)finish();
   };
