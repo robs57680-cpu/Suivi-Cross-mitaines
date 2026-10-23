@@ -8237,22 +8237,19 @@ const eur=v=>(Math.round(v*100)/100).toFixed(2).replace('.',',')+' €';
 const ICO_CARD='<svg '+SVGA+'><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h4"/></svg>';
 /* deux cartes de forfaits qui se font glisser (page Abonnement et page de connexion) */
 function plansCarousel(){
-  const n4=SEASON_WEEKS/4,full=PRICE_4W*n4,save=full-PRICE_SEASON,pct=Math.round(save/full*100),per4=PRICE_SEASON/n4;
-  const plan=(cls,tag,name,price,unit,lines)=>h('article',{class:'plan '+cls},
-    tag?h('span',{class:'plan-tag'},tag):null,
+  /* prix pas encore définis : on affiche « Prix non défini » à la place des montants */
+  const plan=(cls,name,lines)=>h('article',{class:'plan '+cls},
     h('p',{class:'flabel'},name),
-    h('p',{class:'plan-price'},price,h('small',{},' '+unit)),
+    h('p',{class:'plan-price',style:'font-size:28px'},'Prix non défini'),
     ...lines);
   const track=h('div',{class:'plans',role:'region','aria-label':'Forfaits : fais glisser pour voir les deux','tabindex':'0'},
-    plan('','', '4 semaines',eur(PRICE_4W),'/ 4 semaines',[
+    plan('','4 semaines',[
       h('p',{class:'plan-free'},'Les 2 premières semaines sont offertes à l’inscription.'),
       h('p',{class:'plan-sub'},'Renouvelé toutes les 4 semaines.'),
       h('p',{class:'plan-sub'},'Sans engagement : tu arrêtes quand tu veux.')]),
-    plan('best','−'+pct+' %','Saison · '+SEASON_WEEKS+' semaines',eur(PRICE_SEASON),'/ saison',[
-      h('p',{class:'plan-old'},h('s',{},eur(full)),' en prenant '+n4+' fois l’abonnement de 4 semaines'),
-      h('p',{class:'plan-save'},'Tu économises '+eur(save)+' (−'+pct+' %)'),
+    plan('best','Saison · '+SEASON_WEEKS+' semaines',[
       h('p',{class:'plan-free'},'Les 2 premières semaines sont offertes à l’inscription.'),
-      h('p',{class:'plan-sub'},'Soit '+eur(per4)+' par 4 semaines. Renouvelé à chaque nouvelle saison.')]));
+      h('p',{class:'plan-sub'},'Renouvelé à chaque nouvelle saison.')]));
   const dots=[0,1].map(i=>h('button',{type:'button',class:'plan-dot','aria-label':i?'Forfait saison':'Forfait 4 semaines','aria-current':i?null:'true',onclick:()=>track.scrollTo({left:i*(track.scrollWidth-track.clientWidth),behavior:'smooth'})}));
   track.addEventListener('scroll',()=>{const mx=track.scrollWidth-track.clientWidth,i=mx>0&&track.scrollLeft>mx/2?1:0;dots.forEach((d,k)=>{if(k===i)d.setAttribute('aria-current','true');else d.removeAttribute('aria-current');});},{passive:true});
   return h('div',{class:'plans-wrap'},track,h('div',{class:'plan-dots'},...dots),h('p',{class:'hint',style:'text-align:center'},'Fais glisser pour comparer les deux forfaits.'));
