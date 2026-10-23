@@ -2031,8 +2031,10 @@ function findMove(text){
   for(const [c,al] of MOVES)for(const a of al)list.push([c,a]);
   for(const k of Object.keys(S.prof.prs||{}))list.push([k,norm(k)]);
   list.sort((x,y)=>y[1].length-x[1].length);
-  for(const [c,a] of list){
-    const re=new RegExp('(^|[^a-z0-9])'+a.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'($|[^a-z0-9])');
+  for(const [c,a0] of list){
+    /* alias sans accent, « s » final facultatif (back squats = back squat), espace ou tiret indifférent (pull up / pull-up) */
+    const a=norm(a0).replace(/[.*+?^${}()|[\]\\]/g,'\\$&').replace(/(?:\\?[ -])+/g,'[\\s-]+');
+    const re=new RegExp('(^|[^a-z0-9])'+a+'s?($|[^a-z0-9])');
     if(re.test(t))return c;
   }
   return null;
@@ -2053,8 +2055,26 @@ function pullupBlock(text,nums){
   return h('div',{class:'chips'},nums.map(n=>{const c=pullupCalc(bw,pr.kg,n);
     return h('span',{class:'chip load'},n+' % = '+(c.rounded>0?'lest +'+fmtN(c.rounded)+' kg':c.rounded<0?'déleste −'+fmtN(-c.rounded)+' kg':'sans lest'));}));
 }
-function renderLine(text){
-  const line=h('div',{class:'line'},h('span',{},glossSegs(text)));
+/* renforcement : après chaque mouvement qui a des variantes réglées par le coach (p.variants = [{from,to:[…]}]), on ajoute « OU variante »
+   (ex. « 10 Tractions OU rowing TRX »). Rien n'est ajouté si le coach l'a déjà écrit dans la ligne. */
+const lowFirst=s=>/^[A-ZÀ-Ý][a-zà-ÿ]/.test(s)?s.charAt(0).toLowerCase()+s.slice(1):s;
+function renfoSegs(text,vars){
+  const sp=(vars&&vars.length)?mvSpans(text).filter(x=>vars.some(v=>v.from===x.name&&v.to&&v.to.length)):[];
+  if(!sp.length)return glossSegs(text);
+  const tn=norm(text),out=[];let c=0;
+  for(const x of sp){
+    const v=vars.find(y=>y.from===x.name);
+    const to=v.to.filter(n=>!tn.includes(norm(n)));
+    if(!to.length||/^\s*(ou|or|\/)\s/.test(tn.slice(x.e)+' '))continue;
+    out.push(glossSegs(text.slice(c,x.e)),' ',h('b',{},'OU'),' ',h('mark',{class:'varmk',title:'Variante de '+x.name},glossSegs(to.map(lowFirst).join(' OU '))));
+    c=x.e;
+  }
+  if(!out.length)return glossSegs(text);
+  if(c<text.length)out.push(glossSegs(text.slice(c)));
+  return out;
+}
+function renderLine(text,vars){
+  const line=h('div',{class:'line'},h('span',{},vars&&vars.length?renfoSegs(text,vars):glossSegs(text)));
   const m=text.match(PCT_RE);
   if(m){
     const nums=m[1].split(/\s*[\/–-]\s*/).map(Number).filter(n=>n>0&&n<=200);
@@ -3698,7 +3718,7 @@ function partCard(p,w,date){
       metcon?[p.detail,p.lineRounds?'Chaque ligne = 1 tour':(p.repsRound?'1 tour = '+fmtN(eqTotal({content:p.content,repsRound:Number(p.repsRound)||0}))+' reps':'')].filter(Boolean).map(x=>' · '+x).join(''):''):null,
     (fmtId&&S.tip===fmtId)?h('div',{class:'tip',role:'dialog'},fmtExplain(p).map((t,k)=>k===0?h('b',{},t):h('p',{},t))):null,
     lvOpen?h('div',{class:'varnote'},'Version '+levelName(p,lvOpen[1])+' : les variantes remplacent les mouvements en surbrillance.'):null,
-    h('div',{class:'lines'},lines.map(metcon?metL:renderLine)),
+    h('div',{class:'lines'},lines.map(metcon?metL:(t=>renderLine(t,p.kind==='renfo'?p.variants:null)))),
     (metcon&&p.word)?h('div',{class:'cword'},h('span',{class:'flabel'},'Mot du coach'),h('p',{},linkText(p.word))):null,
     metcon?levelsBlock(p):null,
     (metcon&&w&&timerOk(date))?h('div',{class:'row'},h('button',{class:'btn primary btn-block',type:'button','data-tour':'start-metcon',onclick:()=>openTimer(w,date,p)},'Démarrer le metcon')):null);
@@ -7332,6 +7352,15 @@ function draftToWod(d){
   const parts=d.parts.map((p,i)=>{
     const o={label:'P'+(i+1),name:p.name.trim(),kind:p.kind,content:p.content.trim()};
     if(p.kind==='force')o.movement=p.movement.trim();
+    if(p.kind==='renfo'){ /* variantes du réglage « Configurer les mouvements » (Rx, puis Intermédiaire, puis Débutant), proposées en « X OU Y » */
+      const rv=[];
+      for(const from of mvDetect(p.content)){
+        const to=[];
+        for(const k of [2,1,0])for(const n of (mvCfgLv(from,k).v||[]))if(n&&n!==from&&!to.includes(n))to.push(n);
+        if(to.length)rv.push({from,to});
+      }
+      if(rv.length)o.variants=rv;
+    }
     if(p.kind==='renfo'&&p.format==='EMOM'){
       const iv=parseNum(String(p.interval||'1').trim()||'1');
       if(iv===null||iv<=0)throw new Error('Intervalle illisible ('+o.label+') : écris 1 pour un EMOM, 2 pour un E2MOM, 3 pour un E3MOM…');
