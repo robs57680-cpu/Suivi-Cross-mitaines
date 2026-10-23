@@ -5235,12 +5235,12 @@ const RC_DOWN='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20l-8-9h
 const RC_FLAT='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h16v2.6H4zM4 13.4h16V16H4z" fill="currentColor"/></svg>';
 const ICO_RECAP='<svg '+SVGB+'><path d="M3 20h18"/><path d="M5 15l4-5 3.5 3L19 5"/><path d="M15 5h4v4"/></svg>';
 /* ---------- la piste ----------
-   Piste verticale : départ à 0 point en bas, un échelon tous les 10 points sur le côté gauche, 10 couloirs au maximum (un par athlète tant qu'ils sont 10 ou moins).
+   Piste verticale : départ à 0 point en bas, un échelon tous les 10 points sur le côté gauche, 6 couloirs au maximum (un par athlète tant qu'ils sont 6 ou moins).
    Chaque pastille (avatar, pseudo au-dessus) monte d'un point toutes les 0,2 s (RT.STEP) puis s'arrête à son total de points
    de fin de semaine ; la caméra suit la pastille la plus haute. Ensuite la piste se fait défiler à la main et la pastille de
-   l'athlète est en surbrillance. Au-delà de 10 athlètes, certains partent superposés sur le même couloir ; pendant la course, chaque pastille
+   l'athlète est en surbrillance. Au-delà de 6 athlètes, certains partent superposés sur le même couloir ; pendant la course, chaque pastille
    change de couloir pour rester seule dans le sien dès que c'est possible. Plein écran à la réception (rcOpenIntro), puis visible dans l'onglet résumé (rcTrackCard). */
-const RT={PX:4,RAIL:44,PADT:96,PADB:84,STEP:200,RUNG:10,LANES:10};
+const RT={PX:4,RAIL:44,PADT:96,PADB:84,STEP:200,RUNG:10,LANES:6};
 const rtReduced=()=>!!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
 function rcTrackRows(D){
   const sn=D.snaps[D.last],s0=D.snaps[0];
@@ -5255,7 +5255,7 @@ function rcTrackBuild(D,meUid,o){
   const maxT=Math.max(1,...rows.map(r=>r.total));
   const maxSteps=Math.ceil(Math.max(0,...rows.map(r=>r.total-r.from))); /* nombre de pas de 0,2 s : le plus gros gain de la semaine */
   const topRung=Math.ceil(maxT/RT.RUNG)*RT.RUNG+RT.RUNG;
-  const L=Math.max(1,Math.min(n,RT.LANES)); /* nombre de couloirs : 10 au maximum */
+  const L=Math.max(1,Math.min(n,RT.LANES)); /* nombre de couloirs : 6 au maximum */
   const laneW=Math.max(38,Math.min(64,Math.floor(((o.width||360)-RT.RAIL-8)/L)));
   const size=Math.max(30,Math.min(44,laneW-8));
   const W=RT.RAIL+L*laneW+8,H=RT.PADT+topRung*RT.PX+RT.PADB;
