@@ -1280,6 +1280,14 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;op
 .rt-pill.me .pav{transform:scale(1.18);box-shadow:0 0 0 3px var(--rt-me),0 0 20px 5px rgba(255,90,54,.7)}
 .rt-pill.me .rt-pt{color:#fff}
 .rt-world.done .rt-pill:not(.me){opacity:.6}
+.rt-arw{position:absolute;left:50%;z-index:9;display:flex;align-items:center;gap:2px;pointer-events:none;opacity:0;animation:rtArwU 1.2s ease-out forwards}
+.rt-arw svg{width:30px;height:30px;filter:drop-shadow(0 0 7px currentColor) drop-shadow(0 1px 2px #000)}
+.rt-arw b{font:800 12px/1 var(--f-mono);color:#fff;text-shadow:0 1px 3px #000}
+.rt-arw.up{color:#4FE3A0}
+.rt-arw.down{color:#FF6B6B;animation-name:rtArwD}
+.rt-arw.sm svg{width:20px;height:20px}
+@keyframes rtArwU{0%{opacity:0;transform:translate(-50%,8px) scale(.5)}18%{opacity:1;transform:translate(-50%,-6px) scale(1.25)}65%{opacity:1;transform:translate(-50%,-18px) scale(1)}100%{opacity:0;transform:translate(-50%,-34px) scale(1)}}
+@keyframes rtArwD{0%{opacity:0;transform:translate(-50%,-8px) scale(.5)}18%{opacity:1;transform:translate(-50%,6px) scale(1.25)}65%{opacity:1;transform:translate(-50%,18px) scale(1)}100%{opacity:0;transform:translate(-50%,34px) scale(1)}}
 @media (prefers-reduced-motion:no-preference){.rt-pill.me .pav{animation:rtPulse 1.6s ease-in-out infinite}}
 @media (prefers-reduced-motion:reduce){.rt-pill{transition:none}}
 @keyframes rtPulse{50%{box-shadow:0 0 0 3px var(--rt-me),0 0 28px 9px rgba(255,90,54,.95)}}
@@ -1376,7 +1384,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-23.59';
+const APP_VERSION='2026-10-23.60';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -5234,15 +5242,17 @@ const ICO_RECAP='<svg '+SVGB+'><path d="M3 20h18"/><path d="M5 15l4-5 3.5 3L19 5
 const RT={PX:4,RAIL:44,PADT:96,PADB:84,STEP:200,RUNG:20};
 const rtReduced=()=>!!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
 function rcTrackRows(D){
-  const sn=D.snaps[D.last];
-  return sn.rows.map((r,i)=>({uid:r.uid,pseudo:r.pseudo||'Athlète',total:r.total,pos:sn.pos[i]}));
+  const sn=D.snaps[D.last],s0=D.snaps[0];
+  /* from = total à la fin de la semaine d'avant (0 pour un nouvel entrant) : la piste reprend là où elle s'était arrêtée */
+  return sn.rows.map((r,i)=>({uid:r.uid,pseudo:r.pseudo||'Athlète',total:r.total,from:Math.min((s0&&s0.pts[r.uid])||0,r.total),pos:sn.pos[i]}));
 }
-/* o : {animate, width, onPick, restore} ; renvoie {el, maxT, step, follow, startCam, stopCam, focusMe, instant, done} */
+/* o : {animate, width, onPick, restore} ; renvoie {el, maxT, maxSteps, pts, step, follow, flash, moves, label, startCam, stopCam, focusMe, instant, done} */
 function rcTrackBuild(D,meUid,o){
   o=o||{};
   const rows=rcTrackRows(D),n=rows.length;
   const meRow=rows.findIndex(r=>r.uid===meUid);
   const maxT=Math.max(1,...rows.map(r=>r.total));
+  const maxSteps=Math.ceil(Math.max(0,...rows.map(r=>r.total-r.from))); /* nombre de pas de 0,2 s : le plus gros gain de la semaine */
   const topRung=Math.ceil(maxT/RT.RUNG)*RT.RUNG+RT.RUNG;
   const laneW=Math.max(38,Math.min(64,Math.floor(((o.width||360)-RT.RAIL-8)/Math.max(n,1))));
   const size=Math.max(30,Math.min(44,laneW-8));
@@ -5268,14 +5278,32 @@ function rcTrackBuild(D,meUid,o){
     const el=h('div',Object.assign({class:'rt-pill'+(me?' me':''),'data-uid':r.uid,style:'--s:'+size+'px;width:'+laneW+'px;left:'+X(i)+'px'},pick),
       h('span',{class:'rt-nm'},txt),arAvatar(r.uid,rk,false,size),pt);
     world.append(el);
-    return {el,pt,total:r.total};
+    return {el,pt,total:r.total,from:r.from};
   });
-  const step=cur=>pills.forEach(pl=>{
-    const p=Math.min(cur,pl.total);
+  /* t = nombre de pas écoulés : chacun part de son total d'avant et monte d'un point par pas jusqu'à son total actuel */
+  const pts=pills.map(pl=>pl.from);
+  const step=t=>pills.forEach((pl,i)=>{
+    const p=Math.min(pl.total,pl.from+t);
+    pts[i]=p;
     pl.el.style.transform='translate3d(0,'+(Y(p)-off)+'px,0)';
     pl.pt.textContent=p>=pl.total?fmtPts(pl.total):String(Math.floor(p));
   });
   step(o.animate?0:Infinity);
+  const focusIdx=()=>{if(meRow>=0)return meRow;let b=0;pts.forEach((v,i)=>{if(v>pts[b])b=i;});return b;};
+  const focusP=()=>pts[focusIdx()]||0;
+  /* flèche verte (dépassement) ou rouge (dépassé) sur une pastille */
+  const flash=(i,dir,n,small)=>{
+    const a=h('span',{class:'rt-arw '+dir+(small?' sm':''),'aria-hidden':'true',style:'top:'+(off-15)+'px'});
+    a.innerHTML=(dir==='up'?RC_UP:RC_DOWN)+(n>1?'<b>×'+n+'</b>':'');
+    pills[i].el.append(a);
+    setTimeout(()=>a.remove(),1300);
+  };
+  /* bilan de la semaine pour l'athlète mis en avant : combien dépassés, combien l'ont dépassé */
+  const moves=()=>{
+    let passed=0,overtaken=0;
+    if(meRow>=0)rows.forEach((r,j)=>{if(j===meRow)return;const a=r.from>rows[meRow].from,b=r.total>rows[meRow].total;if(a&&!b)passed++;else if(!a&&b)overtaken++;});
+    return {passed,overtaken};
+  };
   const scroll=h('div',{class:'rt-scroll'+(o.animate?' anim':''),role:'region',tabindex:o.animate?null:0,'aria-label':'Piste des points, à faire défiler'},world);
   const maxTop=()=>Math.max(0,H-scroll.clientHeight);
   const clampTop=t=>Math.max(0,Math.min(maxTop(),t));
@@ -5293,12 +5321,13 @@ function rcTrackBuild(D,meUid,o){
   };
   requestAnimationFrame(()=>{
     if(!scroll.isConnected)return;
-    if(o.animate){scroll.scrollLeft=leftFor();scroll.scrollTop=maxTop();camTarget=maxTop();}
+    if(o.animate){scroll.scrollLeft=leftFor();camTarget=clampTop(Y(focusP())-scroll.clientHeight*.5);scroll.scrollTop=camTarget;}
     else if(o.restore)scroll.scrollTo({top:o.restore.top,left:o.restore.left});
     else focusMe(false);
   });
-  return {el:scroll,maxT,rows,step,focusMe,
-    follow:cur=>{camTarget=clampTop(Y(Math.min(cur,maxT))-scroll.clientHeight*.42);},
+  return {el:scroll,maxT,maxSteps,rows,pts,meRow,step,focusMe,flash,moves,
+    label:()=>pills[focusIdx()].pt.textContent,
+    follow:()=>{camTarget=clampTop(Y(focusP())-scroll.clientHeight*.5);}, /* la caméra suit ta pastille (ou la plus haute si tu n'es pas classé) */
     startCam:()=>{if(!raf)raf=requestAnimationFrame(loop);},
     stopCam:()=>{if(raf){cancelAnimationFrame(raf);raf=0;}},
     instant:()=>world.classList.add('nt'),
@@ -5330,10 +5359,10 @@ function rcOpenIntro(D,meUid,mon,o){
   if(!sn||!sn.rows.length){if(o.onClose)o.onClose();return;}
   const reduced=rtReduced();
   const T=rcTrackBuild(D,meUid,{animate:!reduced,width:window.innerWidth-24});
-  const maxStep=Math.ceil(T.maxT);
+  const maxStep=T.maxSteps;
   let cur=0,timer=null,startTo=null,finished=false;
-  const cnt=h('b',{class:'rt-cnt'},'0');
-  const msg=h('p',{class:'rt-msg'},'Chaque pastille avance d’un point toutes les 0,2 seconde.');
+  const cnt=h('b',{class:'rt-cnt'},T.label());
+  const msg=h('p',{class:'rt-msg'},'Chacun repart de sa place de la semaine dernière et avance d’un point toutes les 0,2 seconde.');
   const btn=h('button',{class:'rt-go',type:'button'},'Passer l’animation');
   const ov=h('div',{class:'rt-ov',role:'dialog','aria-modal':'true','aria-label':'Résumé de la semaine : la piste'},
     h('div',{class:'rt-ovhead'},
@@ -5352,28 +5381,40 @@ function rcOpenIntro(D,meUid,mon,o){
   function finish(){
     if(finished)return;finished=true;
     clearInterval(timer);clearTimeout(startTo);T.stopCam();T.done();
-    cnt.textContent=fmtPts(T.maxT);
+    cnt.textContent=T.label();
     const rk=sn.rank[meUid],tot=sn.pts[meUid];
     const who=meUid===S.uid?'Tu es':((S.logs[meUid]||{}).pseudo||'Athlète')+' est';
-    msg.textContent=(rk?who+' '+rcOrd(rk)+' avec '+fmtPts(tot)+' pts. ':'')+'Fais défiler la piste pour retrouver tout le monde.';
+    const mv=T.moves(),me=meUid===S.uid,parts=[];
+    if(mv.passed)parts.push((me?'Tu as':((S.logs[meUid]||{}).pseudo||'Athlète')+' a')+' dépassé '+rcPl(mv.passed,'athlète'));
+    if(mv.overtaken)parts.push(rcPl(mv.overtaken,'athlète')+(mv.overtaken>1?' sont passés':' est passé')+' devant '+(me?'toi':'lui'));
+    msg.textContent=(rk?who+' '+rcOrd(rk)+' avec '+fmtPts(tot)+' pts. ':'')+(parts.length?parts.join(' · ')+'. ':'')+'Fais défiler la piste pour retrouver tout le monde.';
     btn.textContent=o.replay?'Fermer':'Voir mon résumé';
     setTimeout(()=>{if(rcOv===ov)T.focusMe(true);},650);
   }
   function skip(){clearInterval(timer);clearTimeout(startTo);T.instant();cur=maxStep;T.step(cur);finish();}
   const tick=()=>{
     cur=Math.min(cur+1,maxStep);
-    T.step(cur);T.follow(cur);
-    cnt.textContent=cur>=T.maxT?fmtPts(T.maxT):String(cur);
+    const before=T.pts.slice();
+    T.step(cur);T.follow();
+    cnt.textContent=T.label();
+    /* dépassements qui te concernent : flèche verte si tu passes devant quelqu'un, rouge si quelqu'un te passe devant */
+    const m=T.meRow;
+    if(m>=0){
+      const up=[],down=[];
+      T.pts.forEach((v,j)=>{if(j===m)return;const was=before[j]>before[m],is=v>T.pts[m];if(was&&!is)up.push(j);else if(!was&&is)down.push(j);});
+      if(up.length){T.flash(m,'up',up.length);up.forEach(j=>T.flash(j,'down',1,true));}
+      if(down.length){T.flash(m,'down',down.length);down.forEach(j=>T.flash(j,'up',1,true));}
+    }
     if(cur>=maxStep)finish();
   };
   btn.addEventListener('click',()=>{if(finished)close();else skip();});
   document.addEventListener('keydown',onKey);
   document.body.append(ov);rcOv=ov;
   setTimeout(()=>{try{btn.focus({preventScroll:true});}catch(e){}},80);
-  if(reduced){cur=maxStep;T.step(cur);finish();}
+  if(reduced||!maxStep){cur=maxStep;T.step(cur);finish();}
   else{
     T.step(0);
-    startTo=setTimeout(()=>{T.startCam();T.follow(0);timer=setInterval(tick,RT.STEP);},900);
+    startTo=setTimeout(()=>{T.startCam();T.follow();timer=setInterval(tick,RT.STEP);},900);
   }
 }
 
