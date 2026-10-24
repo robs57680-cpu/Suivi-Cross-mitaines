@@ -255,6 +255,23 @@ body.modal-open{overflow:hidden}
 .mvf-chip::after{content:'👆';margin-left:6px;font-size:.8em}
 .mvf-chip:active{transform:scale(.97)}
 .mvf-tips{margin:0;padding-left:20px;display:grid;gap:6px;font-size:14px;line-height:1.4}
+/* planificateur plein écran */
+#plan-full{position:fixed;inset:0;z-index:25;display:none;flex-direction:column;background:var(--bg);padding-bottom:env(safe-area-inset-bottom,0px)}
+#plan-full .pf-bar{flex:0 0 auto;display:flex;align-items:flex-end;height:calc(44px + env(safe-area-inset-top,0px));padding:0 6px;border-bottom:1px solid var(--line)}
+#plan-full .pf-back{width:44px;height:44px;display:grid;place-items:center;border:0;background:transparent;color:var(--ink);cursor:pointer;border-radius:50%}
+#plan-full .pf-back:active{background:var(--surface2)}
+#plan-full .pf-back svg{width:24px;height:24px}
+#plan-full iframe{flex:1 1 auto;width:100%;min-height:0;border:0;background:transparent;color-scheme:normal}
+html[data-plan],html[data-plan] body{overflow:hidden}
+/* charge de la séance (planificateur) rappelée dans Entrer un WOD */
+.ld0{--ldc:var(--ok)}.ld1{--ldc:#E8B923}.ld2{--ldc:#F28C28}.ld3{--ldc:var(--danger)}
+.ld-g{display:inline-flex;gap:2px}.ld-g i{width:14px;height:8px;border-radius:2px;background:var(--line)}.ld-g i.on{background:var(--ldc)}
+.ld-card{display:grid;gap:4px;padding:10px 12px;border:1px solid var(--line);border-left:6px solid var(--ldc);border-radius:6px;background:var(--surface2)}
+.ld-t{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.ld-h{display:flex;align-items:center;gap:10px}.ld-h b{font-family:var(--f-display);font-size:20px;letter-spacing:.03em;color:var(--ldc)}
+.ld-adv{font-weight:600}.ld-d{font-size:13px;color:var(--muted)}
+.ld-line{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:13px;padding:6px 10px;border-left:4px solid var(--ldc);border-radius:4px;background:var(--surface2)}.ld-line b{color:var(--ldc)}
+.ld-mini{display:flex;align-items:center;gap:8px;margin-top:4px;font-size:12px}.ld-mini b{color:var(--ldc)}
 .empty{border:2px dashed var(--line);border-radius:4px;padding:20px;display:grid;gap:10px;color:var(--muted)}
 
 /* navigation */
@@ -2401,45 +2418,48 @@ czogbWVXLCByb3dzOiBtZSwgZnJlZXplUm93czogMSB9CiAgXTsKfQovKiByZW5mbyA6IHVuZSBsaWdu
 VGV4dChyKSB7CiAgdmFyIHN0ID0gZm10U3RlcChyLnN0ZXAgfHwgJycpLCBjbyA9IFN0cmluZyhyLmNvbnNpZ25lIHx8ICcnKS50cmltKCksIG07CiAgaWYgKHN0KSB7CiAgICB2YXIgbGVhZCA9IC9eXGQrXHMq
 w5dccypcZCsvLnRlc3Qoc3QpOwogICAgcmV0dXJuIChsZWFkID8gc3QgKyAnICcgKyByLm5hbWUgOiByLm5hbWUgKyAnIDogJyArIHN0KSArIChjbyA/ICcgKCcgKyBjbyArICcpJyA6ICcnKTsKICB9CiAgY28g
 PSBmbXRTdGVwKGNvKTsKICBtID0gL14oXGQrXHMqw5dccypcZCsoPzpccyrDoFxzKlxkK1xzKiUpPylccyooLiopJC8uZXhlYyhjbyk7CiAgaWYgKG0pIHJldHVybiBtWzFdICsgJyAnICsgci5uYW1lICsgKG1b
-Ml0gPyAnICgnICsgbVsyXS50cmltKCkgKyAnKScgOiAnJyk7CiAgcmV0dXJuIHIubmFtZSArIChjbyA/ICcgOiAnICsgY28gOiAnJyk7Cn0KZnVuY3Rpb24gYnVpbGRTZW5kKGMsIHgpIHsKICB2YXIgZiA9IGMu
-ZkJ5W3gua2V5XSwgYnMgPSBjLnJCeVt4LmtleV0gfHwgW10sIGxpbmVzID0gW10sIGZvcmNlID0gbnVsbDsKICBpZiAoZiAmJiBmLmlkKSBmb3JjZSA9IHsgbW92ZW1lbnQ6IGYubmFtZSwgdGV4dDogZi5uYW1l
-ICsgKGYuc3RlcCA/ICcgOiAnICsgZm10U3RlcChmLnN0ZXApIDogJycpIH07CiAgYnMuZm9yRWFjaChmdW5jdGlvbiAoYikgewogICAgaWYgKGIuZykgbGluZXMucHVzaCgnU3VwZXJzZXQgJyArIGIuZyArICcg
-KMOgIGVuY2hhw65uZXIpJyk7CiAgICBiLml0ZW1zLmZvckVhY2goZnVuY3Rpb24gKHIpIHsgbGluZXMucHVzaChyZW5mb1RleHQocikpOyB9KTsKICB9KTsKICByZXR1cm4geyBpZDogJ3BsYW4tJyArIHgua2V5
-LCBrZXk6IHgua2V5LCB3OiB4LncsIHM6IHgucywgZGF0ZTogZGF0ZXNNYXAoKVt4LmtleV0gfHwgJycsIHRpdGxlOiBzZXNzVGl0bGUoeCksIGRlbG9hZDogISF4LmRlbG9hZCwgZm9yY2U6IGZvcmNlLCByZW5m
-bzogbGluZXMuam9pbignXG4nKSwgbWV0Y29uOiBzdGF0ZS5tZXRjb25beC5rZXldICE9PSB1bmRlZmluZWQgPyBzdGF0ZS5tZXRjb25beC5rZXldIDogJycsIHRlc3ROYW1lOiB0ZXN0c0F0KHgpLmpvaW4oJyAr
-ICcpLCB0ZXN0OiB0ZXN0c0F0KHgpLmxlbmd0aCA+IDAgfTsKfQpmdW5jdGlvbiBzZW5kU2Vzc2lvbnMoa2V5cykgewogIHZhciBzYXkgPSBmdW5jdGlvbiAodCkgeyB2YXIgZSA9ICQoJyN4bXNnJyk7IGlmIChl
-KSBlLnRleHRDb250ZW50ID0gdDsgfTsKICBpZiAoIUVNQkVEKSB7IHNheSgnTFwnZW52b2kgblwnZXN0IHBvc3NpYmxlIHF1ZSBkZXB1aXMgbFwnYXBwbGkuJyk7IHJldHVybjsgfQogIHZhciBjID0gY29tcCgp
-LCBkbSA9IGRhdGVzTWFwKCk7CiAgaWYgKCFPYmplY3Qua2V5cyhkbSkubGVuZ3RoKSB7IHNheSgnQ2hvaXNpcyBkXCdhYm9yZCBsYSBkYXRlIGRlIGTDqXBhcnQgZGFucyBSw6lnbGFnZXMg4oC6IERhdGVzIGRl
-cyBzw6lhbmNlcy4nKTsgc2V0VGFiKCdzZXR0aW5ncycpOyByZXR1cm47IH0KICB2YXIgbGlzdCA9IGMuc2Vzcy5maWx0ZXIoZnVuY3Rpb24gKHMpIHsgcmV0dXJuICFrZXlzIHx8IGtleXMuaW5kZXhPZihzLmtl
-eSkgPj0gMDsgfSk7CiAgdmFyIGl0ZW1zID0gbGlzdC5tYXAoZnVuY3Rpb24gKHMpIHsgcmV0dXJuIGJ1aWxkU2VuZChjLCBzKTsgfSkuZmlsdGVyKGZ1bmN0aW9uIChpdCkgeyByZXR1cm4gaXQuZm9yY2UgfHwg
-aXQucmVuZm87IH0pOwogIGlmICghaXRlbXMubGVuZ3RoKSB7IHNheSgnUmllbiDDoCBlbnZveWVyIDogY2VzIHPDqWFuY2VzIG5cJ29udCBuaSBmb3JjZSBuaSByZW5mby4nKTsgcmV0dXJuOyB9CiAgcGFyZW50
-LnBvc3RNZXNzYWdlKHsgcGxhbm5lcjogMSwgdHlwZTogJ3NlbmQnLCBpdGVtczogaXRlbXMgfSwgJyonKTsKICBzYXkoaXRlbXMubGVuZ3RoICsgJyBzw6lhbmNlJyArIHBsdXJhbChpdGVtcy5sZW5ndGgsICcn
-LCAncycpICsgJyBlbnZvecOpZScgKyBwbHVyYWwoaXRlbXMubGVuZ3RoLCAnJywgJ3MnKSArICcgdmVycyBFbnRyZXIgdW4gV09EIChlbiBhdHRlbnRlKS4nKTsKfQp3aW5kb3cuYWRkRXZlbnRMaXN0ZW5lcign
-bWVzc2FnZScsIGZ1bmN0aW9uIChlKSB7CiAgdmFyIG0gPSBlLmRhdGE7CiAgaWYgKCFtIHx8IG0ucGxhbm5lciAhPT0gMSB8fCBlLnNvdXJjZSAhPT0gcGFyZW50KSByZXR1cm47CiAgaWYgKG0udHlwZSA9PT0g
-J3N0YXR1cycpIHsgZXh0U3RhdHVzID0gbS5tYXAgfHwge307IGlmIChzdGF0ZS51aS50YWIgPT09ICd0YWJsZScgJiYgIXR5cGluZygpKSByZW5kZXJQYW5lbCgpOyByZW5kZXJNb2RhbCgpOyB9Cn0pOwphc3lu
-YyBmdW5jdGlvbiBleHBvcnRYbHN4KCkgewogIHZhciBzYXkgPSBmdW5jdGlvbiAodCkgeyB2YXIgZSA9ICQoJyN4bXNnJyk7IGlmIChlKSBlLnRleHRDb250ZW50ID0gdDsgfTsKICB0cnkgewogICAgdmFyIGRs
-ID0gKHdpbmRvdy5jbGF1ZGUgJiYgd2luZG93LmNsYXVkZS51c2UpID8gYXdhaXQgd2luZG93LmNsYXVkZS51c2UoJ2Rvd25sb2FkcycpIDogbnVsbDsKICAgIGlmICghZGwpIHsgc2F5KCdMZSB0w6lsw6ljaGFy
-Z2VtZW50IG5cJ2VzdCBwYXMgZGlzcG9uaWJsZSBpY2kuIE91dnJlIGxcJ2FwcGxpIGRlcHVpcyBsZSBsaWVuIGRhbnMgQ2xhdWRlIG91IGRhbnMgdG9uIG5hdmlnYXRldXIuJyk7IHJldHVybjsgfQogICAgdmFy
-IGJ5dGVzID0geGxzeEJ1aWxkKGV4cG9ydFNoZWV0cygpKTsKICAgIGF3YWl0IGRsLnNhdmUoeyBmaWxlbmFtZTogJ3NhaXNvbi1jcm9zc2ZpdC54bHN4JywgZGF0YTogYnl0ZXMgfSk7CiAgICBzYXkoJ0ZpY2hp
-ZXIgRXhjZWwgZW5yZWdpc3Ryw6kuJyk7CiAgfSBjYXRjaCAoZSkgewogICAgc2F5KGUgJiYgZS5jb2RlID09PSAnZGVjbGluZWQnID8gJ0V4cG9ydCBhbm51bMOpLicgOiAnRXhwb3J0IGltcG9zc2libGUnICsg
-KGUgJiYgZS5tZXNzYWdlID8gJyA6ICcgKyBlLm1lc3NhZ2UgOiAnLicpKTsKICB9Cn0KCi8qIC0tLS0tLS0tLS0gZMOpbWFycmFnZSAtLS0tLS0tLS0tICovCmZ1bmN0aW9uIGFwcGx5UmVtb3RlKGQpIHsKICB0
-cnkgewogICAgdmFyIHQwID0gc3RhdGUudWkudGFiOwogICAgYWRvcHQoSlNPTi5wYXJzZShkLmpzb24pKTsgc3RhdGUudWkudGFiID0gdDA7IGNsYW1wU2V0dGluZ3MoKTsKICAgIGxhc3RUID0gZC50IHx8IDA7
-CiAgICB0cnkgeyBsb2NhbFN0b3JhZ2Uuc2V0SXRlbShLRVksIEpTT04uc3RyaW5naWZ5KHsgdDogbGFzdFQsIHN0YXRlOiBzdGF0ZSB9KSk7IH0gY2F0Y2ggKGUpIHt9CiAgICByZW5kZXJBbGwoKTsgcmVuZGVy
-TW9kYWwoKTsgc2V0U2F2ZSgnU3luY2hyb25pc8OpIGVuIGxpZ25lJyk7CiAgfSBjYXRjaCAoZSkge30KfQpmdW5jdGlvbiB0eXBpbmcoKSB7CiAgdmFyIGEgPSBkb2N1bWVudC5hY3RpdmVFbGVtZW50OwogIHJl
-dHVybiAhIShhICYmIC9eKElOUFVUfFRFWFRBUkVBfFNFTEVDVCkkLy50ZXN0KGEudGFnTmFtZSkpOwp9CihmdW5jdGlvbiBib290KCkgewogIHZhciBsb2NhbFQgPSAwOwogIHRyeSB7IHZhciBiciA9IGxvY2Fs
-U3RvcmFnZS5nZXRJdGVtKEtFWSArICctYmFja3VwJyk7IGlmIChicikgYmFja3VwUmVjID0gSlNPTi5wYXJzZShicik7IH0gY2F0Y2ggKGUpIHt9CiAgdHJ5IHsKICAgIHZhciByYXcgPSBsb2NhbFN0b3JhZ2Uu
-Z2V0SXRlbShLRVkpOwogICAgaWYgKHJhdykgeyB2YXIgcCA9IEpTT04ucGFyc2UocmF3KTsgaWYgKHAgJiYgcC5zdGF0ZSAmJiBwLnN0YXRlLnNldHRpbmdzKSB7IGFkb3B0KHAuc3RhdGUpOyBsb2NhbFQgPSBw
-LnQgfHwgMDsgfSB9CiAgfSBjYXRjaCAoZSkge30KICBsYXN0VCA9IGxvY2FsVDsKICBjbGFtcFNldHRpbmdzKCk7CiAgcmVuZGVyQWxsKCk7CiAgc2V0U2F2ZShsb2NhbFQgPyAnQ29ubmV4aW9uIGVuIGxpZ25l
-4oCmJyA6ICdDb25uZXhpb24gZW4gbGlnbmXigKYnKTsKICBpZiAod2luZG93LmNsYXVkZSAmJiB3aW5kb3cuY2xhdWRlLnVzZSkgewogICAgd2luZG93LmNsYXVkZS51c2UoJ2RiJykudGhlbihmdW5jdGlvbiAo
-ZGIpIHsKICAgICAgaWYgKCFkYikgeyBzZXRTYXZlKCdTdXIgY2V0IGFwcGFyZWlsIHNldWxlbWVudCcpOyByZXR1cm47IH0KICAgICAgdmFyIGRvYyA9IGRiLmRvYygnc2Fpc29uL2V0YXQnKSwgZmlyc3QgPSB0
-cnVlOwogICAgICBkYlJvb3QgPSBkYjsKICAgICAgZGIuZG9jKCdzYWlzb24vc2F1dmVnYXJkZScpLmdldCgpLnRoZW4oZnVuY3Rpb24gKHNuKSB7CiAgICAgICAgdmFyIGQgPSBzbi5leGlzdHMgPyBzbi5kYXRh
-KCkgOiBudWxsOwogICAgICAgIGlmIChkICYmIGQuanNvbiAmJiAoIWJhY2t1cFJlYyB8fCAoZC50IHx8IDApID4gYmFja3VwUmVjLnQpKSB7IGJhY2t1cFJlYyA9IGQ7IGlmIChzdGF0ZS51aS50YWIgPT09ICdz
-ZXR0aW5ncycpIHJlbmRlclBhbmVsKCk7IH0KICAgICAgfSwgZnVuY3Rpb24gKCkge30pOwogICAgICBkb2Mub25TbmFwc2hvdChmdW5jdGlvbiAoc25hcCkgewogICAgICAgIHZhciBkID0gc25hcC5leGlzdHMg
-PyBzbmFwLmRhdGEoKSA6IG51bGwsIGR0ID0gKGQgJiYgZC50KSB8fCAwOwogICAgICAgIGlmIChmaXJzdCkgewogICAgICAgICAgZmlyc3QgPSBmYWxzZTsgZGJEb2MgPSBkb2M7CiAgICAgICAgICBpZiAoZCAm
-JiBkLmpzb24gJiYgZHQgPiBsb2NhbFQpIGFwcGx5UmVtb3RlKGQpOwogICAgICAgICAgZWxzZSBpZiAobG9jYWxUID4gZHQpIHBlcnNpc3QoKTsKICAgICAgICAgIGVsc2Ugc2V0U2F2ZSgnU3luY2hyb25pc8Op
-IGVuIGxpZ25lJyk7CiAgICAgICAgICByZXR1cm47CiAgICAgICAgfQogICAgICAgIGlmIChkICYmIGQuanNvbiAmJiBkdCA+IGxhc3RUICYmICFzYXZlVGltZXIgJiYgIXdyaXRpbmcgJiYgIXR5cGluZygpKSBh
-cHBseVJlbW90ZShkKTsKICAgICAgfSwgZnVuY3Rpb24gKCkgeyBkYkRvYyA9IG51bGw7IHNldFNhdmUoJ1N1ciBjZXQgYXBwYXJlaWwgc2V1bGVtZW50Jyk7IH0pOwogICAgfSwgZnVuY3Rpb24gKCkgeyBzZXRT
-YXZlKCdTdXIgY2V0IGFwcGFyZWlsIHNldWxlbWVudCcpOyB9KTsKICB9IGVsc2Ugc2V0U2F2ZSgnU3VyIGNldCBhcHBhcmVpbCBzZXVsZW1lbnQnKTsKfSkoKTsKCjwvc2NyaXB0PgoKPC9ib2R5PjwvaHRtbD4K
+Ml0gPyAnICgnICsgbVsyXS50cmltKCkgKyAnKScgOiAnJyk7CiAgcmV0dXJuIHIubmFtZSArIChjbyA/ICcgOiAnICsgY28gOiAnJyk7Cn0KLyogY2hhcmdlIGVzdGltw6llIGRlIGxhIHPDqWFuY2UgYXZhbnQg
+bGUgbWV0Y29uLCBqb2ludGUgw6AgbCdlbnZvaSB2ZXJzIMKrIEVudHJlciB1biBXT0QgwrsgKi8KZnVuY3Rpb24gbG9hZFNlbmQobCkgewogIGlmICghbCkgcmV0dXJuIG51bGw7CiAgdmFyIHIxID0gZnVuY3Rp
+b24gKG4pIHsgcmV0dXJuIE1hdGgucm91bmQobiAqIDEwKSAvIDEwOyB9OwogIHJldHVybiB7IGx2OiBsLmx2LCBsYWJlbDogTFZfTEFCRUxTW2wubHZdLCBhZHZpY2U6IExWX0FEVklDRVtsLmx2XSwgcHJlOiBy
+MShsLnByZSksIGY6IHIxKGwuZiksIHI6IHIxKGwucikgfTsKfQpmdW5jdGlvbiBidWlsZFNlbmQoYywgeCkgewogIHZhciBmID0gYy5mQnlbeC5rZXldLCBicyA9IGMuckJ5W3gua2V5XSB8fCBbXSwgbGluZXMg
+PSBbXSwgZm9yY2UgPSBudWxsOwogIGlmIChmICYmIGYuaWQpIGZvcmNlID0geyBtb3ZlbWVudDogZi5uYW1lLCB0ZXh0OiBmLm5hbWUgKyAoZi5zdGVwID8gJyA6ICcgKyBmbXRTdGVwKGYuc3RlcCkgOiAnJykg
+fTsKICBicy5mb3JFYWNoKGZ1bmN0aW9uIChiKSB7CiAgICBpZiAoYi5nKSBsaW5lcy5wdXNoKCdTdXBlcnNldCAnICsgYi5nICsgJyAow6AgZW5jaGHDrm5lciknKTsKICAgIGIuaXRlbXMuZm9yRWFjaChmdW5j
+dGlvbiAocikgeyBsaW5lcy5wdXNoKHJlbmZvVGV4dChyKSk7IH0pOwogIH0pOwogIHJldHVybiB7IGlkOiAncGxhbi0nICsgeC5rZXksIGtleTogeC5rZXksIHc6IHgudywgczogeC5zLCBkYXRlOiBkYXRlc01h
+cCgpW3gua2V5XSB8fCAnJywgdGl0bGU6IHNlc3NUaXRsZSh4KSwgZGVsb2FkOiAhIXguZGVsb2FkLCBmb3JjZTogZm9yY2UsIHJlbmZvOiBsaW5lcy5qb2luKCdcbicpLCBtZXRjb246IHN0YXRlLm1ldGNvblt4
+LmtleV0gIT09IHVuZGVmaW5lZCA/IHN0YXRlLm1ldGNvblt4LmtleV0gOiAnJywgdGVzdE5hbWU6IHRlc3RzQXQoeCkuam9pbignICsgJyksIHRlc3Q6IHRlc3RzQXQoeCkubGVuZ3RoID4gMCwgbG9hZDogbG9h
+ZFNlbmQoYy5sb2FkICYmIGMubG9hZFt4LmtleV0pIH07Cn0KZnVuY3Rpb24gc2VuZFNlc3Npb25zKGtleXMpIHsKICB2YXIgc2F5ID0gZnVuY3Rpb24gKHQpIHsgdmFyIGUgPSAkKCcjeG1zZycpOyBpZiAoZSkg
+ZS50ZXh0Q29udGVudCA9IHQ7IH07CiAgaWYgKCFFTUJFRCkgeyBzYXkoJ0xcJ2Vudm9pIG5cJ2VzdCBwb3NzaWJsZSBxdWUgZGVwdWlzIGxcJ2FwcGxpLicpOyByZXR1cm47IH0KICB2YXIgYyA9IGNvbXAoKSwg
+ZG0gPSBkYXRlc01hcCgpOwogIGlmICghT2JqZWN0LmtleXMoZG0pLmxlbmd0aCkgeyBzYXkoJ0Nob2lzaXMgZFwnYWJvcmQgbGEgZGF0ZSBkZSBkw6lwYXJ0IGRhbnMgUsOpZ2xhZ2VzIOKAuiBEYXRlcyBkZXMg
+c8OpYW5jZXMuJyk7IHNldFRhYignc2V0dGluZ3MnKTsgcmV0dXJuOyB9CiAgdmFyIGxpc3QgPSBjLnNlc3MuZmlsdGVyKGZ1bmN0aW9uIChzKSB7IHJldHVybiAha2V5cyB8fCBrZXlzLmluZGV4T2Yocy5rZXkp
+ID49IDA7IH0pOwogIHZhciBpdGVtcyA9IGxpc3QubWFwKGZ1bmN0aW9uIChzKSB7IHJldHVybiBidWlsZFNlbmQoYywgcyk7IH0pLmZpbHRlcihmdW5jdGlvbiAoaXQpIHsgcmV0dXJuIGl0LmZvcmNlIHx8IGl0
+LnJlbmZvOyB9KTsKICBpZiAoIWl0ZW1zLmxlbmd0aCkgeyBzYXkoJ1JpZW4gw6AgZW52b3llciA6IGNlcyBzw6lhbmNlcyBuXCdvbnQgbmkgZm9yY2UgbmkgcmVuZm8uJyk7IHJldHVybjsgfQogIHBhcmVudC5w
+b3N0TWVzc2FnZSh7IHBsYW5uZXI6IDEsIHR5cGU6ICdzZW5kJywgaXRlbXM6IGl0ZW1zIH0sICcqJyk7CiAgc2F5KGl0ZW1zLmxlbmd0aCArICcgc8OpYW5jZScgKyBwbHVyYWwoaXRlbXMubGVuZ3RoLCAnJywg
+J3MnKSArICcgZW52b3nDqWUnICsgcGx1cmFsKGl0ZW1zLmxlbmd0aCwgJycsICdzJykgKyAnIHZlcnMgRW50cmVyIHVuIFdPRCAoZW4gYXR0ZW50ZSkuJyk7Cn0Kd2luZG93LmFkZEV2ZW50TGlzdGVuZXIoJ21l
+c3NhZ2UnLCBmdW5jdGlvbiAoZSkgewogIHZhciBtID0gZS5kYXRhOwogIGlmICghbSB8fCBtLnBsYW5uZXIgIT09IDEgfHwgZS5zb3VyY2UgIT09IHBhcmVudCkgcmV0dXJuOwogIGlmIChtLnR5cGUgPT09ICdz
+dGF0dXMnKSB7IGV4dFN0YXR1cyA9IG0ubWFwIHx8IHt9OyBpZiAoc3RhdGUudWkudGFiID09PSAndGFibGUnICYmICF0eXBpbmcoKSkgcmVuZGVyUGFuZWwoKTsgcmVuZGVyTW9kYWwoKTsgfQp9KTsKYXN5bmMg
+ZnVuY3Rpb24gZXhwb3J0WGxzeCgpIHsKICB2YXIgc2F5ID0gZnVuY3Rpb24gKHQpIHsgdmFyIGUgPSAkKCcjeG1zZycpOyBpZiAoZSkgZS50ZXh0Q29udGVudCA9IHQ7IH07CiAgdHJ5IHsKICAgIHZhciBkbCA9
+ICh3aW5kb3cuY2xhdWRlICYmIHdpbmRvdy5jbGF1ZGUudXNlKSA/IGF3YWl0IHdpbmRvdy5jbGF1ZGUudXNlKCdkb3dubG9hZHMnKSA6IG51bGw7CiAgICBpZiAoIWRsKSB7IHNheSgnTGUgdMOpbMOpY2hhcmdl
+bWVudCBuXCdlc3QgcGFzIGRpc3BvbmlibGUgaWNpLiBPdXZyZSBsXCdhcHBsaSBkZXB1aXMgbGUgbGllbiBkYW5zIENsYXVkZSBvdSBkYW5zIHRvbiBuYXZpZ2F0ZXVyLicpOyByZXR1cm47IH0KICAgIHZhciBi
+eXRlcyA9IHhsc3hCdWlsZChleHBvcnRTaGVldHMoKSk7CiAgICBhd2FpdCBkbC5zYXZlKHsgZmlsZW5hbWU6ICdzYWlzb24tY3Jvc3NmaXQueGxzeCcsIGRhdGE6IGJ5dGVzIH0pOwogICAgc2F5KCdGaWNoaWVy
+IEV4Y2VsIGVucmVnaXN0csOpLicpOwogIH0gY2F0Y2ggKGUpIHsKICAgIHNheShlICYmIGUuY29kZSA9PT0gJ2RlY2xpbmVkJyA/ICdFeHBvcnQgYW5udWzDqS4nIDogJ0V4cG9ydCBpbXBvc3NpYmxlJyArIChl
+ICYmIGUubWVzc2FnZSA/ICcgOiAnICsgZS5tZXNzYWdlIDogJy4nKSk7CiAgfQp9CgovKiAtLS0tLS0tLS0tIGTDqW1hcnJhZ2UgLS0tLS0tLS0tLSAqLwpmdW5jdGlvbiBhcHBseVJlbW90ZShkKSB7CiAgdHJ5
+IHsKICAgIHZhciB0MCA9IHN0YXRlLnVpLnRhYjsKICAgIGFkb3B0KEpTT04ucGFyc2UoZC5qc29uKSk7IHN0YXRlLnVpLnRhYiA9IHQwOyBjbGFtcFNldHRpbmdzKCk7CiAgICBsYXN0VCA9IGQudCB8fCAwOwog
+ICAgdHJ5IHsgbG9jYWxTdG9yYWdlLnNldEl0ZW0oS0VZLCBKU09OLnN0cmluZ2lmeSh7IHQ6IGxhc3RULCBzdGF0ZTogc3RhdGUgfSkpOyB9IGNhdGNoIChlKSB7fQogICAgcmVuZGVyQWxsKCk7IHJlbmRlck1v
+ZGFsKCk7IHNldFNhdmUoJ1N5bmNocm9uaXPDqSBlbiBsaWduZScpOwogIH0gY2F0Y2ggKGUpIHt9Cn0KZnVuY3Rpb24gdHlwaW5nKCkgewogIHZhciBhID0gZG9jdW1lbnQuYWN0aXZlRWxlbWVudDsKICByZXR1
+cm4gISEoYSAmJiAvXihJTlBVVHxURVhUQVJFQXxTRUxFQ1QpJC8udGVzdChhLnRhZ05hbWUpKTsKfQooZnVuY3Rpb24gYm9vdCgpIHsKICB2YXIgbG9jYWxUID0gMDsKICB0cnkgeyB2YXIgYnIgPSBsb2NhbFN0
+b3JhZ2UuZ2V0SXRlbShLRVkgKyAnLWJhY2t1cCcpOyBpZiAoYnIpIGJhY2t1cFJlYyA9IEpTT04ucGFyc2UoYnIpOyB9IGNhdGNoIChlKSB7fQogIHRyeSB7CiAgICB2YXIgcmF3ID0gbG9jYWxTdG9yYWdlLmdl
+dEl0ZW0oS0VZKTsKICAgIGlmIChyYXcpIHsgdmFyIHAgPSBKU09OLnBhcnNlKHJhdyk7IGlmIChwICYmIHAuc3RhdGUgJiYgcC5zdGF0ZS5zZXR0aW5ncykgeyBhZG9wdChwLnN0YXRlKTsgbG9jYWxUID0gcC50
+IHx8IDA7IH0gfQogIH0gY2F0Y2ggKGUpIHt9CiAgbGFzdFQgPSBsb2NhbFQ7CiAgY2xhbXBTZXR0aW5ncygpOwogIHJlbmRlckFsbCgpOwogIHNldFNhdmUobG9jYWxUID8gJ0Nvbm5leGlvbiBlbiBsaWduZeKA
+picgOiAnQ29ubmV4aW9uIGVuIGxpZ25l4oCmJyk7CiAgaWYgKHdpbmRvdy5jbGF1ZGUgJiYgd2luZG93LmNsYXVkZS51c2UpIHsKICAgIHdpbmRvdy5jbGF1ZGUudXNlKCdkYicpLnRoZW4oZnVuY3Rpb24gKGRi
+KSB7CiAgICAgIGlmICghZGIpIHsgc2V0U2F2ZSgnU3VyIGNldCBhcHBhcmVpbCBzZXVsZW1lbnQnKTsgcmV0dXJuOyB9CiAgICAgIHZhciBkb2MgPSBkYi5kb2MoJ3NhaXNvbi9ldGF0JyksIGZpcnN0ID0gdHJ1
+ZTsKICAgICAgZGJSb290ID0gZGI7CiAgICAgIGRiLmRvYygnc2Fpc29uL3NhdXZlZ2FyZGUnKS5nZXQoKS50aGVuKGZ1bmN0aW9uIChzbikgewogICAgICAgIHZhciBkID0gc24uZXhpc3RzID8gc24uZGF0YSgp
+IDogbnVsbDsKICAgICAgICBpZiAoZCAmJiBkLmpzb24gJiYgKCFiYWNrdXBSZWMgfHwgKGQudCB8fCAwKSA+IGJhY2t1cFJlYy50KSkgeyBiYWNrdXBSZWMgPSBkOyBpZiAoc3RhdGUudWkudGFiID09PSAnc2V0
+dGluZ3MnKSByZW5kZXJQYW5lbCgpOyB9CiAgICAgIH0sIGZ1bmN0aW9uICgpIHt9KTsKICAgICAgZG9jLm9uU25hcHNob3QoZnVuY3Rpb24gKHNuYXApIHsKICAgICAgICB2YXIgZCA9IHNuYXAuZXhpc3RzID8g
+c25hcC5kYXRhKCkgOiBudWxsLCBkdCA9IChkICYmIGQudCkgfHwgMDsKICAgICAgICBpZiAoZmlyc3QpIHsKICAgICAgICAgIGZpcnN0ID0gZmFsc2U7IGRiRG9jID0gZG9jOwogICAgICAgICAgaWYgKGQgJiYg
+ZC5qc29uICYmIGR0ID4gbG9jYWxUKSBhcHBseVJlbW90ZShkKTsKICAgICAgICAgIGVsc2UgaWYgKGxvY2FsVCA+IGR0KSBwZXJzaXN0KCk7CiAgICAgICAgICBlbHNlIHNldFNhdmUoJ1N5bmNocm9uaXPDqSBl
+biBsaWduZScpOwogICAgICAgICAgcmV0dXJuOwogICAgICAgIH0KICAgICAgICBpZiAoZCAmJiBkLmpzb24gJiYgZHQgPiBsYXN0VCAmJiAhc2F2ZVRpbWVyICYmICF3cml0aW5nICYmICF0eXBpbmcoKSkgYXBw
+bHlSZW1vdGUoZCk7CiAgICAgIH0sIGZ1bmN0aW9uICgpIHsgZGJEb2MgPSBudWxsOyBzZXRTYXZlKCdTdXIgY2V0IGFwcGFyZWlsIHNldWxlbWVudCcpOyB9KTsKICAgIH0sIGZ1bmN0aW9uICgpIHsgc2V0U2F2
+ZSgnU3VyIGNldCBhcHBhcmVpbCBzZXVsZW1lbnQnKTsgfSk7CiAgfSBlbHNlIHNldFNhdmUoJ1N1ciBjZXQgYXBwYXJlaWwgc2V1bGVtZW50Jyk7Cn0pKCk7Cgo8L3NjcmlwdD4KCjwvYm9keT48L2h0bWw+Cg==
 </script>
 <script type="module">
 /* Le SDK Firebase est chargé en dynamique : la page s'affiche tout de suite, même si le réseau est lent.
@@ -2494,7 +2514,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-24.66';
+const APP_VERSION='2026-10-24.67';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -3770,7 +3790,7 @@ const TAB_ICO={feed:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" 
  today:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8.5 9V8a3.5 3.5 0 0 1 7 0v1"/><circle cx="12" cy="14.5" r="5.5"/></svg>',
  board:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 4h9v5a4.5 4.5 0 0 1-9 0z"/><path d="M7.5 6h-3c0 3 1.2 4.6 3.2 5M16.5 6h3c0 3-1.2 4.6-3.2 5M12 13.8V17M8.5 20h7M9.8 17h4.4"/></svg>'};
 function render(){
-  if(planFrame)planFrame.style.display='none';
+  planHide();
   pending=false;S._un=null;S._aw=null;S._ob=null;applyTheme();if(document.body.dataset.tab!==(S.tab||''))document.body.dataset.tab=S.tab||'';document.body.classList.remove('modal-open');document.body.classList.remove('board-lock');
   {const tp=document.querySelector('.top');if(tp)document.documentElement.style.setProperty('--toph',tp.offsetHeight+'px');}
   if(!S.uid){
@@ -8910,7 +8930,7 @@ function rivalryCoach(){
    et pend = séances envoyées, en attente de publication : {id:{id,key,date,title,deload,at,json}} (json = brouillon de séance, comme S.coach.wod).
    Rien n'est publié tant que le coach ne l'a pas fait lui-même dans « Entrer un WOD ». */
 const PLAN_SEED={"t": 1792789783200, "json": "{\"v\":4,\"example\":false,\"nextColor\":36,\"ui\":{\"tab\":\"table\",\"keepFocus\":true},\"settings\":{\"weeks\":12,\"perWeek\":3,\"deload\":11,\"renfoPer\":2,\"tests\":[{\"id\":\"t1\",\"name\":\"Test 1\",\"w\":1,\"s\":1,\"rs\":1},{\"id\":\"t2\",\"name\":\"Test 2\",\"w\":1,\"s\":2,\"rs\":2},{\"id\":\"x5xkne\",\"name\":\"Test 3\",\"w\":1,\"s\":3,\"rs\":3}]},\"methods\":[{\"id\":\"m1\",\"name\":\"Vagues de volume\",\"text\":\"3x3 à 85%, 4x3 à 85%, 5x3 à 85%, 3x4 à 85%, 4x4 à 85%, 5x4 à 85%, 3x5 à 85%, 4x5 à 85%, 5x5 à 85%\",\"loop\":false,\"note\":\"Trois vagues : 3, 4 puis 5 séries, avec 3, 4 puis 5 répétitions. Pour ajouter une vague, écris 3x6, 4x6, 5x6 à la suite.\"},{\"id\":\"m2\",\"name\":\"Séries lourdes\",\"text\":\"4x5 à 75%, 4x4 à 80%, 4x3 à 85%, 3x2 à 90%, 3x1 à 95%\",\"loop\":false,\"note\":\"Les répétitions baissent pendant que la charge monte, jusqu'à un lourd.\"},{\"id\":\"p531\",\"name\":\"5/3/1 Wendler\",\"text\":\"3x5 à 65-75-85 %, 3x3 à 70-80-90 %, 5/3/1 à 75-85-95 %, 3x5 à 40-50-60 %\",\"loop\":true,\"note\":\"Cycle classique de 4 passages dont un allégé. Il se répète tant que la saison continue.\"},{\"id\":\"pw3\",\"name\":\"Wendler 3 phases\",\"text\":\"P1 · max reps à 75 % (TM 90 %), P1 · max reps à 85 % (TM 90 %), P1 · max reps à 95 % (TM 90 %), P2 · max reps à 75 % (TM 92-95 %), P2 · max reps à 85 % (TM 92-95 %), P2 · max reps à 95 % (TM 92-95 %), P3 · max reps à 75 % (TM 94-100 %), P3 · max reps à 85 % (TM 94-100 %), P3 · max reps à 95 % (TM 94-100 %)\",\"loop\":false,\"note\":\"Une seule série à fond par séance. Trois phases de trois séances à 75, 85 puis 95 % du TM. Le TM (training max) vaut 90 % du 1RM en phase 1, 92 à 95 % en phase 2, 94 à 100 % en phase 3.\"},{\"id\":\"prampe\",\"name\":\"Rampe vers un max\",\"text\":\"5x3 à 75 %, 4x2 à 82 %, 3x1 à 90 %, 1x1 à 95 %\",\"loop\":false,\"note\":\"Monte doucement vers une barre très lourde. À placer en fin de saison.\"},{\"id\":\"p5x5\",\"name\":\"5x5 progressif\",\"text\":\"5x5 à 70 %, 5x5 à 73 %, 5x5 à 75 %, 5x5 à 78 %, 5x5 à 80 %\",\"loop\":false,\"note\":\"Même volume à chaque passage, seule la charge augmente. Simple et efficace.\"},{\"id\":\"ptop\",\"name\":\"Top set + back-off\",\"text\":\"1x5 lourd + 3x5 back-off -10 %, 1x3 lourd + 3x4 back-off -10 %, 1x2 lourd + 3x3 back-off -10 %, 1x1 lourd + 3x3 back-off -10 %\",\"loop\":false,\"note\":\"Une série lourde, puis des séries à -10 % pour garder du volume.\"},{\"id\":\"ppause\",\"name\":\"Pause en bas\",\"text\":\"4x4 à 70 % pause 2 s, 5x3 à 75 % pause 2 s, 4x3 à 78 % pause 3 s, 3x3 à 80 % pause 3 s\",\"loop\":false,\"note\":\"Marque une pause dans la position basse. Renforce la sortie de trou au squat et à l'épaulé.\"},{\"id\":\"ptempo\",\"name\":\"Tempo et excentrique\",\"text\":\"4x5 tempo 4-0-1, 5x5 tempo 4-0-1, 4x4 tempo 5-0-1, 5x4 tempo 5-0-1\",\"loop\":false,\"note\":\"Descente lente. Travail de contrôle avec des charges plus légères.\"},{\"id\":\"pvit\",\"name\":\"Vitesse\",\"text\":\"8x2 à 60 %, 8x2 à 65 %, 10x2 à 60 %, 6x2 à 70 %\",\"loop\":false,\"note\":\"Barre rapide, peu de fatigue. Pour les mouvements explosifs.\"},{\"id\":\"pclu\",\"name\":\"Clusters\",\"text\":\"4x3 en clusters 1+1+1, 5x3 en clusters 1+1+1, 4x4 en clusters 2+2, 5x3 en clusters 1+2\",\"loop\":false,\"note\":\"Séries coupées par 15 à 20 s de repos : plus de charge à répétitions égales.\"},{\"id\":\"ppyr\",\"name\":\"Pyramide\",\"text\":\"5 séries 10-8-6-4-2 à 55-65-70-75-80 %, 5 séries 8-6-4-2-1 à 60-70-75-82-88 %, 5 séries 6-4-2-1-1 à 65-75-82-90-92 %\",\"loop\":false,\"note\":\"Les répétitions baissent série après série. Court cycle de trois passages.\"},{\"id\":\"pemom\",\"name\":\"EMOM de force\",\"text\":\"8x2 EMOM à 75 %, 10x2 EMOM à 75 %, 10x2 EMOM à 75 %, 12x2 EMOM à 75 %\",\"loop\":true,\"note\":\"Deux répétitions chaque minute. Travaille la qualité sous fatigue légère.\"},{\"id\":\"a48bcn\",\"name\":\"Cluster 6\",\"text\":\"3x2+2+2 à 85%, 3x3+3 à 85%, 3x4+2 à 85%, 3x5+1 à 85%, 3x6 à 85%\",\"loop\":true,\"note\":\"\"},{\"id\":\"g2u7ax\",\"name\":\"3x5 progressif\",\"text\":\"3x5 à 75%, 3x5 à 78%, 3x5 à 81%, 3x5 à 84%, 3x5 à 87%\",\"loop\":true,\"note\":\"\"},{\"id\":\"e5orwj\",\"name\":\"méthode constante \",\"text\":\"3x3 à 85%, 3x4 à 85%, 3x5 à 85%, 3x6 à 85%\",\"loop\":true,\"note\":\"\"},{\"id\":\"6ne9e3\",\"name\":\"vagues de volume tractions\",\"text\":\"3x3 à 90%, 4x3 à 90%, 5x3 à 90%, 3x4 à 90%, 4x4 à 90%, 5x4 à 90%, 3x5 à 90%, 4x5 à 90%, 5x5 à 90% \",\"loop\":false,\"note\":\"\"}],\"force\":[{\"id\":\"rlthq6\",\"name\":\"Shoulder press\",\"count\":9,\"methodId\":\"pw3\",\"cost\":1,\"c\":29,\"avoid\":[\"ypvgfd\"]},{\"id\":\"i9tegq\",\"name\":\"Tractions lestées\",\"count\":9,\"methodId\":\"6ne9e3\",\"cost\":1.3,\"c\":30,\"avoid\":[\"8cc7w4\"]},{\"id\":\"k59dhi\",\"name\":\"Bench press\",\"count\":5,\"methodId\":\"g2u7ax\",\"cost\":1.3,\"c\":31,\"avoid\":[\"ypvgfd\",\"7zu9zu\"]},{\"id\":\"ll9e07\",\"name\":\"Squats\",\"count\":5,\"methodId\":\"a48bcn\",\"cost\":1.3,\"c\":32,\"avoid\":[\"dfvckm\",\"nieueh\"]},{\"id\":\"ajmtvr\",\"name\":\"Soulevé de terre\",\"count\":5,\"methodId\":\"m2\",\"cost\":1.3,\"c\":33,\"avoid\":[\"9zj9wd\",\"ypvgfd\"]}],\"renfo\":[{\"id\":\"dfvckm\",\"name\":\"fentes\",\"count\":6,\"consigne\":\"\",\"methodId\":null,\"tt\":[\"t1\"],\"ss\":\"A\",\"c\":17,\"rmin\":10,\"rmax\":20,\"rsets\":3,\"prog\":\"wave\"},{\"id\":\"9t0q3g\",\"name\":\"course à pied\",\"count\":6,\"consigne\":\"\",\"methodId\":null,\"tt\":[\"t1\"],\"ss\":\"A\",\"c\":16,\"rmin\":0,\"rmax\":0,\"rsets\":3,\"prog\":\"lin\"},{\"id\":\"gv64qe\",\"name\":\"burpees\",\"count\":6,\"consigne\":\"\",\"methodId\":null,\"tt\":[\"t1\"],\"ss\":\"A\",\"c\":18,\"rmin\":0,\"rmax\":0,\"rsets\":3,\"prog\":\"lin\"},{\"id\":\"hceen3\",\"name\":\"single under\",\"count\":6,\"consigne\":\"\",\"methodId\":null,\"tt\":[\"t2\"],\"ss\":\"B\",\"c\":19,\"rmin\":0,\"rmax\":0,\"rsets\":3,\"prog\":\"lin\"},{\"id\":\"ypvgfd\",\"name\":\"push press\",\"count\":6,\"consigne\":\"\",\"methodId\":null,\"tt\":[\"t2\"],\"ss\":\"B\",\"c\":20,\"rmin\":0,\"rmax\":0,\"rsets\":3,\"prog\":\"lin\"},{\"id\":\"s9nws9\",\"name\":\"abdo poulie\",\"count\":6,\"consigne\":\"\",\"methodId\":null,\"tt\":[],\"ss\":\"\",\"c\":21,\"rmin\":0,\"rmax\":0,\"rsets\":3,\"prog\":\"lin\"},{\"id\":\"2of8uz\",\"name\":\"side bend\",\"count\":6,\"consigne\":\"\",\"methodId\":null,\"tt\":[],\"ss\":\"\",\"c\":22,\"rmin\":0,\"rmax\":0,\"rsets\":3,\"prog\":\"lin\"},{\"id\":\"7zu9zu\",\"name\":\"pompes\",\"count\":6,\"consigne\":\"\",\"methodId\":null,\"tt\":[\"x5xkne\"],\"ss\":\"C\",\"c\":23,\"rmin\":0,\"rmax\":0,\"rsets\":3,\"prog\":\"lin\"},{\"id\":\"8cc7w4\",\"name\":\"tractions\",\"count\":6,\"consigne\":\"\",\"methodId\":null,\"tt\":[\"x5xkne\"],\"ss\":\"C\",\"c\":24,\"rmin\":0,\"rmax\":0,\"rsets\":3,\"prog\":\"lin\"},{\"id\":\"9zj9wd\",\"name\":\"dumbell snatch\",\"count\":6,\"consigne\":\"\",\"methodId\":null,\"tt\":[\"x5xkne\"],\"ss\":\"C\",\"c\":25,\"rmin\":0,\"rmax\":0,\"rsets\":3,\"prog\":\"lin\"},{\"id\":\"wejo9b\",\"name\":\"Gainage\",\"count\":6,\"consigne\":\"\",\"methodId\":null,\"tt\":[],\"ss\":\"\",\"c\":26,\"rmin\":0,\"rmax\":0,\"rsets\":3,\"prog\":\"lin\"},{\"id\":\"nieueh\",\"name\":\"squats\",\"count\":4,\"consigne\":\"\",\"methodId\":null,\"tt\":[],\"ss\":\"\",\"c\":27,\"rmin\":0,\"rmax\":0,\"rsets\":3,\"prog\":\"lin\"}],\"pins\":{},\"metcon\":{},\"mlv\":{}}"};
-let planFrame=null,planReady=false,planKnownT=0,planSaveT=null,planStatusSent='',planLookSent='';
+let planFrame=null,planWrap=null,planReady=false,planKnownT=0,planSaveT=null,planStatusSent='',planLookSent='';
 const planPost=m=>{try{if(planFrame&&planFrame.contentWindow)planFrame.contentWindow.postMessage(Object.assign({planner:1},m),'*');}catch(e){}};
 const planDoc=p=>{const pl=(S.prof&&S.prof.plan)||{};return p==='saison/etat'?(pl.etat||PLAN_SEED):(pl.sauv||null);};
 const planSrc=()=>{const b=atob(document.getElementById('plan-src').textContent.replace(/\s+/g,'')),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return new TextDecoder().decode(u);};
@@ -8932,23 +8952,32 @@ function planSendStatus(force){
   if(!force&&j===planStatusSent)return;
   planStatusSent=j;planPost({type:'status',map:m});
 }
+/* plein écran : l'iframe vit dans #plan-full (fixe, au-dessus de la barre d'onglets et de l'en-tête de l'appli) avec une seule flèche de retour ;
+   il n'est jamais recréé ni déplacé, donc il garde son état entre deux affichages */
 function planEnsure(){
   if(planFrame)return planFrame;
+  planWrap=h('div',{id:'plan-full',role:'region','aria-label':'Planificateur de saison'});
+  const back=h('button',{type:'button',class:'pf-back',id:'plan-back','aria-label':'Retour au menu Coach',onclick:planBack});
+  back.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
+  planWrap.append(h('div',{class:'pf-bar'},back));
   planFrame=document.createElement('iframe');
   planFrame.id='plan-frame';planFrame.title='Planificateur de saison';
-  Object.assign(planFrame.style,{position:'fixed',border:'0',display:'none',zIndex:'6',background:'transparent',colorScheme:'normal'});
   planFrame.srcdoc=planSrc();
-  document.body.append(planFrame);
+  planWrap.append(planFrame);
+  document.body.append(planWrap);
   return planFrame;
 }
-/* l'iframe est posé par-dessus l'emplacement #plan-slot ; il n'est jamais recréé, donc il garde son état entre deux affichages */
+const planBack=()=>{S.coach.view=null;S.entry=null;S.confirm=null;render();window.scrollTo(0,0);};
+function planHide(){
+  if(planWrap)planWrap.style.display='none';
+  document.documentElement.removeAttribute('data-plan');
+}
 function planPlace(){
   const slot=document.getElementById('plan-slot');
-  if(!slot||!S.owner||S.tab!=='coach'||S.coach.view!=='plan'){if(planFrame)planFrame.style.display='none';return;}
-  const f=planEnsure(),tb=document.querySelector('.tabs'),tabH=tb?tb.offsetHeight:0,r=slot.getBoundingClientRect();
-  const top=Math.max(r.top,0),hh=Math.max(320,window.innerHeight-top-tabH-6);
-  slot.style.height=hh+'px';
-  Object.assign(f.style,{display:'block',left:r.left+'px',top:top+'px',width:r.width+'px',height:hh+'px'});
+  if(!slot||!S.owner||S.tab!=='coach'||S.coach.view!=='plan'){planHide();return;}
+  planEnsure();
+  planWrap.style.display='flex';
+  document.documentElement.setAttribute('data-plan','1'); /* bloque le défilement de la page derrière */
   const lk=planLookMsg(),j=JSON.stringify(lk);
   if(planReady&&j!==planLookSent){planLookSent=j;planPost(lk);}
 }
@@ -8972,6 +9001,32 @@ function planSync(){
 }
 const wodHas=d=>!!d&&!!(d.title||d.base||(d.parts||[]).some(p=>(p.content||'').trim()));
 /* séances envoyées par le planificateur : force et renfo préremplis, le metcon reste à écrire ; renvoyer une séance met à jour force et renfo sans toucher au reste */
+/* charge de la séance (envoyée par le planificateur) : niveau 0 à 3, points avant metcon, détail force / renfo, conseil pour le metcon */
+const LOAD_LV=['Légère','Modérée','Lourde','Très lourde'];
+const LOAD_ADV=['Metcon : tu peux pousser fort','Metcon : intensité normale','Metcon : court ou modéré','Metcon : léger, technique'];
+function pendLoad(l,old){
+  if(l&&typeof l==='object'&&Number.isInteger(l.lv)&&l.lv>=0&&l.lv<=3){
+    const n=v=>Math.round((+v||0)*10)/10;
+    return {lv:l.lv,label:String(l.label||'').slice(0,20),advice:String(l.advice||'').slice(0,80),pre:n(l.pre),f:n(l.f),r:n(l.r)};
+  }
+  return (old&&old.load)||null; /* envoi sans charge (ancien planificateur) : on garde celle déjà reçue */
+}
+function loadOfPend(id){
+  const p=id&&pendMap()[id],l=p&&p.load;
+  return (l&&Number.isInteger(l.lv)&&l.lv>=0&&l.lv<=3)?l:null;
+}
+const loadName=l=>l.label||LOAD_LV[l.lv];
+const loadAdv=l=>l.advice||LOAD_ADV[l.lv];
+const loadGauge=l=>h('span',{class:'ld-g','aria-hidden':'true'},[0,1,2,3].map(i=>h('i',{class:i<=l.lv?'on':''})));
+function loadCard(l){
+  return h('div',{class:'ld-card ld'+l.lv,id:'load-card',role:'note'},
+    h('div',{class:'ld-t'},'Charge de la séance (planificateur)'),
+    h('div',{class:'ld-h'},loadGauge(l),h('b',{},loadName(l))),
+    h('div',{class:'ld-adv'},loadAdv(l)),
+    h('div',{class:'ld-d'},'Charge avant le metcon : '+fmtN(l.pre)+' pts (force '+fmtN(l.f)+' + renfo '+fmtN(l.r)+')'));
+}
+const loadLine=l=>h('div',{class:'ld-line ld'+l.lv,id:'load-line'},loadGauge(l),h('b',{},'Charge '+loadName(l).toLowerCase()),h('span',{},' · '+loadAdv(l)));
+const loadMini=l=>h('div',{class:'ld-mini ld'+l.lv},loadGauge(l),h('b',{},loadName(l)+' · '+fmtN(l.pre)+' pts'));
 function planReceive(items){
   if(!S.owner||!S.prof||!Array.isArray(items))return;
   const pend=S.prof.pend=S.prof.pend||{},pl=S.prof.plan=S.prof.plan||{},sent=pl.sent=pl.sent||{};
@@ -8989,7 +9044,7 @@ function planReceive(items){
     if(fresh||!(pm.content||'').trim()){pm.content=String(it.metcon||'');pm.test=!!it.test;}
     if(it.test&&it.testName&&(fresh||pm.name==='Metcon'))pm.name='Metcon · '+String(it.testName).slice(0,40);
     d.parts.sort((a,b)=>({force:0,renfo:1,metcon:2}[a.kind]??3)-({force:0,renfo:1,metcon:2}[b.kind]??3));
-    pend[it.id]={id:it.id,key:it.key,date:it.date,title:d.title,deload:!!it.deload,at:new Date().toISOString(),json:JSON.stringify(d)};
+    pend[it.id]={id:it.id,key:it.key,date:it.date,title:d.title,deload:!!it.deload,at:new Date().toISOString(),json:JSON.stringify(d),load:pendLoad(it.load,old)};
     sent[it.key]=it.date;
     if(old)nUpd++;else nNew++;
   });
@@ -9010,8 +9065,7 @@ window.addEventListener('message',e=>{
   else if(m.type==='set')planStore(m.path,m.data);
   else if(m.type==='send')planReceive(m.items);
 });
-window.addEventListener('resize',()=>{if(planFrame&&planFrame.style.display!=='none')planPlace();});
-window.addEventListener('scroll',()=>{if(planFrame&&planFrame.style.display!=='none')planPlace();},{passive:true});
+window.addEventListener('resize',()=>{if(planWrap&&planWrap.style.display!=='none')planPlace();});
 /* séances en attente : liste dans « Entrer un WOD » (point rouge), reprise dans l'éditeur habituel */
 function pendKeep(){
   const id=S.coach.pendId,p=id&&pendMap()[id];
@@ -9037,11 +9091,11 @@ function pendSection(){
     h('ul',{class:'list'},(S.coach.pendAll?arr:arr.slice(0,6)).map(p=>{
       let d=null;try{d=JSON.parse(p.json);}catch(e){}
       const part=k=>d&&(d.parts||[]).find(x=>x.kind===k),has=k=>{const x=part(k);return !!(x&&(x.content||'').trim());};
-      const mc=has('metcon');
+      const mc=has('metcon'),pl=(p.load&&Number.isInteger(p.load.lv)&&p.load.lv>=0&&p.load.lv<=3)?p.load:null;
       return h('li',{class:'pendli'},
         h('span',{class:'pdot','aria-hidden':'true',title:'En attente de publication'}),
         h('div',{class:'l'},h('div',{class:'nm'},p.title+' · '+cap(fmtShort(p.date))+(p.deload?' · Deload':'')),
-          h('div',{class:'sub'},'Force '+(has('force')?'✓':'–')+' · Renfo '+(has('renfo')?'✓':'–')+' · Metcon '+(mc?'✓':'à compléter'))),
+          h('div',{class:'sub'},'Force '+(has('force')?'✓':'–')+' · Renfo '+(has('renfo')?'✓':'–')+' · Metcon '+(mc?'✓':'à compléter')),pl?loadMini(pl):null),
         h('div',{class:'row'},
           h('button',{class:'btn sm primary',type:'button',onclick:()=>pendOpen(p.id)},'Compléter'),
           S.confirm==='pend-'+p.id?h('button',{class:'btn sm danger',type:'button',onclick:()=>{S.confirm=null;if(S.coach.pendId===p.id){S.coach.wodOpen=false;pendLeave();}delete S.prof.pend[p.id];planSave();planSendStatus();render();}},'Confirmer')
@@ -9056,8 +9110,8 @@ function viewCoach(){
   if(!S.owner){el.append(h('div',{class:'empty'},h('p',{},'Cet espace est réservé au coach.')));return el;}
   if(!S.coach.wod)S.coach.wod=blankWod();
   const v=S.coach.view,titles={wod:'Entrer un WOD',groups:'Gérer les groupes',results:'Gérer les résultats',seasons:'Gérer les saisons',avatar:'Objets secrets',rivals:'Messages du fil',message:'Message aux athlètes',mvcfg:'Configurer les mouvements',plan:'Planificateur de saison'};
-  if(titles[v])el.append(h('div',{class:'row'},h('button',{class:'btn sm',type:'button',onclick:()=>{S.coach.view=null;S.entry=null;S.confirm=null;render();window.scrollTo(0,0);}},'← Coach'),v==='plan'?h('b',{style:'margin-left:6px'},'Planificateur de saison'):null));
-  if(v==='plan'){el.append(planView());return el;}
+  if(v==='plan'){el.append(planView());return el;} /* plein écran, sans la ligne de retour ni le titre : voir planPlace */
+  if(titles[v])el.append(h('div',{class:'row'},h('button',{class:'btn sm',type:'button',onclick:()=>{S.coach.view=null;S.entry=null;S.confirm=null;render();window.scrollTo(0,0);}},'← Coach')));
   el.append(h('div',{class:'row',style:'justify-content:space-between;flex-wrap:nowrap;align-items:flex-start'},h('div',{style:'min-width:0'},h('p',{class:'eyebrow'},'Espace coach'),h('h1',{class:'day'},titles[v]||'Programmation')),coachIcons()));
   if(!titles[v])el.append(coachMenu());
   else if(v==='wod'){el.append(...[pendSection(),wodLauncher(),wodList()].filter(Boolean));const ov=wodOverlay();if(ov)el.append(ov);}
@@ -9621,6 +9675,8 @@ function wodEditor(modal){
   sec.append(h('label',{class:'chk'},h('input',{type:'checkbox',id:'w-deload',checked:!!d.deload,onchange:e=>{d.deload=e.target.checked;}}),h('span',{},'Séance DELOAD (semaine allégée)')),
     h('p',{class:'hint'},'La mention DELOAD apparaît en haut de la carte de la séance chez les athlètes.'));
   if(!S.coach.editing&&S.wods[d.date])sec.append(h('p',{class:'hint'},'Une séance existe déjà à cette date : elle sera remplacée.'));
+  const ld=loadOfPend(S.coach.pendId); /* séance venue du planificateur : on rappelle sa charge avant d'écrire le metcon */
+  if(ld)sec.append(loadCard(ld));
   d.parts.forEach((p,i)=>{
     const metcon=p.kind==='metcon';
     const isOpen=p.open!==undefined?p.open:metcon;
@@ -9639,6 +9695,7 @@ function wodEditor(modal){
       h('button',{class:'btn sm',type:'button','aria-label':'Descendre',disabled:i===d.parts.length-1,onclick:()=>{d.parts.splice(i+1,0,d.parts.splice(i,1)[0]);render();}},'↓'),
       h('button',{class:'btn sm danger',type:'button',onclick:()=>{d.parts.splice(i,1);render();}},'Retirer')));
     box.append(field('Nom de la partie',tin(p,'name',{id:'p'+i+'-name',placeholder:metcon?'Metcon':'Back Squat'})));
+    if(metcon&&ld)box.append(loadLine(ld));
     if(p.kind==='force'){const names=MOVES.map(m=>m[0]);if(p.movement&&!names.includes(p.movement))names.push(p.movement);box.append(field('Mouvement (pour les trophées de force)',sel([['','Aucun']].concat(names.map(n=>[n,n])),p.movement||'',v=>{p.movement=v;},{id:'p'+i+'-mv'})));}
     box.append(field('Contenu, une ligne par consigne',h('textarea',{id:'p'+i+'-content',rows:'4',value:p.content,placeholder:metcon?'21-15-9\nThrusters\nPull-ups':'5 x 5 Back Squat à 75 %',oninput:e=>{p.content=e.target.value;}}),
       metcon?(p.format==='FT'?'Les charges se règlent par niveau ci-dessous. Un schéma comme 21-15-9 ou 10-9-8-7-6-5-4-3-2-1 sur sa propre ligne, suivi des mouvements, est détecté : chaque nombre devient un tour pour les paliers du time cap.':'Les charges se règlent par niveau ci-dessous. Pour qu’un mouvement compte moins de reps (corde à sauter…), ajoute {10=1} en fin de ligne (10 reps comptent pour 1) ou {=5} (la ligne entière vaut 5 reps). Exemple : 50 Single under {10=1}. Écris le nombre de reps en début de ligne.'):'Écris un pourcentage et le mouvement sur la même ligne : chaque athlète verra sa charge calculée.'));
