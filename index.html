@@ -1376,6 +1376,15 @@ body[data-tab=today] .themed .card{background:color-mix(in srgb,var(--c1) 18%,va
 .pdot{display:inline-block;flex:none;width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--tint)}
 .pendli{display:flex;align-items:center;gap:10px}
 .pendli>.l{flex:1;min-width:0}
+.wkacc{display:grid;gap:8px}
+.wk{border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.wk-h{display:flex;align-items:center;gap:10px;width:100%;padding:12px;border:0;background:transparent;color:var(--ink);text-align:left;cursor:pointer;font:inherit}
+.wk-h .t{flex:1;min-width:0;display:grid;gap:2px}.wk-h .t b{font-weight:700}.wk-h .t span{font-size:13px;color:var(--muted)}
+.wk-h .wdot{flex:none;width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--tint)}
+.wk-h .wchev{flex:none;width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg) translateY(-2px);transition:transform .2s}
+.wk-h[aria-expanded="true"] .wchev{transform:rotate(225deg) translateY(-2px)}
+.wk-b{padding:0 12px 12px;display:grid;gap:8px}
+.wk-b .list{margin:0}
 </style>
 </head>
 <body>
@@ -9083,25 +9092,18 @@ function pendOpen(id){
   else if(!S.coach.editing&&wodHas(S.coach.wod))S.coach.manual=S.coach.wod; /* le brouillon écrit à la main est gardé de côté */
   S.coach.wod=d;S.coach.editing=false;S.coach.pendId=id;S.coach.wodOpen=true;render();
 }
-function pendSection(){
-  const arr=Object.values(pendMap()).sort((a,b)=>(a.date||'')<(b.date||'')?-1:1);
-  if(!arr.length)return null;
-  return h('section',{class:'card',id:'pend-card'},h('h2',{class:'h2'},'En attente de publication'),
-    h('p',{class:'hint'},'Envoyées depuis le planificateur : la force et le renfo sont déjà remplis. Complète le metcon, puis publie.'),
-    h('ul',{class:'list'},(S.coach.pendAll?arr:arr.slice(0,6)).map(p=>{
-      let d=null;try{d=JSON.parse(p.json);}catch(e){}
-      const part=k=>d&&(d.parts||[]).find(x=>x.kind===k),has=k=>{const x=part(k);return !!(x&&(x.content||'').trim());};
-      const mc=has('metcon'),pl=(p.load&&Number.isInteger(p.load.lv)&&p.load.lv>=0&&p.load.lv<=3)?p.load:null;
-      return h('li',{class:'pendli'},
-        h('span',{class:'pdot','aria-hidden':'true',title:'En attente de publication'}),
-        h('div',{class:'l'},h('div',{class:'nm'},p.title+' · '+cap(fmtShort(p.date))+(p.deload?' · Deload':'')),
-          h('div',{class:'sub'},'Force '+(has('force')?'✓':'–')+' · Renfo '+(has('renfo')?'✓':'–')+' · Metcon '+(mc?'✓':'à compléter')),pl?loadMini(pl):null),
-        h('div',{class:'row'},
-          h('button',{class:'btn sm primary',type:'button',onclick:()=>pendOpen(p.id)},'Compléter'),
-          S.confirm==='pend-'+p.id?h('button',{class:'btn sm danger',type:'button',onclick:()=>{S.confirm=null;if(S.coach.pendId===p.id){S.coach.wodOpen=false;pendLeave();}delete S.prof.pend[p.id];planSave();planSendStatus();render();}},'Confirmer')
-            :h('button',{class:'btn sm danger',type:'button',onclick:()=>{S.confirm='pend-'+p.id;render();}},'Retirer')));
-    })),
-    arr.length>6?h('button',{class:'btn sm',type:'button',onclick:()=>{S.coach.pendAll=!S.coach.pendAll;render();}},S.coach.pendAll?'Réduire la liste':'Voir les '+(arr.length-6)+' autres'):null);
+function pendRow(p){
+  let d=null;try{d=JSON.parse(p.json);}catch(e){}
+  const part=k=>d&&(d.parts||[]).find(x=>x.kind===k),has=k=>{const x=part(k);return !!(x&&(x.content||'').trim());};
+  const mc=has('metcon'),pl=(p.load&&Number.isInteger(p.load.lv)&&p.load.lv>=0&&p.load.lv<=3)?p.load:null;
+  return h('li',{class:'pendli'},
+    h('span',{class:'pdot','aria-hidden':'true',title:'En attente de publication'}),
+    h('div',{class:'l'},h('div',{class:'nm'},p.title+' · '+cap(fmtShort(p.date))+(p.deload?' · Deload':'')),
+      h('div',{class:'sub'},'En attente · Force '+(has('force')?'✓':'–')+' · Renfo '+(has('renfo')?'✓':'–')+' · Metcon '+(mc?'✓':'à compléter')),pl?loadMini(pl):null),
+    h('div',{class:'row'},
+      h('button',{class:'btn sm primary',type:'button',onclick:()=>pendOpen(p.id)},'Compléter'),
+      S.confirm==='pend-'+p.id?h('button',{class:'btn sm danger',type:'button',onclick:()=>{S.confirm=null;if(S.coach.pendId===p.id){S.coach.wodOpen=false;pendLeave();}delete S.prof.pend[p.id];planSave();planSendStatus();render();}},'Confirmer')
+        :h('button',{class:'btn sm danger',type:'button',onclick:()=>{S.confirm='pend-'+p.id;render();}},'Retirer')));
 }
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&S.coach&&S.coach.pendId&&S.coach.wodOpen)pendKeep();});
 
@@ -9114,7 +9116,7 @@ function viewCoach(){
   if(titles[v])el.append(h('div',{class:'row'},h('button',{class:'btn sm',type:'button',onclick:()=>{S.coach.view=null;S.entry=null;S.confirm=null;render();window.scrollTo(0,0);}},'← Coach')));
   el.append(h('div',{class:'row',style:'justify-content:space-between;flex-wrap:nowrap;align-items:flex-start'},h('div',{style:'min-width:0'},h('p',{class:'eyebrow'},'Espace coach'),h('h1',{class:'day'},titles[v]||'Programmation')),coachIcons()));
   if(!titles[v])el.append(coachMenu());
-  else if(v==='wod'){el.append(...[pendSection(),wodLauncher(),wodList()].filter(Boolean));const ov=wodOverlay();if(ov)el.append(ov);}
+  else if(v==='wod'){el.append(...[wodLauncher(),wodWeeks()].filter(Boolean));const ov=wodOverlay();if(ov)el.append(ov);}
   else if(v==='groups')el.append(groupsCard());
   else if(v==='results')el.append(resultsSection());
   else if(v==='avatar')el.append(avatarCoach());
@@ -9786,17 +9788,45 @@ function wodEditor(modal){
     S.coach.editing?h('button',{class:'btn',type:'button',onclick:closeWodWindow},'Annuler'):null));
   return sec;
 }
-function wodList(){
-  const ws=Object.values(S.wods).sort((a,b)=>a.date<b.date?1:-1);
-  const count=date=>Object.values(S.logs).filter(l=>l.entries&&l.entries[date]).length;
-  return h('section',{class:'card'},h('h2',{class:'h2'},'Séances publiées'),
-    ws.length?h('ul',{class:'list'},ws.slice(0,40).map(w=>h('li',{},
-      h('div',{class:'l'},h('div',{class:'nm'},cap(fmtShort(w.date))+' · '+w.title),h('div',{class:'sub'},(w.parts||[]).length+' parties · '+count(w.date)+' athlète'+(count(w.date)>1?'s':'')+' ont validé')),
-      h('div',{class:'row'},
-        h('button',{class:'btn sm',onclick:()=>{S.coach.wod=wodToDraft(w);S.coach.editing=true;S.coach.wodOpen=true;render();}},'Modifier'),
-        S.confirm==='wod-'+w.date?h('button',{class:'btn sm danger',onclick:()=>{S.confirm=null;run(async()=>{await S.db.doc('wods/'+w.date).delete();toast('Séance supprimée');});}},'Confirmer')
-                                  :h('button',{class:'btn sm danger',onclick:()=>{S.confirm='wod-'+w.date;render();}},'Supprimer')))))
-    :h('p',{class:'muted'},'Aucune séance publiée.'));
+function wodRow(w){
+  const n=Object.values(S.logs).filter(l=>l.entries&&l.entries[w.date]).length;
+  return h('li',{},
+    h('div',{class:'l'},h('div',{class:'nm'},cap(fmtShort(w.date))+' · '+w.title),h('div',{class:'sub'},(w.parts||[]).length+' parties · '+n+' athlète'+(n>1?'s':'')+' ont validé')),
+    h('div',{class:'row'},
+      h('button',{class:'btn sm',onclick:()=>{S.coach.wod=wodToDraft(w);S.coach.editing=true;S.coach.wodOpen=true;render();}},'Modifier'),
+      S.confirm==='wod-'+w.date?h('button',{class:'btn sm danger',onclick:()=>{S.confirm=null;run(async()=>{await S.db.doc('wods/'+w.date).delete();toast('Séance supprimée');});}},'Confirmer')
+                                :h('button',{class:'btn sm danger',onclick:()=>{S.confirm='wod-'+w.date;render();}},'Supprimer')));
+}
+/* séances par semaine : la semaine en cours est dépliée, les autres repliées ; point rouge = moins de séances publiées que prévu
+   (nombre de séances par semaine du planificateur) sur la semaine en cours, les semaines à venir et celles de la saison en cours */
+const planPerWeek=()=>{try{const n=Math.floor(Number(JSON.parse(planDoc('saison/etat').json).settings.perWeek));return n>0?n:0;}catch(e){return 0;}};
+function wodWeeks(){
+  const t=todayStr(),cur=mondayOf(t),per=planPerWeek(),wk={};
+  const get=m=>wk[m]||(wk[m]={mon:m,pub:[],pend:[]});
+  get(cur);
+  Object.values(S.wods).forEach(w=>{if(w&&w.date)get(mondayOf(w.date)).pub.push(w);});
+  Object.values(pendMap()).forEach(p=>{if(p&&p.date)get(mondayOf(p.date)).pend.push(p);});
+  const all=Object.values(wk);
+  all.forEach(x=>{x.pub.sort((a,b)=>a.date<b.date?-1:1);x.pend.sort((a,b)=>(a.date||'')<(b.date||'')?-1:1);});
+  /* ordre : semaine en cours, puis les semaines à venir (la plus proche d'abord), puis les semaines passées (la plus récente d'abord) */
+  const list=[wk[cur]].concat(all.filter(x=>x.mon>cur).sort((a,b)=>a.mon<b.mon?-1:1),all.filter(x=>x.mon<cur).sort((a,b)=>a.mon<b.mon?1:-1).slice(0,26));
+  const ap=activePeriod();
+  const inSeason=m=>{const q=periodFor(m);return !!q&&(q===ap||(q.start===ap.start&&q.end===ap.end));};
+  S.coach.wkOpen=S.coach.wkOpen||{};
+  return h('section',{class:'card',id:'wk-card'},h('h2',{class:'h2'},'Séances par semaine'),
+    h('p',{class:'hint'},'Un point rouge indique une semaine où il manque une séance'+(per?' ('+per+' séances publiées prévues par semaine)':'')+'. Les séances envoyées par le planificateur y sont marquées « En attente » : complète le metcon, puis publie.'),
+    h('div',{class:'wkacc'},list.map(x=>{
+      const isOpen=x.mon in S.coach.wkOpen?!!S.coach.wkOpen[x.mon]:x.mon===cur;
+      const missing=per>0&&x.pub.length<per&&(x.mon>=cur||inSeason(x.mon));
+      const sub=(per?x.pub.length+'/'+per+' publiée'+(x.pub.length>1?'s':''):pl_(x.pub.length,'séance')+' publiée'+(x.pub.length>1?'s':''))+(x.pend.length?' · '+x.pend.length+' en attente':'');
+      const rows=x.pend.map(pendRow).concat(x.pub.map(wodRow));
+      return h('div',{class:'wk'},
+        h('button',{class:'wk-h',type:'button','aria-expanded':isOpen?'true':'false',onclick:()=>{S.coach.wkOpen[x.mon]=!isOpen;render();}},
+          h('div',{class:'t'},h('b',{},weekRange(x.mon)+(x.mon===cur?' · cette semaine':'')),h('span',{},sub)),
+          missing?h('span',{class:'wdot',role:'img','aria-label':'Il manque une séance',title:'Il manque une séance'}):null,
+          h('span',{class:'wchev','aria-hidden':'true'})),
+        isOpen?h('div',{class:'wk-b'},rows.length?h('ul',{class:'list'},rows):h('p',{class:'muted'},'Aucune séance cette semaine.')):null);
+    })));
 }
 /* résultats de tous les athlètes pour une séance : le coach peut les corriger, en saisir ou en retirer */
 function resultsSection(){
