@@ -717,6 +717,28 @@ input[type=date]{inline-size:100%;max-inline-size:100%;box-sizing:border-box;ove
 #hal-deco .hd-sp{top:0;right:64px;width:26px;height:96px;transform-origin:50% 0}
 #hal-deco .hd-pm{left:10px;bottom:calc(var(--tabh,62px) + 6px);width:46px;height:46px}
 html[data-hal] .top{border-bottom-color:#E8710A}
+/* thème Noël : habillage des pages (palette nuit + givre, fond de salle enneigée), décors animés (voir JS « thème Noël ») */
+html:root[data-noel]{--accent:#F0463C;--accent-ink:#fff;--tint:#2A1416;--panel-accent:#FF6B5E;--tabon:#fff;
+  --cardbg:rgba(7,14,34,.8);--cardbd:#d6ecff #9cc6ea #c4e3ff #86b4da;
+  --cardsh:inset 0 0 0 1px rgba(160,210,255,.08),0 0 0 1px rgba(0,0,0,.6),0 0 16px rgba(110,180,255,.10);
+  --topbg:linear-gradient(rgba(6,14,38,.95),rgba(8,20,48,.86));--topbd:1px solid #F5C451;
+  --tabbg:linear-gradient(rgba(8,16,40,.92),rgba(4,9,26,.97))}
+html[data-noel] body::before{background:linear-gradient(rgba(3,8,24,.58),rgba(3,8,24,.74)),url('assets/embedded/decor-noel-salle.webp') center top/cover no-repeat,#07102a}
+html[data-noel] .tabs{border-top-color:#F5C451}
+#noel-snow{position:fixed;inset:0;z-index:-1;pointer-events:none}
+#noel-fall{position:fixed;inset:0;z-index:11;pointer-events:none}
+#noel-deco{position:fixed;inset:0;z-index:6;pointer-events:none;overflow:hidden}
+.nl-gar{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + var(--toph,60px) - 1px);height:34px;pointer-events:none}
+.nl-gar svg{display:block;width:100%;height:100%;overflow:visible}
+.nl-l{animation:nltw 2.6s ease-in-out infinite;animation-delay:var(--d,0s)}
+@keyframes nltw{0%,100%{opacity:.45}50%{opacity:1}}
+.nl-pile{position:absolute;left:0;right:0;bottom:calc(var(--tabh,62px) - 1px);height:5px;filter:drop-shadow(0 -2px 5px rgba(150,205,255,.55));pointer-events:none}
+.nl-pile svg{display:block;width:100%;height:100%}
+.nl-test{position:absolute;left:10px;bottom:calc(var(--tabh,62px) + 72px);pointer-events:auto;border:2px solid #F5C451;background:rgba(6,14,38,.94);color:#fff;border-radius:999px;padding:6px 12px;font:700 13px var(--f-body);cursor:pointer}
+.nl-testmenu{position:absolute;left:10px;bottom:calc(var(--tabh,62px) + 112px);max-width:260px;display:none;gap:8px;pointer-events:auto;background:rgba(6,14,38,.96);border:2px solid #F5C451;border-radius:8px;padding:10px;color:#fff;box-shadow:0 6px 20px rgba(0,0,0,.5)}
+#noel-deco.testopen .nl-testmenu{display:grid}
+@media (prefers-reduced-motion:reduce){.nl-l{animation:none}.nl-pile{transition:none}}
+
 @media (prefers-reduced-motion:no-preference){#hal-deco .hd-sp{animation:hdsw 6s ease-in-out infinite}}
 @keyframes hdsw{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
 
@@ -5759,9 +5781,15 @@ const pmp=(x,y,r,glow)=>'<g transform="translate('+x+' '+y+') scale('+(r/50)+')"
   '<path d="M-36 -10L-18 -26L-8 -6Z M36 -10L18 -26L8 -6Z M-30 10Q0 40 30 10L22 24L11 14L0 28L-11 14L-22 24Z" fill="#FFC21A"/></g>';
 const candleG=(x,y)=>'<g transform="translate('+x+' '+y+')"><circle cy="-34" r="16" fill="url(#scGl)"/><rect x="-5" y="-26" width="10" height="26" rx="2" fill="#EFE2C6"/><path d="M0 -40Q-6 -32 0 -27Q6 -32 0 -40Z" fill="#FFB43A"/></g>';
 const pumpkinIco=()=>pmp(0,0,50,false);
+/* icône du thème Noël (inventaire, fenêtre de déblocage) : sapin étoilé dans un médaillon de nuit */
+const noelIco=()=>'<circle cy="-12" r="54" fill="#10224A" stroke="#9FD8FF" stroke-width="3"/>'+
+  '<polygon points="0,-56 -20,-28 20,-28" fill="#1F8A4C"/><polygon points="0,-40 -28,-6 28,-6" fill="#1B7A43"/><polygon points="0,-22 -36,16 36,16" fill="#176B3A"/><rect x="-6" y="16" width="12" height="10" fill="#6B4423"/>'+
+  '<polygon points="0,-68 2.6,-61 10,-61 4,-56.5 6.3,-49 0,-53.5 -6.3,-49 -4,-56.5 -10,-61 -2.6,-61" fill="#FFD24A"/>'+
+  '<circle cx="-9" cy="-22" r="4" fill="#FF4D4D"/><circle cx="12" cy="-13" r="4" fill="#FFD24A"/><circle cx="-18" cy="5" r="4" fill="#6FE3FF"/><circle cx="8" cy="5" r="4" fill="#FF4D4D"/><circle cx="23" cy="9" r="3.4" fill="#FFD24A"/>'+
+  '<g fill="#fff"><circle cx="-40" cy="-40" r="2.2"/><circle cx="38" cy="-44" r="2"/><circle cx="-45" cy="-2" r="1.8"/><circle cx="45" cy="-14" r="2.2"/><circle cx="-30" cy="26" r="1.8"/><circle cx="32" cy="28" r="1.8"/></g>';
 /* décor de box (viewBox 1000x1000) : l'avatar se place au centre ; hal = ajoute citrouilles, bougies, toiles, chauves-souris */
 function sceneSVG(hal){
-  return hal?halScene():imgScene(BASE_BG);
+  return imgScene(sceneURL(hal));
   const holes=n=>{let s='';for(let i=0;i<n;i++)s+='<circle cx="0" cy="'+(24+i*34)+'" r="5" fill="#050506"/>';return s;};
   let g='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice"><defs>'+
     '<linearGradient id="scBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0B0C0E"/><stop offset="1" stop-color="'+(hal?'#1D120B':'#15171B')+'"/></linearGradient>'+
@@ -5795,12 +5823,14 @@ function sceneSVG(hal){
   return g+'</svg>';
 }
 const HAL_BG='assets/embedded/image_07.jpg';
+const NOEL_BG='assets/embedded/decor-noel-salle.webp';
 const BASE_BG='assets/embedded/image_08.png';
 const imgScene=src=>'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice"><image href="'+src+'" xlink:href="'+src+'" width="1000" height="1000"/></svg>';
 const halScene=()=>'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice"><image href="'+HAL_BG+'" xlink:href="'+HAL_BG+'" width="1000" height="1000"/></svg>';
 const sceneURLc={};
 /* décor en fond CSS : on pointe directement l'image (un SVG en data-URI ne peut pas charger d'image externe, d'où un décor vide derrière un déguisement transparent) */
-const sceneURL=hal=>hal?HAL_BG:BASE_BG;
+const THEME_BG={theme_halloween:HAL_BG,theme_noel:NOEL_BG};
+const sceneURL=th=>THEME_BG[th]||BASE_BG;
 const HAL_DECO='<svg class="hd-web" viewBox="0 0 110 110" aria-hidden="true">'+webG(110,0,-1,1,105)+'</svg>'+
   '<svg class="hd-sp" viewBox="-20 -2 40 100" aria-hidden="true">'+spiderG(0,74,.9,74/.9)+'</svg>'+
   '<svg class="hd-pm" viewBox="-60 -72 120 120" aria-hidden="true">'+pmp(0,0,50,false)+'</svg>';
@@ -5808,8 +5838,133 @@ function halOn(){
   if(!S.uid||!ready())return false;
   return avEq(S.uid).theme==='theme_halloween';
 }
+
+/* ---------- thème Noël (cosmétique) ----------
+   Équipé, il habille tout : fond de salle enneigée (assets/embedded/decor-noel-salle.webp) derrière l'avatar ET en fond des pages,
+   flocons qui tombent en arrière-plan, guirlandes étoilées en haut de l'écran, tas de neige en bas.
+   Le tas grossit quand l'appli est inactive (par ex. pendant un chrono de récup) : NOEL_FULL secondes d'inactivité pour le maximum.
+   Chaque action (clic, toucher, mouvement, défilement, touche) en retire une part (NOEL_STEP) avec une chute de neige hors de l'écran :
+   10 actions = tas au plus petit. Le coach a des boutons de test (tas au max / à zéro / +1 min d'inactivité). */
+const NOEL_FULL=300;           /* secondes d'inactivité (écran visible) pour un tas maximal */
+const NOEL_STEP=.1;            /* part du tas retirée à chaque action : 10 actions = tas au plus petit */
+const NOEL_IDLE=1500;          /* ms sans action avant que la neige recommence à s'accumuler */
+const NOEL_GAP=180;            /* ms minimum entre deux actions comptées (un mouvement continu compte environ 5 actions par seconde) */
+const NOEL_KEY='bs-noel-neige2';
+const NOEL={on:false,p:0,timer:0,raf:0,last:0,lastAct:0,tick:0,open:false};
+const noelSaved=()=>{try{const v=parseFloat(localStorage.getItem(NOEL_KEY));return isFinite(v)?Math.max(0,Math.min(1,v)):0;}catch(e){return 0;}};
+const noelSave=()=>{try{localStorage.setItem(NOEL_KEY,NOEL.p.toFixed(4));}catch(e){}};
+const noelReduced=()=>!!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
+function noelGarland(box){
+  const W=Math.max(320,window.innerWidth),n=Math.max(3,Math.round(W/92)),sw=W/n,dep=14,cols=['#FFD24A','#FF4D4D','#6FE3FF','#FFFFFF','#58E08A'];
+  let wire='',lights='',k=0;
+  const star=(x,y,r,c,d)=>{let pts='';for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,q=i%2?r*.45:r;pts+=(x+q*Math.cos(a)).toFixed(1)+','+(y+q*Math.sin(a)).toFixed(1)+' ';}
+    return '<polygon class="nl-l" style="--d:'+d+'s;fill:'+c+';filter:drop-shadow(0 0 3px '+c+')" points="'+pts+'"/>';};
+  for(let i=0;i<n;i++){
+    const x0=i*sw,x1=x0+sw,cx=x0+sw/2;
+    wire+='M'+x0.toFixed(1)+' 2Q'+cx.toFixed(1)+' '+(2+dep*2)+' '+x1.toFixed(1)+' 2';
+    for(let j=1;j<=4;j++){
+      const t=j/5,x=(1-t)*(1-t)*x0+2*(1-t)*t*cx+t*t*x1,y=(1-t)*(1-t)*2+2*(1-t)*t*(2+dep*2)+t*t*2,c=cols[k%cols.length],d=((k*.37)%2.4).toFixed(2);k++;
+      if(j%2)lights+=star(x,y+6,5.2,c,d);
+      else lights+='<circle class="nl-l" style="--d:'+d+'s;fill:'+c+';filter:drop-shadow(0 0 3px '+c+')" cx="'+x.toFixed(1)+'" cy="'+(y+3).toFixed(1)+'" r="3"/>';
+    }
+  }
+  box.innerHTML='<svg viewBox="0 0 '+W+' 34" preserveAspectRatio="xMidYMin slice" aria-hidden="true"><path d="'+wire+'" fill="none" stroke="#14532F" stroke-width="2" stroke-linecap="round"/>'+lights+'</svg>';
+}
+/* flocons : canvas derrière le contenu (z-index -1, au-dessus du fond d'écran) */
+function noelSnow(cv){
+  const ctx=cv.getContext('2d');let W=0,H=0,fl=[],last=0;
+  const mk=top=>({x:Math.random()*W,y:top?-8:Math.random()*H,r:.9+Math.random()*2.7,v:20+Math.random()*40,w:Math.random()*6.28,s:.5+Math.random(),a:.4+Math.random()*.55});
+  const size=()=>{const d=Math.min(2,window.devicePixelRatio||1);W=window.innerWidth;H=window.innerHeight;cv.width=W*d;cv.height=H*d;cv.style.width=W+'px';cv.style.height=H+'px';ctx.setTransform(d,0,0,d,0,0);
+    const n=Math.round(Math.min(95,Math.max(45,W*H/11000)));while(fl.length<n)fl.push(mk(false));fl.length=n;if(noelReduced())draw();};
+  const draw=()=>{ctx.clearRect(0,0,W,H);ctx.fillStyle='#fff';for(const f of fl){ctx.globalAlpha=f.a;ctx.beginPath();ctx.arc(f.x,f.y,f.r,0,6.283);ctx.fill();}ctx.globalAlpha=1;};
+  const loop=t=>{NOEL.raf=requestAnimationFrame(loop);const dt=Math.min(.05,(t-(last||t))/1000);last=t;
+    for(const f of fl){f.y+=f.v*dt;f.w+=dt*f.s;f.x+=Math.sin(f.w)*14*dt;if(f.y>H+6){Object.assign(f,mk(true));}if(f.x<-6)f.x=W+6;if(f.x>W+6)f.x=-6;}
+    draw();};
+  const run=()=>{cancelAnimationFrame(NOEL.raf);last=0;if(!noelReduced()&&!document.hidden)NOEL.raf=requestAnimationFrame(loop);};
+  size();run();
+  return {size,run};
+}
+/* neige qui tombe du tas hors de l'écran : canvas devant la barre du bas (z-index 11), actif seulement tant qu'il reste des morceaux en chute */
+function noelFall(cv){
+  const ctx=cv.getContext('2d');let W=0,H=0,ps=[],raf=0,last=0;
+  const size=()=>{const d=Math.min(2,window.devicePixelRatio||1);W=window.innerWidth;H=window.innerHeight;cv.width=W*d;cv.height=H*d;cv.style.width=W+'px';cv.style.height=H+'px';ctx.setTransform(d,0,0,d,0,0);};
+  const loop=t=>{const dt=Math.min(.05,(t-(last||t))/1000);last=t;ctx.clearRect(0,0,W,H);ctx.fillStyle='#F4FAFF';
+    for(let i=ps.length-1;i>=0;i--){const q=ps[i];q.vy+=900*dt;q.x+=q.vx*dt;q.y+=q.vy*dt;if(q.y>H+12){ps.splice(i,1);continue;}ctx.globalAlpha=q.a;ctx.beginPath();ctx.arc(q.x,q.y,q.r,0,6.283);ctx.fill();}
+    ctx.globalAlpha=1;
+    if(ps.length)raf=requestAnimationFrame(loop);else{raf=0;ctx.clearRect(0,0,W,H);}};
+  size();
+  return {size,stop:()=>{cancelAnimationFrame(raf);raf=0;ps=[];},
+    drop:(n,top)=>{for(let i=0;i<n;i++)ps.push({x:Math.random()*W,y:top+Math.random()*8,vx:(Math.random()-.5)*60,vy:10+Math.random()*90,r:1.8+Math.random()*3.8,a:.75+Math.random()*.25});if(!raf){last=0;raf=requestAnimationFrame(loop);}}};
+}
+function noelPile(fast){
+  const lay=document.getElementById('noel-deco');if(!lay)return;
+  const pile=lay.querySelector('.nl-pile');
+  pile.style.transition=noelReduced()?'none':fast?'height .35s ease-out':'height .3s linear';
+  pile.style.height=(5+NOEL.p*52).toFixed(1)+'px';
+}
+/* une action de l'utilisateur : le tas fond d'un cran et des morceaux de neige tombent hors de l'écran */
+function noelAct(e){
+  const t=e&&e.target;if(t&&t.closest&&t.closest('.nl-test,.nl-testmenu'))return;
+  const now=Date.now();NOEL.last=now;
+  if(now-NOEL.lastAct<NOEL_GAP||NOEL.p<=0)return;
+  NOEL.lastAct=now;
+  const before=NOEL.p;NOEL.p=Math.max(0,before-NOEL_STEP);
+  const lay=document.getElementById('noel-deco'),pile=lay&&lay.querySelector('.nl-pile');
+  if(NOEL.fall&&pile&&!noelReduced())NOEL.fall.drop(Math.round(8+before*14),pile.getBoundingClientRect().top);
+  noelPile(true);
+}
+function noelStart(){
+  if(document.getElementById('noel-deco'))return;
+  NOEL.p=noelSaved();NOEL.last=Date.now();NOEL.lastAct=0;
+  const cv=h('canvas',{id:'noel-snow','aria-hidden':'true'}),cf=h('canvas',{id:'noel-fall','aria-hidden':'true'});document.body.append(cv);
+  const lay=h('div',{id:'noel-deco','aria-hidden':'false'});
+  const gar=h('div',{class:'nl-gar','aria-hidden':'true'});
+  const pile=h('div',{class:'nl-pile','aria-hidden':'true'});
+  pile.innerHTML='<svg viewBox="0 0 400 60" preserveAspectRatio="none"><defs><linearGradient id="nlg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#C9E0F5"/></linearGradient></defs><path d="M0 60V24C16 10 38 4 70 14C100 22 122 2 160 8C198 14 232 0 270 10C306 19 340 4 400 16V60Z" fill="url(#nlg)"/></svg>';
+  lay.append(gar,pile);
+  if(S.owner){
+    const set=v=>()=>{NOEL.p=Math.max(0,Math.min(1,v()));noelSave();noelPile(false);};
+    const menu=h('div',{class:'nl-testmenu'},
+      h('b',{},'Aperçu coach · thème Noël'),
+      h('span',{class:'sub'},'Touche ailleurs ou bouge : le tas fond de 10 % par action.'),
+      h('button',{type:'button',class:'btn sm',id:'nl-max',onclick:set(()=>1)},'Tas au maximum'),
+      h('button',{type:'button',class:'btn sm',id:'nl-zero',onclick:set(()=>0)},'Remettre à zéro'),
+      h('button',{type:'button',class:'btn sm',id:'nl-plus',onclick:set(()=>NOEL.p+60/NOEL_FULL)},'+ 1 minute d’inactivité'));
+    const tg=h('button',{type:'button',class:'nl-test',id:'nl-test','aria-expanded':'false',onclick:()=>{NOEL.open=!NOEL.open;lay.classList.toggle('testopen',NOEL.open);tg.setAttribute('aria-expanded',NOEL.open?'true':'false');}},'🎄 Test');
+    lay.append(tg,menu);
+  }
+  document.body.append(lay,cf);
+  noelGarland(gar);noelPile(false);
+  NOEL.fx=noelSnow(cv);NOEL.fall=noelFall(cf);
+  NOEL.onResize=()=>{noelGarland(gar);NOEL.fx.size();NOEL.fall.size();};
+  NOEL.onVis=()=>{NOEL.last=Date.now();NOEL.fx.run();};
+  NOEL.evs=['pointerdown','pointermove','keydown','wheel','scroll','touchstart','touchmove'];
+  window.addEventListener('resize',NOEL.onResize);document.addEventListener('visibilitychange',NOEL.onVis);
+  NOEL.evs.forEach(n=>document.addEventListener(n,noelAct,{capture:true,passive:true}));
+  /* inactivité : le tas grossit doucement (écran visible, aucune action depuis NOEL_IDLE ms) */
+  NOEL.timer=setInterval(()=>{
+    if(document.hidden)return;
+    if(Date.now()-NOEL.last>NOEL_IDLE&&NOEL.p<1){NOEL.p=Math.min(1,NOEL.p+.25/NOEL_FULL);noelPile(false);}
+    if(++NOEL.tick%20===0)noelSave();
+  },250);
+}
+function noelStop(){
+  cancelAnimationFrame(NOEL.raf);clearInterval(NOEL.timer);NOEL.timer=0;
+  if(NOEL.fall)NOEL.fall.stop();
+  if(NOEL.onResize)window.removeEventListener('resize',NOEL.onResize);if(NOEL.onVis)document.removeEventListener('visibilitychange',NOEL.onVis);
+  if(NOEL.evs)NOEL.evs.forEach(n=>document.removeEventListener(n,noelAct,{capture:true}));
+  noelSave();NOEL.onResize=NOEL.onVis=NOEL.fx=NOEL.fall=NOEL.evs=null;NOEL.open=false;
+  for(const id of ['noel-deco','noel-snow','noel-fall']){const e=document.getElementById(id);if(e)e.remove();}
+}
+function noelSet(on){
+  document.documentElement.toggleAttribute('data-noel',on);
+  NOEL.on=on;
+  if(on)noelStart();else if(document.getElementById('noel-deco')||document.getElementById('noel-snow'))noelStop();
+}
 function applyTheme(){
-  let on=false;try{on=halOn();}catch(e){}
+  let th='';try{th=(S.uid&&ready())?(avEq(S.uid).theme||''):'';}catch(e){}
+  noelSet(th==='theme_noel');
+  const on=th==='theme_halloween';
   document.documentElement.toggleAttribute('data-hal',on);
   let d=document.getElementById('hal-deco');
   if(on&&!d){d=document.createElement('div');d.id='hal-deco';d.setAttribute('aria-hidden','true');d.innerHTML=HAL_DECO;document.body.append(d);}
@@ -5828,6 +5983,7 @@ const AV_ITEMS=[
  {id:'long_black',slot:'pants',name:'Legging noir',c:'#22252B',long:true},
  {id:'wrist_alpha',slot:'wrist',name:'Bracelet Alpha',art:alphaArt,layer:alphaWear},
  {id:'theme_halloween',slot:'theme',name:'Thème Halloween',art:pumpkinIco},
+ {id:'theme_noel',slot:'theme',name:'Thème Noël',art:noelIco},
  {id:'kettlebell',slot:'hand',name:'Kettlebell',art:kettleArt},
  /* Déguisements complets : l'image remplace tout l'avatar (corps + tenue), elle est dessinée à l'échelle 480x968 comme l'avatar de base.
     Fichiers dans assets/embedded/. Pour en ajouter : déposer l'image (fond transparent, ratio 480x968) puis ajouter une ligne ici, dans AV_OBJ et dans AV_PUB. */
@@ -5844,6 +6000,7 @@ const AV_OBJ={
  shirt_black:{d:'Avoir un score enregistré sur 6 metcons dans une saison.',test:c=>c.r.perfN>=6},
  wrist_alpha:{d:'Cadeau : participer à au moins 3 séances pendant la saison Alpha, la saison dont le nom contient « alpha ». Disponible tout de suite, sans attendre la fin de la saison.',test:()=>false},
  theme_halloween:{d:'Cadeau : à cocher dans les objets gagnables de la saison où tu veux l’offrir (par exemple la saison 2). Les athlètes l’obtiennent en validant au moins un WOD d’octobre pendant cette saison, sans attendre sa fin. Tant qu’aucune saison ne le propose, personne ne l’a. Une fois équipé, le décor Halloween s’applique à l’avatar et, discrètement, à toute l’appli.',test:()=>false},
+ theme_noel:{d:'Cadeau : à cocher dans les objets gagnables de la saison où tu veux l’offrir (la saison de décembre). Les athlètes l’obtiennent en enregistrant au moins une séance pendant le mois de décembre sur cette saison, sans attendre sa fin. Tant qu’aucune saison ne le propose, personne ne l’a. Une fois équipé, le décor de Noël s’applique à l’avatar et à toute l’appli : fond de salle enneigée, flocons qui tombent, guirlandes étoilées en haut et tas de neige en bas qui grossit quand l’appli reste inactive (par exemple pendant un chrono de récup) et fond dès qu’on touche ou bouge, avec de la neige qui tombe hors de l’écran.',test:()=>false},
  shirt_octobre:{d:'Cadeau : avoir défini son nombre de séances par semaine (objectif de séances du profil) pour la saison en cours, la saison d’octobre. À cocher dans les objets gagnables de cette saison. Disponible tout de suite, sans attendre la fin de la saison.',test:()=>false},
  shirt_beta:{d:'Cadeau : avoir enregistré un metcon (avec score) pendant la saison bêta, la saison dont le nom contient « bêta ». Disponible tout de suite, sans attendre la fin de la saison.',test:()=>false},
  shirt_gold:{d:'Remporter 2 trophées différents dans la même saison.',test:c=>c.wins.size>=2},
@@ -5855,7 +6012,7 @@ const AV_OBJ={
  costume_vampire:{d:'Cadeau : réaliser au moins un WOD de la semaine du 26 octobre au 1er novembre 2026. Disponible tout de suite, sans attendre la fin de la saison.',test:()=>false},
  costume_sorciere:{d:'Cadeau : réaliser au moins un WOD de la semaine du 26 octobre au 1er novembre 2026. Disponible tout de suite, sans attendre la fin de la saison.',test:()=>false},
 };
-const AV_PUB={costume_vampire:'Réaliser au moins un WOD pendant la semaine du 26 octobre au 1er novembre.',costume_sorciere:'Réaliser au moins un WOD pendant la semaine du 26 octobre au 1er novembre.',shirt_octobre:'Définir ton nombre de séances par semaine (objectif de séances, dans ton profil) pour la saison d’octobre.',wrist_alpha:'Participer à au moins 3 séances pendant la saison Alpha.',shirt_beta:'Enregistrer un metcon avec un score pendant la saison bêta.',theme_halloween:'Valider au moins un WOD d’octobre pendant une saison qui propose ce thème.'};
+const AV_PUB={costume_vampire:'Réaliser au moins un WOD pendant la semaine du 26 octobre au 1er novembre.',costume_sorciere:'Réaliser au moins un WOD pendant la semaine du 26 octobre au 1er novembre.',shirt_octobre:'Définir ton nombre de séances par semaine (objectif de séances, dans ton profil) pour la saison d’octobre.',wrist_alpha:'Participer à au moins 3 séances pendant la saison Alpha.',shirt_beta:'Enregistrer un metcon avec un score pendant la saison bêta.',theme_halloween:'Valider au moins un WOD d’octobre pendant une saison qui propose ce thème.',theme_noel:'Enregistrer au moins une séance pendant le mois de décembre, sur une saison qui propose ce thème.'};
 /* peut-on gagner cet objet sur la saison en cours ? */
 function avStatus(it,own){
   if(own.has(it.id))return ['✓ Déjà débloqué.',true];
@@ -5909,6 +6066,15 @@ function avState(){
       const en=lg.entries||{};
       const d=Object.keys(en).sort().find(x=>S.wods[x]&&inP(x,per)&&(x.slice(5,7)==='10'||String(en[x].at||'').slice(5,7)==='10'));
       if(d){const o=(earned[uid]=earned[uid]||{});if(!o.theme_halloween)o.theme_halloween=per;}
+    }
+  }
+  /* thème Noël (cadeau) : seulement sur les saisons où le coach l'a coché ; acquis dès qu'une séance de décembre de cette saison est enregistrée (même en cours) */
+  for(const per of plist()){
+    if(!(per.avItems||[]).includes('theme_noel')||periodState(per)==='soon')continue;
+    for(const [uid,lg] of Object.entries(S.logs)){
+      const en=lg.entries||{};
+      const d=Object.keys(en).sort().find(x=>S.wods[x]&&inP(x,per)&&(x.slice(5,7)==='12'||String(en[x].at||'').slice(5,7)==='12'));
+      if(d){const o=(earned[uid]=earned[uid]||{});if(!o.theme_noel)o.theme_noel=per;}
     }
   }
   /* déguisements (cadeau) : acquis dès qu'un WOD de la semaine du 26 octobre au 1er novembre est réalisé (même saison en cours) */
@@ -6042,7 +6208,7 @@ function avatarEl(sx,eq,width,onclick,label,world){
   const cv=h('canvas',{width:AV_W,height:AV_H});wrap.append(cv);
   let cur=eq,seq=0;
   wrap.set=e=>{
-    cur=e;const my=++seq;wrap.style.backgroundImage=!world?'url("'+sceneURL(!!e.theme)+'")':'';
+    cur=e;const my=++seq;wrap.style.backgroundImage=!world?'url("'+sceneURL(e.theme)+'")':'';
     const old=wrap.querySelector('svg');if(old)old.remove();
     wrap.insertAdjacentHTML('beforeend',avOverlay(sx,e));
     if(AV_BY[e.costume]&&AV_BY[e.costume].img){cv.getContext('2d').clearRect(0,0,AV_W,AV_H);return;} /* déguisement : l'avatar de base n'est pas dessiné */
@@ -6133,7 +6299,7 @@ function openAvatar(uid){
   const close=()=>{ov.remove();document.removeEventListener('keydown',esc);render();};
   const big=avatarEl(sx,eq,0,null,mine?'Mon avatar':'Avatar de '+pseudo,true);
   const scene=h('div',{class:'av-scene'}),world=h('div',{class:'av-world'},scene,big);
-  const drawScene=()=>{scene.innerHTML=sceneSVG(!!eq.theme);world.classList.toggle('hal',!!eq.theme);};drawScene();
+  const drawScene=()=>{scene.innerHTML=sceneSVG(eq.theme);world.classList.toggle('hal',eq.theme==='theme_halloween');world.classList.toggle('noel',eq.theme==='theme_noel');};drawScene();
   const inv=h('div',{class:'av-inv'});
   const stage=h('div',{class:'av-stage'},world);addZoom(stage,world);
   const ov=h('div',{class:'avfs',id:'av-ov',role:'dialog','aria-modal':'true','aria-label':mine?'Mon avatar':'Avatar de '+pseudo},
@@ -6149,7 +6315,7 @@ function openAvatar(uid){
       if(it.slot==='hat'){delete eq.crown;delete av.crown;delete preview.crown;}
       if(it.slot==='crown'){delete eq.hat;delete av.hat;delete preview.hat;}
       if(S.owner&&mine&&!earned.has(it.id)){
-        const until=Date.now()+60000;
+        const dur=it.id==='theme_noel'?600000:60000,until=Date.now()+dur;
         preview[it.slot]={id:it.id,until};
         window.setTimeout(()=>{
           const cur=(S.logs[uid]&&S.logs[uid].avatar)||{},pr=cur._preview||{},active=pr[it.slot];
@@ -6161,7 +6327,7 @@ function openAvatar(uid){
           if(document.getElementById('av-ov')&&mine){delete eq[it.slot];big.set(eq);drawScene();applyTheme();drawInv();}
           else render();
           toast('Aperçu terminé : cet objet n’est pas encore débloqué.');
-        },60000);
+        },dur);
       }else delete preview[it.slot];
     }
     if(Object.keys(preview).length)av._preview=preview;else delete av._preview;
@@ -6176,7 +6342,7 @@ function openAvatar(uid){
       h('div',{class:'row',style:'justify-content:space-between;flex-wrap:nowrap'},h('b',{},'Inventaire · '+own.size+' objet'+(own.size>1?'s':'')),
         Object.keys(eq).length?h('button',{class:'btn sm',type:'button',onclick:()=>{for(const k of Object.keys(eq))delete eq[k];big.set(eq);S.logs[S.uid]=Object.assign({},S.logs[S.uid]||{},{avatar:{}});saveLog({avatar:{}});drawScene();applyTheme();drawInv();}},'Tout retirer'):null),
       h('div',{class:'av-tabs'},AV_SLOTS.map(([k,l])=>h('button',{type:'button',class:'btn sm',id:'avtab-'+k,onclick:()=>{slot=k;drawInv();}},l+' ('+AV_ITEMS.filter(x=>x.slot===k&&own.has(x.id)&&vis(x)).length+'/'+AV_ITEMS.filter(x=>x.slot===k&&vis(x)).length+')'))),
-      h('p',{class:'hint'},(S.owner?'Mode coach : tu vois les objets comme les athlètes ; touche un objet grisé pour l’essayer 60 s (aperçu). ':'')+'Choisis une catégorie, puis touche un objet pour l’équiper. Touche-le encore pour l’enlever. Touche le ? d’un objet pour voir comment l’obtenir. Un déguisement remplace toute la tenue tant qu’il est porté. Pince l’avatar, double-touche-le ou utilise + / − pour zoomer.'));return;}
+      h('p',{class:'hint'},(S.owner?'Mode coach : tu vois les objets comme les athlètes ; touche un objet grisé pour l’essayer 60 s (aperçu ; 10 min pour le thème Noël). ':'')+'Choisis une catégorie, puis touche un objet pour l’équiper. Touche-le encore pour l’enlever. Touche le ? d’un objet pour voir comment l’obtenir. Un déguisement remplace toute la tenue tant qu’il est porté. Pince l’avatar, double-touche-le ou utilise + / − pour zoomer.'));return;}
     const items=AV_ITEMS.filter(x=>x.slot===slot&&vis(x));
     const q=it=>h('button',{type:'button',class:'avq',id:'avq-'+it.id,'aria-label':'Comment obtenir '+it.name,'aria-expanded':info===it.id?'true':'false',onclick:()=>{info=info===it.id?null:it.id;drawInv();}},'?');
     const cur=info&&AV_BY[info]&&AV_BY[info].slot===slot?AV_BY[info]:null,st=cur?avStatus(cur,own):null;
@@ -6191,7 +6357,7 @@ function openAvatar(uid){
         return h('div',{class:'avcell'},tile,q(it));})),
       cur?h('div',{class:'tip',role:'note',id:'av-info'},h('b',{},cur.name),
         h('div',{},h('span',{class:'flabel',style:'color:var(--panel-muted)'},'Comment l’obtenir'),h('div',{},AV_PUB[cur.id]||AV_OBJ[cur.id].d)),
-        h('div',{style:'font-weight:700'},st[0]),S.owner&&!own.has(cur.id)?h('div',{class:'sub'},'Aperçu coach : touche l’objet pour l’essayer 60 s.'):null):'',
+        h('div',{style:'font-weight:700'},st[0]),S.owner&&!own.has(cur.id)?h('div',{class:'sub'},'Aperçu coach : touche l’objet pour l’essayer '+(cur.id==='theme_noel'?'10 min (avec des boutons de test pour la neige)':'60 s')+'.'):null):'',
       h('p',{class:'hint'},'Touche le ? d’un objet pour voir comment l’obtenir.'));
   }
   function drawView(){
