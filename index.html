@@ -1385,6 +1385,9 @@ body[data-tab=today] .themed .card{background:color-mix(in srgb,var(--c1) 18%,va
 .wk-h[aria-expanded="true"] .wchev{transform:rotate(225deg) translateY(-2px)}
 .wk-b{padding:0 12px 12px;display:grid;gap:8px}
 .wk-b .list{margin:0}
+a.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;color:inherit}
+a.btn.primary{color:var(--accent-ink)}
+.paystat{display:grid;gap:4px}.paystat b{font-size:18px}
 </style>
 </head>
 <body>
@@ -5397,6 +5400,7 @@ function viewCards(){
 }
 function backToCards(){S.carDate=S.viewDate||S.carDate;S.viewDate=null;S.entry=null;S.redo=null;S.tip=null;S.confirm=null;render();window.scrollTo(0,0);}
 function viewToday(){
+  if(!hasAccess())return viewPaywall();
   if(!S.viewDate)return viewCards();
   const t=todayStr(),date=S.viewDate||defaultDate(),w=S.wods[date];
   /* même couleur que la carte sur laquelle on a cliqué (cardColor la mémorise par date) */
@@ -10125,7 +10129,7 @@ function authErr(e){
   if(c==='auth/operation-not-allowed')return 'Cette méthode de connexion n’est pas activée dans Firebase.';
   return 'Connexion impossible, réessaie.';
 }
-/* présentation du coach, de la méthode et des tarifs, affichée sous le formulaire de connexion */
+/* présentation du coach et de la méthode, affichée sous le formulaire de connexion (pas de prix ici : ils sont dans la page Abonnement) */
 function loginPitch(){
   const ul=(...items)=>h('ul',{style:'margin:0;padding-left:20px;display:grid;gap:4px'},items.map(t=>h('li',{},t)));
   return h('div',{class:'card',id:'login-pitch'},
@@ -10140,9 +10144,8 @@ function loginPitch(){
          'Un classement de saison, des trophées et des badges',
          'Une communauté pour te comparer et t’encourager',
          'Une appli personnalisable : avatar, niveaux et variantes adaptées')),
-    h('div',{style:'display:grid;gap:8px'},h('b',{},'Les forfaits'),
-      plansCarousel(),
-      h('p',{class:'hint'},'Résiliation possible à tout moment. TVA non applicable, art. 293 B du CGI.'),
+    h('div',{style:'display:grid;gap:8px'},h('b',{},'Abonnement'),
+      h('p',{},'Les 2 premières semaines sont offertes. Ensuite, un abonnement est nécessaire pour accéder aux séances, avec résiliation possible à tout moment.'),
       cgvButton()),
     h('p',{class:'hint'},'Cette appli ne remplace pas un avis médical. Consulte un médecin avant de commencer ou de reprendre une activité intense.'));
 }
@@ -10578,25 +10581,77 @@ function avisTop(){
   return box;
 }
 /* ---------- abonnement : tarifs (repris sur la page de connexion) ---------- */
-const PRICE_4W=9.99,PRICE_SEASON=26.99,SEASON_WEEKS=12;
+const PRICE_4W=7.99,PRICE_SEASON=19.99,SEASON_WEEKS=12;
 const eur=v=>(Math.round(v*100)/100).toFixed(2).replace('.',',')+' €';
 const ICO_CARD='<svg '+SVGA+'><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h4"/></svg>';
+/* ---------- paiements Stripe ----------
+   Les liens de paiement (Payment Links) et le lien du portail client se créent dans Stripe (voir README paiements).
+   Le paiement est relié au compte par client_reference_id = identifiant du compte. Un script GitHub (sync-stripe.mjs)
+   recopie l'état des abonnements dans Firestore : subs/{uid} = { active, status, plan, periodEnd, cancelAtPeriodEnd }.
+   L'appli lit ce document ; elle ne l'écrit jamais. Essai gratuit : TRIAL_DAYS jours depuis la création du compte. */
+const PAY_LINKS={'4w':'','season':''}; /* À COMPLÉTER : adresses des deux liens de paiement Stripe (https://buy.stripe.com/…) */
+const PORTAL_LINK='';                  /* À COMPLÉTER : lien de connexion au portail client Stripe (https://billing.stripe.com/p/login/…) */
+const TRIAL_DAYS=14;
+const PAY_OPEN=''; /* À COMPLÉTER au lancement des paiements (AAAA-MM-JJ) : l'essai des comptes déjà créés démarre à cette date ; sans cela, ils seraient bloqués dès l'ouverture */
+const PLAN_NAMES={'4w':'4 semaines','season':'12 semaines'};
+function payState(){
+  if(S.owner)return {k:'coach'};
+  const d=S.pay&&S.pay.doc;
+  if(d&&d.active===true)return {k:'active',plan:d.plan,end:d.periodEnd,cancel:!!d.cancelAtPeriodEnd};
+  let c=S.created?Date.parse(S.created):NaN;const po=PAY_OPEN?Date.parse(PAY_OPEN+'T00:00:00'):NaN;if(!isNaN(c)&&!isNaN(po)&&po>c)c=po;
+  const te=isNaN(c)?null:new Date(c+TRIAL_DAYS*864e5);
+  if(te&&te>new Date())return {k:'trial',end:te};
+  /* statut encore inconnu (chargement, hors ligne, règles non publiées) : on ne bloque pas */
+  if(!S.pay||!S.pay.loaded||S.pay.err||!S.coachLoaded||!te)return {k:'unknown'};
+  return {k:'blocked',status:d&&d.status};
+}
+const hasAccess=()=>payState().k!=='blocked';
+function buyBtn(key){
+  const base=PAY_LINKS[key];
+  if(!base||!S.uid)return h('button',{class:'btn btn-block',type:'button',disabled:true},'Bientôt disponible');
+  const url=base+(base.indexOf('?')>=0?'&':'?')+'client_reference_id='+encodeURIComponent(S.uid)+(S.email?'&prefilled_email='+encodeURIComponent(S.email):'');
+  return h('a',{class:'btn primary btn-block',href:url,rel:'noopener'},'S’abonner');
+}
+function payStatusCard(){
+  const st=payState(),fd=x=>cap(fmtDate(dfmt(new Date(x))));
+  const card=h('section',{class:'card paystat'},h('p',{class:'flabel'},'Ton accès'));
+  if(st.k==='coach')card.append(h('b',{},'Accès coach'));
+  else if(st.k==='trial')card.append(h('b',{},'Essai gratuit'),h('p',{class:'muted'},'Jusqu’au '+fd(st.end)+'. Abonne-toi avant la fin pour garder l’accès aux séances.'));
+  else if(st.k==='active'){
+    card.append(h('b',{},'Abonné'+(PLAN_NAMES[st.plan]?' · '+PLAN_NAMES[st.plan]:'')),
+      st.end?h('p',{class:'muted'},(st.cancel?'Fin de l’abonnement le ':'Prochain renouvellement le ')+fd(st.end)+'.'):null);
+    if(PORTAL_LINK)card.append(h('a',{class:'btn',href:PORTAL_LINK,rel:'noopener'},'Gérer mon abonnement'));
+  }
+  else if(st.k==='blocked')card.append(h('b',{},'Aucun abonnement actif'),h('p',{class:'muted'},'Ton essai est terminé : abonne-toi pour retrouver les séances.'),
+    PORTAL_LINK?h('a',{class:'btn',href:PORTAL_LINK,rel:'noopener'},'J’ai déjà un abonnement'):null);
+  else card.append(h('p',{class:'muted'},'Chargement de ton abonnement…'));
+  if(S.pay&&S.pay.doc&&!S.pay.doc.active&&st.k!=='active'&&S.pay.doc.status&&st.k!=='coach')card.append(h('p',{class:'hint'},'Dernier état du paiement : '+S.pay.doc.status+'.'));
+  return card;
+}
+function viewPaywall(){
+  return h('div',{class:'stack'},
+    h('div',{},h('p',{class:'eyebrow'},'Box Score'),h('h1',{class:'day'},'Abonne-toi pour accéder aux séances')),
+    payStatusCard(),
+    plansCarousel(true),
+    h('p',{class:'hint'},'Après le paiement, l’accès s’ouvre tout seul en quelques minutes. Résiliation possible à tout moment. TVA non applicable, art. 293 B du CGI.'),
+    cgvButton());
+}
 /* deux cartes de forfaits qui se font glisser (page Abonnement et page de connexion) */
-function plansCarousel(){
-  /* prix pas encore définis : on affiche « Prix non défini » à la place des montants */
-  const plan=(cls,name,lines)=>h('article',{class:'plan '+cls},
+function plansCarousel(buy){
+  const plan=(cls,name,price,lines,key)=>h('article',{class:'plan '+cls},
     h('p',{class:'flabel'},name),
-    h('p',{class:'plan-price',style:'font-size:28px'},'Prix non défini'),
-    ...lines);
+    h('p',{class:'plan-price',style:'font-size:28px'},price),
+    ...lines,buy?buyBtn(key):null);
   const track=h('div',{class:'plans',role:'region','aria-label':'Forfaits : fais glisser pour voir les deux','tabindex':'0'},
-    plan('','4 semaines',[
+    plan('','4 semaines',eur(PRICE_4W)+' / 4 semaines',[
       h('p',{class:'plan-free'},'Les 2 premières semaines sont offertes à l’inscription.'),
       h('p',{class:'plan-sub'},'Renouvelé toutes les 4 semaines.'),
-      h('p',{class:'plan-sub'},'Sans engagement : tu arrêtes quand tu veux.')]),
-    plan('best','Saison · '+SEASON_WEEKS+' semaines',[
+      h('p',{class:'plan-sub'},'Sans engagement : tu arrêtes quand tu veux.')],'4w'),
+    plan('best',SEASON_WEEKS+' semaines',eur(PRICE_SEASON)+' / '+SEASON_WEEKS+' semaines',[
       h('p',{class:'plan-free'},'Les 2 premières semaines sont offertes à l’inscription.'),
-      h('p',{class:'plan-sub'},'Renouvelé à chaque nouvelle saison.')]));
-  const dots=[0,1].map(i=>h('button',{type:'button',class:'plan-dot','aria-label':i?'Forfait saison':'Forfait 4 semaines','aria-current':i?null:'true',onclick:()=>track.scrollTo({left:i*(track.scrollWidth-track.clientWidth),behavior:'smooth'})}));
+      h('p',{class:'plan-sub'},'Renouvelé toutes les '+SEASON_WEEKS+' semaines.'),
+      h('p',{class:'plan-sub'},'Sans engagement : tu arrêtes quand tu veux.')],'season'));
+  const dots=[0,1].map(i=>h('button',{type:'button',class:'plan-dot','aria-label':i?'Forfait '+SEASON_WEEKS+' semaines':'Forfait 4 semaines','aria-current':i?null:'true',onclick:()=>track.scrollTo({left:i*(track.scrollWidth-track.clientWidth),behavior:'smooth'})}));
   track.addEventListener('scroll',()=>{const mx=track.scrollWidth-track.clientWidth,i=mx>0&&track.scrollLeft>mx/2?1:0;dots.forEach((d,k)=>{if(k===i)d.setAttribute('aria-current','true');else d.removeAttribute('aria-current');});},{passive:true});
   return h('div',{class:'plans-wrap'},track,h('div',{class:'plan-dots'},...dots),h('p',{class:'hint',style:'text-align:center'},'Fais glisser pour comparer les deux forfaits.'));
 }
@@ -10619,19 +10674,19 @@ function cgvSections(){
       'Dans ces conditions, « l’éditeur » désigne l’éditeur de Box Score, qui est aussi le coach, et « tu » ou « l’athlète » désigne toute personne qui crée un compte.']},
     {t:'2. Objet',p:[
       'Ces conditions générales de vente (CGV) encadrent la vente des abonnements qui donnent accès à Box Score : le programme de Crosstraining du coach, le classement de saison, les trophées, les badges et la communauté.',
-      'Créer un compte et choisir un forfait vaut acceptation des CGV. Elles sont consultables à tout moment sous les forfaits.',
+      'Créer un compte et choisir un forfait vaut acceptation des CGV. Elles sont consultables à tout moment, sur l’écran de connexion et dans la page Abonnement.',
       'L’abonnement est réservé aux personnes majeures. Un mineur doit avoir l’autorisation de son représentant légal, qui réalise le paiement.']},
     {t:'3. Forfaits et prix',p:[
       'Forfait 4 semaines : '+eur(PRICE_4W)+' toutes les 4 semaines.',
-      'Forfait saison : '+eur(PRICE_SEASON)+' pour une saison de '+SEASON_WEEKS+' semaines, soit '+eur(per4)+' par 4 semaines.',
+      'Forfait '+SEASON_WEEKS+' semaines : '+eur(PRICE_SEASON)+' toutes les '+SEASON_WEEKS+' semaines, soit '+eur(per4)+' par 4 semaines.',
       'Les prix sont en euros. TVA non applicable, art. 293 B du CGI.',
       'L’éditeur peut modifier ses prix. Le nouveau prix ne s’applique qu’au renouvellement suivant, après une information envoyée au moins 30 jours avant. Tu peux résilier avant son entrée en vigueur.']},
     {t:'4. Essai gratuit',p:[
       'Les 2 premières semaines sont offertes à l’inscription. L’essai est limité à une fois par personne : créer plusieurs comptes pour renouveler l’essai est interdit et peut entraîner la suspension des comptes concernés.',
-      'À la fin de l’essai, l’accès aux séances est réservé aux athlètes abonnés. Si tu as enregistré un moyen de paiement pendant l’essai, le forfait choisi démarre automatiquement à la fin de l’essai, sauf résiliation avant.']},
+      'À la fin de l’essai, l’accès aux séances est réservé aux athlètes abonnés. Aucun moyen de paiement n’est demandé pendant l’essai et rien n’est prélevé sans que tu aies choisi un forfait.']},
     {t:'5. Paiement et renouvellement',p:[
       'Le paiement se fait en ligne par carte bancaire, via Stripe, prestataire de paiement sécurisé. L’éditeur ne voit pas et ne conserve pas tes coordonnées bancaires.',
-      'Le montant est dû au début de chaque période. L’abonnement est renouvelé automatiquement à chaque échéance (toutes les 4 semaines, ou à chaque nouvelle saison pour le forfait saison) jusqu’à ta résiliation.',
+      'Le montant est dû au début de chaque période. L’abonnement est renouvelé automatiquement à chaque échéance (toutes les 4 semaines pour le forfait 4 semaines, toutes les '+SEASON_WEEKS+' semaines pour le forfait '+SEASON_WEEKS+' semaines) jusqu’à ta résiliation.',
       'En cas d’échec de paiement, l’accès peut être suspendu jusqu’à la régularisation. Un reçu est envoyé par e-mail à chaque paiement.']},
     {t:'6. Accès au service',p:[
       'L’accès est personnel : ne communique pas tes identifiants. Il commence à la création du compte (essai) puis au paiement du forfait.',
@@ -10643,7 +10698,7 @@ function cgvSections(){
       'Pour te rétracter, envoie une demande claire par e-mail à '+I.email+'. Le remboursement éventuel est effectué dans les 14 jours, par le même moyen de paiement.']},
     {t:'8. Résiliation',p:[
       'Tu peux résilier à tout moment, sans motif ni pénalité, depuis la gestion de ton abonnement dans l’appli ou par e-mail à '+I.email+'.',
-      'La résiliation prend effet à la fin de la période déjà payée (4 semaines ou saison en cours) : tu gardes l’accès jusque-là. La période commencée n’est pas remboursée, sauf cas prévu par la loi.',
+      'La résiliation prend effet à la fin de la période déjà payée (4 semaines ou '+SEASON_WEEKS+' semaines en cours) : tu gardes l’accès jusque-là. La période commencée n’est pas remboursée, sauf cas prévu par la loi.',
       'L’éditeur peut suspendre ou résilier un compte en cas de non-respect des CGV ou du règlement (triche, propos injurieux, comptes multiples), après t’avoir informé.']},
     {t:'9. Santé et pratique sportive',p:[
       'Box Score ne remplace pas un avis médical. Consulte un médecin avant de commencer ou de reprendre une activité physique intense.',
@@ -10684,7 +10739,8 @@ function viewSub(){
     h('div',{},h('p',{class:'eyebrow'},'Box Score'),h('h1',{class:'day'},'Abonnement')),
     h('section',{class:'card'},h('h2',{class:'h2'},'Ce que tu y gagnes'),
       h('ul',{style:'margin:0;padding-left:20px;display:grid;gap:6px'},gains.map(t=>h('li',{},t)))),
-    plansCarousel(),
+    payStatusCard(),
+    plansCarousel(true),
     h('p',{class:'hint'},'Résiliation possible à tout moment. TVA non applicable, art. 293 B du CGI.'),
     cgvButton());
 }
@@ -10723,6 +10779,13 @@ const installActAndroid=()=>(isAndroid()&&!isStandalone()&&installEv)?{label:'In
   try{ev.prompt();const c=await ev.userChoice;if(c&&c.outcome==='accepted'){btn.textContent='Installée ✓';btn.disabled=true;return;}}catch(e){}
   btn.textContent='Pas installée : réessaie via les trois points';btn.disabled=true;
 }}:null;
+/* étapes « écran d'accueil » : seulement celle de la plateforme, rien si l'appli est déjà installée */
+function installSteps(){
+  if(isStandalone())return [];
+  if(isIOS())return [{act:installActIOS,title:'Mets l’appli sur ton écran d’accueil',text:'Ouvre l’appli dans Safari, touche le bouton Partager (le carré avec une flèche vers le haut), fais défiler et choisis « Sur l’écran d’accueil », puis « Ajouter ». Elle s’ouvre ensuite comme une vraie appli, et sur iPhone les notifications ne marchent que depuis cette icône.'}];
+  if(isAndroid())return [{act:installActAndroid,title:'Mets l’appli sur ton écran d’accueil',text:'Ouvre l’appli dans Chrome, touche les trois points en haut à droite, puis « Ajouter à l’écran d’accueil » (ou « Installer l’application ») et confirme. L’icône apparaît comme une appli classique.'}];
+  return [{title:'Mets l’appli sur l’écran d’accueil de ton téléphone',text:'Sur iPhone : ouvre l’appli dans Safari, touche Partager puis « Sur l’écran d’accueil ». Sur Android : ouvre-la dans Chrome, touche les trois points puis « Ajouter à l’écran d’accueil ». Elle s’ouvre ensuite comme une vraie appli.'}];
+}
 const TOUR_STEPS={
   loginEmail:{sel:'#auth-email',title:'Ton e-mail',text:'Commence par écrire ton adresse e-mail ici.'},
   loginPw:{sel:'#auth-pw',title:'Ton mot de passe',text:'Choisis un mot de passe de 6 caractères minimum.'},
@@ -10734,18 +10797,27 @@ const TOURS={
     {title:'Ton niveau, ta performance',text:'Sur chaque metcon, tu choisis le niveau qui te correspond (Débutant, Intermédiaire ou Rx). Les points récompensent ta performance à ton niveau : tout le monde peut viser le haut du classement.'},
     {title:'Plus qu’un classement',text:'Des trophées en fin de saison, des flammes pour la régularité, un avatar à habiller et un fil pour s’encourager avec des emojis.'},
     TOUR_STEPS.loginEmail,TOUR_STEPS.loginPw,TOUR_STEPS.loginCreate,
+    {title:'Deux semaines offertes',text:'Tes 2 premières semaines de participation sont gratuites. Ensuite, un abonnement est nécessaire pour accéder aux séances.'},
     {sel:'#tour-help',title:'Besoin d’un rappel ?',text:'Ce bouton « ? » te remet ce guide quand tu veux.'}],
+  welcome:()=>[
+    {title:'Bienvenue sur Box Score',text:'Le classement de ton groupe de Crosstraining : le coach publie des séances, tu les fais quand tu veux dans la semaine, tu notes ton résultat et tu gagnes des points. Quelques secondes pour bien démarrer.'},
+    ...installSteps(),
+    {sel:'#tour-help',title:'Des explications quand tu veux',text:'Ce bouton « ? » en haut à droite ouvre le guide de l’écran où tu te trouves. Touche-le à tout moment, sur chaque écran.'},
+    {sel:'[data-tour=tab-menu]',title:'Le menu',text:'Touche ces trois traits pour ouvrir le menu : profil, notifications, règlement, abonnement…'},
+    {needs:'drawer',sel:'[data-tour=dm-sub]',title:'Deux semaines offertes',text:'Tes 2 premières semaines de participation sont gratuites. Ensuite, un abonnement sera nécessaire : tu le trouves ici, dans la rubrique « Abonnement » du menu.'}],
   feed:()=>[
-    {act:installActIOS,title:'Mettre l’appli sur l’écran d’accueil : iPhone',text:'Ouvre l’appli dans Safari, touche le bouton Partager (le carré avec une flèche vers le haut), fais défiler et choisis « Sur l’écran d’accueil », puis « Ajouter ». Sur iPhone, les notifications ne marchent que depuis cette icône.'},
-    {act:installActAndroid,title:'Mettre l’appli sur l’écran d’accueil : Android',text:'Ouvre l’appli dans Chrome, touche les trois points en haut à droite, puis « Ajouter à l’écran d’accueil » (ou « Installer l’application ») et confirme. L’icône apparaît comme une appli classique.'},
+    ...installSteps(),
+    {sel:'#hdr-right .chip',title:'La saison',text:'La saison affichée. Tes points comptent pour la saison en cours.'},
     {sel:'main .day',title:'Le fil d’actualité',text:'Ici apparaissent les séances validées par les athlètes du groupe, de la plus récente à la plus ancienne.'},
     {sel:'.rv',title:'Tes actualités de la semaine',text:'Cette carte te parle de ta saison : rivalités avec les athlètes proches de toi au classement, objectif de séances, prochaine récompense. Touche son en-tête pour la déplier ou la replier.'},
     {sel:'.feed-card',title:'Une séance publiée',text:'Le pseudo, le titre de la séance et les résultats. Touche un pseudo pour ouvrir le profil de l’athlète.'},
     {sel:'.rxrow',title:'Encourage tes partenaires',text:'Un emoji pour féliciter : ça fait toujours plaisir.'},
-    {sel:'[data-tour=tab-menu]',title:'Nouveau : le menu',text:'Touche ces trois traits : un bandeau se déplie sur le côté. Il regroupe ton profil, tes notifications, le message du coach et le partage de l’appli.'},
+    {sel:'.tabs',title:'Les onglets du bas',text:'Fil : l’actualité du groupe. Séance : les séances de la semaine. Classement : les points de tous les athlètes. Le dernier bouton, aux trois traits, ouvre le menu.'},
+    {sel:'[data-tour=tab-menu]',title:'Le menu',text:'Touche ces trois traits : un bandeau se déplie sur le côté. Il regroupe ton profil, ton résumé de la semaine, tes notifications, le règlement, l’abonnement et plus encore.'},
     {needs:'drawer',sel:'#drawer',title:'Le bandeau déplié',text:'Chaque entrée a son petit dessin. On les passe en revue une par une.'},
     {needs:'drawer',sel:'[data-tour=dm-profile]',title:'Profil : le bonhomme',text:'Tes points, ton rang, ton avatar, tes informations et ton objectif de séances.'},
     {needs:'drawer',sel:'[data-tour=dm-coach]',title:'Coach',text:'Réservé au coach : publier les séances et les messages.'},
+    {needs:'drawer',sel:'[data-tour=dm-recap]',title:'Résumé de la semaine : le graphique',text:'Chaque lundi matin, le bilan de la semaine écoulée : ton évolution au classement, les leaders, les plus grosses progressions. Le point rouge signale un résumé pas encore ouvert.'},
     {needs:'drawer',sel:'[data-tour=dm-notif]',title:'Notifications : la cloche',text:'Active les notifications pour être prévenu d’une nouvelle séance, d’un message du coach ou d’une réaction. Un point rouge signale qu’elles ne sont pas encore activées.'},
     {needs:'drawer',sel:'[data-tour=dm-mail]',title:'Message du coach : l’enveloppe',text:'Relis le dernier message du coach. Le point rouge indique un message pas encore lu.'},
     {needs:'drawer',sel:'[data-tour=dm-rules]',title:'Règlement : le livre',text:'Les règles de la compétition, à lire un point à la fois. Le point rouge disparaît dès que tu as ouvert le règlement.'},
@@ -10753,8 +10825,11 @@ const TOURS={
     {needs:'drawer',sel:'[data-tour=dm-moves]',title:'Apprentissage des mouvements',text:'La banque de mouvements : pour chacun, la fiche avec les critères de rep valide et de no rep, une image et parfois une vidéo. Tu y accèdes aussi en touchant le nom d’un mouvement dans une séance.'},
     {needs:'drawer',sel:'[data-tour=dm-bug]',title:'Signaler un bug',text:'Un souci dans l’appli ? Décris-le ici, il arrive directement au développeur.'},
     {needs:'drawer',sel:'[data-tour=dm-share]',title:'Partager l’appli : le téléphone',text:'Ouvre une page avec le lien de l’appli : tu le copies et tu l’envoies à quelqu’un.'},
+    {needs:'drawer',sel:'[data-tour=dm-avis]',title:'Avis',text:'Note l’appli et laisse un petit mot : seul le coach le lit.'},
+    {needs:'drawer',sel:'[data-tour=dm-sub]',title:'Abonnement',text:'Ton statut (essai gratuit ou abonné), les deux forfaits, le paiement et les conditions générales de vente.'},
     {sel:'#tour-help',title:'Besoin d’un rappel ?',text:'Ce bouton « ? » te remet le guide de l’onglet où tu te trouves, quand tu veux.'}],
   today:()=>[
+    {sel:'.back-btn',title:'Retour aux séances',text:'Ce bouton te ramène à la liste des séances de la semaine.'},
     {sel:'main .day',title:'La séance du jour',text:'La date de la séance. Tu peux la faire n’importe quel jour de la semaine.'},
     {sel:'#wu-card',title:'L’échauffement',text:'Un échauffement avant d’attaquer la séance est très fortement conseillé. Celui qui est proposé est complet, mais tu es libre de faire le tien. « Lancer l’échauffement » démarre le mode guidé avec timer, « Mode libre » te laisse avancer à ton rythme, et « Voir les exercices » affiche la liste. Pendant l’échauffement, touche « Voir les infos » pour voir l’image et les consignes de l’exercice. Le « ? » en haut à droite de la carte explique les deux modes.'},
     {sel:'main .wtitle',title:'Titre et points',text:'Le titre de la séance et les points de base qu’elle rapporte. Le metcon ajoute des points selon ton niveau.'},
@@ -10784,6 +10859,23 @@ const TOURS={
     {sel:'#pm-infos',title:'Le menu du profil',text:'Tes informations, tes badges, ta bannière, ta progression et tes records (PR), et tes notifications : chaque rubrique s’ouvre d’un toucher.'},
     {sel:'#pseudo-edit',title:'Tes informations',text:'Ton pseudo apparaît dans le classement. Tu peux le modifier ici.'}]
 };
+TOURS.cards=()=>[
+    {sel:'main .day',title:'Les séances de la semaine',text:'Les séances de la semaine, du lundi au dimanche : tu les fais quand tu veux. Fais glisser les cartes pour passer d’une séance ou d’une semaine à l’autre.'},
+    {sel:'.car-track',title:'Une carte par séance',text:'Chaque carte montre le titre et le contenu de la séance, et indique si tu l’as déjà validée. Touche une carte pour l’ouvrir.'},
+    {sel:'.car-dots',title:'Les points',text:'Un point par séance : touche-en un pour y aller directement.'}];
+TOURS.recap=()=>[
+    {sel:'.rc-head',title:'Ta semaine',text:'Le résumé de la semaine écoulée, du lundi au dimanche. Un nouveau résumé arrive chaque lundi matin.'},
+    {sel:'.rc-nav',title:'Changer de semaine',text:'Les flèches te ramènent aux semaines précédentes.'},
+    {sel:'.rc-ctl',title:'Global ou Groupe, GOAT ou Scratch',text:'Global réunit tous les groupes, Groupe te compare à ton équipe. GOAT classe avec des points pondérés (réglage par défaut), Scratch avec les points bruts.'}];
+TOURS.avis=()=>[
+    {sel:'.kbpick',title:'Ta note',text:'Note l’appli de 1 à 5 kettlebells.'},
+    {sel:'#avis-text',title:'Ton petit mot',text:'Quelques mots, 200 caractères au maximum : ce qui te plaît, ce qui t’aide.'},
+    {sel:'#avis-send',title:'Envoyer',text:'Tu as un seul avis, que tu peux modifier quand tu veux. Seul le coach peut le lire ; s’il est affiché sur l’écran de connexion, ton pseudo, ta note et ton mot apparaissent.'}];
+TOURS.sub=()=>[
+    {sel:'.paystat',title:'Ton accès',text:'Ton statut : essai gratuit avec sa date de fin, ou abonnement en cours. Une fois abonné, « Gérer mon abonnement » te permet de changer de carte ou de résilier.'},
+    {sel:'.plans',title:'Les deux forfaits',text:'4 semaines à '+eur(PRICE_4W)+' ou '+SEASON_WEEKS+' semaines à '+eur(PRICE_SEASON)+'. Fais glisser pour comparer. Les deux se renouvellent automatiquement et tu peux résilier à tout moment.'},
+    {sel:'.plan .btn',title:'S’abonner',text:'Le paiement par carte se fait sur la page sécurisée de Stripe. Quelques minutes plus tard, ton accès aux séances est ouvert.'},
+    {sel:'#cgv-btn',title:'Conditions générales de vente',text:'Les conditions de l’abonnement, à lire avant de t’abonner.'}];
 TOURS.moves=()=>[
     {sel:'main .day',title:'Apprentissage des mouvements',text:'La banque de tous les mouvements, classés en haltérophilie, gymnastique et cardio.'},
     {sel:'.mvcard',title:'Une fiche',text:'Touche un mouvement pour la déplier : description, critères de rep valide et de no rep, image, et vidéo quand elle existe.'},
@@ -10801,23 +10893,20 @@ TOURS.bug=()=>[
 TOURS.share=()=>[
     {sel:'#share-url',title:'Le lien de l’appli',text:'Le lien à envoyer à quelqu’un de ton groupe.'},
     {sel:'#share-copy',title:'Copier',text:'Copie le lien, puis colle-le dans un message.'}];
-const TOUR_AUTO=['login','feed','today','board','profile']; /* les autres guides s'ouvrent avec le « ? » */
+/* les guides ne s'ouvrent plus tout seuls : seulement avec le « ? ». Seul le message de bienvenue (TOURS.welcome) s'affiche une fois, à la première connexion */
 let tourEl=null;
-const TOUR_VER={feed:'-v3',today:'-v3',board:'-v2',profile:'-v2'}; /* un guide enrichi est remontré une fois */
+const TOUR_VER={welcome:'-v1'};
 const tourKey=t=>'bs-tour-'+(t==='login'?'login':(S.uid||'anon')+'-'+t)+(TOUR_VER[t]||'');
 const tourSeen=t=>{try{return localStorage.getItem(tourKey(t))==='1';}catch(e){return true;}}; /* stockage indisponible : on n'insiste pas */
 const tourMark=t=>{try{localStorage.setItem(tourKey(t),'1');}catch(e){}};
 const tourBusy=()=>!!document.querySelector('.ov,.cer,.tm,.avfs,.ann,.reward-pop,#tm-ov');
-const curTourId=()=>!S.uid?((S.authReady&&S.db)?'login':null):((S.viewUser||S.boardDetail||(S.tab==='today'&&!S.viewDate))?null:(TOURS[S.tab]?S.tab:null));
+const curTourId=()=>!S.uid?((S.authReady&&S.db)?'login':null):((S.viewUser||S.boardDetail)?null:((S.tab==='today'&&!hasAccess())?'sub':(S.tab==='today'&&!S.viewDate)?'cards':(TOURS[S.tab]?S.tab:null)));
 function helpBtn(){return h('button',{class:'help-btn',id:'tour-help',type:'button','aria-label':'Afficher le guide de cet écran',title:'Guide de cet écran',onclick:()=>{const t=curTourId();if(t)startTour(TOURS[t]());}},'?');}
 function maybeTour(){
-  if(tourEl)return;
-  const t=curTourId();
-  if(!t||!TOUR_AUTO.includes(t)||tourSeen(t))return;
-  if(S.uid&&(!ready()||needPseudo()))return;
-  if(tourBusy())return;
-  tourMark(t);
-  startTour(TOURS[t]());
+  if(tourEl||!S.uid||tourSeen('welcome'))return;
+  if(!ready()||needPseudo()||tourBusy())return;
+  tourMark('welcome');
+  startTour(TOURS.welcome());
 }
 function stopTour(){
   if(!tourEl)return;
@@ -10988,7 +11077,7 @@ function startFirebase(){
     S.sexSync=null;S.coachUid=null;S.coachLoaded=false;S.owner=false;S.error=null;S.entry=null;S.redo=null;S.viewDate=null;S.confirm=null;S.cerAuto=false;S._annDone=false;S.ann=null;S.annLoaded=false;S._aw=null;S.groups={list:[],of:{},snap:{}};S._freezing=false;S.boardGroup=undefined;S.comments={};S.cacheMode=false;S.snapMode=false;S._srv={};S._netOff=false;clearTimeout(cacheT);S.reactions={};S.wu={cfg:null,loaded:false,list:false};
     S.coach={wod:null,editing:false,period:null,resDate:null};S.avisFor=null;S.profView=null;S.viewUser=null;S.tip=null;S.tab=user?takeInitialTab():'feed';S.authReady=true;
     if(!user){S.uid=null;try{localStorage.removeItem(SNAP_KEY);}catch(e){}render();return;}
-    S.uid=user.uid;setTimeout(pushSync,2500);S.meName=user.displayName||(user.email||'').split('@')[0]||'';
+    S.uid=user.uid;S.pay={loaded:false,doc:null,err:false};S.created=(user.metadata&&user.metadata.creationTime)||'';S.email=user.email||'';setTimeout(pushSync,2500);S.meName=user.displayName||(user.email||'').split('@')[0]||'';
     const fail=e=>{S.error=(e&&e.code==='permission-denied')?'Accès refusé par la base de données. Publie les règles de sécurité (voir README).':'Lecture des données impossible pour le moment.';scheduleRender();};
     const watch=(path,key)=>unsubs.push(S.db.collection(path).onSnapshot(sn=>{S[key]=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));S.loaded[key]=true;S._srv[key]=!sn.fromCache;
       if(S._netOff&&ready())backOnline();
@@ -10997,6 +11086,8 @@ function startFirebase(){
       scheduleRender();if(key==='logs')selfSync();},fail,true));
     watch('periods','periods');watch('wods','wods');watch('logs','logs');
     if(persist)cacheT=setTimeout(()=>{if(S.uid===user.uid&&!ready()&&snapRead()&&snapRead().uid===user.uid)goCache();},3000);
+    /* état de l'abonnement (écrit par le script GitHub, lecture seule ici) ; en cas d'erreur de lecture on ne bloque personne */
+    unsubs.push(S.db.doc('subs/'+S.uid).onSnapshot(sn=>{S.pay={loaded:true,doc:sn.exists?sn.data():null,err:false};scheduleRender();},()=>{S.pay={loaded:true,doc:null,err:true};scheduleRender();}));
     unsubs.push(S.db.doc('config/coach').onSnapshot(sn=>{S.coachUid=sn.exists?(sn.data().uid||null):null;S.coachLoaded=true;S.owner=!!S.coachUid&&S.coachUid===S.uid;wuMaybeSeed();scheduleRender();},fail));
     /* les groupes ne bloquent jamais l'appli : si les règles ne sont pas encore publiées, on ignore l'erreur */
     unsubs.push(S.db.doc('config/groups').onSnapshot(sn=>{const d=sn.exists?sn.data():null;S.groups={list:(d&&Array.isArray(d.list))?d.list:[],of:(d&&d.of&&typeof d.of==='object')?d.of:{},snap:(d&&d.snap&&typeof d.snap==='object')?d.snap:{},loaded:true};S._freezing=false;scheduleRender();},()=>{}));
