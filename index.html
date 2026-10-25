@@ -10589,10 +10589,10 @@ const ICO_CARD='<svg '+SVGA+'><rect x="2.5" y="5" width="19" height="14" rx="2.5
    Le paiement est relié au compte par client_reference_id = identifiant du compte. Un script GitHub (sync-stripe.mjs)
    recopie l'état des abonnements dans Firestore : subs/{uid} = { active, status, plan, periodEnd, cancelAtPeriodEnd }.
    L'appli lit ce document ; elle ne l'écrit jamais. Essai gratuit : TRIAL_DAYS jours depuis la création du compte. */
-const PAY_LINKS={'4w':'','season':''}; /* À COMPLÉTER : adresses des deux liens de paiement Stripe (https://buy.stripe.com/…) */
-const PORTAL_LINK='';                  /* À COMPLÉTER : lien de connexion au portail client Stripe (https://billing.stripe.com/p/login/…) */
+const PAY_LINKS={'4w':'https://buy.stripe.com/test_00w14n0VodLaabpayt8Ra00','season':'https://buy.stripe.com/test_00waEXbA26iIerF3618Ra01'}; /* À COMPLÉTER : adresses des deux liens de paiement Stripe (https://buy.stripe.com/…) */
+const PORTAL_LINK='https://billing.stripe.com/p/login/test_00w14n0VodLaabpayt8Ra00';                  /* À COMPLÉTER : lien de connexion au portail client Stripe (https://billing.stripe.com/p/login/…) */
 const TRIAL_DAYS=14;
-const PAY_OPEN=''; /* À COMPLÉTER au lancement des paiements (AAAA-MM-JJ) : l'essai des comptes déjà créés démarre à cette date ; sans cela, ils seraient bloqués dès l'ouverture */
+const PAY_OPEN='2026-11-02'; /* À COMPLÉTER au lancement des paiements (AAAA-MM-JJ) : l'essai des comptes déjà créés démarre à cette date ; sans cela, ils seraient bloqués dès l'ouverture */
 const PLAN_NAMES={'4w':'4 semaines','season':'12 semaines'};
 function payState(){
   if(S.owner)return {k:'coach'};
