@@ -298,6 +298,10 @@ html[data-plan],html[data-plan] body{overflow:hidden}
 
 /* ajouts : saisons, niveaux, objectif */
 .brand span{white-space:nowrap}
+.bt{display:grid;gap:4px;min-width:0}
+.paychip{justify-self:start;font:700 10.5px/1.2 var(--f-mono);letter-spacing:.03em;text-transform:none;color:var(--accent-ink);background:var(--accent);padding:3px 7px;border-radius:3px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.paychip.off{background:none;color:var(--muted);border:1px solid var(--edge);padding:2px 6px}
+.paychip[hidden]{display:none}
 .tab{font-size:clamp(13px,4.2vw,17px);letter-spacing:.03em;min-width:0;padding-inline:2px;white-space:nowrap}
 .ttop{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
 .ttop .tn{flex:1;min-width:0}
@@ -1392,7 +1396,7 @@ a.btn.primary{color:var(--accent-ink)}
 </head>
 <body>
 <div class="shell">
-  <header class="top"><div class="brand"><svg class="bb" viewBox="0 0 72 24" aria-hidden="true"><rect x="0" y="11" width="72" height="2"/><rect class="pl" x="12" y="1" width="6" height="22" rx="1"/><rect x="19" y="5" width="4" height="14" rx="1"/><rect x="25" y="9" width="2" height="6"/><rect x="45" y="9" width="2" height="6"/><rect x="49" y="5" width="4" height="14" rx="1"/><rect class="pl" x="54" y="1" width="6" height="22" rx="1"/></svg><span>BOX SCORE</span></div><div id="hdr-right"></div></header>
+  <header class="top"><div class="brand"><svg class="bb" viewBox="0 0 72 24" aria-hidden="true"><rect x="0" y="11" width="72" height="2"/><rect class="pl" x="12" y="1" width="6" height="22" rx="1"/><rect x="19" y="5" width="4" height="14" rx="1"/><rect x="25" y="9" width="2" height="6"/><rect x="45" y="9" width="2" height="6"/><rect x="49" y="5" width="4" height="14" rx="1"/><rect class="pl" x="54" y="1" width="6" height="22" rx="1"/></svg><div class="bt"><span>BOX SCORE</span><span id="pay-chip" class="paychip" role="button" tabindex="0" hidden></span></div></div><div id="hdr-right"></div></header>
   <main id="main" class="stack"></main>
 </div>
 <nav class="tabs" aria-label="Navigation"><div class="in" id="tabs"></div></nav>
@@ -3802,7 +3806,7 @@ const TAB_ICO={feed:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" 
  today:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8.5 9V8a3.5 3.5 0 0 1 7 0v1"/><circle cx="12" cy="14.5" r="5.5"/></svg>',
  board:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 4h9v5a4.5 4.5 0 0 1-9 0z"/><path d="M7.5 6h-3c0 3 1.2 4.6 3.2 5M16.5 6h3c0 3-1.2 4.6-3.2 5M12 13.8V17M8.5 20h7M9.8 17h4.4"/></svg>'};
 function render(){
-  planHide();
+  planHide();updatePayChip();
   pending=false;S._un=null;S._aw=null;S._ob=null;applyTheme();if(document.body.dataset.tab!==(S.tab||''))document.body.dataset.tab=S.tab||'';document.body.classList.remove('modal-open');document.body.classList.remove('board-lock');
   {const tp=document.querySelector('.top');if(tp)document.documentElement.style.setProperty('--toph',tp.offsetHeight+'px');}
   if(!S.uid){
@@ -10606,11 +10610,38 @@ function payState(){
   return {k:'blocked',status:d&&d.status};
 }
 const hasAccess=()=>payState().k!=='blocked';
+/* cadre d'état de l'abonnement à côté du titre (Accès coach / Accès gratuit / Abonné jusqu'au / Accès à vie) */
+const PAYTRY_KEY='bs_pay_try';
+const payTryRecent=()=>{try{const t=Number(localStorage.getItem(PAYTRY_KEY)||0);return t>0&&Date.now()-t<2*3600e3;}catch(e){return false;}};
+const payShort=x=>new Date(x).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+function payChipInfo(){
+  const st=payState();
+  if(st.k==='coach')return {t:'Accès coach'};
+  if(st.k==='active'){
+    try{localStorage.removeItem(PAYTRY_KEY);}catch(e){}
+    if(st.plan==='free')return {t:'Accès à vie'};
+    if(st.end)return {t:(st.cancel?'Fin le ':'Abonné jusqu’au ')+payShort(st.end)};
+    return {t:'Abonné'};
+  }
+  if(payTryRecent())return {t:'Paiement en cours…',off:true};
+  if(st.k==='trial')return {t:'Accès gratuit · jusqu’au '+payShort(st.end),off:true};
+  if(st.k==='blocked')return {t:'Non abonné',off:true};
+  return null;
+}
+function updatePayChip(){
+  const el=document.getElementById('pay-chip');if(!el)return;
+  const i=S.uid?payChipInfo():null;
+  if(!i){el.hidden=true;return;}
+  el.hidden=false;el.textContent=i.t;el.className='paychip'+(i.off?' off':'');
+  el.onclick=()=>go('sub');
+  el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go('sub');}};
+  if(i.t==='Paiement en cours…'&&!S._payToast){S._payToast=1;toast('Si tu viens de payer, ton accès s’ouvre en moins de 30 minutes.');}
+}
 function buyBtn(key){
   const base=PAY_LINKS[key];
   if(!base||!S.uid)return h('button',{class:'btn btn-block',type:'button',disabled:true},'Bientôt disponible');
   const url=base+(base.indexOf('?')>=0?'&':'?')+'client_reference_id='+encodeURIComponent(S.uid)+(S.email?'&prefilled_email='+encodeURIComponent(S.email):'');
-  return h('a',{class:'btn primary btn-block',href:url,rel:'noopener'},'S’abonner');
+  return h('a',{class:'btn primary btn-block',href:url,rel:'noopener',onclick:()=>{try{localStorage.setItem(PAYTRY_KEY,String(Date.now()));}catch(e){}}},'S’abonner');
 }
 function payStatusCard(){
   const st=payState(),fd=x=>cap(fmtDate(dfmt(new Date(x))));
@@ -10626,6 +10657,7 @@ function payStatusCard(){
   else if(st.k==='blocked')card.append(h('b',{},'Aucun abonnement actif'),h('p',{class:'muted'},'Ton essai est terminé : abonne-toi pour retrouver les séances.'),
     PORTAL_LINK?h('a',{class:'btn',href:PORTAL_LINK,rel:'noopener'},'J’ai déjà un abonnement'):null);
   else card.append(h('p',{class:'muted'},'Chargement de ton abonnement…'));
+  if(st.k!=='active'&&st.k!=='coach'&&payTryRecent())card.append(h('p',{class:'hint'},'Si tu viens de payer : ton accès s’ouvre tout seul en moins de 30 minutes. Tu peux continuer à utiliser l’appli en attendant.'));
   if(S.pay&&S.pay.doc&&!S.pay.doc.active&&st.k!=='active'&&S.pay.doc.status&&st.k!=='coach')card.append(h('p',{class:'hint'},'Dernier état du paiement : '+S.pay.doc.status+'.'));
   return card;
 }
