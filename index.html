@@ -1142,7 +1142,7 @@ body.board-lock{overflow:hidden;padding-block-end:0}
 
 /* séances en cartes */
 .car-page{overflow:hidden}
-.car-track{display:flex;gap:14px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-inline:-16px;padding:14px 11% 26px;overscroll-behavior-x:contain;touch-action:pan-x pan-y}
+.car-track{display:flex;gap:14px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;margin-inline:-16px;padding:28px 11% 26px;overscroll-behavior-x:contain;touch-action:pan-x pan-y}
 .car-track::-webkit-scrollbar{display:none}
 .car-slot{flex:0 0 78%;max-width:420px;scroll-snap-align:center;filter:drop-shadow(0 10px 14px rgba(0,0,0,.28));transform:scale(.93) rotate(1.4deg);opacity:.82;transform-origin:50% 60%}
 .car-slot:nth-child(even){transform:scale(.93) rotate(-1.4deg)}
@@ -1402,8 +1402,9 @@ a.btn.primary{color:var(--accent-ink)}
 @media (prefers-reduced-motion:no-preference){.flip{transition:transform .55s cubic-bezier(.2,.7,.2,1)}}
 .car-slot.flipped .flip{transform:rotateY(180deg)}
 .car-slot:not(.flipped) .face.back,.car-slot.flipped .face.front{pointer-events:none}
-.cc-swap{margin-top:auto;display:block;width:100%;text-align:center;font-family:var(--f-mono);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:rgba(0,0,0,.3);border:2px dashed rgba(255,255,255,.8);border-radius:6px;padding:9px 10px;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.cc-swap+.cc-go{margin-top:0}
+.car-slot{position:relative}
+.cc-swap{position:absolute;z-index:4;top:-18px;right:16px;width:40px;height:40px;padding:0;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;line-height:1;color:var(--accent-ink);background:var(--accent);border:3px solid #fff;border-radius:50%;box-shadow:0 3px 8px rgba(0,0,0,.4);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.car-slot.flipped>.cc-swap{display:none}
 .car-back{cursor:default;gap:9px}
 .sb-t{font-family:var(--f-display);font-weight:400;font-size:24px;line-height:1.05;text-transform:uppercase;text-shadow:0 2px 0 rgba(0,0,0,.18)}
 .sb-p{font-size:13px;line-height:1.4;opacity:.96}
@@ -2758,7 +2759,7 @@ const lvTag=avg=>{const i=lvNear(avg),d=avg-LV_VAL[i];return LV_ABBR[i]+(Math.ab
 const dispLvl=n=>norm(n)==='scaled'?'Débutant':n;
 const levelName=(m,i)=>{const lv=levelsOf(m)[i||0];return dispLvl((lv&&lv.name)||('Niveau '+((i||0)+1)));};
 const lowLvl=m=>{const a=activeLevels(m);return a.length?a[0][1]:0;};
-const SUB_F=0.5; /* une séance de remplacement rapporte moitié moins de points (séance + metcon) */
+const SUB_F=1; /* une séance de remplacement rapporte les points normaux (séance + metcon) : plus de division par deux */
 const adjF=e=>(e&&e.sw)?SUB_F:1; /* le niveau personnalisé ne change pas les points ; seul un remplacement les réduit */
 const adjTxt=e=>{const k=kgOf(e);return k?' '+(k>0?'+':'−')+Math.abs(k)+' kg':'';};
 const lvlLab=(m,e)=>levelName(m,e.level)+adjTxt(e);
@@ -4988,8 +4989,8 @@ function partCard(p,w,date){
   const lines=(p.content||'').split('\n').map(s=>s.trim()).filter(Boolean);
   const hasSw=p.kind==='force'||p.kind==='renfo';
   /* niveau ouvert avec des variantes : elles remplacent les mouvements dans le descriptif, en surbrillance */
-  const lvOpen=metcon?activeLevels(p).find(x=>S.tip==='lv-'+p.label+x[1]&&(x[0].variants||[]).length):null;
-  const metL=lvOpen?(t=>h('div',{class:'line'},varSegs(tagShow(t),lvOpen[0].variants))):metLine;
+  const lvOpen=metcon?activeLevels(p).find(x=>S.tip==='lv-'+p.label+x[1]&&((x[0].variants||[]).length||rdOf(x[0]))):null;
+  const metL=lvOpen?(t=>h('div',{class:'line'},roundsSegs(tagShow(t),rdOf(lvOpen[0]),lvOpen[0].variants))):metLine;
   /* format cliquable : metcon (For Time, AMRAP, EMOM) ou renforcement en EMOM */
   const fmtId=(metcon||(p.kind==='renfo'&&p.format==='EMOM'))?'fmt-'+(date||'')+'-'+p.label:null;
   const body=h('div',{class:'pbody'+(hasSw?' has-sw':'')},
@@ -5004,7 +5005,7 @@ function partCard(p,w,date){
     fmtId?h('div',{class:'fmt'},h('button',{type:'button',class:'fmtbtn tipbtn','aria-expanded':S.tip===fmtId?'true':'false',onclick:()=>toggleTip(fmtId)},fmtLabel(p)),
       metcon?[p.detail,p.lineRounds?'Chaque ligne = 1 tour':(p.repsRound?'1 tour = '+fmtN(eqTotal({content:p.content,repsRound:Number(p.repsRound)||0}))+' reps':'')].filter(Boolean).map(x=>' · '+x).join(''):''):null,
     (fmtId&&S.tip===fmtId)?h('div',{class:'tip',role:'dialog'},fmtExplain(p).map((t,k)=>k===0?h('b',{},t):h('p',{},t))):null,
-    lvOpen?h('div',{class:'varnote'},'Version '+levelName(p,lvOpen[1])+' : les variantes remplacent les mouvements en surbrillance.'):null,
+    lvOpen?h('div',{class:'varnote'},'Version '+levelName(p,lvOpen[1])+' : '+[(lvOpen[0].variants||[]).length?'les variantes remplacent les mouvements':'',rdOf(lvOpen[0])?'le nombre de tours est adapté':''].filter(Boolean).join(' · ')+' (en surbrillance).'):null,
     h('div',{class:'lines'},lines.map(metcon?metL:(t=>renderLine(t,p.kind==='renfo'?p.variants:null)))),
     (metcon&&p.word)?h('div',{class:'cword'},h('span',{class:'flabel'},'Mot du coach'),h('p',{},linkText(p.word))):null,
     metcon?levelsBlock(p):null,
@@ -5399,7 +5400,7 @@ function askSub(w,date,per,k){
       h('p',{},'« '+(s.title||'Remplacement '+(k+1))+' » remplacera la séance « '+w.title+' » ('+fmtShort(date)+').'),
       h('ul',{class:'sub-ul'},
         h('li',{},'La séance d’origine ne sera plus réalisable : on ne peut pas marquer les points des deux.'),
-        h('li',{},'Points réduits : '+fmtN(b)+' pts pour la séance, et les points du metcon comptent pour moitié.'),
+        h('li',{},'Points normaux : '+fmtN(b)+' pts pour la séance, et les points du metcon comptent en entier.'),
         h('li',{},'Ta flamme est maintenue dès que tu enregistres ton résultat.')),
       h('div',{class:'row'},
         h('button',{class:'btn primary',type:'button',id:'sub-ok',onclick:()=>{close();chooseSub(w,date,per,k);}},'Oui, remplacer'),
@@ -5444,20 +5445,20 @@ function sessionCard(w,i,n,mine,prev,next){
     (()=>{const m=metconOf(wE),tags=[];if(sw)tags.push(h('span',{class:'cc-tag'},'🏠 Remplacée'));if(m&&m.test)tags.push(h('span',{class:'cc-tag'},'TEST'));if(m&&m.redo!==false&&!lockedDate(date))tags.push(h('span',{class:'cc-tag'},'RE DO'));return tags.length?h('div',{class:'cc-flags'},tags):null;})(),
     h('div',{class:'cc-meta'},h('span',{},cap(fmtShort(date))),h('span',{},basePts(wE,per)+' pts'+(metconOf(wE)?' + metcon':''))),
     h('div',{class:'cc-parts'},shown.map(cardPart)),
-    canSub?h('button',{type:'button',class:'cc-swap','data-tour':'sub-btn','aria-label':'Pas ou peu de matériel : retourner la carte pour choisir un metcon de remplacement',
-      onclick:e=>{e.stopPropagation();flip(true);},onkeydown:e=>e.stopPropagation()},'↻ ',sw?'Changer de remplacement':'Pas ou peu de matériel'):null,
     h('div',{class:'cc-go'},'Touche pour ouvrir ',h('b',{},'→')));
   if(canSub){
     back=h('div',{class:'car-card car-back face back','aria-hidden':'true',style:'--c1:'+col[0]+';--c2:'+col[1]},
       h('div',{class:'cc-top'},h('span',{class:'cc-n'},'Séance de remplacement')),
       h('h2',{class:'sb-t'},'Pas ou peu de matériel ?'),
-      h('p',{class:'sb-p'},'Choisis un metcon à faire sans salle : il remplace cette séance ('+fmtShort(date)+') et elle ne sera plus réalisable. Moitié moins de points, flamme maintenue.'),
+      h('p',{class:'sb-p'},'Choisis un metcon à faire sans salle : il remplace cette séance ('+fmtShort(date)+') et elle ne sera plus réalisable. Points normaux, flamme maintenue.'),
       subs.map((s,k)=>s?h('button',{type:'button',class:'sb-opt'+(sw&&sw.k===k?' on':''),onclick:e=>{e.stopPropagation();askSub(w,date,per,k);}},
         h('b',{},s.title||('Remplacement '+(k+1))),h('span',{},subLine(s)),h('em',{},sw&&sw.k===k?'✓ Choisi':'Choisir →')):null),
       h('button',{type:'button',class:'sb-back',onclick:e=>{e.stopPropagation();flip(false);}},'↻ Revenir à la séance'));
     back.inert=true;
   }
-  slot=h('div',{class:'car-slot','data-date':date},h('div',{class:'flip'},card,back));
+  const swapBtn=canSub?h('button',{type:'button',class:'cc-swap','data-tour':'sub-btn','aria-label':sw?'Changer de remplacement : retourner la carte':'Pas ou peu de matériel : retourner la carte pour choisir un metcon de remplacement',title:sw?'Changer de remplacement':'Pas ou peu de matériel',
+    onclick:e=>{e.stopPropagation();flip(true);}},'↻'):null;
+  slot=h('div',{class:'car-slot','data-date':date},h('div',{class:'flip'},card,back),swapBtn);
   return slot;
 }
 /* une séance d'une saison terminée n'apparaît plus dans l'onglet Séance */
@@ -5538,7 +5539,7 @@ function viewToday(){
   }else{
     const per=periodFor(date);
     el.append(h('h2',{class:'wtitle'},w.title),h('p',{class:'eyebrow'},'Séance à '+basePts(w,per)+' pts'+(metconOf(w)?' + points du metcon selon ton niveau':'')),h('p',{class:'hint'},'À faire n’importe quel jour de la semaine, du '+fmtShort(mondayOf(date))+' au '+fmtShort(addDays(mondayOf(date),6))+'.'));
-    if(w.isSub)el.append(h('div',{class:'sub-banner'},h('b',{},'🏠 Séance de remplacement (pas ou peu de matériel)'),h('div',{},'Elle remplace « '+w.subFrom+' » : la séance d’origine n’est plus réalisable. Points réduits (séance et metcon à moitié), flamme maintenue.'),(!(S.logs[S.uid]&&S.logs[S.uid].entries&&S.logs[S.uid].entries[date]))?h('div',{class:'hint'},'Tu peux encore en choisir un autre depuis la carte (bouton ↻) tant que ton résultat n’est pas enregistré.'):null));
+    if(w.isSub)el.append(h('div',{class:'sub-banner'},h('b',{},'🏠 Séance de remplacement (pas ou peu de matériel)'),h('div',{},'Elle remplace « '+w.subFrom+' » : la séance d’origine n’est plus réalisable. Points normaux (séance et metcon), flamme maintenue.'),(!(S.logs[S.uid]&&S.logs[S.uid].entries&&S.logs[S.uid].entries[date]))?h('div',{class:'hint'},'Tu peux encore en choisir un autre depuis la carte (bouton ↻) tant que ton résultat n’est pas enregistré.'):null));
     (w.parts||[]).forEach(p=>el.append(partCard(p,w,date)));
     {const es=entrySection(w,date);es.setAttribute('data-tour','entry');el.append(es);}
     {const ov=entryOverlay(w,date);if(ov)el.append(ov);}
@@ -8933,7 +8934,7 @@ function wodToDraft(w){
   return {date:w.date,title:w.title||'',base:(w.base!==undefined&&w.base!==null)?String(w.base):'',deload:!!w.deload,
     parts:(w.parts||[]).map(p=>{
       const fmt=p.format||'FT';const cm={format:fmt,content:p.content||'',repsRound:p.repsRound||0,lineRounds:!!p.lineRounds};
-      const lv=(p.kind==='metcon'?levelsOf(p):blankLevels()).slice(0,3).map((l,i)=>({mode:l.mode||(l.off?'off':'custom'),touched:l.touched!==undefined?l.touched:!l.off,name:l.name||LEVEL_NAMES[i],loadF:l.loadF||'',loadH:l.loadH||'',note:l.note||'',vars:mvVarsOf(l),
+      const lv=(p.kind==='metcon'?levelsOf(p):blankLevels()).slice(0,3).map((l,i)=>({mode:l.mode||(l.off?'off':'custom'),touched:l.touched!==undefined?l.touched:!l.off,name:l.name||LEVEL_NAMES[i],loadF:l.loadF||'',loadH:l.loadH||'',note:l.note||'',dRounds:Number(l.dRounds)||0,vars:mvVarsOf(l),
         tiers:(l.tiers&&l.tiers.length)?l.tiers.map(t=>({t:(fmt==='FT'||(fmt==='EMOM'&&p.deadBy))?fmtTime(t.t):String(t.t).replace('.',','),p:String(t.p)})):blankTiers(),
         capTiers:(l.capTiers&&l.capTiers.length)?l.capTiers.map(t=>({t:capInput(cm,tierCum(p,t.t)),p:String(t.p)})):blankCapTiers()}));
       while(lv.length<3)lv.push({mode:lv.length<2?'off':'custom',touched:false,name:LEVEL_NAMES[lv.length],loadF:'',loadH:'',note:'',vars:{},tiers:blankTiers(),capTiers:blankCapTiers()});
@@ -9009,6 +9010,7 @@ function draftToWod(d){
         }
         const o2={name,loadF:lv.loadF.trim(),loadH:lv.loadH.trim(),note:lv.note.trim(),tiers,capTiers};
         const variants=mvVariantsOut(p,lv);if(variants.length)o2.variants=variants;
+        if(Number(lv.dRounds))o2.dRounds=Number(lv.dRounds);
         return o2;
       };
       const rx=build(p.levels[2],2);
@@ -9335,9 +9337,18 @@ function varSegs(text,vars){
   if(c<text.length)out.push(glossSegs(text.slice(c)));
   return out;
 }
+const rdOf=lv=>Number(lv&&lv.dRounds)||0; /* écart de tours d'un niveau par rapport à Rx (ex. −1 pour les débutants) */
+/* ligne « 5 tours… » / « 5 rounds… » / « 5 RFT… » : le nombre de tours est corrigé et mis en surbrillance (orange, comme une variante d'exercice) */
+function roundsSegs(text,d,vars){
+  const m=d&&String(text).match(/^(\d+)(\s*(?:rounds?|tours?|rft)\b)/i);
+  if(!m)return varSegs(text,vars);
+  const k=Math.max(1,+m[1]+d);
+  return [h('mark',{class:'varmk',title:'Variante : '+m[1]+' → '+k+' tour'+(k>1?'s':'')},String(k)),varSegs(String(text).slice(m[1].length),vars)];
+}
 const lvNote=lv=>{
   if(!lv)return '';
   const a=(lv.variants||[]).filter(x=>x&&x.to&&x.to.length).map(x=>x.from+' → '+x.to.join(' ou '));
+  if(rdOf(lv))a.push(Math.abs(rdOf(lv))+' tour'+(Math.abs(rdOf(lv))>1?'s':'')+(rdOf(lv)<0?' en moins':' en plus'));
   if(lv.note)a.push(lv.note);
   return a.join(' · ');
 };
@@ -9810,7 +9821,7 @@ function wodEditor(modal){
   sec.append(h('div',{class:'grid2'},
     SUBM?null:field('Date',h('input',{id:'w-date',type:'date',value:d.date,onchange:e=>{d.date=e.target.value;render();}}),'Visible dès la publication. Les athlètes la font n’importe quel jour de cette semaine, du lundi au dimanche.'),
     field('Titre',tin(d,'title',{id:'w-title',placeholder:SUBM?'Metcon sans matériel':'Jeudi lourd'})),
-    field('Points de la séance',tin(d,'base',{id:'w-base',inputmode:'numeric',placeholder:'par défaut : '+(SUBM?Math.max(1,Math.round(Number(per.base)*SUB_F)):per.base)}),SUBM?'Séance de remplacement : par défaut la moitié des points de la saison. Les points du metcon comptent pour moitié.':'Une séance plus dure peut rapporter plus. Les points du metcon s’y ajoutent.')));
+    field('Points de la séance',tin(d,'base',{id:'w-base',inputmode:'numeric',placeholder:'par défaut : '+(SUBM?Math.max(1,Math.round(Number(per.base)*SUB_F)):per.base)}),SUBM?'Séance de remplacement : par défaut les points de la saison. Les points du metcon comptent en entier.':'Une séance plus dure peut rapporter plus. Les points du metcon s’y ajoutent.')));
   if(!SUBM)sec.append(h('label',{class:'chk'},h('input',{type:'checkbox',id:'w-deload',checked:!!d.deload,onchange:e=>{d.deload=e.target.checked;}}),h('span',{},'Séance DELOAD (semaine allégée)')),
     h('p',{class:'hint'},'La mention DELOAD apparaît en haut de la carte de la séance chez les athlètes.'));
   if(!SUBM&&!S.coach.editing&&S.wods[d.date])sec.append(h('p',{class:'hint'},'Une séance existe déjà à cette date : elle sera remplacée.'));
@@ -9888,6 +9899,9 @@ function wodEditor(modal){
             field('Charge femmes',tin(lv,'loadF',{id:'p'+i+'-l'+k+'-f',placeholder:'30 kg'})),
             field('Charge hommes',tin(lv,'loadH',{id:'p'+i+'-l'+k+'-h',placeholder:'40 kg'}))),
           mvPanel(p,lv,i,k),
+          k<2?h('div',{class:'field'},h('span',{class:'flabel'},'Nombre de tours'),
+            h('div',{class:'seg',role:'group','aria-label':'Nombre de tours du niveau '+(k+1)},h('button',{type:'button',class:'btn sm','aria-pressed':lv.dRounds?'true':'false',onclick:()=>{lv.dRounds=lv.dRounds?0:-1;render();}},'−1 tour')),
+            h('p',{class:'hint'},'Retire 1 tour pour ce niveau : le nombre écrit sur la ligne « 5 tours », « 5 rounds » ou « 5 RFT » du metcon change et passe en orange, comme une variante d’exercice, quand l’athlète ouvre ce niveau.')):null,
           field('Autre variante (texte libre, optionnel)',tin(lv,'note',{id:'p'+i+'-l'+k+'-note',placeholder:'Ring rows à la place des pull-ups'})),
           (k<2&&p.syncTiers)?h('p',{class:'hint'},'Paliers identiques à ceux du niveau 3 (case cochée sur le niveau 3).'):tiersEditor(p,lv,i,k),
           (k<2&&p.syncTiers)?null:(p.format==='FT'?capTiersEditor(p,lv,i,k):null));
@@ -9982,7 +9996,7 @@ function subsBlock(P){
     n<3?h('span',{class:'wdot',role:'img','aria-label':'Il manque des séances de remplacement',title:'Il manque des séances de remplacement'}):null,
     h('span',{class:'wchev','aria-hidden':'true'})));
   if(open)box.append(h('div',{class:'wk-b'},
-    h('p',{class:'hint'},'Pour une semaine de vacances ou sans accès à la salle : l’athlète touche « Pas ou peu de matériel » sur la carte d’une séance, et l’un de ces 3 metcons la remplace (elle n’est plus réalisable ensuite). Il rapporte moitié moins de points mais maintient les flammes. Chaque remplacement est utilisable autant de fois que l’athlète veut sur la saison.'),
+    h('p',{class:'hint'},'Pour une semaine de vacances ou sans accès à la salle : l’athlète touche « Pas ou peu de matériel » sur la carte d’une séance, et l’un de ces 3 metcons la remplace (elle n’est plus réalisable ensuite). Il rapporte les points normaux et maintient les flammes. Chaque remplacement est utilisable autant de fois que l’athlète veut sur la saison.'),
     h('ul',{class:'list'},L.map((s,k)=>{
       const key='sub-'+P.id+'-'+k;
       return h('li',{},
@@ -11076,7 +11090,7 @@ const TOURS={
     {sel:'.back-btn',title:'Retour aux séances',text:'Ce bouton te ramène à la liste des séances de la semaine.'},
     {sel:'main .day',title:'La séance du jour',text:'La date de la séance. Tu peux la faire n’importe quel jour de la semaine.'},
     {sel:'#wu-card',title:'L’échauffement',text:'Un échauffement avant d’attaquer la séance est très fortement conseillé. Celui qui est proposé est complet, mais tu es libre de faire le tien. « Lancer l’échauffement » démarre le mode guidé avec timer, « Mode libre » te laisse avancer à ton rythme, et « Voir les exercices » affiche la liste. Pendant l’échauffement, touche « Voir les infos » pour voir l’image et les consignes de l’exercice. Le « ? » en haut à droite de la carte explique les deux modes.'},
-    {sel:'.sub-banner',title:'Séance de remplacement',text:'Cette séance remplace celle de la carte : elle rapporte moins de points mais garde ta flamme. Tu peux encore changer de remplacement depuis la carte (bouton ↻) tant que ton résultat n’est pas enregistré.'},
+    {sel:'.sub-banner',title:'Séance de remplacement',text:'Cette séance remplace celle de la carte : elle rapporte les points normaux et garde ta flamme. Tu peux encore changer de remplacement depuis la carte (bouton ↻) tant que ton résultat n’est pas enregistré.'},
     {sel:'main .wtitle',title:'Titre et points',text:'Le titre de la séance et les points de base qu’elle rapporte. Le metcon ajoute des points selon ton niveau.'},
     {sel:'.pbody',title:'Les parties de la séance',text:'Force, renforcement, metcon… Chaque partie détaille ce qu’il faut faire. Le metcon est celle qui rapporte des points au classement.'},
     {sel:'.mv',title:'Touche un mouvement',text:'Le nom d’un mouvement (avec la petite main) ouvre sa fiche : rep valide, no rep, image ou vidéo. Le bouton « Retour à la séance » te ramène là où tu étais.'},
@@ -11107,7 +11121,7 @@ const TOURS={
 TOURS.cards=()=>[
     {sel:'main .day',title:'Les séances de la semaine',text:'Les séances de la semaine, du lundi au dimanche : tu les fais quand tu veux. Fais glisser les cartes pour passer d’une séance ou d’une semaine à l’autre.'},
     {sel:'.car-track',title:'Une carte par séance',text:'Chaque carte montre le titre et le contenu de la séance, et indique si tu l’as déjà validée. Touche une carte pour l’ouvrir.'},
-    {sel:document.querySelector('[data-tour=sub-btn]')?'[data-tour=sub-btn]':'.car-track',title:'Pas ou peu de matériel ?',text:'En vacances ou sans accès à la salle, touche « Pas ou peu de matériel » (si ton coach a prévu des remplacements pour la saison) : la carte se retourne et dévoile 3 metcons de remplacement, sans ou avec peu de matériel. Choisis-en un : il remplace cette séance, qui ne sera plus réalisable (sinon on pourrait marquer deux fois). Il rapporte moins de points (moitié), mais il maintient tes flammes. Tu peux t’en servir autant de fois que tu veux sur la saison, quand tu veux. « Revenir à la séance » retourne la carte.'},
+    {sel:document.querySelector('[data-tour=sub-btn]')?'[data-tour=sub-btn]':'.car-track',title:'Pas ou peu de matériel ?',text:'En vacances ou sans accès à la salle, touche le bouton ↻ au-dessus de la carte (si ton coach a prévu des remplacements pour la saison) : la carte se retourne et dévoile 3 metcons de remplacement, sans ou avec peu de matériel. Choisis-en un : il remplace cette séance, qui ne sera plus réalisable (sinon on pourrait marquer deux fois). Il rapporte les points normaux et il maintient tes flammes. Tu peux t’en servir autant de fois que tu veux sur la saison, quand tu veux. « Revenir à la séance » retourne la carte.'},
     {sel:'.car-dots',title:'Les points',text:'Un point par séance : touche-en un pour y aller directement.'}];
 TOURS.recap=()=>[
     {sel:'.rc-head',title:'Ta semaine',text:'Le résumé de la semaine écoulée, du lundi au dimanche. Un nouveau résumé arrive chaque lundi matin.'},
