@@ -6631,14 +6631,14 @@ const ICO_SCRATCH='<svg '+SVGB+'><path d="M6 20L10 4M11.5 20L15.5 4M17 20L21 4"/
 const ICO_RECAP='<svg '+SVGB+'><path d="M3 20h18"/><path d="M5 15l4-5 3.5 3L19 5"/><path d="M15 5h4v4"/></svg>';
 /* ---------- la piste ----------
    Piste verticale : départ à 0 point en bas, un échelon tous les 10 points sur le côté gauche, 6 couloirs au maximum (un par athlète tant qu'ils sont 6 ou moins).
-   Chaque pastille (avatar, pseudo au-dessus) part de son total de la semaine d'avant et rejoint son total de fin de semaine en RT.DUR ms (10 s) :
+   Chaque pastille (avatar, pseudo au-dessus) part de son total de la semaine d'avant et rejoint son total de fin de semaine en RT.DUR ms (6 s) :
    tout le monde démarre et s'arrête en même temps, à vitesse constante (donc plus vite quand il y a plus de points à gagner) ; le mouvement est
    continu (requestAnimationFrame, position calculée au temps écoulé), sans palier. La caméra suit la pastille de l'athlète (ou la plus haute).
    Ensuite la piste se fait défiler à la main et la pastille de l'athlète est en surbrillance. Pendant la course, chaque pastille change de couloir
    pour rester seule dans le sien dès que c'est possible. Plein écran à la réception (rcOpenIntro), puis visible dans l'onglet résumé (rcTrackCard).
    Gros effectifs (global) : au-delà de RT.FULL athlètes, seuls l'athlète regardé, le haut du classement, la plus grosse progression, ses voisins et les plus gros
    mouvements ont un avatar ; les autres sont de petits points cliquables. Les pastilles hors de l'écran (+ RT.CULL px) ne sont ni dessinées ni mises à jour. */
-const RT={PX:4,RAIL:44,PADT:96,PADB:84,DUR:10000,RUNG:10,LANES:6,FULL:48,CULL:100};
+const RT={PX:4,RAIL:44,PADT:96,PADB:84,DUR:6000,RUNG:10,LANES:6,FULL:48,CULL:100};
 const RT_TR=!!(window.CSS&&CSS.supports&&CSS.supports('translate','1px 0')); /* propriété « translate » (couloir animé à part de la hauteur) */
 const rtReduced=()=>!!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
 function rcTrackRows(D){
@@ -6866,7 +6866,7 @@ function rcTrackCard(D,meUid,mon,R){
 }
 
 /* animation plein écran : à la réception du résumé (o.onClose = marquer la semaine comme vue) ou au clic sur « Rejouer ».
-   Durée fixe RT.DUR (10 s) pour tout le monde, quel que soit le nombre de points. */
+   Durée fixe RT.DUR (6 s) pour tout le monde, quel que soit le nombre de points. */
 let rcOv=null;
 function rcOpenIntro(D,meUid,mon,o){
   o=o||{};
@@ -9900,8 +9900,11 @@ function wodEditor(modal){
             field('Charge hommes',tin(lv,'loadH',{id:'p'+i+'-l'+k+'-h',placeholder:'40 kg'}))),
           mvPanel(p,lv,i,k),
           k<2?h('div',{class:'field'},h('span',{class:'flabel'},'Nombre de tours'),
-            h('div',{class:'seg',role:'group','aria-label':'Nombre de tours du niveau '+(k+1)},h('button',{type:'button',class:'btn sm','aria-pressed':lv.dRounds?'true':'false',onclick:()=>{lv.dRounds=lv.dRounds?0:-1;render();}},'−1 tour')),
-            h('p',{class:'hint'},'Retire 1 tour pour ce niveau : le nombre écrit sur la ligne « 5 tours », « 5 rounds » ou « 5 RFT » du metcon change et passe en orange, comme une variante d’exercice, quand l’athlète ouvre ce niveau.')):null,
+            h('div',{class:'row',role:'group','aria-label':'Tours en moins pour le niveau '+(k+1),style:'align-items:center;gap:10px;flex-wrap:nowrap'},
+              h('button',{type:'button',class:'btn sm','aria-label':'Un tour de plus en moins',disabled:(Number(lv.dRounds)||0)<=-20,onclick:()=>{lv.dRounds=Math.max(-20,(Number(lv.dRounds)||0)-1);render();}},'−'),
+              h('b',{style:'min-width:110px;text-align:center'},(Number(lv.dRounds)||0)?'− '+Math.abs(Number(lv.dRounds))+' tour'+(Math.abs(Number(lv.dRounds))>1?'s':''):'Aucun changement'),
+              h('button',{type:'button',class:'btn sm','aria-label':'Un tour de moins en moins',disabled:(Number(lv.dRounds)||0)>=0,onclick:()=>{lv.dRounds=Math.min(0,(Number(lv.dRounds)||0)+1);render();}},'+')),
+            h('p',{class:'hint'},'Choisis combien de tours retirer pour ce niveau : le nombre écrit sur la ligne « 5 tours », « 5 rounds » ou « 5 RFT » du metcon change et passe en orange, comme une variante d’exercice, quand l’athlète ouvre ce niveau.')):null,
           field('Autre variante (texte libre, optionnel)',tin(lv,'note',{id:'p'+i+'-l'+k+'-note',placeholder:'Ring rows à la place des pull-ups'})),
           (k<2&&p.syncTiers)?h('p',{class:'hint'},'Paliers identiques à ceux du niveau 3 (case cochée sur le niveau 3).'):tiersEditor(p,lv,i,k),
           (k<2&&p.syncTiers)?null:(p.format==='FT'?capTiersEditor(p,lv,i,k):null));
