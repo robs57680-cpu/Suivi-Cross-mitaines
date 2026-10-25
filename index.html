@@ -10634,7 +10634,7 @@ function viewPaywall(){
     h('div',{},h('p',{class:'eyebrow'},'Box Score'),h('h1',{class:'day'},'Abonne-toi pour accéder aux séances')),
     payStatusCard(),
     plansCarousel(true),
-    h('p',{class:'hint'},'Après le paiement, l’accès s’ouvre tout seul en quelques minutes. Résiliation possible à tout moment. TVA non applicable, art. 293 B du CGI.'),
+    h('p',{class:'hint'},'Après le paiement, l’accès s’ouvre tout seul en moins de 30 minutes (rouvre l’appli si besoin). Résiliation possible à tout moment. TVA non applicable, art. 293 B du CGI.'),
     cgvButton());
 }
 /* deux cartes de forfaits qui se font glisser (page Abonnement et page de connexion) */
@@ -10875,7 +10875,7 @@ TOURS.avis=()=>[
 TOURS.sub=()=>[
     {sel:'.paystat',title:'Ton accès',text:'Ton statut : essai gratuit avec sa date de fin, ou abonnement en cours. Une fois abonné, « Gérer mon abonnement » te permet de changer de carte ou de résilier.'},
     {sel:'.plans',title:'Les deux forfaits',text:'4 semaines à '+eur(PRICE_4W)+' ou '+SEASON_WEEKS+' semaines à '+eur(PRICE_SEASON)+'. Fais glisser pour comparer. Les deux se renouvellent automatiquement et tu peux résilier à tout moment.'},
-    {sel:'.plan .btn',title:'S’abonner',text:'Le paiement par carte se fait sur la page sécurisée de Stripe. Quelques minutes plus tard, ton accès aux séances est ouvert.'},
+    {sel:'.plan .btn',title:'S’abonner',text:'Le paiement par carte se fait sur la page sécurisée de Stripe. Moins de 30 minutes plus tard, ton accès aux séances est ouvert.'},
     {sel:'#cgv-btn',title:'Conditions générales de vente',text:'Les conditions de l’abonnement, à lire avant de t’abonner.'}];
 TOURS.moves=()=>[
     {sel:'main .day',title:'Apprentissage des mouvements',text:'La banque de tous les mouvements, classés en haltérophilie, gymnastique et cardio.'},
