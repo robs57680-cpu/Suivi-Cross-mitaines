@@ -5399,7 +5399,8 @@ function askSub(w,date,per,k){
       h('div',{class:'ov-h'},h('span',{class:'ov-t'},'Remplacer la séance ?'),h('button',{type:'button',class:'ov-x','aria-label':'Fermer',onclick:close},'✕')),
       h('p',{},'« '+(s.title||'Remplacement '+(k+1))+' » remplacera la séance « '+w.title+' » ('+fmtShort(date)+').'),
       h('ul',{class:'sub-ul'},
-        h('li',{},'La séance d’origine ne sera plus réalisable : on ne peut pas marquer les points des deux.'),
+        h('li',{},'Tant que tu n’as pas enregistré de résultat, ce n’est pas définitif : tu peux revenir à la séance d’origine ou changer de remplacement.'),
+        h('li',{},'Dès que tu enregistres un résultat, la séance d’origine n’est plus réalisable : on ne peut pas marquer les points des deux.'),
         h('li',{},'Points normaux : '+fmtN(b)+' pts pour la séance, et les points du metcon comptent en entier.'),
         h('li',{},'Ta flamme est maintenue dès que tu enregistres ton résultat.')),
       h('div',{class:'row'},
@@ -5418,6 +5419,17 @@ function chooseSub(w,date,per,k){
   S.viewDate=date;S.entry=null;S.redo=null;S.tip=null;
   saveLog({subs},'Séance remplacée');
   render();window.scrollTo(0,0);
+}
+function unchooseSub(date){
+  if(!S.uid||!S.db||S.snapMode){toast('Connexion nécessaire.',true);return;}
+  const cur=S.logs[S.uid]||{};
+  if((cur.entries||{})[date]){toast('Un résultat est déjà enregistré : le remplacement est définitif.',true);return;}
+  if(!(cur.subs&&cur.subs[date]))return;
+  const subs=Object.assign({},cur.subs);delete subs[date];
+  S.logs[S.uid]=Object.assign({},cur,{subs});
+  S.viewDate=date;S.entry=null;S.redo=null;S.tip=null;
+  saveLog({subs},'Séance d’origine rétablie');
+  render();
 }
 function sessionCard(w,i,n,mine,prev,next){
   const date=w.date,col=cardColor(date,prev,next),done=!!mine[date],per=periodFor(date);
@@ -5442,7 +5454,7 @@ function sessionCard(w,i,n,mine,prev,next){
       h('span',{class:'cc-n'},'Séance '+(i+1)+' / '+n),
       done?h('span',{class:'cc-done'},'✓ Faite'):null),
     h('h2',{class:'cc-title'},wE.title),
-    (()=>{const m=metconOf(wE),tags=[];if(sw)tags.push(h('span',{class:'cc-tag'},'🏠 Remplacée'));if(m&&m.test)tags.push(h('span',{class:'cc-tag'},'TEST'));if(m&&m.redo!==false&&!lockedDate(date))tags.push(h('span',{class:'cc-tag'},'RE DO'));return tags.length?h('div',{class:'cc-flags'},tags):null;})(),
+    (()=>{const m=metconOf(wE),tags=[];if(sw)tags.push(h('span',{class:'cc-tag'},'🏠 Remplacement'));if(m&&m.test)tags.push(h('span',{class:'cc-tag'},'TEST'));if(m&&m.redo!==false&&!lockedDate(date))tags.push(h('span',{class:'cc-tag'},'RE DO'));return tags.length?h('div',{class:'cc-flags'},tags):null;})(),
     h('div',{class:'cc-meta'},h('span',{},cap(fmtShort(date))),h('span',{},basePts(wE,per)+' pts'+(metconOf(wE)?' + metcon':''))),
     h('div',{class:'cc-parts'},shown.map(cardPart)),
     h('div',{class:'cc-go'},'Touche pour ouvrir ',h('b',{},'→')));
@@ -5450,9 +5462,10 @@ function sessionCard(w,i,n,mine,prev,next){
     back=h('div',{class:'car-card car-back face back','aria-hidden':'true',style:'--c1:'+col[0]+';--c2:'+col[1]},
       h('div',{class:'cc-top'},h('span',{class:'cc-n'},'Séance de remplacement')),
       h('h2',{class:'sb-t'},'Pas ou peu de matériel ?'),
-      h('p',{class:'sb-p'},'Choisis un metcon à faire sans salle : il remplace cette séance ('+fmtShort(date)+') et elle ne sera plus réalisable. Points normaux, flamme maintenue.'),
+      h('p',{class:'sb-p'},'Choisis un metcon à faire sans salle : il remplace cette séance ('+fmtShort(date)+'). Ce n’est définitif que quand tu enregistres un résultat : d’ici là, tu peux revenir à la séance d’origine. Points normaux, flamme maintenue.'),
       subs.map((s,k)=>s?h('button',{type:'button',class:'sb-opt'+(sw&&sw.k===k?' on':''),onclick:e=>{e.stopPropagation();askSub(w,date,per,k);}},
         h('b',{},s.title||('Remplacement '+(k+1))),h('span',{},subLine(s)),h('em',{},sw&&sw.k===k?'✓ Choisi':'Choisir →')):null),
+      sw?h('button',{type:'button',class:'sb-opt',onclick:e=>{e.stopPropagation();unchooseSub(date);}},h('b',{},'Garder la séance d’origine'),h('span',{},'Le remplacement n’est définitif qu’une fois ton résultat enregistré.')):null,
       h('button',{type:'button',class:'sb-back',onclick:e=>{e.stopPropagation();flip(false);}},'↻ Revenir à la séance'));
     back.inert=true;
   }
@@ -5539,7 +5552,8 @@ function viewToday(){
   }else{
     const per=periodFor(date);
     el.append(h('h2',{class:'wtitle'},w.title),h('p',{class:'eyebrow'},'Séance à '+basePts(w,per)+' pts'+(metconOf(w)?' + points du metcon selon ton niveau':'')),h('p',{class:'hint'},'À faire n’importe quel jour de la semaine, du '+fmtShort(mondayOf(date))+' au '+fmtShort(addDays(mondayOf(date),6))+'.'));
-    if(w.isSub)el.append(h('div',{class:'sub-banner'},h('b',{},'🏠 Séance de remplacement (pas ou peu de matériel)'),h('div',{},'Elle remplace « '+w.subFrom+' » : la séance d’origine n’est plus réalisable. Points normaux (séance et metcon), flamme maintenue.'),(!(S.logs[S.uid]&&S.logs[S.uid].entries&&S.logs[S.uid].entries[date]))?h('div',{class:'hint'},'Tu peux encore en choisir un autre depuis la carte (bouton ↻) tant que ton résultat n’est pas enregistré.'):null));
+    if(w.isSub)el.append(h('div',{class:'sub-banner'},h('b',{},'🏠 Séance de remplacement (pas ou peu de matériel)'),h('div',{},'Elle remplace « '+w.subFrom+' » : la séance d’origine ne sera plus réalisable une fois ton résultat enregistré. Points normaux (séance et metcon), flamme maintenue.'),(!(S.logs[S.uid]&&S.logs[S.uid].entries&&S.logs[S.uid].entries[date]))?h('div',{class:'hint'},'Tant que ton résultat n’est pas enregistré, tu peux en choisir un autre depuis la carte (bouton ↻) ou revenir à la séance d’origine.'):null,
+      (!(S.logs[S.uid]&&S.logs[S.uid].entries&&S.logs[S.uid].entries[date]))?h('div',{class:'row'},h('button',{type:'button',class:'btn sm',onclick:()=>unchooseSub(date)},'Revenir à la séance d’origine')):null));
     (w.parts||[]).forEach(p=>el.append(partCard(p,w,date)));
     {const es=entrySection(w,date);es.setAttribute('data-tour','entry');el.append(es);}
     {const ov=entryOverlay(w,date);if(ov)el.append(ov);}
@@ -9999,7 +10013,7 @@ function subsBlock(P){
     n<3?h('span',{class:'wdot',role:'img','aria-label':'Il manque des séances de remplacement',title:'Il manque des séances de remplacement'}):null,
     h('span',{class:'wchev','aria-hidden':'true'})));
   if(open)box.append(h('div',{class:'wk-b'},
-    h('p',{class:'hint'},'Pour une semaine de vacances ou sans accès à la salle : l’athlète touche « Pas ou peu de matériel » sur la carte d’une séance, et l’un de ces 3 metcons la remplace (elle n’est plus réalisable ensuite). Il rapporte les points normaux et maintient les flammes. Chaque remplacement est utilisable autant de fois que l’athlète veut sur la saison.'),
+    h('p',{class:'hint'},'Pour une semaine de vacances ou sans accès à la salle : l’athlète touche « Pas ou peu de matériel » sur la carte d’une séance, et l’un de ces 3 metcons la remplace. Ce n’est définitif que quand l’athlète enregistre un résultat : d’ici là il peut revenir à la séance d’origine ou changer de remplacement. Il rapporte les points normaux et maintient les flammes. Chaque remplacement est utilisable autant de fois que l’athlète veut sur la saison.'),
     h('ul',{class:'list'},L.map((s,k)=>{
       const key='sub-'+P.id+'-'+k;
       return h('li',{},
@@ -11124,7 +11138,7 @@ const TOURS={
 TOURS.cards=()=>[
     {sel:'main .day',title:'Les séances de la semaine',text:'Les séances de la semaine, du lundi au dimanche : tu les fais quand tu veux. Fais glisser les cartes pour passer d’une séance ou d’une semaine à l’autre.'},
     {sel:'.car-track',title:'Une carte par séance',text:'Chaque carte montre le titre et le contenu de la séance, et indique si tu l’as déjà validée. Touche une carte pour l’ouvrir.'},
-    {sel:document.querySelector('[data-tour=sub-btn]')?'[data-tour=sub-btn]':'.car-track',title:'Pas ou peu de matériel ?',text:'En vacances ou sans accès à la salle, touche le bouton ↻ au-dessus de la carte (si ton coach a prévu des remplacements pour la saison) : la carte se retourne et dévoile 3 metcons de remplacement, sans ou avec peu de matériel. Choisis-en un : il remplace cette séance, qui ne sera plus réalisable (sinon on pourrait marquer deux fois). Il rapporte les points normaux et il maintient tes flammes. Tu peux t’en servir autant de fois que tu veux sur la saison, quand tu veux. « Revenir à la séance » retourne la carte.'},
+    {sel:document.querySelector('[data-tour=sub-btn]')?'[data-tour=sub-btn]':'.car-track',title:'Pas ou peu de matériel ?',text:'En vacances ou sans accès à la salle, touche le bouton ↻ au-dessus de la carte (si ton coach a prévu des remplacements pour la saison) : la carte se retourne et dévoile 3 metcons de remplacement, sans ou avec peu de matériel. Choisis-en un : il remplace cette séance, Ce n’est définitif que quand tu enregistres un résultat (ensuite la séance d’origine n’est plus réalisable, sinon on pourrait marquer deux fois) : d’ici là, tu peux revenir à la séance d’origine. Il rapporte les points normaux et il maintient tes flammes. Tu peux t’en servir autant de fois que tu veux sur la saison, quand tu veux. « Revenir à la séance » retourne la carte.'},
     {sel:'.car-dots',title:'Les points',text:'Un point par séance : touche-en un pour y aller directement.'}];
 TOURS.recap=()=>[
     {sel:'.rc-head',title:'Ta semaine',text:'Le résumé de la semaine écoulée, du lundi au dimanche. Un nouveau résumé arrive chaque lundi matin.'},
