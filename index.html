@@ -10617,6 +10617,7 @@ function payStatusCard(){
   const card=h('section',{class:'card paystat'},h('p',{class:'flabel'},'Ton accès'));
   if(st.k==='coach')card.append(h('b',{},'Accès coach'));
   else if(st.k==='trial')card.append(h('b',{},'Essai gratuit'),h('p',{class:'muted'},'Jusqu’au '+fd(st.end)+'. Abonne-toi avant la fin pour garder l’accès aux séances.'));
+  else if(st.k==='active'&&st.plan==='free')card.append(h('b',{},'Accès offert à vie'),h('p',{class:'muted'},'Ton accès aux séances est offert, sans durée limitée.'));
   else if(st.k==='active'){
     card.append(h('b',{},'Abonné'+(PLAN_NAMES[st.plan]?' · '+PLAN_NAMES[st.plan]:'')),
       st.end?h('p',{class:'muted'},(st.cancel?'Fin de l’abonnement le ':'Prochain renouvellement le ')+fd(st.end)+'.'):null);
@@ -10740,7 +10741,7 @@ function viewSub(){
     h('section',{class:'card'},h('h2',{class:'h2'},'Ce que tu y gagnes'),
       h('ul',{style:'margin:0;padding-left:20px;display:grid;gap:6px'},gains.map(t=>h('li',{},t)))),
     payStatusCard(),
-    plansCarousel(true),
+    (payState().k==='active'&&payState().plan==='free')?null:plansCarousel(true),
     h('p',{class:'hint'},'Résiliation possible à tout moment. TVA non applicable, art. 293 B du CGI.'),
     cgvButton());
 }
