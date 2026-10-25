@@ -293,13 +293,14 @@ html[data-plan],html[data-plan] body{overflow:hidden}
 #toast{position:fixed;left:16px;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));display:grid;gap:6px;justify-items:center;z-index:20;pointer-events:none}
 .toast{background:var(--ink);color:var(--bg);border-radius:4px;padding:10px 14px;font-weight:700;max-width:100%}
 .toast.bad{background:var(--danger);color:#fff}
+.toast,.toast *,.paychip{text-shadow:none!important;-webkit-font-smoothing:antialiased}
 @media (max-width:420px){.tabs .in{gap:5px;padding-inline:6px}.tab{padding-inline:3px}.day{font-size:38px}.pr-top{grid-template-columns:minmax(0,1fr) 90px}.pr-top .btn{grid-column:1/-1}}
 @media (prefers-reduced-motion:no-preference){.btn{transition:transform .08s}.btn:active{transform:scale(.98)}}
 
 /* ajouts : saisons, niveaux, objectif */
 .brand span{white-space:nowrap}
 .bt{display:grid;gap:4px;min-width:0}
-.paychip{justify-self:start;font:700 10.5px/1.2 var(--f-mono);letter-spacing:.03em;text-transform:none;color:var(--accent-ink);background:var(--accent);padding:3px 7px;border-radius:3px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.paychip{justify-self:start;font:700 11px/1.2 var(--f-mono);letter-spacing:.03em;text-transform:none;color:var(--accent-ink);background:var(--accent);padding:3px 7px;border-radius:3px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .paychip.off{background:none;color:var(--muted);border:1px solid var(--edge);padding:2px 6px}
 .paychip[hidden]{display:none}
 .tab{font-size:clamp(13px,4.2vw,17px);letter-spacing:.03em;min-width:0;padding-inline:2px;white-space:nowrap}
