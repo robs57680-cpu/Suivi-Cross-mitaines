@@ -9802,20 +9802,28 @@ function wodRow(w){
 const planPerWeek=()=>{try{const n=Math.floor(Number(JSON.parse(planDoc('saison/etat').json).settings.perWeek));return n>0?n:0;}catch(e){return 0;}};
 function wodWeeks(){
   const t=todayStr(),cur=mondayOf(t),per=planPerWeek(),wk={};
+  /* saison affichée : liste déroulante (saison en cours par défaut, ou « Toutes les saisons ») */
+  const seasons=plist().slice().reverse(),ap=activePeriod();
+  let P=null;
+  if(seasons.length){
+    if(S.coach.wodSeason!=='all'&&!seasons.some(x=>x.id===S.coach.wodSeason))S.coach.wodSeason=ap&&!ap.virtual?ap.id:'all';
+    P=S.coach.wodSeason==='all'?null:seasons.find(x=>x.id===S.coach.wodSeason)||null;
+  }
+  const inSel=d=>!P||inP(d,P);
   const get=m=>wk[m]||(wk[m]={mon:m,pub:[],pend:[]});
-  get(cur);
-  Object.values(S.wods).forEach(w=>{if(w&&w.date)get(mondayOf(w.date)).pub.push(w);});
-  Object.values(pendMap()).forEach(p=>{if(p&&p.date)get(mondayOf(p.date)).pend.push(p);});
+  if(!P||inP(t,P))get(cur);
+  Object.values(S.wods).forEach(w=>{if(w&&w.date&&inSel(w.date))get(mondayOf(w.date)).pub.push(w);});
+  Object.values(pendMap()).forEach(p=>{if(p&&p.date&&inSel(p.date))get(mondayOf(p.date)).pend.push(p);});
   const all=Object.values(wk);
   all.forEach(x=>{x.pub.sort((a,b)=>a.date<b.date?-1:1);x.pend.sort((a,b)=>(a.date||'')<(b.date||'')?-1:1);});
   /* ordre : semaine en cours, puis les semaines à venir (la plus proche d'abord), puis les semaines passées (la plus récente d'abord) */
-  const list=[wk[cur]].concat(all.filter(x=>x.mon>cur).sort((a,b)=>a.mon<b.mon?-1:1),all.filter(x=>x.mon<cur).sort((a,b)=>a.mon<b.mon?1:-1).slice(0,26));
-  const ap=activePeriod();
+  const list=(wk[cur]?[wk[cur]]:[]).concat(all.filter(x=>x.mon>cur).sort((a,b)=>a.mon<b.mon?-1:1),all.filter(x=>x.mon<cur).sort((a,b)=>a.mon<b.mon?1:-1).slice(0,26));
   const inSeason=m=>{const q=periodFor(m);return !!q&&(q===ap||(q.start===ap.start&&q.end===ap.end));};
   S.coach.wkOpen=S.coach.wkOpen||{};
   return h('section',{class:'card',id:'wk-card'},h('h2',{class:'h2'},'Séances par semaine'),
+    seasons.length?field('Saison affichée',sel(seasons.map(x=>[x.id,seasonTag(x)+(x.id===ap.id?' (en cours)':'')]).concat([['all','Toutes les saisons']]),S.coach.wodSeason,v=>{S.coach.wodSeason=v;render();},{id:'wod-season'})):null,
     h('p',{class:'hint'},'Un point rouge indique une semaine où il manque une séance'+(per?' ('+per+' séances publiées prévues par semaine)':'')+'. Les séances envoyées par le planificateur y sont marquées « En attente » : complète le metcon, puis publie.'),
-    h('div',{class:'wkacc'},list.map(x=>{
+    h('div',{class:'wkacc'},list.length?list.map(x=>{
       const isOpen=x.mon in S.coach.wkOpen?!!S.coach.wkOpen[x.mon]:x.mon===cur;
       const missing=per>0&&x.pub.length<per&&(x.mon>=cur||inSeason(x.mon));
       const sub=(per?x.pub.length+'/'+per+' publiée'+(x.pub.length>1?'s':''):pl_(x.pub.length,'séance')+' publiée'+(x.pub.length>1?'s':''))+(x.pend.length?' · '+x.pend.length+' en attente':'');
@@ -9826,7 +9834,7 @@ function wodWeeks(){
           missing?h('span',{class:'wdot',role:'img','aria-label':'Il manque une séance',title:'Il manque une séance'}):null,
           h('span',{class:'wchev','aria-hidden':'true'})),
         isOpen?h('div',{class:'wk-b'},rows.length?h('ul',{class:'list'},rows):h('p',{class:'muted'},'Aucune séance cette semaine.')):null);
-    })));
+    }):h('p',{class:'muted'},'Aucune séance dans cette saison.')));
 }
 /* résultats de tous les athlètes pour une séance : le coach peut les corriger, en saisir ou en retirer */
 function resultsSection(){
