@@ -4440,7 +4440,8 @@ function badgeHTML(tid,label,size){
 const BADGE_IMG_Y={senior:0.8793,veteran:0.8793,goat:0.9167,lagoat:0.9167,points:0.92,regulier:0.9167,serie:0.9167,top:0.9167,perf:0.9133,lafort:0.92,fort:0.9325,mcardio:0.9183,mgym:0.9167,mhaltero:0.9167,tonnage:0.955,latonnage:0.955,gduo:0.9067,gsolo:0.9083,bdeb:0.9083,binter:0.9083,objectif:0.9083,ratio:0.9183}; /* hauteur du centre de la plaque, en fraction de l'image */
 const BADGE_IMG_FILE={}; /* correspondances trophée -> fichier quand ils diffèrent (ex. {ratio:'fort'}) ; chaque trophée a son image badge-<id>.webp */
 const BADGE_LEGACY_RX=/alpha|b[eé]ta/i; /* saisons dont les badges restent inchangés */
-const badgeImgOn=(per,tid)=>!!per&&!!BADGE_IMG_Y[BADGE_IMG_FILE[tid]||tid]&&!BADGE_LEGACY_RX.test(String(per.name||''));
+/* saison Alpha/Bêta terminée = anciens badges dessinés ; saison pas encore terminée (aperçu coach de la remise) = badges illustrés actuels, aucun badge n'y ayant été remis */
+const badgeImgOn=(per,tid)=>!!per&&!!BADGE_IMG_Y[BADGE_IMG_FILE[tid]||tid]&&(periodState(per)!=='done'||!BADGE_LEGACY_RX.test(String(per.name||'')));
 function badgeImgHTML(tid,label,size){
   const key=BADGE_IMG_FILE[tid]||tid,ty=BADGE_IMG_Y[key];
   const name=String(label||'').toUpperCase(),short=(name.length>16?name.slice(0,15)+'…':name).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
@@ -4616,7 +4617,7 @@ function goldenBook(per,gid,wins,o){
     h('h1',{class:'gb-title'},seasonTag(per)),
     h('p',{class:'gb-sub'},seasonLabel(per)+' · '+fmtShort(per.start)+' → '+fmtShort(per.end)+(final?'':' · résultats provisoires')),
     o.stats?h('p',{class:'gb-stats'},o.stats):null,
-    ids.length>1?h('div',{class:'gb-gs'},ids.map(x=>h('button',{type:'button',class:'gb-gb'+(x===gid?' on':''),onclick:()=>{if(o.onGroup)o.onGroup(x);}},scopeName(x,per)||'Sans groupe'))):null,
+    (ids.length>1&&!o.noGroups)?h('div',{class:'gb-gs'},ids.map(x=>h('button',{type:'button',class:'gb-gb'+(x===gid?' on':''),onclick:()=>{if(o.onGroup)o.onGroup(x);}},scopeName(x,per)||'Sans groupe'))):null,
     h('div',{class:'gb-orn'}),
     animate?h('p',{class:'gb-hint'},'Touche l’écran pour passer l’écriture'):null),
     list,animate?h('div',{class:'gb-endsp'}):null);
@@ -4748,7 +4749,7 @@ function openCeremony(pid,gid0){
   function slideEl(s){
     if(s.k==='book'){
       const nS=ranked.reduce((a,r)=>a+r.sessions,0);
-      bk=goldenBook(per,gid,wins,{animate:!bookSeen,
+      bk=goldenBook(per,gid,wins,{animate:!bookSeen,noGroups:true,
         stats:ranked.length+' athlète'+(ranked.length>1?'s':'')+' · '+nS+' séance'+(nS>1?'s':'')+' · '+wins.length+' trophée'+(wins.length>1?'s':''),
         onGroup:x=>openCeremony(pid,x),
         onMine:()=>{if(stopFw)stopFw();stopFw=fireworks(ov);},
