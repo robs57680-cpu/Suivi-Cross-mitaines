@@ -130,7 +130,7 @@ async function cacheFirst(req,name,forceCors){
   return res;
 }
 
-/* ---------- notifications push (inchangé) ---------- */
+/* ---------- notifications push ---------- */
 self.addEventListener('push',e=>{
   let d={};
   try{d=e.data?e.data.json():{};}catch(_){}
@@ -146,10 +146,17 @@ self.addEventListener('notificationclick',e=>{
   e.notification.close();
   const go=(e.notification.data&&e.notification.data.go)||'feed';
   e.waitUntil((async()=>{
-    const list=await self.clients.matchAll({type:'window',includeUncontrolled:true});
+    let list=[];
+    try{list=await self.clients.matchAll({type:'window',includeUncontrolled:true});}catch(_){}
+    /* appli déjà ouverte : on lui dit où aller (message {type:'go'}, lu par l'appli), puis on la met au premier plan.
+       Le message part AVANT focus() : si focus() est refusé (certains navigateurs mobiles), l'onglet est quand même changé. */
+    let handled=false;
     for(const c of list){
-      if('focus' in c){await c.focus();c.postMessage({type:'go',go});return;}
+      try{c.postMessage({type:'go',go});handled=true;}catch(_){continue;}
+      try{if('focus' in c)await c.focus();}catch(_){}
+      break;
     }
-    await self.clients.openWindow(self.registration.scope+'?go='+go);
+    /* appli fermée : on l'ouvre directement sur le bon onglet */
+    if(!handled)await self.clients.openWindow(self.registration.scope+'?go='+go);
   })());
 });
