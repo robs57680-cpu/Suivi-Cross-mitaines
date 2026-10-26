@@ -492,6 +492,8 @@ section.feed-card>.feed-badge{position:absolute!important;top:8px;right:12px;z-i
 
 /* livre d'or : remise des trophées animée et livre des saisons */
 .cer-body.gbb{align-items:stretch;max-width:520px}
+.cer.cer-book{grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden}
+.cer.cer-book .cer-body{min-height:0}
 .gb-bt{font-family:'Great Vibes','Snell Roundhand','Segoe Script','Brush Script MT',cursive;font-size:30px;line-height:1;color:#f0cf6a}
 .gb-stage{position:relative;display:grid;grid-template-rows:minmax(0,1fr);justify-items:center;align-items:stretch;width:100%;min-height:0;perspective:1500px;overflow:hidden;border-radius:10px;background:radial-gradient(ellipse at 50% 38%,rgba(150,100,25,.45),rgba(0,0,0,0) 66%);cursor:pointer}
 .gb-stage.all,.gb-stage.still{cursor:auto}
@@ -4625,28 +4627,43 @@ function goldenBook(per,gid,wins,o){
   stage.append(h('div',{class:'gb-book'},page,cover));
   function doneLine(L){L.line.classList.add('done');L.ul.style.transition='none';L.ul.style.transform='scaleX(1)';L.pen.classList.remove('on');}
   if(!animate)ents.forEach(E=>{E.el.classList.add('show','skip');E.lines.forEach(doneLine);});
-  /* la page glisse en continu vers sa cible : au début d'un trophée vers son entrée, puis, pendant l'écriture, vers la lettre en cours
-     (le texte écrit reste vers le milieu de l'écran, même quand plusieurs gagnants se suivent). Un coup de molette ou de doigt met le suivi en pause 2 s. */
-  let tgt=null,raf=0,userUntil=0;
-  const maxScroll=()=>Math.max(0,page.scrollHeight-page.clientHeight);
+  /* l'écran glisse en continu pour centrer le trophée en cours d'écriture (et, si un trophée est plus haut que l'écran, la lettre en cours).
+     Le conteneur qui défile est cherché à chaque fois (page du livre, ou fenêtre de remise si le livre est plus haut que l'écran).
+     Un coup de molette ou de doigt met le suivi en pause 2 s. */
+  let tgt=null,raf=0,userUntil=0,scEl=null;
+  function scroller(){
+    for(let n=page;n&&n!==document.body&&n!==document.documentElement;n=n.parentElement){
+      const oy=getComputedStyle(n).overflowY;
+      if((oy==='auto'||oy==='scroll')&&n.scrollHeight>n.clientHeight+1)return n;
+    }
+    return document.scrollingElement||document.documentElement;
+  }
+  const isDoc=sc=>sc===document.scrollingElement||sc===document.documentElement||sc===document.body;
+  const viewOf=sc=>isDoc(sc)?{top:0,h:window.innerHeight}:{top:sc.getBoundingClientRect().top,h:sc.clientHeight};
   function glide(){
     raf=0;
-    if(tgt===null)return;
+    if(tgt===null||!scEl)return;
     if(Date.now()<userUntil){raf=requestAnimationFrame(glide);return;}
-    const to=Math.max(0,Math.min(tgt,maxScroll())),d=to-page.scrollTop;
-    if(Math.abs(d)<1){page.scrollTop=to;tgt=null;return;}
+    const to=Math.max(0,Math.min(tgt,scEl.scrollHeight-viewOf(scEl).h)),d=to-scEl.scrollTop;
+    if(Math.abs(d)<1){scEl.scrollTop=to;tgt=null;return;}
     const st=Math.max(1,Math.abs(d)*.12);
-    page.scrollTop+=d>0?Math.min(st,d):-Math.min(st,-d);
+    scEl.scrollTop+=d>0?Math.min(st,d):-Math.min(st,-d);
     raf=requestAnimationFrame(glide);
   }
-  function aim(y){tgt=y;if(!raf)raf=requestAnimationFrame(glide);}
-  function stopGlide(){tgt=null;if(raf){cancelAnimationFrame(raf);raf=0;}}
-  function focusEnt(el){aim(el.offsetTop-page.clientHeight*.28);}
-  function followLetter(g){
-    const pr=page.getBoundingClientRect(),gr=g.getBoundingClientRect();
-    aim(page.scrollTop+(gr.top-pr.top)+gr.height/2-page.clientHeight*.42);
+  /* centre l'élément (ou la zone y0..y1 de l'élément) au milieu de l'écran visible */
+  function aimAt(rect){
+    const sc=scroller(),v=viewOf(sc);
+    scEl=sc;tgt=sc.scrollTop+(rect.top+rect.height/2)-(v.top+v.h/2);
+    if(!raf)raf=requestAnimationFrame(glide);
   }
-  ['wheel','touchmove'].forEach(ev=>page.addEventListener(ev,()=>{userUntil=Date.now()+2000;},{passive:true}));
+  function stopGlide(){tgt=null;if(raf){cancelAnimationFrame(raf);raf=0;}}
+  function focusEnt(el){aimAt(el.getBoundingClientRect());}
+  function followLetter(g){
+    /* trophée plus haut que l'écran : on suit la lettre ; sinon le trophée reste centré */
+    const v=viewOf(scroller());
+    if(cur&&cur.el.offsetHeight>v.h*.8)aimAt(g.getBoundingClientRect());
+  }
+  ['wheel','touchmove'].forEach(ev=>stage.addEventListener(ev,()=>{userUntil=Date.now()+2000;},{passive:true}));
   function writeLine(L,cb){
     const n=L.letters.length,step=Math.max(55,Math.min(150,2000/Math.max(1,n)));
     L.ul.style.transition='transform '+Math.round(step*n+300)+'ms cubic-bezier(.3,.6,.3,1)';
@@ -4774,6 +4791,7 @@ function openCeremony(pid,gid0){
     const sl=slides[i],isBook=sl.k==='book';
     dots.replaceChildren(...slides.map((_,j)=>h('span',{class:'cd'+(j===i?' on':j<i?' past':'')})));
     body.className='cer-body'+(isBook?' gbb':'');
+    ov.classList.toggle('cer-book',isBook);ov.scrollTop=0;
     body.replaceChildren(slideEl(sl));
     if(isBook)bk.start();
     if((sl.k==='mine'&&final&&mineW.length)||(sl.k==='podium'&&ranked.slice(0,3).some(r=>r.uid===S.uid)))stopFw=fireworks(ov);
@@ -4785,7 +4803,8 @@ function openCeremony(pid,gid0){
   document.addEventListener('keydown',esc);
   S.cerRefresh=null;
   show();
-  document.getElementById('cer-next').focus();
+  document.getElementById('cer-next').focus({preventScroll:true});
+  ov.scrollTop=0;
 }
 /* ---------- livre des saisons : tous les livres d'or des saisons terminées (icône livre du classement) ---------- */
 function openSeasonBook(){
