@@ -454,11 +454,38 @@ section.feed-card>.feed-badge{position:absolute!important;top:8px;right:12px;z-i
 .cer-stats{display:flex;flex-wrap:wrap;gap:24px;justify-content:center}
 .cer-stats b{display:block;font-family:var(--f-display);font-weight:400;font-size:44px;line-height:1}
 .cer-stats span{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--panel-muted)}
-.podium{display:flex;align-items:flex-end;gap:10px;width:100%}
-.pod{display:grid;justify-items:center;align-content:end;gap:4px;flex:1;min-width:0}
-.pod .nm{text-align:center}
-.pbar{width:100%;background:var(--accent);border-radius:4px 4px 0 0}
-.p1 .pbar{height:110px}.p2 .pbar{height:80px}.p3 .pbar{height:56px}
+/* podium de la remise : trois socles lumineux, avatars posés dessus (2e à gauche, 1er au centre, 3e à droite) */
+.cpodium{--ar-gold:#FFC857;--ar-ink:#F6F2EA;--ar-mute:#9097A6;position:relative;display:grid;grid-template-columns:1fr 1.14fr 1fr;align-items:end;gap:6px;width:100%;max-width:440px;margin:34px auto 0;padding:0 2px 6px}
+.cpodium::before{content:'';position:absolute;left:-6%;right:-6%;bottom:-4px;height:40px;background:radial-gradient(ellipse at 50% 100%,rgba(255,200,87,.20),transparent 70%);pointer-events:none}
+.cpod{--s:60px;position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;min-width:0}
+.cpod.p1{--rc:255,200,87;--s:78px;z-index:2}.cpod.p2{--rc:156,194,255}.cpod.p3{--rc:242,154,91}
+.cpod.empty{opacity:.3}
+.cpod-av{position:relative;z-index:3;display:grid;place-items:center;margin-bottom:calc(var(--s)*-.36)}
+.cpod-av .pav{box-shadow:0 10px 20px rgba(0,0,0,.55)}
+.cpod-base{position:relative;width:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:3px;padding:calc(var(--s)*.36 + 12px) 6px 14px;border-radius:14px 14px 2px 2px;text-align:center;overflow:hidden;
+  background:linear-gradient(180deg,rgba(var(--rc),.44),rgba(var(--rc),.15) 55%,rgba(var(--rc),.05));border:1px solid rgba(var(--rc),.55);border-bottom:0;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.38),inset 0 0 24px rgba(var(--rc),.12),0 -10px 28px rgba(var(--rc),.18)}
+.cpod-base::before{content:'';position:absolute;left:0;right:0;top:0;height:9px;background:linear-gradient(180deg,rgba(255,255,255,.40),rgba(255,255,255,.04));pointer-events:none}
+.cpod-base::after{content:'';position:absolute;top:0;bottom:0;left:-45%;width:34%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.14),transparent);transform:skewX(-18deg);pointer-events:none;opacity:0}
+.cpod.p1 .cpod-base{min-height:176px}.cpod.p2 .cpod-base{min-height:140px}.cpod.p3 .cpod-base{min-height:114px}
+.cpod-n{font-family:var(--f-display);font-size:46px;line-height:1;color:rgb(var(--rc));text-shadow:0 2px 0 rgba(0,0,0,.45),0 0 18px rgba(var(--rc),.6)}
+.cpod.p1 .cpod-n{font-size:60px}
+.cpod-nm{max-width:100%;font-weight:700;font-size:13px;line-height:1.15;color:var(--ar-ink);overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cpod.p1 .cpod-nm{font-size:15px}
+.cpod-pts{font-family:var(--f-display);font-size:15px;letter-spacing:.03em;color:rgb(var(--rc))}
+.cpod.p1 .cpod-pts{font-size:17px}
+.cpod-pts small{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.08em;color:var(--ar-mute)}
+.cpod.me .cpod-base{border-color:rgba(255,120,70,.95);box-shadow:inset 0 1px 0 rgba(255,255,255,.38),0 0 0 1px rgba(255,120,70,.55),0 0 24px rgba(255,90,54,.45)}
+@keyframes cpUp{0%{opacity:0;transform:translateY(54px)}100%{opacity:1;transform:none}}
+@keyframes cpDrop{0%{opacity:0;transform:translateY(-38px) scale(.5)}60%{opacity:1;transform:translateY(4px) scale(1.06)}100%{opacity:1;transform:none}}
+@keyframes cpSheen{0%{left:-45%;opacity:1}100%{left:130%;opacity:1}}
+@media (prefers-reduced-motion:no-preference){
+  .cpod-base{animation:cpUp .65s cubic-bezier(.2,.9,.3,1) both}
+  .cpod.p3 .cpod-base{animation-delay:.1s}.cpod.p2 .cpod-base{animation-delay:.45s}.cpod.p1 .cpod-base{animation-delay:.8s}
+  .cpod-av{animation:cpDrop .75s cubic-bezier(.2,1.1,.4,1) both}
+  .cpod.p3 .cpod-av{animation-delay:.55s}.cpod.p2 .cpod-av{animation-delay:.9s}.cpod.p1 .cpod-av{animation-delay:1.25s}
+  .cpod-base::after{animation:cpSheen 1.3s ease-out 1.7s both}
+}
 .cer .bsel .sub{color:var(--muted)}
 @keyframes bpop{0%{transform:scale(.4) rotate(-25deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
 @media (prefers-reduced-motion:no-preference){.badge.pop{animation:bpop .7s cubic-bezier(.2,1.3,.4,1) both}}
@@ -534,6 +561,8 @@ section.feed-card>.feed-badge{position:absolute!important;top:8px;right:12px;z-i
 .gb-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .gb-shelf{display:grid;gap:12px;width:100%;max-width:420px;align-content:start}
 .gb-vol{display:grid;gap:2px;justify-items:center;padding:16px 12px;border:0;border-radius:4px 10px 10px 4px;cursor:pointer;background:linear-gradient(135deg,#6a2218,#2b0b07);box-shadow:inset 0 0 0 2px #c9a24a,inset 0 0 0 5px #2b0b07,inset 0 0 0 6px rgba(201,162,74,.6),0 6px 16px rgba(0,0,0,.45);color:#e8d29a}
+.gb-vol.pre{box-shadow:inset 0 0 0 2px #e8b830,inset 0 0 0 5px #2b0b07,inset 0 0 0 6px rgba(232,184,48,.7),0 0 18px rgba(232,184,48,.28),0 6px 16px rgba(0,0,0,.45)}
+.gb-vp{font:700 10px var(--f-mono);letter-spacing:.16em;text-transform:uppercase;color:#1b1206;background:#e8b830;border-radius:999px;padding:2px 9px;margin-bottom:4px}
 .gb-vt{font-family:'Great Vibes','Snell Roundhand','Segoe Script','Brush Script MT',cursive;font-size:36px;line-height:1.1;color:#f0cf6a}
 .gb-vs{font:600 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:#cdb273}
 
@@ -3800,7 +3829,7 @@ function movBackGo(){
 /* ---------- écritures ---------- */
 let chain=Promise.resolve();
 function run(fn){chain=chain.then(fn).catch(e=>{toast(errMsg(e),true);});return chain;}
-const saveProf=()=>run(async()=>{await S.db.doc('users/'+S.uid+'/private/profile').set({prs:S.prof.prs||{},sex:S.prof.sex||'',birth:S.prof.birth||'',genEx:S.prof.genEx||null,genAll:S.prof.genAll||null,words:S.prof.words||[],mvcfg:S.prof.mvcfg||{},revd:S.prof.revd||{},intf:S.prof.intf||{},intCustom:Array.isArray(S.prof.intCustom)?S.prof.intCustom:[],pace:S.prof.pace||{},spread:S.prof.spread||{},weight:Number(S.prof.weight)>0?Number(S.prof.weight):0,plan:S.prof.plan||null,pend:S.prof.pend||{},rewardDraft:String(S.prof.rewardDraft||'')});});
+const saveProf=()=>run(async()=>{await S.db.doc('users/'+S.uid+'/private/profile').set({prs:S.prof.prs||{},sex:S.prof.sex||'',birth:S.prof.birth||'',genEx:S.prof.genEx||null,genAll:S.prof.genAll||null,words:S.prof.words||[],mvcfg:S.prof.mvcfg||{},revd:S.prof.revd||{},intf:S.prof.intf||{},intn:S.prof.intn||{},intCustom:Array.isArray(S.prof.intCustom)?S.prof.intCustom:[],pace:S.prof.pace||{},spread:S.prof.spread||{},weight:Number(S.prof.weight)>0?Number(S.prof.weight):0,plan:S.prof.plan||null,pend:S.prof.pend||{},rewardDraft:String(S.prof.rewardDraft||'')});});
 const needPseudo=()=>S.uid&&S.loaded.logs&&!(S.logs[S.uid]&&S.logs[S.uid].pseudo);
 /* groupes : un seul document config/groups {list:[{id,name}], of:{uid:idDuGroupe}}, écrit par le coach seul */
 const groupsList=()=>(S.groups&&S.groups.list)||[];
@@ -4596,7 +4625,28 @@ function goldenBook(per,gid,wins,o){
   stage.append(h('div',{class:'gb-book'},page,cover));
   function doneLine(L){L.line.classList.add('done');L.ul.style.transition='none';L.ul.style.transform='scaleX(1)';L.pen.classList.remove('on');}
   if(!animate)ents.forEach(E=>{E.el.classList.add('show','skip');E.lines.forEach(doneLine);});
-  function focusEnt(el){const y=Math.max(0,el.offsetTop-page.clientHeight*.28);try{page.scrollTo({top:y,behavior:'smooth'});}catch(e){page.scrollTop=y;}}
+  /* la page glisse en continu vers sa cible : au début d'un trophée vers son entrée, puis, pendant l'écriture, vers la lettre en cours
+     (le texte écrit reste vers le milieu de l'écran, même quand plusieurs gagnants se suivent). Un coup de molette ou de doigt met le suivi en pause 2 s. */
+  let tgt=null,raf=0,userUntil=0;
+  const maxScroll=()=>Math.max(0,page.scrollHeight-page.clientHeight);
+  function glide(){
+    raf=0;
+    if(tgt===null)return;
+    if(Date.now()<userUntil){raf=requestAnimationFrame(glide);return;}
+    const to=Math.max(0,Math.min(tgt,maxScroll())),d=to-page.scrollTop;
+    if(Math.abs(d)<1){page.scrollTop=to;tgt=null;return;}
+    const st=Math.max(1,Math.abs(d)*.12);
+    page.scrollTop+=d>0?Math.min(st,d):-Math.min(st,-d);
+    raf=requestAnimationFrame(glide);
+  }
+  function aim(y){tgt=y;if(!raf)raf=requestAnimationFrame(glide);}
+  function stopGlide(){tgt=null;if(raf){cancelAnimationFrame(raf);raf=0;}}
+  function focusEnt(el){aim(el.offsetTop-page.clientHeight*.28);}
+  function followLetter(g){
+    const pr=page.getBoundingClientRect(),gr=g.getBoundingClientRect();
+    aim(page.scrollTop+(gr.top-pr.top)+gr.height/2-page.clientHeight*.42);
+  }
+  ['wheel','touchmove'].forEach(ev=>page.addEventListener(ev,()=>{userUntil=Date.now()+2000;},{passive:true}));
   function writeLine(L,cb){
     const n=L.letters.length,step=Math.max(55,Math.min(150,2000/Math.max(1,n)));
     L.ul.style.transition='transform '+Math.round(step*n+300)+'ms cubic-bezier(.3,.6,.3,1)';
@@ -4607,6 +4657,7 @@ function goldenBook(per,gid,wins,o){
       const g=L.letters[j++];
       g.classList.add('in');
       L.pen.style.left=(g.offsetLeft+g.offsetWidth)+'px';L.pen.style.top=(g.offsetTop+g.offsetHeight*.55)+'px';L.pen.classList.add('on');
+      followLetter(g);
       later(tick,step);
     };
     tick();
@@ -4629,7 +4680,7 @@ function goldenBook(per,gid,wins,o){
     focusEnt(cur.el);
     later(()=>writeAll(ents[j],0),1500); /* le trophée entre (1 s), puis son explication, puis l'écriture */
   }
-  function finish(){clearAll();phase='done';stage.classList.add('all');if(o.onDone)o.onDone();}
+  function finish(){clearAll();stopGlide();phase='done';stage.classList.add('all');if(o.onDone)o.onDone();}
   function endIntro(fast){
     clearAll();
     if(fast)stage.classList.add('fast');
@@ -4657,7 +4708,7 @@ function goldenBook(per,gid,wins,o){
     later(()=>stage.classList.add('zoom'),1500);  /* l'écran se rapproche de la page */
     later(()=>endIntro(false),3100);
   }
-  return {el:stage,start,stop:clearAll,revealAll,done:()=>phase==='done',animated:animate};
+  return {el:stage,start,stop:()=>{clearAll();stopGlide();},revealAll,done:()=>phase==='done',animated:animate};
 }
 /* ---------- remise des trophées ---------- */
 function openCeremony(pid,gid0){
@@ -4688,9 +4739,19 @@ function openCeremony(pid,gid0){
       bookSeen=true;return bk.el;
     }
     if(s.k==='podium'){
-      const pod=(r,pos)=>r?h('div',{class:'pod p'+pos},h('div',{class:'rank r'+pos},pos),h('div',{class:'nm'},r.pseudo+(r.uid===S.uid?' (toi)':'')),h('div',{class:'sub'},fmtN(r.total)+' pts'),h('div',{class:'pbar'})):h('div',{class:'pod'});
+      /* socle (rang, pseudo, points) avec la pastille d'avatar + cadre équipé posée dessus ; 1er : couronne */
+      const pod=(r,pos)=>{
+        if(!r)return h('div',{class:'cpod p'+pos+' empty'},
+          h('div',{class:'cpod-av'},h('div',{class:'pav'},h('div',{class:'pav-c'},h('div',{class:'noav-dot'},'–')))),
+          h('div',{class:'cpod-base'},h('div',{class:'cpod-n'},pos),h('div',{class:'cpod-nm'},'Place libre')));
+        const me=r.uid===S.uid;
+        return h('div',{class:'cpod p'+pos+(me?' me':'')},
+          h('div',{class:'cpod-av'},pos===1?svgOf(ICO_CROWN):null,arAvatar(r.uid,pos,true,pos===1?78:60)),
+          h('div',{class:'cpod-base'},h('div',{class:'cpod-n'},pos),h('div',{class:'cpod-nm'},r.pseudo+(me?' (toi)':'')),
+            h('div',{class:'cpod-pts'},fmtN(r.total),h('small',{},' pts'))));
+      };
       return h('div',{class:'cer-in'},h('p',{class:'eyebrow cer-eb'},'Points bruts de la saison'),h('h2',{class:'day'},'Le podium'),
-        h('div',{class:'podium'},pod(ranked[1],2),pod(ranked[0],1),pod(ranked[2],3)));
+        h('div',{class:'cpodium'},pod(ranked[1],2),pod(ranked[0],1),pod(ranked[2],3)));
     }
     if(!mineW.length)return h('div',{class:'cer-in'},h('h2',{class:'day'},'Pas de badge cette fois'),h('p',{class:'cer-sub'},'Rendez-vous à la prochaine saison !'));
     const btns=[];
@@ -4730,6 +4791,8 @@ function openCeremony(pid,gid0){
 function openSeasonBook(){
   const old=document.getElementById('sb-ov');if(old)old.remove();
   const done=plist().filter(p=>!p.virtual&&periodState(p)==='done').reverse();
+  /* coach : la saison en cours figure aussi sur l'étagère, en aperçu (résultats provisoires), pour prévisualiser la remise */
+  const live=S.owner?plist().filter(p=>!p.virtual&&periodState(p)==='live').reverse():[];
   const esc=e=>{if(e.key==='Escape')close();};
   const close=()=>{ov.remove();document.removeEventListener('keydown',esc);};
   const body=h('div',{class:'cer-body'}),nav=h('div',{class:'row'});
@@ -4737,10 +4800,11 @@ function openSeasonBook(){
     h('div',{class:'cer-top'},h('div',{class:'gb-bt'},'Livre des saisons'),h('button',{class:'btn sm',type:'button',onclick:close},'Fermer')),body,nav);
   function shelf(){
     body.className='cer-body';nav.replaceChildren();
-    if(!done.length){body.replaceChildren(h('div',{class:'cer-in'},h('h2',{class:'day'},'Le livre est encore vide'),
+    if(!done.length&&!live.length){body.replaceChildren(h('div',{class:'cer-in'},h('h2',{class:'day'},'Le livre est encore vide'),
       h('p',{class:'cer-sub'},'Il s’écrit à la fin de chaque saison : les trophées et leurs gagnants y sont inscrits en lettres d’or.')));return;}
-    body.replaceChildren(h('div',{class:'gb-shelf'},done.map(p=>h('button',{type:'button',class:'gb-vol',onclick:()=>openSeason(p.id)},
-      h('span',{class:'gb-vt'},seasonTag(p)),h('span',{class:'gb-vs'},seasonLabel(p)+' · '+fmtShort(p.start)+' → '+fmtShort(p.end))))));
+    body.replaceChildren(h('div',{class:'gb-shelf'},live.concat(done).map(p=>{const pre=periodState(p)!=='done';return h('button',{type:'button',class:'gb-vol'+(pre?' pre':''),onclick:()=>openSeason(p.id)},
+      pre?h('span',{class:'gb-vp'},'Saison en cours · aperçu coach'):null,
+      h('span',{class:'gb-vt'},seasonTag(p)),h('span',{class:'gb-vs'},seasonLabel(p)+' · '+fmtShort(p.start)+' → '+fmtShort(p.end)));})));
   }
   function openSeason(pid,gid0){
     const per=plist().find(x=>x.id===pid);if(!per){shelf();return;}
@@ -4751,7 +4815,7 @@ function openSeasonBook(){
       stats:ranked.length+' athlète'+(ranked.length>1?'s':'')+' · '+nS+' séance'+(nS>1?'s':'')+' · '+wins.length+' trophée'+(wins.length>1?'s':'')});
     body.className='cer-body gbb';body.replaceChildren(bk.el);
     nav.replaceChildren(h('button',{class:'btn',type:'button',onclick:shelf},'← Les saisons'),
-      h('button',{class:'btn primary',type:'button',onclick:()=>{close();openCeremony(pid,gid);}},'Revoir la remise'));
+      h('button',{class:'btn primary',type:'button',onclick:()=>{close();openCeremony(pid,gid);}},periodState(per)==='done'?'Revoir la remise':'Prévisualiser la remise'));
   }
   document.body.append(ov);document.addEventListener('keydown',esc);
   shelf();
@@ -9477,22 +9541,28 @@ function deadTiers(D,iv,pct){ /* Dead by : temps tenu décroissant depuis le tim
   return times.map((t,j)=>({t:fmtTime(Math.round(t*60)),p:String(c>1?Math.round(10-9*j/(c-1)):10)}));
 }
 /* f = multiplicateur appliqué au temps « pur » (reps x secondes par rep) : transitions, fatigue, respirations */
-const INTENS={max:{l:'À fond',f:1.2,d:'Tu pousses du début à la fin.'},allure:{l:'Gestion d’allure',f:1.45,d:'Tu gardes un rythme régulier, sans te vider.'},cool:{l:'Pas à fond',f:1.8,d:'Séance tranquille : tu gardes de la marge.'}};
+const INTENS={max:{l:'À fond',f:1.2,d:'Tu pousses du début à la fin.',cat:'max'},allure:{l:'Gestion d’allure',f:1.45,d:'Tu gardes un rythme régulier, sans te vider.',cat:'allure'},cool:{l:'Pas à fond',f:1.8,d:'Séance tranquille : tu gardes de la marge.',cat:'cool'}};
+/* trois catégories d'intensité ; chaque intensité (de base ou créée par le coach) appartient à l'une d'elles. Les noms de base sont modifiables (S.prof.intn) */
+const INTENS_CATS=[['max','À fond'],['allure','Gestion d’allure'],['cool','Pas à fond']];
+const INTENS_DEFL={max:'À fond',allure:'Gestion d’allure',cool:'Pas à fond'};
+/* catégorie d'une intensité du coach : celle choisie, sinon déduite du coefficient (proche de 1,2 = à fond, 1,45 = gestion d'allure, 1,8 = pas à fond) */
+const intCatOf=x=>{const c=x&&x.cat;if(INTENS_CATS.some(a=>a[0]===c))return c;const f=parseNum(String((x&&x.f)??''));return f===null?'allure':f<1.325?'max':f<1.625?'allure':'cool';};
 const intF=k=>{const v=parseNum(String((S.prof&&S.prof.intf&&S.prof.intf[k])??''));return (v!==null&&v>=0.5&&v<=5)?v:INTENS[k].f;};
 /* intensités créées par le coach (onglet Configuration des mouvements) : clé « c_… », ajoutées à INTENS pour servir partout comme les intensités de base */
 function syncIntens(){
   Object.keys(INTENS).forEach(k=>{if(k.slice(0,2)==='c_')delete INTENS[k];});
+  Object.keys(INTENS_DEFL).forEach(k=>{const n=String((S.prof&&S.prof.intn&&S.prof.intn[k])||'').trim().slice(0,40);INTENS[k].l=n||INTENS_DEFL[k];});
   const L=(S.prof&&Array.isArray(S.prof.intCustom))?S.prof.intCustom:[];
   L.forEach(x=>{
     if(!x||!x.id)return;
     const f=parseNum(String(x.f??'')),l=String(x.l||'').trim();
     if(!l||f===null||!(f>=0.5&&f<=5))return;
-    INTENS['c_'+x.id]={l,f,d:'Coefficient '+String(f).replace('.',',')+'.',custom:true};
+    INTENS['c_'+x.id]={l,f,d:'Coefficient '+String(f).replace('.',',')+'.',custom:true,cat:intCatOf(x)};
   });
 }
-const intList=()=>{syncIntens();return Object.entries(INTENS);};
+const intList=()=>{syncIntens();const o=INTENS_CATS.map(a=>a[0]);return Object.entries(INTENS).sort((a,b)=>o.indexOf(a[1].cat)-o.indexOf(b[1].cat));};
 /* intensité d'une partie : celle de la liste, sinon le nom gardé dans la séance (intensité du coach absente du profil de l'athlète) */
-const intInfo=p=>INTENS[p.intensity]||((p.intensity&&p.intensityL)?{l:String(p.intensityL),d:''}:null);
+const intInfo=p=>(p.intensity&&p.intensityL)?{l:String(p.intensityL),d:(INTENS[p.intensity]&&INTENS[p.intensity].d)||''}:(INTENS[p.intensity]||null);
 const SEC_EXTRA={'Back Squat':3.5,'Bench Press':3,'Shoulder Press':3,'Jerk':4,'Down Up':3,'Crunch mains sur les cuisses':2,'Sauts sans corde':.5,'Pompes sur genoux':2,'Snatch':4,'Clean':4};
 const SEC_MAP={'Snatch':'Power Snatch','Row (rameur)':'Rameur'};
 let _secAl=null;
@@ -9763,7 +9833,7 @@ function draftToWod(d){
           o.deadBy=true;
         }
       }
-      o.format=p.format;o.detail=p.detail.trim();o.focus=p.focus;if(INTENS[p.intensity]){o.intensity=p.intensity;o.intensityL=INTENS[p.intensity].l;}o.capV=2; /* capV 2 : paliers time cap en reps cumulées */
+      o.format=p.format;o.detail=p.detail.trim();o.focus=p.focus;syncIntens();if(INTENS[p.intensity]){o.intensity=p.intensity;o.intensityL=INTENS[p.intensity].l;}o.capV=2; /* capV 2 : paliers time cap en reps cumulées */
       if(String(p.repsRound||'').trim()!==''){const n=parseNum(p.repsRound);if(n===null||n<=0||n%1)throw new Error('Reps par tour illisibles ('+o.label+').');o.repsRound=n;}
       /* si des reps équivalentes sont définies dans le contenu, le total de reps réelles du tour s'en déduit */
       if(p.format==='FT'&&p.lineRounds)delete o.repsRound;
@@ -10202,8 +10272,12 @@ function mvCfgSave(){
   const fi=S.prof.intf||{};
   for(const k of Object.keys(INTENS)){const fv=parseNum(String(fi[k]??''));if(fv!==null&&fv>=0.5&&fv<=5)fi[k]=Math.round(fv*100)/100;else delete fi[k];}
   S.prof.intf=fi;
+  /* noms des intensités de base : vide ou identique au nom d'origine = nom par défaut */
+  const nn=S.prof.intn||{};
+  for(const k of Object.keys(INTENS_DEFL)){const v=String(nn[k]||'').trim().slice(0,40);if(v&&v!==INTENS_DEFL[k])nn[k]=v;else delete nn[k];}
+  S.prof.intn=nn;
   /* intensités du coach : un nom et un coefficient entre 0,5 et 5, sinon la ligne est retirée */
-  S.prof.intCustom=(S.prof.intCustom||[]).map(x=>{const f=parseNum(String((x&&x.f)??'')),l=String((x&&x.l)||'').trim().slice(0,40);return (x&&x.id&&l&&f!==null&&f>=0.5&&f<=5)?{id:String(x.id),l,f:Math.round(f*100)/100}:null;}).filter(Boolean);
+  S.prof.intCustom=(S.prof.intCustom||[]).map(x=>{const f=parseNum(String((x&&x.f)??'')),l=String((x&&x.l)||'').trim().slice(0,40);return (x&&x.id&&l&&f!==null&&f>=0.5&&f<=5)?{id:String(x.id),l,f:Math.round(f*100)/100,cat:intCatOf(x)}:null;}).filter(Boolean);
   syncIntens();
   const pc=S.prof.pace||{};
   for(const k of ['row','run']){const raw=String(pc[k]??'').trim();let v=raw?parseTime(raw):null;if(raw&&v===null){const n=parseNum(raw);if(n!==null&&n>0)v=n;}if(v!==null&&v>=20&&v<=1800)pc[k]=fmtTime(Math.round(v));else delete pc[k];}
@@ -10245,25 +10319,30 @@ function spreadCard(){
 }
 function intensCard(){
   syncIntens();
-  const keys=Object.keys(INTENS).filter(k=>!INTENS[k].custom);
-  S.prof.intf=S.prof.intf||{};
+  S.prof.intf=S.prof.intf||{};S.prof.intn=S.prof.intn||{};
   S.prof.intCustom=S.prof.intCustom||[];
+  S.prof.intCustom.forEach(x=>{if(!INTENS_CATS.some(a=>a[0]===x.cat))x.cat=intCatOf(x);});
   const box=h('section',{class:'card'},h('h2',{class:'h2'},'Intensités du metcon'),
-    h('p',{class:'muted'},'Coefficient appliqué au temps « pur » du metcon pour calculer les paliers. Plus il est grand, moins l’effort est intense (donc moins de reps). Vide = valeur par défaut.'));
-  keys.forEach(k=>{
-    const I=INTENS[k];
-    box.append(field(I.l,h('input',{id:'intf-'+k,type:'text',inputmode:'decimal',value:(S.prof.intf[k]!==undefined&&S.prof.intf[k]!==null)?String(S.prof.intf[k]):'',placeholder:String(I.f).replace('.',','),'aria-label':'Coefficient '+I.l,oninput:ev=>{S.prof.intf[k]=ev.target.value;}}),I.d+' Défaut : '+String(I.f).replace('.',',')+'.'));
-  });
-  box.append(h('div',{class:'flabel'},'Mes intensités'),
-    h('p',{class:'hint'},'Crée tes propres intensités : un nom et un coefficient (entre 0,5 et 5). Elles apparaissent dans le créateur de séance, à côté des intensités ci-dessus, et servent à calculer les paliers.'));
-  S.prof.intCustom.forEach((x,j)=>{
+    h('p',{class:'muted'},'Trois catégories : à fond, gestion d’allure et pas à fond. Chaque intensité a un nom (modifiable, y compris les trois de base) et un coefficient appliqué au temps « pur » du metcon pour calculer les paliers. Plus il est grand, moins l’effort est intense (donc moins de reps). Coefficient vide = valeur par défaut. Elles apparaissent rangées par catégorie dans le créateur de séance.'));
+  INTENS_CATS.forEach(([c,cl])=>{
+    const I=INTENS[c];
+    box.append(h('div',{class:'flabel'},cl));
     box.append(h('div',{class:'lvl-edit'},
       h('div',{class:'grid2'},
-        field('Nom',h('input',{id:'intc-l-'+j,type:'text',maxlength:'40',value:x.l||'',placeholder:'Ex : Sprint','aria-label':'Nom de l’intensité',oninput:ev=>{x.l=ev.target.value;}})),
-        field('Coefficient',h('input',{id:'intc-f-'+j,type:'text',inputmode:'decimal',value:(x.f!==undefined&&x.f!==null)?String(x.f).replace('.',','):'',placeholder:'1,3','aria-label':'Coefficient de l’intensité',oninput:ev=>{x.f=ev.target.value;}}))),
-      h('div',{class:'row'},h('button',{type:'button',class:'btn sm','aria-label':'Supprimer cette intensité',onclick:()=>{S.prof.intCustom.splice(j,1);render();}},'Supprimer'))));
+        field('Nom',h('input',{id:'intn-'+c,type:'text',maxlength:'40',value:S.prof.intn[c]||'',placeholder:INTENS_DEFL[c],'aria-label':'Nom de l’intensité de base '+cl,oninput:ev=>{S.prof.intn[c]=ev.target.value;}}),'Intensité de base. Vide = « '+INTENS_DEFL[c]+' ».'),
+        field('Coefficient',h('input',{id:'intf-'+c,type:'text',inputmode:'decimal',value:(S.prof.intf[c]!==undefined&&S.prof.intf[c]!==null)?String(S.prof.intf[c]):'',placeholder:String(I.f).replace('.',','),'aria-label':'Coefficient '+I.l,oninput:ev=>{S.prof.intf[c]=ev.target.value;}}),'Défaut : '+String(I.f).replace('.',',')+'.')),
+      h('p',{class:'hint'},I.d)));
+    S.prof.intCustom.forEach((x,j)=>{
+      if(x.cat!==c)return;
+      box.append(h('div',{class:'lvl-edit'},
+        h('div',{class:'grid2'},
+          field('Nom',h('input',{id:'intc-l-'+j,type:'text',maxlength:'40',value:x.l||'',placeholder:'Ex : Sprint','aria-label':'Nom de l’intensité',oninput:ev=>{x.l=ev.target.value;}})),
+          field('Coefficient',h('input',{id:'intc-f-'+j,type:'text',inputmode:'decimal',value:(x.f!==undefined&&x.f!==null)?String(x.f).replace('.',','):'',placeholder:'1,3','aria-label':'Coefficient de l’intensité',oninput:ev=>{x.f=ev.target.value;}}))),
+        field('Catégorie',sel(INTENS_CATS,x.cat,v=>{x.cat=v;render();},{id:'intc-c-'+j,'aria-label':'Catégorie de l’intensité'})),
+        h('div',{class:'row'},h('button',{type:'button',class:'btn sm','aria-label':'Supprimer cette intensité',onclick:()=>{S.prof.intCustom.splice(j,1);render();}},'Supprimer'))));
+    });
+    box.append(h('div',{class:'row'},h('button',{type:'button',class:'btn sm',id:'intc-add-'+c,onclick:()=>{S.prof.intCustom.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),l:'',f:'',cat:c});render();}},'Ajouter une intensité « '+cl+' »')));
   });
-  box.append(h('div',{class:'row'},h('button',{type:'button',class:'btn sm',id:'intc-add',onclick:()=>{S.prof.intCustom.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),l:'',f:''});render();}},'Ajouter une intensité')));
   return box;
 }
 function mvCfgCard(name){
@@ -12287,7 +12366,7 @@ function startFirebase(){
     unsubs.push(S.db.collection('comments').onSnapshot(sn=>{S.comments=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));if(S.cerRefresh)S.cerRefresh();},()=>{}));
     /* réactions emoji : si les règles ne sont pas publiées, on ignore l'erreur */
     unsubs.push(S.db.collection('reactions').onSnapshot(sn=>{S.reactions=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));scheduleRender();},()=>{}));
-    unsubs.push(S.db.doc('users/'+S.uid+'/private/profile').onSnapshot(sn=>{const d=sn.exists?sn.data():null;const _op=S.prof;S.prof={plan:(d&&d.plan&&typeof d.plan==='object')?JSON.parse(JSON.stringify(d.plan)):null,pend:(d&&d.pend&&typeof d.pend==='object')?JSON.parse(JSON.stringify(d.pend)):{},prs:(d&&d.prs)?JSON.parse(JSON.stringify(d.prs)):{},sex:(d&&d.sex)||'',birth:(d&&typeof d.birth==='string')?d.birth:'',genEx:(d&&Array.isArray(d.genEx))?d.genEx:null,genAll:(d&&Array.isArray(d.genAll))?d.genAll:null,words:(d&&Array.isArray(d.words))?d.words:[],mvcfg:(d&&d.mvcfg&&typeof d.mvcfg==='object')?JSON.parse(JSON.stringify(d.mvcfg)):{},revd:(d&&d.revd&&typeof d.revd==='object')?JSON.parse(JSON.stringify(d.revd)):{},intf:(d&&d.intf&&typeof d.intf==='object')?JSON.parse(JSON.stringify(d.intf)):{},intCustom:(d&&Array.isArray(d.intCustom))?JSON.parse(JSON.stringify(d.intCustom)):[],pace:(d&&d.pace&&typeof d.pace==='object')?JSON.parse(JSON.stringify(d.pace)):{},spread:(d&&d.spread&&typeof d.spread==='object')?JSON.parse(JSON.stringify(d.spread)):{},weight:(d&&Number(d.weight)>0)?Number(d.weight):0,rewardDraft:(d&&typeof d.rewardDraft==='string')?d.rewardDraft:''};if(planSaveT!==null&&_op){S.prof.plan=_op.plan||null;S.prof.pend=_op.pend||{};}if(rwT!==null&&_op)S.prof.rewardDraft=_op.rewardDraft||'';syncIntens();S.profLoaded=true;scheduleRender();selfSync();planSync();},fail));
+    unsubs.push(S.db.doc('users/'+S.uid+'/private/profile').onSnapshot(sn=>{const d=sn.exists?sn.data():null;const _op=S.prof;S.prof={plan:(d&&d.plan&&typeof d.plan==='object')?JSON.parse(JSON.stringify(d.plan)):null,pend:(d&&d.pend&&typeof d.pend==='object')?JSON.parse(JSON.stringify(d.pend)):{},prs:(d&&d.prs)?JSON.parse(JSON.stringify(d.prs)):{},sex:(d&&d.sex)||'',birth:(d&&typeof d.birth==='string')?d.birth:'',genEx:(d&&Array.isArray(d.genEx))?d.genEx:null,genAll:(d&&Array.isArray(d.genAll))?d.genAll:null,words:(d&&Array.isArray(d.words))?d.words:[],mvcfg:(d&&d.mvcfg&&typeof d.mvcfg==='object')?JSON.parse(JSON.stringify(d.mvcfg)):{},revd:(d&&d.revd&&typeof d.revd==='object')?JSON.parse(JSON.stringify(d.revd)):{},intf:(d&&d.intf&&typeof d.intf==='object')?JSON.parse(JSON.stringify(d.intf)):{},intn:(d&&d.intn&&typeof d.intn==='object')?JSON.parse(JSON.stringify(d.intn)):{},intCustom:(d&&Array.isArray(d.intCustom))?JSON.parse(JSON.stringify(d.intCustom)):[],pace:(d&&d.pace&&typeof d.pace==='object')?JSON.parse(JSON.stringify(d.pace)):{},spread:(d&&d.spread&&typeof d.spread==='object')?JSON.parse(JSON.stringify(d.spread)):{},weight:(d&&Number(d.weight)>0)?Number(d.weight):0,rewardDraft:(d&&typeof d.rewardDraft==='string')?d.rewardDraft:''};if(planSaveT!==null&&_op){S.prof.plan=_op.plan||null;S.prof.pend=_op.pend||{};}if(rwT!==null&&_op)S.prof.rewardDraft=_op.rewardDraft||'';syncIntens();S.profLoaded=true;scheduleRender();selfSync();planSync();},fail));
     render();
   });
 }
