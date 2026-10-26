@@ -9,8 +9,8 @@
   },
   "vars": {
     "FIREBASE_API_KEY": "AIzaSyCuWJnsxTBCdaHI4zkLRUZ1UpiLXE0Q8wE",
-    "PRICE_4W": "prod_VUzigLnojalMq1",
-    "PRICE_SEASON": "prod_VUzjfngTSA2jIA",
+    "PRICE_4W": "price_1UTzisHLdqEIvaiVmHUy3JD4",
+    "PRICE_SEASON": "price_1UTzkFHLdqEIvaiVzjxf1pu0",
     "PAY_OPEN": "2026-11-02T00:00:00+01:00"
   }
 }
