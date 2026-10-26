@@ -28,7 +28,7 @@ async function checkout(request, env) {
     let body = {};
     try { body = await request.json(); } catch (e) {}
     const price = { '4w': env.PRICE_4W, 'season': env.PRICE_SEASON }[body.plan];
-    if (!price) return json({ error: 'forfait inconnu' }, 400);
+    if (!price) return json({ error: 'forfait inconnu', detail: 'PRICE_4W ou PRICE_SEASON absent' }, 400);
 
     const origin = new URL(request.url).origin;
 
@@ -38,7 +38,7 @@ async function checkout(request, env) {
       'https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' + encodeURIComponent(env.FIREBASE_API_KEY || ''),
       { method: 'POST', headers: { 'Content-Type': 'application/json', 'Referer': origin + '/' }, body: JSON.stringify({ idToken: token }) }
     );
-    if (!lk.ok) { console.error('lookup', lk.status, await lk.text()); return json({ error: 'session invalide' }, 401); }
+    if (!lk.ok) { const tx = await lk.text(); console.error('lookup', lk.status, tx); let m = ''; try { m = JSON.parse(tx).error.message; } catch (e) {} return json({ error: 'session invalide', detail: m || ('Google ' + lk.status) }, 401); }
     const user = ((await lk.json()).users || [])[0];
     if (!user || !user.localId) return json({ error: 'compte introuvable' }, 401);
 
@@ -66,7 +66,7 @@ async function checkout(request, env) {
       body: p
     });
     const sess = await st.json();
-    if (!st.ok || !sess.url) { console.error('stripe', st.status, JSON.stringify(sess.error || sess)); return json({ error: 'paiement indisponible' }, 502); }
+    if (!st.ok || !sess.url) { console.error('stripe', st.status, JSON.stringify(sess.error || sess)); return json({ error: 'paiement indisponible', detail: (sess.error && sess.error.message) || ('Stripe ' + st.status) }, 502); }
     return json({ url: sess.url });
   } catch (e) {
     console.error(e);
