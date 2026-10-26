@@ -494,6 +494,11 @@ section.feed-card>.feed-badge{position:absolute!important;top:8px;right:12px;z-i
 .tm-passages ul{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:2px;max-height:22vh;overflow:auto;font-family:var(--f-mono);font-size:13px}
 .tm-passages li{display:grid;grid-template-columns:1fr auto 70px;gap:8px}
 .tm-passages .sub{text-align:right;color:var(--panel-muted)}
+/* rappel du metcon dans le minuteur */
+.tm-sum{width:100%;max-width:420px;text-align:left;display:grid;gap:6px;max-height:30vh;overflow:auto;padding:10px 12px;border:1px solid var(--panel-muted);border-radius:8px;background:rgba(255,255,255,.06);font-size:15px;user-select:text;-webkit-user-select:text}
+.tm-sum .line{color:var(--panel-ink)}
+.tm-sum .varnote{color:var(--panel-accent)}
+.tm-sum .lvl-load{color:var(--panel-muted);font-size:13px}
 /* échauffement guidé */
 .wu-card .wu-acts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .wu-card .wu-full{width:100%}
@@ -3088,9 +3093,31 @@ function subSnap(per,k,from){
   return {k,title:s.title||('Remplacement '+(k+1)),base:subBase(s,per),parts,from:from||''};
 }
 const subChoice=(uid,date)=>{const lg=S.logs[uid];return (lg&&lg.subs&&lg.subs[date])||null;};
+/* La copie gardée dans le résultat ne fige pas les réglages du coach : la base et les paliers (tiers / capTiers de chaque niveau du metcon)
+   suivent toujours la séance de remplacement actuelle de la saison. Une correction du coach s'applique donc aussi aux séances déjà faites. */
+const SUB_FRESH=new WeakMap();
+function subFresh(sw,date){
+  if(!sw||typeof sw!=='object'||!date)return sw;
+  let per=null,live=null;
+  try{per=periodFor(date);live=(per&&!per.virtual&&Number.isInteger(sw.k))?subsOf(per)[sw.k]:null;}catch(x){return sw;}
+  if(!live)return sw;
+  const c=SUB_FRESH.get(sw);if(c&&c.live===live&&c.per===per)return c.out;
+  const lm=subMetcon(live);
+  const parts=(sw.parts||[]).map(p=>{
+    if(p.kind!=='metcon'||!lm)return p;
+    const q=Object.assign({},p);
+    if(Array.isArray(p.levels)&&Array.isArray(lm.levels))q.levels=p.levels.map((lv,i)=>{const L=lm.levels[i];if(!L)return lv;const o=Object.assign({},lv);['tiers','capTiers'].forEach(k=>{if(L[k]!==undefined)o[k]=L[k];else delete o[k];});return o;});
+    else if(lm.tiers!==undefined)q.tiers=lm.tiers;
+    return q;
+  });
+  const out=Object.assign({},sw,{base:subBase(live,per),parts});
+  SUB_FRESH.set(sw,{live,per,out});
+  return out;
+}
 function wodFor(w,e){
   if(!w||!e||!e.sw)return w;
-  return Object.assign({},w,{title:e.sw.title+' · remplacement',base:e.sw.base,parts:e.sw.parts,deload:false,isSub:true,subK:e.sw.k,subSw:e.sw,subFrom:w.subFrom||w.title});
+  const sw=subFresh(e.sw,w.date);
+  return Object.assign({},w,{title:sw.title+' · remplacement',base:sw.base,parts:sw.parts,deload:false,isSub:true,subK:sw.k,subSw:sw,subFrom:w.subFrom||w.title});
 }
 function myWod(w,uid){
   if(!w)return w;
@@ -4935,7 +4962,7 @@ function openWarmupEdit(){
   paint();
 }
 
-function openTimer(w,date,m){
+function openTimer(w,date,m,lvIdx){
   if(document.getElementById('tm-ov'))return;
   const fmt=m.format||'FT',dur=metDuration(m),size=fmt==='AMRAP'?roundSizeFor(m):0;
   const ivS=Math.max(1,Math.round(emomIv(m)*60)),dead=isDead(m); /* durée d'un intervalle EMOM en secondes ; Dead by */
@@ -4969,6 +4996,19 @@ function openTimer(w,date,m){
   const info=label+(dur?(fmt==='FT'?' · time cap ':' · ')+mmss(dur):'');
   const ov=h('div',{class:'tm prep',id:'tm-ov',role:'dialog','aria-modal':'true','aria-label':'Minuteur du metcon'});
   let numEl,timeEl,subEl,lapsEl,lastEl;
+  /* rappel du metcon, comme sur la fiche : niveau consulté (variantes et tours adaptés compris), Rx si aucun niveau n'a été touché */
+  const lvA=activeLevels(m),lvPick=(Number.isInteger(lvIdx)&&lvA.some(x=>x[1]===lvIdx))?lvIdx:(lvA.length?lvA[lvA.length-1][1]:0);
+  const summary=()=>{
+    const lv=levelsOf(m)[lvPick]||{},lines=String(m.content||'').split('\n').map(x=>x.trim()).filter(Boolean);
+    const adapted=((lv.variants||[]).length||rdOf(lv))?true:false;
+    const L=adapted?(t=>h('div',{class:'line'},roundsSegs(tagShow(t),rdOf(lv),lv.variants))):metLine;
+    const ld=loadsText(lv);
+    return h('div',{class:'tm-sum'},
+      h('span',{class:'flabel tm-eb'},'Rappel · version '+levelName(m,lvPick)),
+      h('div',{class:'lines'},lines.map(L)),
+      ld?h('div',{class:'lvl-load'},(S.prof.sex?'Ta charge : ':'')+ld):null,
+      adapted?h('div',{class:'varnote'},[(lv.variants||[]).length?'Les variantes remplacent les mouvements':'',rdOf(lv)?'le nombre de tours est adapté':''].filter(Boolean).join(' · ')+' (en surbrillance).'):null);
+  };
   const topBar=(allowQuit)=>{
     const mute=h('button',{type:'button',class:'btn sm'},st.muted?'Son coupé':'Son activé');
     mute.addEventListener('click',()=>{st.muted=!st.muted;setTmMuted(st.muted);mute.textContent=st.muted?'Son coupé':'Son activé';});
@@ -4979,7 +5019,7 @@ function openTimer(w,date,m){
   function showPrep(){
     numEl=h('div',{class:'tm-time'},String(PREP));
     ov.className='tm prep';
-    ov.replaceChildren(topBar(),h('div',{class:'tm-mid'},h('p',{class:'eyebrow tm-eb'},'Prépare-toi'),numEl,h('p',{class:'tm-sub'},info),m.word?h('div',{class:'tm-word'},h('span',{class:'flabel tm-eb'},'Mot du coach'),h('p',{},linkText(m.word))):null,dur?null:h('p',{class:'tm-sub'},'Aucune durée détectée pour ce metcon : le chrono ne s’arrêtera pas tout seul.')),h('div',{class:'tm-bot'}));
+    ov.replaceChildren(topBar(),h('div',{class:'tm-mid'},h('p',{class:'eyebrow tm-eb'},'Prépare-toi'),numEl,h('p',{class:'tm-sub'},info),summary(),m.word?h('div',{class:'tm-word'},h('span',{class:'flabel tm-eb'},'Mot du coach'),h('p',{},linkText(m.word))):null,dur?null:h('p',{class:'tm-sub'},'Aucune durée détectée pour ce metcon : le chrono ne s’arrêtera pas tout seul.')),h('div',{class:'tm-bot'}));
   }
   function lap(){
     if(st.phase!=='run')return;
@@ -5006,6 +5046,7 @@ function openTimer(w,date,m){
       stop.addEventListener('click',armed(stop,dead?'Confirmer : j’ai décroché':'Confirmer l’arrêt',()=>stopManual()));
       bot.append(h('div',{class:'row'},stop));
     }
+    mid.append(summary());
     ov.className='tm run';
     ov.replaceChildren(topBar(),mid,bot);
     draw();
@@ -5284,8 +5325,9 @@ function swTick(){
     document.querySelectorAll('.sw').forEach(b=>{const k=b.getAttribute('data-sw');if(SW[k]&&SW[k].run)swPaint(b,k);});
   },250);
 }
-function swBtn(k){
+function swBtn(k,emom){
   const b=h('button',{type:'button',class:'sw','data-sw':k,onclick:()=>{
+    if(emom){openEmomTimer(emom);return;} /* renfo en EMOM : minuteur plein écran par intervalle */
     const x=SW[k]||(SW[k]={run:false,acc:0,t0:0});
     if(x.run){x.acc+=Date.now()-x.t0;x.run=false;}
     else{x.acc=0;x.t0=Date.now();x.run=true;swTick();}
@@ -5295,6 +5337,92 @@ function swBtn(k){
   swPaint(b,k);
   if(SW[k]&&SW[k].run)swTick();
   return b;
+}
+/* EMOM de renforcement : un appui sur le chrono ouvre un minuteur en grand. Il compte la durée d'un intervalle (1 min pour un EMOM, 2 min pour un E2MOM…)
+   puis repart tout seul autant de fois qu'il y a de tours prévus (durée de la partie ÷ durée de l'intervalle). Sans durée détectée, il tourne jusqu'à « Terminer ». */
+function openEmomTimer(p){
+  if(document.getElementById('tm-ov'))return;
+  const ivS=Math.max(1,Math.round(emomIv(p)*60)),dur=metDuration(p),n=dur?Math.max(1,Math.ceil(dur/ivS)):0;
+  const st={phase:'prep',t0:Date.now(),t1:0,last:-1,k:-1,rem:null,iv:null,ac:null,muted:tmMuted(),wake:null,vid:null,auto:false};
+  try{st.ac=new (window.AudioContext||window.webkitAudioContext)();if(st.ac.resume)st.ac.resume();}catch(e){}
+  const beep=(f,ms)=>{
+    if(!st.muted&&st.ac){try{const o=st.ac.createOscillator(),g=st.ac.createGain();o.type='sine';o.frequency.value=f;g.gain.value=.3;o.connect(g);g.connect(st.ac.destination);o.start();o.stop(st.ac.currentTime+ms/1000);}catch(e){}}
+    try{if(navigator.vibrate)navigator.vibrate(ms>300?[200,80,200]:ms>150?120:40);}catch(e){}
+  };
+  const lock=async()=>{
+    try{if(navigator.wakeLock&&!st.wake){st.wake=await navigator.wakeLock.request('screen');st.wake.addEventListener('release',()=>{st.wake=null;});}}catch(e){}
+    if(!st.wake&&!st.vid){
+      try{
+        const v=document.createElement('video');
+        v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline','');v.setAttribute('muted','');v.muted=true;v.loop=true;
+        v.style.cssText='position:fixed;left:0;top:0;width:2px;height:2px;opacity:.02;pointer-events:none';
+        v.src=NOSLEEP_MP4;document.body.append(v);st.vid=v;
+        const pr=v.play();if(pr&&pr.catch)pr.catch(()=>{});
+      }catch(e){}
+    }
+  };
+  const release=()=>{try{if(st.wake)st.wake.release();}catch(e){}st.wake=null;if(st.vid){try{st.vid.pause();st.vid.remove();}catch(e){}st.vid=null;}};
+  const onVis=()=>{if(!document.hidden&&st.phase!=='closed'){lock();tick();}};
+  const close=()=>{st.phase='closed';clearInterval(st.iv);document.removeEventListener('visibilitychange',onVis);release();try{if(st.ac&&st.ac.close)st.ac.close();}catch(e){}ov.remove();};
+  const armed=(btn,txt,fn)=>{let t=null;const orig=btn.textContent;return ()=>{if(t){clearTimeout(t);t=null;btn.textContent=orig;fn();return;}btn.textContent=txt;t=setTimeout(()=>{t=null;btn.textContent=orig;},3000);};};
+  const ov=h('div',{class:'tm prep',id:'tm-ov',role:'dialog','aria-modal':'true','aria-label':'Minuteur EMOM'});
+  let numEl,subEl;
+  const ivTxt=ivS===60?'1 min':mmss(ivS);
+  const info=fmtLabel(p)+' · '+(n?n+' tour'+(n>1?'s':'')+' de '+ivTxt:'intervalles de '+ivTxt);
+  const topBar=allowQuit=>{
+    const mute=h('button',{type:'button',class:'btn sm'},st.muted?'Son coupé':'Son activé');
+    mute.addEventListener('click',()=>{st.muted=!st.muted;setTmMuted(st.muted);mute.textContent=st.muted?'Son coupé':'Son activé';});
+    const q=h('button',{type:'button',class:'btn sm','aria-label':'Quitter le minuteur'},'✕');
+    q.addEventListener('click',st.phase==='run'?armed(q,'Quitter ?',close):close);
+    return h('div',{class:'tm-top'},h('span',{class:'chip'},p.name||'EMOM'),h('div',{class:'row'},mute,allowQuit===false?null:q));
+  };
+  /* rappel des exercices de la partie, comme sur la fiche */
+  const reminder=()=>{
+    const lines=String(p.content||'').split('\n').map(x=>x.trim()).filter(Boolean);
+    return lines.length?h('div',{class:'tm-sum'},h('span',{class:'flabel tm-eb'},'Rappel'),h('div',{class:'lines'},lines.map(t=>renderLine(t,p.variants)))):null;
+  };
+  function showPrep(){
+    numEl=h('div',{class:'tm-time'},String(PREP));
+    ov.className='tm prep';
+    ov.replaceChildren(topBar(),h('div',{class:'tm-mid'},h('p',{class:'eyebrow tm-eb'},'Prépare-toi'),numEl,h('p',{class:'tm-sub'},info),reminder()),h('div',{class:'tm-bot'}));
+  }
+  function showRun(){
+    numEl=h('div',{class:'tm-time'},mmss(ivS));subEl=h('p',{class:'tm-sub'});
+    const end=h('button',{type:'button',class:'btn'},'Terminer');
+    end.addEventListener('click',armed(end,'Confirmer la fin',()=>{st.phase='done';st.auto=false;beep(880,300);showDone();}));
+    ov.className='tm run';
+    ov.replaceChildren(topBar(),h('div',{class:'tm-mid'},h('p',{class:'eyebrow tm-eb'},info),numEl,subEl,reminder()),h('div',{class:'tm-bot'},h('div',{class:'row'},end)));
+  }
+  function showDone(){
+    ov.className='tm done';
+    const done=h('button',{type:'button',class:'btn primary tm-save'},'Fermer');
+    done.addEventListener('click',close);
+    ov.replaceChildren(topBar(false),h('div',{class:'tm-mid'},h('p',{class:'eyebrow tm-eb'},'Terminé'),h('div',{class:'tm-time'},'OK'),
+      h('p',{class:'tm-sub'},st.auto?'Les '+n+' tour'+(n>1?'s':'')+' de l’EMOM sont terminés.':'EMOM arrêté'+(st.k>=0?' pendant le tour '+(st.k+1)+(n?' sur '+n:''):'')+'.')),h('div',{class:'tm-bot'},done));
+  }
+  function tick(){
+    const now=Date.now();
+    if(st.phase==='prep'){
+      const left=PREP-(now-st.t0)/1000,c=Math.max(0,Math.ceil(left));
+      if(c!==st.last){st.last=c;if(numEl)numEl.textContent=String(c);if(c>0&&c<=3)beep(660,120);}
+      if(left<=0){st.phase='run';st.t1=Date.now();st.k=-1;st.rem=null;beep(880,600);showRun();tick();}
+      return;
+    }
+    if(st.phase!=='run')return;
+    const el=(now-st.t1)/1000;
+    if(n&&el>=n*ivS){st.phase='done';st.auto=true;beep(880,900);showDone();return;}
+    const k=Math.floor(el/ivS),left=Math.ceil((k+1)*ivS-el);
+    if(k!==st.k){if(st.k>=0)beep(880,300);st.k=k;st.rem=null;}
+    if(left!==st.rem){st.rem=left;if(left>0&&left<=3)beep(660,120);}
+    numEl.textContent=mmss(left);
+    subEl.textContent='Tour '+(k+1)+(n?' / '+n:'');
+    ov.classList.toggle('alert',left<=3);
+  }
+  document.body.append(ov);
+  document.addEventListener('visibilitychange',onVis);
+  lock();
+  showPrep();
+  st.iv=setInterval(tick,100);
 }
 /* explication affichée quand l'athlète touche le format d'une partie (For Time, AMRAP, EMOM, E2MOM, Dead by…) */
 function fmtExplain(p){
@@ -5320,7 +5448,7 @@ function partCard(p,w,date){
   /* format cliquable : metcon (For Time, AMRAP, EMOM) ou renforcement en EMOM */
   const fmtId=(metcon||(p.kind==='renfo'&&p.format==='EMOM'))?'fmt-'+(date||'')+'-'+p.label:null;
   const body=h('div',{class:'pbody'+(hasSw?' has-sw':'')},
-    hasSw?swBtn(swKey(p,date)):null,
+    hasSw?swBtn(swKey(p,date),(p.kind==='renfo'&&p.format==='EMOM')?p:null):null,
     h('div',{class:'phead'},h('h3',{},p.name||KIND[p.kind]||'Partie'),
       h('span',{class:'chip'+(metcon?' live':'')},metcon?'Metcon · points au classement':(KIND[p.kind]||'Autre')),
       metcon&&p.focus&&FOCUS[p.focus]?h('span',{class:'chip'},FOCUS[p.focus]):null,
@@ -5335,7 +5463,7 @@ function partCard(p,w,date){
     h('div',{class:'lines'},lines.map(metcon?metL:(t=>renderLine(t,p.kind==='renfo'?p.variants:null)))),
     (metcon&&p.word)?h('div',{class:'cword'},h('span',{class:'flabel'},'Mot du coach'),h('p',{},linkText(p.word))):null,
     metcon?levelsBlock(p):null,
-    (metcon&&w&&timerOk(date))?h('div',{class:'row'},h('button',{class:'btn primary btn-block',type:'button','data-tour':'start-metcon',onclick:()=>openTimer(w,date,p)},'Démarrer le metcon')):null);
+    (metcon&&w&&timerOk(date))?h('div',{class:'row'},h('button',{class:'btn primary btn-block',type:'button','data-tour':'start-metcon',onclick:()=>{const lo=activeLevels(p).find(x=>S.tip==='lv-'+p.label+x[1]);openTimer(w,date,p,lo?lo[1]:null);}},'Démarrer le metcon')):null);
   return h('article',{class:'part'+(metcon?' metcon':'')},h('div',{class:'plabel'},p.label),body);
 }
 /* séance affichée à l'ouverture : celle du jour si elle n'est pas déjà faite, sinon la première séance de la semaine pas encore faite */
@@ -6367,6 +6495,7 @@ function entryForm(w,date){
   const title=S.entry.coach?'Résultats de '+((S.logs[S.entry.uid]||{}).pseudo||'l’athlète'):'Mes résultats';
   const form=h('form',{class:S.entry.coach?'card':'stack',id:'entry-form',onsubmit:e=>{e.preventDefault();submitEntry(w);}},S.entry.coach?h('h2',{class:'h2'},title):h('p',{class:'eyebrow'},cap(fmtShort(date))+' · '+w.title));
   if(S.entry.coach)form.append(h('p',{class:'hint'},'Tu modifies ce résultat en tant que coach. Les points et le classement se recalculent tout de suite.'));
+  if(S.entry.coach&&w.isSub)form.append(h('div',{class:'sub-banner'},h('b',{},'🏠 Séance de substitution'),h('div',{},'Cet athlète a fait « '+w.title.replace(/ · remplacement$/,'')+' » à la place de « '+(w.subFrom||'la séance d’origine')+' ».')));
   const hasForce=(w.parts||[]).some(p=>p.kind==='force');
   if(m&&hasForce){
     form.append(ynSwitch('Corps de séance',!S.entry.only,'entry-only',()=>{S.entry.only=!S.entry.only;if(S.entry.only)S.entry.skip=false;upd();render();}));
@@ -10459,7 +10588,8 @@ function resultsSection(){
   if(!ws.length){sec.append(h('p',{class:'muted'},'Publie une séance pour voir les résultats des athlètes.'));return sec;}
   if(!S.coach.resDate||!S.wods[S.coach.resDate])S.coach.resDate=S.wods[defaultDate()]?defaultDate():ws[0].date;
   const date=S.coach.resDate,w=S.wods[date],m=metconOf(w),per=periodFor(date)||ALL;
-  sec.append(field('Séance',sel(ws.slice(0,40).map(x=>[x.date,cap(fmtShort(x.date))+' · '+x.title]),date,v=>{S.coach.resDate=v;S.entry=null;S.confirm=null;render();},{id:'res-date'})));
+  const nSubOf=d=>Object.values(S.logs).filter(lg=>lg&&lg.entries&&lg.entries[d]&&lg.entries[d].sw).length;
+  sec.append(field('Séance',sel(ws.slice(0,40).map(x=>{const ns=nSubOf(x.date);return [x.date,cap(fmtShort(x.date))+' · '+x.title+(ns?' · 🏠 '+ns+' remplacement'+(ns>1?'s':''):'')];}),date,v=>{S.coach.resDate=v;S.entry=null;S.confirm=null;render();},{id:'res-date'})));
   if(S.entry&&S.entry.coach&&S.entry.date===date){sec.append(entryForm(w,date));return sec;}
   const todo=unusualAll();
   if(todo.length){
@@ -10472,7 +10602,8 @@ function resultsSection(){
   }
   const rows=Object.entries(S.logs).map(([uid,lg])=>({uid,lg})).sort((a,b)=>(a.lg.pseudo||'').localeCompare(b.lg.pseudo||''));
   const done=rows.filter(r=>r.lg.entries&&r.lg.entries[date]).length;
-  sec.append(h('p',{class:'hint'},done+' athlète'+(done>1?'s':'')+' sur '+rows.length+' ont validé cette séance. Une modification s’applique tout de suite au classement.'));
+  const nSub=nSubOf(date);
+  sec.append(h('p',{class:'hint'},done+' athlète'+(done>1?'s':'')+' sur '+rows.length+' ont validé cette séance'+(nSub?' (dont '+nSub+' en séance de remplacement 🏠)':'')+'. Une modification s’applique tout de suite au classement.'));
   if(!rows.length){sec.append(h('p',{class:'muted'},'Aucun athlète inscrit pour l’instant.'));return sec;}
   sec.append(h('ul',{class:'list'},rows.map(({uid,lg})=>{
     const e=lg.entries&&lg.entries[date];
@@ -10480,10 +10611,14 @@ function resultsSection(){
     const pts=e?wodPoints(w,e,per):null;
     const key='cres-'+uid+date;
     const fl=(e&&!unRevd(uid,date))?unusualOne(uid,date):[];
+    const subDone=!!(e&&e.sw),subCh=(!e&&subChoice(uid,date))||null;
     const detail=!e?'Pas de résultat'
-      :fmtN(pts.total)+' pts'+(mm?(hasScore(e)?' · '+lvlLab(mm,e)+' · '+scoreText(mm,e.score,e):(e.level!==undefined?' · '+lvlLab(mm,e)+' · sans score':'')):'')+(e&&e.sw?' · 🏠 remplacement':'');
+      :fmtN(pts.total)+' pts'+(mm?(hasScore(e)?' · '+lvlLab(mm,e)+' · '+scoreText(mm,e.score,e):(e.level!==undefined?' · '+lvlLab(mm,e)+' · sans score':'')):'')+(subDone?' · 🏠 remplacement':'');
     return h('li',{},
-      h('div',{class:'l'},h('div',{class:'nm'},(lg.pseudo||'Athlète')+(uid===S.uid?' (toi)':'')+(fl.length?' ':''),fl.length?h('span',{class:'chip miss',title:fl.map(f=>f.msg).join(' ')},'⚠ À vérifier'):null),h('div',{class:'sub'},detail+grpTxt(uid)),fl.map(f=>h('div',{class:'sub'},f.msg))),
+      h('div',{class:'l'},h('div',{class:'nm'},(lg.pseudo||'Athlète')+(uid===S.uid?' (toi)':'')+(fl.length?' ':''),subDone?h('span',{class:'chip live',title:'Séance de substitution faite à la place de la séance d’origine'},'🏠 Substitution'):null,fl.length?h('span',{class:'chip miss',title:fl.map(f=>f.msg).join(' ')},'⚠ À vérifier'):null),h('div',{class:'sub'},detail+grpTxt(uid)),
+        subDone?h('div',{class:'sub'},'🏠 A fait la séance de remplacement « '+(wodFor(w,e).subSw.title||'')+' » à la place de « '+w.title+' ».'):null,
+        subCh&&subCh.sw?h('div',{class:'sub'},'🏠 A choisi la séance de remplacement « '+(subCh.sw.title||'')+' » : pas encore validée.'):null,
+        fl.map(f=>h('div',{class:'sub'},f.msg))),
       h('div',{class:'row'},
         fl.length?h('button',{class:'btn sm',type:'button',onclick:()=>markReviewed(uid,date)},'Vérifié'):null,
         h('button',{class:'btn sm',onclick:()=>openEntry(w,date,uid,true)},e?'Modifier':'Saisir'),
