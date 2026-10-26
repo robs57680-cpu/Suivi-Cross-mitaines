@@ -9,8 +9,8 @@
   },
   "vars": {
     "FIREBASE_API_KEY": "COLLE_ICI_LE_apiKey_DE_firebase-config.js",
-    "PRICE_4W": "price_COLLE_ICI_LE_PRIX_TEST_4_SEMAINES",
-    "PRICE_SEASON": "price_COLLE_ICI_LE_PRIX_TEST_12_SEMAINES",
+    "PRICE_4W": "prod_VUzigLnojalMq1",
+    "PRICE_SEASON": "prod_VUzjfngTSA2jIA",
     "PAY_OPEN": "2026-11-02T00:00:00+01:00"
   }
 }
