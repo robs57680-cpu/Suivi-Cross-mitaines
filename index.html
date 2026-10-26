@@ -11078,10 +11078,15 @@ function buyBtn(key){
       const tok=await auth.currentUser.getIdToken();
       const r=await fetch(CHECKOUT_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},body:JSON.stringify({plan:key})});
       const j=await r.json().catch(()=>({}));
-      if(!r.ok||!j.url)throw new Error(j.error||'erreur');
+      if(!r.ok||!j.url)throw new Error('réponse '+r.status+(j.error?' · '+j.error:'')+(j.detail?' · '+j.detail:''));
       try{localStorage.setItem(PAYTRY_KEY,String(Date.now()));}catch(e){}
       location.href=j.url;
-    }catch(e){b.disabled=false;b.textContent=t0;toast('Impossible d’ouvrir le paiement. Réessaie dans un instant.',true);}
+    }catch(e){
+      b.disabled=false;b.textContent=t0;
+      toast('Impossible d’ouvrir le paiement. Réessaie dans un instant.',true);
+      const old=b.parentNode&&b.parentNode.querySelector('.paydiag');if(old)old.remove();
+      if(b.parentNode)b.after(h('p',{class:'hint paydiag'},'Détail technique : '+((e&&e.message)||'erreur')));
+    }
   };
   return b;
 }
