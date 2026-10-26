@@ -521,6 +521,11 @@ section.feed-card>.feed-badge{position:absolute!important;top:8px;right:12px;z-i
 .wu-li .t{font-weight:700;overflow-wrap:anywhere}
 .wu-li .o{font-family:var(--f-mono);font-size:12px;color:var(--muted);white-space:nowrap}
 .tm.wu .tm-mid{align-content:start;justify-items:stretch;overflow:auto;padding-bottom:8px;min-height:0}
+/* échauffement en cours : colonne flex, la vidéo occupe toute la place restante */
+.tm.wu.wu-live .tm-mid{display:flex;flex-direction:column;align-items:stretch;overflow:hidden;gap:8px}
+.tm.wu.wu-live .tm-mid>*{flex:none}
+.tm.wu.wu-live .tm-mid>.wu-media{flex:1 1 0;min-height:120px;display:flex;align-items:center;justify-content:center}
+.tm.wu.wu-live .wu-media .wu-vid,.tm.wu.wu-live .wu-media .wu-img{width:auto;height:auto;max-width:100%;max-height:100%;min-height:0;object-fit:contain}
 .tm.wu .tm-mid.wu-end{align-content:center;justify-items:center}
 .wu-seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;width:100%}
 .wu-seg i{height:8px;border-radius:2px;background:rgba(255,255,255,.18)}
@@ -536,6 +541,7 @@ section.feed-card>.feed-badge{position:absolute!important;top:8px;right:12px;z-i
 .wu-desc{color:var(--panel-muted);font-size:15px}
 .wu-media{justify-self:center;display:grid;justify-items:center;width:100%}
 .wu-vid{display:block;width:auto;max-width:100%;max-height:40vh;border-radius:8px;background:#000}
+.tm.wu.wu-live .wu-name{font-size:clamp(34px,10vw,64px);line-height:1.02}
 .wu-img{display:block;width:100%;max-width:520px;max-height:46vh;object-fit:contain;border-radius:6px;background:#fff}
 .wu-steps{text-align:left;margin:0 auto;padding-left:24px;display:grid;gap:8px;font-size:18px;line-height:1.35;max-width:46ch;width:100%}
 .wu-main{min-height:68px;font-size:17px}
@@ -4629,7 +4635,9 @@ const WU_IMG={
 };
 /* vidéos des exercices (dossier assets/embedded) : lues en boucle pendant l'exercice ; liées par l'id de l'exercice */
 const WU_VID={
- 'wu-leg-swings':'assets/embedded/leg_swing.mp4'
+ 'wu-jumping-jack':'assets/embedded/jumping_jack.mp4',
+ 'wu-leg-swings':'assets/embedded/leg_swing.mp4',
+ 'wu-boot-strappers':'assets/embedded/boot_strapper.mp4'
 };
 const wuImg=x=>WU_IMG[x.id]||'';
 const wuVid=x=>WU_VID[x.id]||'';
@@ -4867,7 +4875,19 @@ function openWarmup(mode,start){
     const nx=(timed&&!st.prep&&!last)?items[st.idx+1]:null;
     if(nx)nextEl=h('div',{class:'wu-nx',role:'status','aria-label':'Prochain mouvement : '+nx.name},h('span',{class:'ar','aria-hidden':'true'},'→'),h('span',{class:'nm'},nx.name));
     ov.replaceChildren(top(),mid,h('div',{class:'tm-bot'},nextEl?[nextEl].concat(bot):bot));
+    fitName(mid);
     upd();
+  }
+  /* si le nom du mouvement prend trop de place (plus de 2 lignes), on réduit sa taille : la vidéo passe avant */
+  function fitName(mid){
+    try{
+      const el=mid.querySelector('.wu-name');if(!el)return;
+      el.style.fontSize='';
+      let fs=parseFloat(getComputedStyle(el).fontSize)||48;
+      const lines=()=>{const lh=parseFloat(getComputedStyle(el).lineHeight)||fs*1.02;return Math.round(el.getBoundingClientRect().height/lh);};
+      let g=0;
+      while(lines()>2&&fs>22&&g++<30){fs-=2;el.style.fontSize=fs+'px';}
+    }catch(e){}
   }
   function drawDone(){
     ov.className='tm wu';timeEl=null;barEl=null;nextEl=null;
