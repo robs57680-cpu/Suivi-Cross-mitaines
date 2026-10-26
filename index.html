@@ -407,7 +407,6 @@ html[data-plan],html[data-plan] body{overflow:hidden}
 .exercise-help-link{border:0;padding:0;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}
 .qbtn{width:32px;height:32px;flex:none;border-radius:50%;border:2px solid var(--edge);background:var(--surface);font-family:var(--f-display);font-size:17px;line-height:1;cursor:pointer;padding:0;display:grid;place-items:center}
 .qbtn[aria-expanded="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.tm-tap.sm{min-height:22vh}
 .tm-end{width:100%;min-height:72px;font-size:20px}
 .fbox .fhead{display:none}
 /* badges et remise des trophées */
@@ -481,8 +480,10 @@ section.feed-card>.feed-badge{position:absolute!important;top:8px;right:12px;z-i
 .tm-time{font-family:var(--f-display);font-size:clamp(88px,30vw,190px);line-height:1;letter-spacing:.02em;font-variant-numeric:tabular-nums}
 .tm-sub{color:var(--panel-muted);font-size:15px;max-width:42ch}
 .tm-laps{font-family:var(--f-display);font-size:clamp(38px,12vw,64px);line-height:1;letter-spacing:.04em;color:var(--panel-accent)}
-.tm-tap{width:100%;min-height:30vh;border:0;border-radius:10px;background:var(--accent);color:var(--accent-ink);font-family:var(--f-display);font-size:clamp(48px,16vw,96px);letter-spacing:.08em;cursor:pointer;touch-action:manipulation}
-.tm-tap:active{filter:brightness(1.25);transform:scale(.99)}
+.tm-laprow{display:flex;align-items:center;justify-content:center;gap:18px;width:100%}
+.tm-plus{flex:none;min-width:104px;min-height:84px;padding:0 22px;border:0;border-radius:14px;background:var(--accent);color:var(--accent-ink);font-family:var(--f-display);font-size:clamp(40px,12vw,60px);line-height:1;letter-spacing:.04em;cursor:pointer;touch-action:manipulation}
+.tm-plus:active{filter:brightness(1.25);transform:scale(.96)}
+.tm.run .tm-sum{max-height:42vh}
 .tm-save{min-height:54px;font-size:15px}
 .tm-in{width:100%;max-width:200px;text-align:center;font-family:var(--f-display);font-size:34px;letter-spacing:.04em;padding:8px;background:rgba(255,255,255,.08);color:var(--panel-ink);border:2px solid var(--panel-muted);user-select:text;-webkit-user-select:text}
 .tm-fld{display:grid;gap:6px;justify-items:center}
@@ -526,15 +527,15 @@ section.feed-card>.feed-badge{position:absolute!important;top:8px;right:12px;z-i
 .wu-seg i.on{background:var(--panel-accent)}
 .wu-seg i.cur{background:var(--panel-ink)}
 .wu-name{font-family:var(--f-display);font-weight:400;font-size:clamp(46px,14vw,88px);line-height:1.02;text-transform:uppercase;text-wrap:balance;overflow-wrap:anywhere}
-.tm .wu-time{font-size:clamp(84px,28vw,170px)}
+.tm .wu-time{font-size:clamp(58px,19vw,112px)}
 .wu-obj{font-family:var(--f-display);font-size:clamp(64px,20vw,120px);line-height:1;color:var(--panel-accent);letter-spacing:.02em}
 .wu-obj small{display:block;font-family:var(--f-body);font-size:15px;color:var(--panel-muted);letter-spacing:0;font-weight:600;margin-top:4px}
 .tm .wu-bar{width:100%;height:8px;background:rgba(255,255,255,.18);border:0}
 .tm .wu-bar i{background:var(--panel-accent)}
 .wu-note{font-weight:600;color:var(--panel-ink)}
 .wu-desc{color:var(--panel-muted);font-size:15px}
-.wu-info-b{justify-self:center;min-height:44px;padding:0 20px}
-.wu-info{display:grid;gap:12px;justify-items:center;width:100%}
+.wu-media{justify-self:center;display:grid;justify-items:center;width:100%}
+.wu-vid{display:block;width:auto;max-width:100%;max-height:40vh;border-radius:8px;background:#000}
 .wu-img{display:block;width:100%;max-width:520px;max-height:46vh;object-fit:contain;border-radius:6px;background:#fff}
 .wu-steps{text-align:left;margin:0 auto;padding-left:24px;display:grid;gap:8px;font-size:18px;line-height:1.35;max-width:46ch;width:100%}
 .wu-main{min-height:68px;font-size:17px}
@@ -545,6 +546,11 @@ section.feed-card>.feed-badge{position:absolute!important;top:8px;right:12px;z-i
 .tm.wu .wu-nx.on{visibility:visible;animation:wuNx .35s ease-out}
 @keyframes wuNx{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
 .tm.wu .tm-bot .btn.sm{min-height:40px}
+/* écran de l'échauffement en cours : boutons plus compacts, le prochain mouvement s'affiche par-dessus (sans réserver de place) */
+.tm.wu-live .tm-bot{gap:8px;position:relative}
+.tm.wu.wu-live .tm-bot .btn{min-height:40px;font-size:14px}
+.tm.wu.wu-live .tm-bot .wu-main{min-height:46px;font-size:15px}
+.tm.wu .tm-bot .wu-nx{position:absolute;left:0;right:0;bottom:100%;margin-bottom:8px;z-index:3;padding:8px 12px;font-size:clamp(20px,6vw,28px);background:color-mix(in srgb,var(--panel) 85%,#fff)}
 .wu-check{width:96px;height:96px;border-radius:50%;background:var(--panel-accent);color:var(--panel);display:grid;place-items:center;font-family:var(--f-display);font-size:64px;line-height:1}
 .wu-tip{max-width:34ch;margin-top:4px;padding:12px 16px;border-radius:12px;border:1px solid var(--panel-accent);background:color-mix(in srgb,var(--panel-accent) 14%,transparent);color:var(--panel-ink);font-size:16px;line-height:1.4;text-align:center;text-wrap:balance}
 .wu-tip b{display:block;margin-bottom:2px;text-transform:uppercase;letter-spacing:.04em;font-size:13px;color:var(--panel-accent)}
@@ -4557,7 +4563,7 @@ function openCeremony(pid,gid0){
 /* ---------- minuteur du metcon ---------- */
 /* Plein écran, 10 s de préparation puis :
    - For Time : chrono qui monte (time cap en alerte si « Time cap 15 min » est dans le détail), bouton TERMINÉ ;
-   - AMRAP : compte à rebours, bouton TOUR pour noter chaque temps de passage ;
+   - AMRAP : compte à rebours, bouton +1 pour noter chaque temps de passage ;
    - EMOM : compte à rebours avec un bip à chaque minute.
    À l'arrêt, le résultat est corrigeable puis prérempli dans le formulaire de résultat de la séance. L'écran reste allumé (Wake Lock, ou vidéo muette en secours). */
 const PREP=10;
@@ -4621,7 +4627,12 @@ const WU_IMG={
  'wu-boot-strappers':'assets/embedded/echauffement_09_boot-strappers.png',
  'wu-squat-twist-reach':'assets/embedded/echauffement_10_squat-twist.png'
 };
+/* vidéos des exercices (dossier assets/embedded) : lues en boucle pendant l'exercice ; liées par l'id de l'exercice */
+const WU_VID={
+ 'wu-leg-swings':'assets/embedded/leg_swing.mp4'
+};
 const wuImg=x=>WU_IMG[x.id]||'';
+const wuVid=x=>WU_VID[x.id]||'';
 const WU_DEFAULT=[
  {id:'wu-jumping-jack',name:'Jumping Jack',desc:'Saut écarté classique : bras et jambes s’ouvrent et se ferment ensemble.',
   steps:['Pieds joints, bras le long du corps.','Saute en écartant les pieds plus large que les épaules et lève les bras au-dessus de la tête.','Reviens pieds joints, bras le long du corps.','Reste léger sur l’avant des pieds, rythme régulier, respiration fluide.'],mode:'time',target:30,perSide:false,note:''},
@@ -4803,7 +4814,7 @@ function openWarmup(mode,start){
   function draw(){
     if(st.phase==='done'||st.phase==='closed')return;
     const x=cur(),timed=st.mode==='guided'&&x.mode==='time',paused=st.phase==='paused',last=st.idx>=n-1;
-    ov.className='tm wu'+(paused||st.prep?' prep':'');
+    ov.className='tm wu wu-live'+(paused||st.prep?' prep':'');
     const anim=st.shown!==st.idx;st.shown=st.idx;
     timeEl=null;barEl=null;nextEl=null;
     const mid=h('div',{class:'tm-mid'+(anim?' wu-anim':'')},
@@ -4821,35 +4832,35 @@ function openWarmup(mode,start){
       if(st.mode==='guided')mid.append(h('p',{class:'tm-sub'},'Touche « '+(last?'Terminer l’échauffement':'Exercice suivant')+' » quand tu as fini.'));
     }
     if(x.note)mid.append(h('p',{class:'wu-note'},x.note));
-    const img=wuImg(x),hasInfo=!!(img||x.desc||x.steps.length);
-    if(hasInfo){
-      const open=st.infoIdx===st.idx;
-      mid.append(h('button',{class:'btn wu-info-b',type:'button',id:'wu-info-btn','aria-expanded':open?'true':'false','aria-controls':'wu-info',onclick:()=>{
-        st.infoIdx=open?-1:st.idx;draw();
-        if(!open)setTimeout(()=>{const e=document.getElementById('wu-info');if(e&&e.scrollIntoView)e.scrollIntoView({block:'nearest',behavior:'smooth'});},40);
-      }},open?'Masquer les infos':'Voir les infos'));
-      if(open){
-        const box=h('div',{class:'wu-info',id:'wu-info'});
-        if(img)box.append(h('img',{class:'wu-img',src:img,alt:'Illustration : '+x.name,loading:'lazy',onerror:function(){this.remove();}}));
-        if(x.desc)box.append(h('p',{class:'wu-desc'},x.desc));
-        if(x.steps.length)box.append(h('ol',{class:'wu-steps'},x.steps.map(s=>h('li',{},s))));
-        mid.append(box);
-      }
+    /* vidéo de l'exercice, lue pendant qu'on le fait ; à défaut de vidéo, l'image */
+    const vsrc=wuVid(x),img=vsrc?'':wuImg(x);
+    if(vsrc||img){
+      const box=h('div',{class:'wu-media'});
+      if(vsrc){
+        const v=document.createElement('video');
+        v.className='wu-vid';v.src=vsrc;v.muted=true;v.defaultMuted=true;v.loop=true;v.autoplay=true;v.preload='auto';
+        v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline','');v.setAttribute('muted','');v.setAttribute('disablepictureinpicture','');
+        v.setAttribute('aria-label','Démonstration : '+x.name);
+        v.addEventListener('error',()=>v.remove());
+        box.append(v);
+        const pr=v.play();if(pr&&pr.catch)pr.catch(()=>{});
+      }else box.append(h('img',{class:'wu-img',src:img,alt:'Illustration : '+x.name,loading:'lazy',onerror:function(){this.remove();}}));
+      mid.append(box);
     }
     const prevB=h('button',{class:'btn',type:'button',disabled:st.idx===0,onclick:prev},'← Précédent');
-    const endB=h('button',{class:'btn',type:'button'},'Terminer l’échauffement');
-    endB.addEventListener('click',wuArmed(endB,'Terminer ?',()=>finish(false)));
+    let endB=null; /* « Terminer l'échauffement » : seulement en mode libre (en guidé, le ✕ en haut suffit) */
+    if(st.mode==='manual'){endB=h('button',{class:'btn',type:'button'},'Terminer l’échauffement');
+      endB.addEventListener('click',wuArmed(endB,'Terminer ?',()=>finish(false)));}
     let bot;
     if(st.prep){
       bot=[h('button',{class:'btn primary wu-main',type:'button',id:'wu-pause',onclick:paused?resume:pause},paused?'Reprendre':'Pause'),
-        h('div',{class:'wu-two'},h('button',{class:'btn',type:'button',id:'wu-skip',onclick:skipPrep},'Commencer maintenant'),endB)];
+        h('button',{class:'btn',type:'button',id:'wu-skip',onclick:skipPrep},'Commencer maintenant')];
     }else if(timed){
       bot=[h('button',{class:'btn primary wu-main',type:'button',id:'wu-pause',onclick:paused?resume:pause},paused?'Reprendre':'Pause'),
-        h('div',{class:'wu-two'},prevB,h('button',{class:'btn',type:'button',id:'wu-next',onclick:next},last?'Terminer':'Suivant →')),
-        last?null:endB];
+        h('div',{class:'wu-two'},prevB,h('button',{class:'btn',type:'button',id:'wu-next',onclick:next},last?'Terminer':'Suivant →'))];
     }else{
       bot=[h('button',{class:'btn primary wu-main',type:'button',id:'wu-next',onclick:next},last?'Terminer l’échauffement':'Exercice suivant'),
-        h('div',{class:'wu-two'},prevB,last?h('span',{}):endB)];
+        h('div',{class:'wu-two'},prevB,(endB&&!last)?endB:h('span',{}))];
       if(st.mode==='manual')bot.push(h('button',{class:'btn sm',type:'button',id:'wu-toguided',onclick:toGuided},'Lancer le mode guidé à partir d’ici'));
     }
     /* mode guidé : une flèche puis le nom du prochain mouvement, en gros, pendant les 5 dernières secondes (place réservée pour que rien ne bouge) */
@@ -5025,20 +5036,21 @@ function openTimer(w,date,m,lvIdx){
     if(st.phase!=='run')return;
     st.laps.push((Date.now()-st.t1)/1000);beep(1000,70);draw();
   }
+  const lapRow=()=>h('div',{class:'tm-laprow'},lapsEl,h('button',{type:'button',class:'tm-plus','aria-label':'Ajouter un tour',onclick:lap},'+1'));
   function undoLap(){if(st.phase==='run'&&st.laps.length){st.laps.pop();draw();}}
   function showRun(){
     timeEl=h('div',{class:'tm-time'},'0:00');subEl=h('p',{class:'tm-sub'});
     const mid=h('div',{class:'tm-mid'},h('p',{class:'eyebrow tm-eb'},info),timeEl,subEl);
     const bot=h('div',{class:'tm-bot'});
     if(fmt==='AMRAP'){
-      lapsEl=h('div',{class:'tm-laps'});lastEl=h('p',{class:'tm-sub'});mid.append(lapsEl,lastEl);
+      lapsEl=h('div',{class:'tm-laps'});lastEl=h('p',{class:'tm-sub'});mid.append(lapRow(),lastEl);
       const stop=h('button',{type:'button',class:'btn'},'Arrêter');
       stop.addEventListener('click',armed(stop,'Confirmer l’arrêt',()=>stopManual()));
-      bot.append(h('button',{type:'button',class:'tm-tap',onclick:lap},'TOUR'),
+      bot.append(
         h('div',{class:'row'},h('button',{type:'button',class:'btn sm',onclick:undoLap},'Annuler le dernier tour'),stop));
     }else if(fmt==='FT'){
-      lapsEl=h('div',{class:'tm-laps'});lastEl=h('p',{class:'tm-sub'});mid.append(lapsEl,lastEl);
-      bot.append(h('button',{type:'button',class:'tm-tap sm',onclick:lap},'TOUR'),
+      lapsEl=h('div',{class:'tm-laps'});lastEl=h('p',{class:'tm-sub'});mid.append(lapRow(),lastEl);
+      bot.append(
         h('button',{type:'button',class:'btn primary tm-end',onclick:()=>stopManual()},'TERMINÉ'),
         h('div',{class:'row'},h('button',{type:'button',class:'btn sm',onclick:undoLap},'Annuler le dernier tour')));
     }else{
@@ -5067,7 +5079,7 @@ function openTimer(w,date,m,lvIdx){
     if((fmt==='AMRAP'||fmt==='FT')&&lapsEl){
       const n=st.laps.length;
       lapsEl.textContent='Tours : '+n;
-      lastEl.textContent=n?'Passage '+mmss(st.laps[n-1])+(n>1?' · dernier tour '+mmss(st.laps[n-1]-st.laps[n-2]):''):'Touche TOUR à chaque tour terminé';
+      lastEl.textContent=n?'Passage '+mmss(st.laps[n-1])+(n>1?' · dernier tour '+mmss(st.laps[n-1]-st.laps[n-2]):''):'Touche +1 à chaque tour terminé';
     }
   }
   function startRun(){st.phase='run';st.t1=Date.now();st.min=0;beep(880,600);showRun();}
@@ -11686,7 +11698,7 @@ const TOURS={
   today:()=>[
     {sel:'.back-btn',title:'Retour aux séances',text:'Ce bouton te ramène à la liste des séances de la semaine.'},
     {sel:'main .day',title:'La séance du jour',text:'La date de la séance. Tu peux la faire n’importe quel jour de la semaine.'},
-    {sel:'#wu-card',title:'L’échauffement',text:'Un échauffement avant d’attaquer la séance est très fortement conseillé. Celui qui est proposé est complet, mais tu es libre de faire le tien. « Lancer l’échauffement » démarre le mode guidé avec timer, « Mode libre » te laisse avancer à ton rythme, et « Voir les exercices » affiche la liste. Pendant l’échauffement, touche « Voir les infos » pour voir l’image et les consignes de l’exercice. Le « ? » en haut à droite de la carte explique les deux modes.'},
+    {sel:'#wu-card',title:'L’échauffement',text:'Un échauffement avant d’attaquer la séance est très fortement conseillé. Celui qui est proposé est complet, mais tu es libre de faire le tien. « Lancer l’échauffement » démarre le mode guidé avec timer, « Mode libre » te laisse avancer à ton rythme, et « Voir les exercices » affiche la liste. Pendant l’échauffement, la vidéo de l’exercice se lit en boucle pour te montrer le mouvement. Le « ? » en haut à droite de la carte explique les deux modes.'},
     {sel:'.sub-banner',title:'Séance de remplacement',text:'Cette séance remplace celle de la carte : elle rapporte les points normaux et garde ta flamme. Tu peux encore changer de remplacement depuis la carte (bouton ↻) tant que ton résultat n’est pas enregistré.'},
     {sel:'main .wtitle',title:'Titre et points',text:'Le titre de la séance et les points de base qu’elle rapporte. Le metcon ajoute des points selon ton niveau.'},
     {sel:'.pbody',title:'Les parties de la séance',text:'Force, renforcement, metcon… Chaque partie détaille ce qu’il faut faire. Le metcon est celle qui rapporte des points au classement.'},
@@ -11694,7 +11706,7 @@ const TOURS={
     {sel:'.sw',title:'Le chronomètre',text:'Sur la force et le renforcement, ce chronomètre t’aide à gérer tes temps de travail et de repos.'},
     {sel:'.fmtbtn',title:'Le format du metcon',text:'Touche le format (For Time, AMRAP, EMOM…) pour une explication de son fonctionnement.'},
     {sel:'.levels',title:'Les niveaux',text:'Choisis Débutant, Intermédiaire ou Rx : tu vois le record du niveau et tu peux aussi personnaliser ton niveau si tu adaptes la séance.'},
-    {sel:'[data-tour=start-metcon]',title:'Démarrer le metcon',text:'Lance le minuteur en plein écran : 10 secondes de préparation, puis le chrono qui monte (For Time, avec le time cap), le compte à rebours et le bouton TOUR (AMRAP) ou un bip chaque minute (EMOM). À l’arrêt, tu peux corriger ton résultat : il est prérempli dans le formulaire.'},
+    {sel:'[data-tour=start-metcon]',title:'Démarrer le metcon',text:'Lance le minuteur en plein écran : 10 secondes de préparation, puis le chrono qui monte (For Time, avec le time cap), le compte à rebours et le bouton +1 à côté du nombre de tours (AMRAP) ou un bip chaque minute (EMOM). À l’arrêt, tu peux corriger ton résultat : il est prérempli dans le formulaire.'},
     {sel:'[data-tour=entry]',title:'Enregistre ton résultat',text:'Une fois la séance terminée, touche « Entrer mes résultats » : un encart s’ouvre (il s’ouvre aussi tout seul quand tu valides le minuteur). Les cases à remplir brillent un instant : choisis ton niveau, entre tes charges et ton score, puis valide. Tes points arrivent dans le classement. Tu peux aussi indiquer « Je n’ai pas fait le metcon » ou « Je n’ai fait que le metcon », refaire une séance passée (REDO) et laisser un message dans le fil.'},
     {sel:'[data-tour=tab-board]',title:'Et ensuite ?',text:'Tes points apparaissent dans l’onglet Classement.'}],
   board:()=>[
