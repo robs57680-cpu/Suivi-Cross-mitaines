@@ -14,8 +14,8 @@
 <title>Box Score</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@500;600&family=Work+Sans:wght@400;500;600;700&family=Permanent+Marker&family=Rubik+Distressed&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<noscript><link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@500;600&family=Work+Sans:wght@400;500;600;700&family=Permanent+Marker&family=Rubik+Distressed&display=swap" rel="stylesheet"></noscript>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@500;600&family=Work+Sans:wght@400;500;600;700&family=Permanent+Marker&family=Rubik+Distressed&family=Great+Vibes&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@500;600&family=Work+Sans:wght@400;500;600;700&family=Permanent+Marker&family=Rubik+Distressed&family=Great+Vibes&display=swap" rel="stylesheet"></noscript>
 <style>
 /* Layout: a gym whiteboard column. Barbell wordmark on top, scoreboard panel for stats, weight plates as ranks and trophies.
    Light = concrete floor, dark = rubber floor. Anton for headings and numerals, Work Sans for text, Plex Mono for scores. */
@@ -462,6 +462,80 @@ section.feed-card>.feed-badge{position:absolute!important;top:8px;right:12px;z-i
 .cer .bsel .sub{color:var(--muted)}
 @keyframes bpop{0%{transform:scale(.4) rotate(-25deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
 @media (prefers-reduced-motion:no-preference){.badge.pop{animation:bpop .7s cubic-bezier(.2,1.3,.4,1) both}}
+
+/* livre d'or : remise des trophées animée et livre des saisons */
+.cer-body.gbb{align-items:stretch;max-width:520px}
+.gb-bt{font-family:'Great Vibes','Snell Roundhand','Segoe Script','Brush Script MT',cursive;font-size:30px;line-height:1;color:#f0cf6a}
+.gb-stage{position:relative;display:grid;grid-template-rows:minmax(0,1fr);justify-items:center;align-items:stretch;width:100%;min-height:0;perspective:1500px;overflow:hidden;border-radius:10px;background:radial-gradient(ellipse at 50% 38%,rgba(150,100,25,.45),rgba(0,0,0,0) 66%);cursor:pointer}
+.gb-stage.all,.gb-stage.still{cursor:auto}
+.gb-book{position:relative;display:flex;width:min(100%,440px);min-height:0;box-sizing:border-box;padding:9px 9px 9px 17px;border-radius:6px 14px 14px 6px;background:linear-gradient(135deg,#6a2218,#2b0b07);box-shadow:0 22px 50px rgba(0,0,0,.65),inset 0 0 0 1.5px rgba(232,184,48,.45);transform-style:preserve-3d}
+.gb-book::before{content:'';position:absolute;left:0;top:0;bottom:0;width:11px;border-radius:6px 0 0 6px;background:linear-gradient(90deg,rgba(0,0,0,.55),rgba(255,255,255,.08) 60%,transparent);pointer-events:none;z-index:2}
+.gb-stage.gb-anim .gb-book{transform:translateX(15%) scale(.6) rotateX(6deg)}
+.gb-stage.gb-anim.zoom .gb-book{transform:none;transition:transform 1.5s cubic-bezier(.55,.05,.2,1)}
+.gb-cover{position:absolute;left:0;top:0;right:0;bottom:0;z-index:5;transform-origin:0 50%;transform-style:preserve-3d;transition:transform 1.5s cubic-bezier(.55,.05,.25,1)}
+.gb-stage.open .gb-cover{transform:rotateY(-172deg)}
+.gb-stage.opened .gb-cover{display:none}
+.gb-cf,.gb-cb{position:absolute;left:0;top:0;right:0;bottom:0;border-radius:6px 14px 14px 6px;-webkit-backface-visibility:hidden;backface-visibility:hidden}
+.gb-cf{display:grid;place-content:center;justify-items:center;text-align:center;gap:4px;background:linear-gradient(135deg,#7a2a1c,#3a110b 70%);box-shadow:inset 0 0 0 3px #c9a24a,inset 0 0 0 8px #3a110b,inset 0 0 0 9px #c9a24a;color:#f0cf6a;padding:20px}
+.gb-cf .st{font-size:26px;line-height:1;color:#ffe08a;text-shadow:0 0 14px rgba(255,210,90,.8)}
+.gb-cf h2{margin:0;font-family:'Great Vibes','Snell Roundhand','Segoe Script','Brush Script MT',cursive;font-weight:400;font-size:clamp(46px,14vw,66px);line-height:1;background:linear-gradient(180deg,#fff3b0,#e8b830 45%,#a8700a 62%,#f6d466);-webkit-background-clip:text;background-clip:text;color:transparent}
+.gb-cf .nm{font:700 12px var(--f-mono);letter-spacing:.2em;text-transform:uppercase;color:#e8c96a}
+.gb-cb{transform:rotateY(180deg);background:linear-gradient(135deg,#e9d9a8,#bda56c);box-shadow:inset 0 0 30px rgba(90,55,5,.45)}
+.gb-stage.fast .gb-book,.gb-stage.fast .gb-cover{transition:none!important}
+.gb-page{position:relative;flex:1;min-width:0;min-height:0;box-sizing:border-box;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:20px 14px 30px;border-radius:3px 9px 9px 3px;color:#f1e3b8;background:radial-gradient(ellipse at 50% 0,#2e2618,#17130c 72%);box-shadow:inset 0 0 0 1.5px #c9a24a,inset 0 0 0 5px #17130c,inset 0 0 0 6px rgba(201,162,74,.6),inset 0 0 40px rgba(0,0,0,.55)}
+.gb-head{display:grid;justify-items:center;text-align:center;gap:2px;padding:6px 6px 10px}
+.gb-eb{margin:0;font:700 11px var(--f-mono);letter-spacing:.24em;text-transform:uppercase;color:#cdb273}
+.gb-title{margin:0;font-family:'Great Vibes','Snell Roundhand','Segoe Script','Brush Script MT',cursive;font-weight:400;font-size:clamp(46px,14vw,64px);line-height:1.05;overflow-wrap:anywhere;background:linear-gradient(180deg,#fff3b0,#e8b830 45%,#a8700a 62%,#f6d466);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 10px rgba(255,190,50,.45))}
+.gb-sub{margin:0;font-size:13px;color:#cdb273}
+.gb-stats{margin:0;font-size:12px;color:#a8946a}
+.gb-orn{width:70%;height:12px;margin-top:6px;background:linear-gradient(90deg,transparent,#c9a24a 25%,#c9a24a 75%,transparent) center/100% 1px no-repeat;position:relative}
+.gb-orn::after{content:'\2726';position:absolute;left:50%;top:50%;transform:translate(-50%,-52%);padding:0 8px;background:#1c170e;color:#e8b830;font-size:13px;line-height:1}
+.gb-gs{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:6px}
+.gb-gb{min-height:32px;padding:4px 12px;border:1px solid rgba(201,162,74,.6);border-radius:16px;background:transparent;color:#e8d29a;font:600 12px var(--f-body,inherit);cursor:pointer}
+.gb-gb.on{background:#c9a24a;color:#2a1c04;border-color:#c9a24a}
+.gb-hint{margin:6px 0 0;font-size:11px;color:#8f7d56;font-style:italic}
+.gb-list{display:grid;gap:4px}
+.gb-ent{display:flex;align-items:center;gap:12px;width:92%;margin:12px 0;visibility:hidden}
+.gb-ent.l{margin-right:auto}
+.gb-ent.r{margin-left:auto;flex-direction:row-reverse;text-align:right}
+.gb-ent.show{visibility:visible}
+.gb-badge{flex:none;line-height:0;filter:drop-shadow(0 5px 8px rgba(0,0,0,.6)) drop-shadow(0 0 10px rgba(232,184,48,.3));opacity:0}
+.gb-ent.show .gb-badge{opacity:1}
+.gb-ent.l.show .gb-badge{animation:gbInL 1s cubic-bezier(.2,1.2,.4,1) both}
+.gb-ent.r.show .gb-badge{animation:gbInR 1s cubic-bezier(.2,1.2,.4,1) both}
+@keyframes gbInL{0%{opacity:0;transform:translateX(-70px) scale(.25) rotate(-35deg)}100%{opacity:1;transform:none}}
+@keyframes gbInR{0%{opacity:0;transform:translateX(70px) scale(.25) rotate(35deg)}100%{opacity:1;transform:none}}
+.gb-txt{flex:1;min-width:0;opacity:0}
+.gb-ent.show .gb-txt{animation:gbTxt .7s .55s ease both}
+@keyframes gbTxt{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:none}}
+.gb-ent.skip .gb-badge,.gb-ent.skip .gb-txt{animation:none;opacity:1;transform:none}
+.gb-tn{font-family:var(--f-display);font-size:17px;line-height:1.1;letter-spacing:.06em;text-transform:uppercase;color:#f3dc9a}
+.gb-td{margin:2px 0 4px;font-size:12.5px;line-height:1.3;font-style:italic;color:#c4b283}
+.gb-names{display:grid;gap:2px;justify-items:start}
+.gb-ent.r .gb-names{justify-items:end}
+.gb-line{max-width:100%}
+.gb-nm{position:relative;display:inline-block;max-width:100%;font-family:'Great Vibes','Snell Roundhand','Segoe Script','Brush Script MT',cursive;font-size:clamp(30px,9vw,40px);line-height:1.2;overflow-wrap:anywhere;filter:drop-shadow(0 0 7px rgba(255,190,50,.5))}
+.gb-w{display:inline-block;white-space:nowrap}
+.gl{display:inline-block;opacity:0;background:linear-gradient(180deg,#fff7c4 0%,#f3c64a 38%,#b9801a 64%,#ffe58f 100%);-webkit-background-clip:text;background-clip:text;color:transparent;padding:0 .02em}
+.gl.in{animation:gbLetter .65s cubic-bezier(.2,.9,.3,1.15) both}
+@keyframes gbLetter{0%{opacity:0;transform:translateY(-16px) scale(1.9) rotate(-9deg);filter:blur(7px)}55%{opacity:1;transform:translateY(2px) scale(1.07) rotate(1deg);filter:blur(0)}100%{opacity:1;transform:none;filter:none}}
+.gb-line.done .gl{opacity:1;animation:none;transform:none;filter:none}
+.gb-pen{position:absolute;width:14px;height:14px;margin:-7px 0 0 -4px;border-radius:50%;pointer-events:none;opacity:0;background:radial-gradient(circle,#fff 0,#ffe27a 30%,rgba(255,200,60,0) 70%);transition:left .09s linear,top .09s linear,opacity .3s}
+.gb-pen.on{opacity:1;animation:gbPen .5s linear infinite}
+@keyframes gbPen{0%{transform:scale(1) rotate(0)}50%{transform:scale(1.5) rotate(90deg)}100%{transform:scale(1) rotate(180deg)}}
+.gb-ul{display:block;height:2px;margin-top:1px;border-radius:2px;background:linear-gradient(90deg,transparent,#e8b830 30%,#fff1a0 50%,#e8b830 70%,transparent);transform:scaleX(0);transform-origin:0 50%}
+.gb-ent.r .gb-ul{transform-origin:100% 50%}
+.gb-line.done .gb-ul{transform:scaleX(1);transition:none}
+.gb-line.me .gb-nm{filter:drop-shadow(0 0 12px rgba(255,210,90,.85))}
+.gb-me{display:inline-block;margin-top:4px;padding:2px 9px;border-radius:10px;background:#c9a24a;color:#2a1c04;font:700 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;opacity:0}
+.gb-ent.wrote .gb-me,.gb-ent.skip .gb-me,.gb-stage.still .gb-me{opacity:1}
+.gb-none{text-align:center;color:#cdb273;margin:30px 0}
+.gb-endsp{height:40vh}
+.gb-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.gb-shelf{display:grid;gap:12px;width:100%;max-width:420px;align-content:start}
+.gb-vol{display:grid;gap:2px;justify-items:center;padding:16px 12px;border:0;border-radius:4px 10px 10px 4px;cursor:pointer;background:linear-gradient(135deg,#6a2218,#2b0b07);box-shadow:inset 0 0 0 2px #c9a24a,inset 0 0 0 5px #2b0b07,inset 0 0 0 6px rgba(201,162,74,.6),0 6px 16px rgba(0,0,0,.45);color:#e8d29a}
+.gb-vt{font-family:'Great Vibes','Snell Roundhand','Segoe Script','Brush Script MT',cursive;font-size:36px;line-height:1.1;color:#f0cf6a}
+.gb-vs{font:600 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:#cdb273}
 
 /* minuteur du metcon */
 .tm{position:fixed;inset:0;z-index:45;background:var(--panel);color:var(--panel-ink);display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:12px;padding:calc(12px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));overflow:auto;user-select:none;-webkit-user-select:none;touch-action:manipulation}
@@ -3726,7 +3800,7 @@ function movBackGo(){
 /* ---------- écritures ---------- */
 let chain=Promise.resolve();
 function run(fn){chain=chain.then(fn).catch(e=>{toast(errMsg(e),true);});return chain;}
-const saveProf=()=>run(async()=>{await S.db.doc('users/'+S.uid+'/private/profile').set({prs:S.prof.prs||{},sex:S.prof.sex||'',birth:S.prof.birth||'',genEx:S.prof.genEx||null,genAll:S.prof.genAll||null,words:S.prof.words||[],mvcfg:S.prof.mvcfg||{},revd:S.prof.revd||{},intf:S.prof.intf||{},pace:S.prof.pace||{},spread:S.prof.spread||{},weight:Number(S.prof.weight)>0?Number(S.prof.weight):0,plan:S.prof.plan||null,pend:S.prof.pend||{},rewardDraft:String(S.prof.rewardDraft||'')});});
+const saveProf=()=>run(async()=>{await S.db.doc('users/'+S.uid+'/private/profile').set({prs:S.prof.prs||{},sex:S.prof.sex||'',birth:S.prof.birth||'',genEx:S.prof.genEx||null,genAll:S.prof.genAll||null,words:S.prof.words||[],mvcfg:S.prof.mvcfg||{},revd:S.prof.revd||{},intf:S.prof.intf||{},intCustom:Array.isArray(S.prof.intCustom)?S.prof.intCustom:[],pace:S.prof.pace||{},spread:S.prof.spread||{},weight:Number(S.prof.weight)>0?Number(S.prof.weight):0,plan:S.prof.plan||null,pend:S.prof.pend||{},rewardDraft:String(S.prof.rewardDraft||'')});});
 const needPseudo=()=>S.uid&&S.loaded.logs&&!(S.logs[S.uid]&&S.logs[S.uid].pseudo);
 /* groupes : un seul document config/groups {list:[{id,name}], of:{uid:idDuGroupe}}, écrit par le coach seul */
 const groupsList=()=>(S.groups&&S.groups.list)||[];
@@ -4389,25 +4463,7 @@ function badgesSection(){
   return sec;
 }
 
-/* ---------- messages en bulles et feu d'artifice ---------- */
-const cKey=(pid,tid,uid)=>pid+'__'+tid+'__'+uid;
-function commentBox(per,t){
-  const id=cKey(per.id,t.id,S.uid);
-  let has=!!S.comments[id];
-  const ta=h('textarea',{rows:'2',maxlength:'140',placeholder:'Un message pour ce trophée (140 caractères)','aria-label':'Ton message',value:has?S.comments[id].text:'',style:'background:rgba(255,255,255,.08);color:var(--panel-ink);border-color:var(--panel-muted)'});
-  const send=h('button',{class:'btn sm primary',type:'button'},has?'Mettre à jour':'Envoyer');
-  const del=h('button',{class:'btn sm',type:'button',style:has?'':'display:none'},'Retirer');
-  send.addEventListener('click',()=>{
-    const v=ta.value.trim();
-    if(!v){toast('Écris un message.',true);return;}
-    if(needPseudo()){toast('Choisis d’abord ton pseudo.',true);return;}
-    const d={per:per.id,tid:t.id,uid:S.uid,pseudo:(S.logs[S.uid]||{}).pseudo||S.meName||'Athlète',text:v.slice(0,140),at:new Date().toISOString()};
-    S.comments[id]=d;
-    run(async()=>{await S.db.doc('comments/'+id).set(d);toast(has?'Message mis à jour':'Message envoyé');has=true;send.textContent='Mettre à jour';del.style.display='';});
-  });
-  del.addEventListener('click',()=>{delete S.comments[id];has=false;ta.value='';send.textContent='Envoyer';del.style.display='none';run(async()=>{await S.db.doc('comments/'+id).delete();toast('Message retiré');});});
-  return h('div',{class:'cer-win',style:'width:100%;max-width:380px'},h('span',{class:'flabel',style:'color:var(--panel-muted)'},'Ton message (une bulle pour les autres)'),ta,h('div',{class:'row'},send,del));
-}
+/* ---------- bulles de réactions et feu d'artifice ---------- */
 function openBubble(c,onClose){
   const esc=e=>{if(e.key==='Escape')close();};
   const close=()=>{ov.remove();document.removeEventListener('keydown',esc);if(onClose)onClose();};
@@ -4482,41 +4538,154 @@ function maybeCeremony(){
   if(!me||!me.sessions)return;
   openCeremony(per.id);
 }
+/* ---------- livre d'or : remise des trophées animée et livre des saisons ---------- */
+/* résumé le plus court possible de chaque trophée (sinon : première phrase de sa description, raccourcie) */
+const TROPHY_BLURB={goat:'Meilleur score pondéré par le niveau',lagoat:'Meilleur score pondéré, chez les femmes',points:'Le plus de points bruts',regulier:'Le plus de séances',serie:'La plus longue flamme',top:'La plus longue série à 90 % et plus',perf:'Meilleure moyenne de points par metcon',fort:'Les charges cumulées les plus lourdes',lafort:'Charges cumulées les plus lourdes, chez les femmes',tonnage:'Le plus de kilos soulevés',latonnage:'Le plus de kilos soulevés, chez les femmes',ratio:'Le plus lourd par rapport à son poids',mcardio:'Meilleur sur les metcons cardio',mgym:'Meilleur sur les metcons gym',mhaltero:'Meilleur sur les metcons haltéro',gduo:'Meilleur à 2 séances par semaine',gsolo:'Meilleur à 1 séance par semaine',bdeb:'Meilleur chez les débutants',binter:'Meilleur chez les intermédiaires',senior:'Meilleur des 18 à 34 ans',veteran:'Meilleur des 35 ans et plus',objectif:'Objectif de séances tenu toute la saison'};
+const trophyBlurb=t=>{if(TROPHY_BLURB[t.id])return TROPHY_BLURB[t.id];const x=String(t.desc||'').split(/[.(]/)[0].trim();return x.length>60?x.slice(0,57).trim()+'…':x;};
+const reducedMotion=()=>!!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
+/* trophées d'une saison pour un groupe, dans l'ordre de la remise : du dernier trophée de la liste au GOAT, qui clôt le livre */
+function bookWins(per,gid){const board=computeBoard(per);return {board,wins:TROPHIES.map(t=>({t,ws:winners(t,board,gid)})).filter(x=>x.ws.length).reverse()};}
+/* Le livre d'or d'une saison. animate:true = le livre se ferme sur sa couverture, s'ouvre, l'écran s'en rapproche, puis les trophées
+   apparaissent un par un en quinconce (gauche, droite, gauche…) : explication à côté du trophée, pseudo du gagnant écrit en lettres d'or,
+   lettre par lettre. Un clic passe l'écriture du nom en cours. animate:false = le livre est déjà ouvert, tout est écrit (livre des saisons). */
+function goldenBook(per,gid,wins,o){
+  o=o||{};
+  const animate=!!o.animate&&!reducedMotion()&&wins.length>0;
+  const final=periodState(per)==='done';
+  const timers=new Set();
+  const later=(fn,ms)=>{const id=setTimeout(()=>{timers.delete(id);fn();},ms);timers.add(id);return id;};
+  const clearAll=()=>{timers.forEach(clearTimeout);timers.clear();};
+  let phase=animate?'wait':'done',k=-1,cur=null;
+  const stage=h('div',{class:'gb-stage'+(animate?' gb-anim':' still'),role:'region','aria-label':'Livre d’or · '+seasonTag(per)});
+  const page=h('div',{class:'gb-page'}),list=h('div',{class:'gb-list'});
+  const ents=wins.map((x,j)=>{
+    const t=x.t,side=j%2?'r':'l';
+    const lines=x.ws.map(r=>{
+      const letters=[],nm=h('div',{class:'gb-nm','aria-hidden':'true'});
+      String(r.pseudo||'Athlète').split(/\s+/).filter(Boolean).forEach((w,wi)=>{
+        if(wi)nm.append(' ');
+        nm.append(h('span',{class:'gb-w'},[...w].map(ch=>{const g=h('span',{class:'gl'},ch);letters.push(g);return g;})));
+      });
+      const pen=h('i',{class:'gb-pen'}),ul=h('span',{class:'gb-ul'});
+      nm.append(pen);
+      const me=r.uid===S.uid;
+      const line=h('div',{class:'gb-line'+(me?' me':'')},h('span',{class:'gb-sr'},r.pseudo+(me?' (toi)':'')),nm,ul);
+      return {line,letters,pen,ul,me};
+    });
+    const me=lines.some(L=>L.me);
+    const el=h('div',{class:'gb-ent '+side+(me?' mine':'')},
+      h('div',{class:'gb-badge'},badgeEl(t.id,per.name,96,t.name+' · '+per.name,per)),
+      h('div',{class:'gb-txt'},h('div',{class:'gb-tn'},t.name),h('div',{class:'gb-td'},trophyBlurb(t)),
+        h('div',{class:'gb-names'},lines.map(L=>L.line)),me?h('span',{class:'gb-me'},'C’est toi !'):null));
+    return {el,lines,me};
+  });
+  const ids=scopeIds(per);
+  page.append(h('div',{class:'gb-head'},
+    h('p',{class:'gb-eb'},final?'Livre d’or':'Aperçu · livre d’or'),
+    h('h1',{class:'gb-title'},seasonTag(per)),
+    h('p',{class:'gb-sub'},seasonLabel(per)+' · '+fmtShort(per.start)+' → '+fmtShort(per.end)+(final?'':' · résultats provisoires')),
+    o.stats?h('p',{class:'gb-stats'},o.stats):null,
+    ids.length>1?h('div',{class:'gb-gs'},ids.map(x=>h('button',{type:'button',class:'gb-gb'+(x===gid?' on':''),onclick:()=>{if(o.onGroup)o.onGroup(x);}},scopeName(x,per)||'Sans groupe'))):null,
+    h('div',{class:'gb-orn'}),
+    animate?h('p',{class:'gb-hint'},'Touche l’écran pour passer l’écriture'):null),
+    list,animate?h('div',{class:'gb-endsp'}):null);
+  if(!ents.length)list.append(h('p',{class:'gb-none'},'Aucun trophée décerné cette saison.'));
+  ents.forEach(E=>list.append(E.el));
+  const cover=animate?h('div',{class:'gb-cover','aria-hidden':'true'},
+    h('div',{class:'gb-cf'},h('span',{class:'st'},'✦'),h('h2',{},'Livre d’or'),h('span',{class:'nm'},seasonTag(per))),h('div',{class:'gb-cb'})):null;
+  stage.append(h('div',{class:'gb-book'},page,cover));
+  function doneLine(L){L.line.classList.add('done');L.ul.style.transition='none';L.ul.style.transform='scaleX(1)';L.pen.classList.remove('on');}
+  if(!animate)ents.forEach(E=>{E.el.classList.add('show','skip');E.lines.forEach(doneLine);});
+  function focusEnt(el){const y=Math.max(0,el.offsetTop-page.clientHeight*.28);try{page.scrollTo({top:y,behavior:'smooth'});}catch(e){page.scrollTop=y;}}
+  function writeLine(L,cb){
+    const n=L.letters.length,step=Math.max(55,Math.min(150,2000/Math.max(1,n)));
+    L.ul.style.transition='transform '+Math.round(step*n+300)+'ms cubic-bezier(.3,.6,.3,1)';
+    L.ul.style.transform='scaleX(1)';
+    let j=0;
+    const tick=()=>{
+      if(j>=n){L.line.classList.add('done');later(()=>L.pen.classList.remove('on'),300);cb();return;}
+      const g=L.letters[j++];
+      g.classList.add('in');
+      L.pen.style.left=(g.offsetLeft+g.offsetWidth)+'px';L.pen.style.top=(g.offsetTop+g.offsetHeight*.55)+'px';L.pen.classList.add('on');
+      later(tick,step);
+    };
+    tick();
+  }
+  function writeAll(E,i){
+    phase='write';
+    if(i>=E.lines.length){endEntry(E,false);return;}
+    writeLine(E.lines[i],()=>later(()=>writeAll(E,i+1),250));
+  }
+  function endEntry(E,fast){
+    phase='pause';
+    E.el.classList.add('wrote');
+    if(E.me&&o.onMine)o.onMine(E.el);
+    later(()=>playEntry(k+1),fast?450:900);
+  }
+  function playEntry(j){
+    if(j>=ents.length){phase='pause';later(finish,600);return;}
+    k=j;cur=ents[j];phase='show';
+    cur.el.classList.add('show');
+    focusEnt(cur.el);
+    later(()=>writeAll(ents[j],0),1500); /* le trophée entre (1 s), puis son explication, puis l'écriture */
+  }
+  function finish(){clearAll();phase='done';stage.classList.add('all');if(o.onDone)o.onDone();}
+  function endIntro(fast){
+    clearAll();
+    if(fast)stage.classList.add('fast');
+    stage.classList.add('open','zoom','opened');
+    phase='pause';
+    later(()=>playEntry(0),fast?150:350);
+  }
+  /* un clic : passe l'ouverture du livre, ou l'écriture du nom en cours, ou l'attente avant le trophée suivant */
+  function skip(){
+    if(phase==='wait'){endIntro(true);return;}
+    if(phase==='show'||phase==='write'){clearAll();const E=cur;E.el.classList.add('show','skip');E.lines.forEach(doneLine);endEntry(E,true);return;}
+    if(phase==='pause'){clearAll();playEntry(k+1);}
+  }
+  function revealAll(){
+    clearAll();
+    if(phase==='wait')stage.classList.add('fast','open','zoom','opened');
+    ents.forEach(E=>{E.el.classList.add('show','skip');E.lines.forEach(doneLine);});
+    finish();
+  }
+  stage.addEventListener('click',e=>{if(e.target.closest('button'))return;if(phase!=='done')skip();});
+  function start(){
+    if(!animate)return;
+    phase='wait';
+    later(()=>stage.classList.add('open'),450);   /* la couverture s'ouvre */
+    later(()=>stage.classList.add('zoom'),1500);  /* l'écran se rapproche de la page */
+    later(()=>endIntro(false),3100);
+  }
+  return {el:stage,start,stop:clearAll,revealAll,done:()=>phase==='done',animated:animate};
+}
+/* ---------- remise des trophées ---------- */
 function openCeremony(pid,gid0){
   const per=plist().find(x=>x.id===pid);if(!per)return;
   const old=document.getElementById('cer-ov');if(old)old.remove();
+  const sbo=document.getElementById('sb-ov');if(sbo)sbo.remove();
   const final=periodState(per)==='done';
   if(final)markCer(per.id);
   const gid=gid0!==undefined?gid0:scopeOf(S.uid,per);
-  const board=computeBoard(per);
-  const wins=TROPHIES.map(t=>({t,ws:winners(t,board,gid)})).filter(x=>x.ws.length).reverse();
+  const {board,wins}=bookWins(per,gid);
   const ranked=board.rows.filter(r=>r.sessions>0&&inScope(r.uid,gid,per));
   const mineW=wins.filter(x=>x.ws.some(r=>r.uid===S.uid)).reverse();
-  const slides=[{k:'intro'}].concat(wins.map(x=>({k:'t',x}))).concat(ranked.length?[{k:'podium'}]:[]).concat([{k:'mine'}]);
-  let i=0;
-  const esc=e=>{if(e.key!=='Escape'&&/^(INPUT|TEXTAREA)$/.test(e.target.tagName))return;if(e.key==='Escape')close();else if(e.key==='ArrowRight')next();else if(e.key==='ArrowLeft')prev();};
-  const close=()=>{if(stopFw)stopFw();S.cerRefresh=null;ov.remove();document.removeEventListener('keydown',esc);};
+  const slides=[{k:'book'}].concat(ranked.length?[{k:'podium'}]:[]).concat([{k:'mine'}]);
+  let i=0,bk=null,bookSeen=false,stopFw=null;
+  const esc=e=>{if(e.key==='Escape')close();else if(e.key==='ArrowRight')next();else if(e.key==='ArrowLeft')prev();};
+  const close=()=>{if(bk)bk.stop();if(stopFw)stopFw();S.cerRefresh=null;ov.remove();document.removeEventListener('keydown',esc);};
   const body=h('div',{class:'cer-body'}),dots=h('div',{class:'cer-dots'}),nav=h('div',{class:'row'});
   const ov=h('div',{class:'cer',id:'cer-ov',role:'dialog','aria-modal':'true','aria-label':'Remise des trophées'},
     h('div',{class:'cer-top'},dots,h('button',{class:'btn sm',type:'button',onclick:close},'Passer')),body,nav);
-  const stat=(n,l)=>h('div',{},h('b',{},n),h('span',{},l));
   function slideEl(s){
-    if(s.k==='intro')return h('div',{class:'cer-in'},
-      h('p',{class:'eyebrow cer-eb'},final?'Remise des trophées':'Aperçu · remise des trophées'),
-      h('h1',{class:'day'},per.name),
-      scopeName(gid,per)?h('p',{class:'cer-sub'},h('b',{},'Groupe : '+scopeName(gid,per))):null,
-      scopeIds(per).length>1?h('div',{class:'row',style:'justify-content:center;margin:6px 0'},scopeIds(per).filter(x=>x!==gid).map(x=>h('button',{class:'btn sm',type:'button',onclick:()=>openCeremony(pid,x)},scopeName(x,per)))):null,
-      h('p',{class:'cer-sub'},seasonLabel(per)+' · '+fmtShort(per.start)+' → '+fmtShort(per.end)+(final?'':' · résultats provisoires')),
-      h('div',{class:'cer-stats'},stat(ranked.length,'athlètes'),stat(ranked.reduce((a,r)=>a+r.sessions,0),'séances'),stat(wins.length,'trophées')));
-    if(s.k==='t'){
-      const {t,ws}=s.x,me=ws.some(r=>r.uid===S.uid);
-      const b=badgeEl(t.id,per.name,200,t.name+' · '+per.name,per);b.classList.add('pop');
-      const dp=h('p',{class:'cer-sub',hidden:true},t.desc);
-      const db=h('button',{class:'btn sm',type:'button','aria-expanded':'false',onclick:()=>{dp.hidden=!dp.hidden;db.setAttribute('aria-expanded',dp.hidden?'false':'true');}},'Descriptif');
-      return h('div',{class:'cer-in'},h('p',{class:'eyebrow cer-eb'},seasonLabel(per)+' · '+per.name),h('div',{class:'glow'},b),
-        h('h2',{class:'day',style:'font-size:34px'},t.name),db,dp,
-        h('div',{class:'cer-win'},ws.map(r=>h('div',{},h('b',{},r.pseudo+(r.uid===S.uid?' (toi)':'')),h('div',{class:'sub'},t.show(r))))),
-        me?h('span',{class:'chip live'},'C’est toi !'):null,commentBox(per,t));
+    if(s.k==='book'){
+      const nS=ranked.reduce((a,r)=>a+r.sessions,0);
+      bk=goldenBook(per,gid,wins,{animate:!bookSeen,
+        stats:ranked.length+' athlète'+(ranked.length>1?'s':'')+' · '+nS+' séance'+(nS>1?'s':'')+' · '+wins.length+' trophée'+(wins.length>1?'s':''),
+        onGroup:x=>openCeremony(pid,x),
+        onMine:()=>{if(stopFw)stopFw();stopFw=fireworks(ov);},
+        onDone:()=>{const b=document.getElementById('cer-next');if(b&&slides[i].k==='book')b.textContent=i===slides.length-1?'Terminer':'Suivant';}});
+      bookSeen=true;return bk.el;
     }
     if(s.k==='podium'){
       const pod=(r,pos)=>r?h('div',{class:'pod p'+pos},h('div',{class:'rank r'+pos},pos),h('div',{class:'nm'},r.pseudo+(r.uid===S.uid?' (toi)':'')),h('div',{class:'sub'},fmtN(r.total)+' pts'),h('div',{class:'pbar'})):h('div',{class:'pod'});
@@ -4539,32 +4708,53 @@ function openCeremony(pid,gid0){
   function next(){if(i<slides.length-1){i++;show();}else close();}
   function prev(){if(i>0){i--;show();}}
   function show(){
-    dots.replaceChildren(...slides.map((_,j)=>h('span',{class:'cd'+(j===i?' on':j<i?' past':'')})));
-    body.replaceChildren(slideEl(slides[i]));
+    if(bk){bk.stop();bk=null;}
     if(stopFw){stopFw();stopFw=null;}
-    layer.replaceChildren();bubbles();
-    const sl=slides[i];
-    if((sl.k==='t'&&sl.x.ws.some(r=>r.uid===S.uid))||(sl.k==='mine'&&final&&mineW.length)||(sl.k==='podium'&&ranked.slice(0,3).some(r=>r.uid===S.uid)))stopFw=fireworks(ov);
+    const sl=slides[i],isBook=sl.k==='book';
+    dots.replaceChildren(...slides.map((_,j)=>h('span',{class:'cd'+(j===i?' on':j<i?' past':'')})));
+    body.className='cer-body'+(isBook?' gbb':'');
+    body.replaceChildren(slideEl(sl));
+    if(isBook)bk.start();
+    if((sl.k==='mine'&&final&&mineW.length)||(sl.k==='podium'&&ranked.slice(0,3).some(r=>r.uid===S.uid)))stopFw=fireworks(ov);
+    const lastLabel=i===slides.length-1?'Terminer':'Suivant';
     nav.replaceChildren(...[i>0?h('button',{class:'btn',type:'button',onclick:prev},'Précédent'):null,
-      h('button',{class:'btn primary',type:'button',id:'cer-next',onclick:next},i===slides.length-1?'Terminer':i===0?'Commencer':'Suivant')].filter(Boolean));
+      h('button',{class:'btn primary',type:'button',id:'cer-next',onclick:()=>{if(isBook&&bk&&!bk.done()){bk.revealAll();return;}next();}},(isBook&&!bk.done())?'Tout afficher':lastLabel)].filter(Boolean));
   }
   document.body.append(ov);
   document.addEventListener('keydown',esc);
-  const layer=h('div',{class:'bubs'});ov.append(layer);
-  let stopFw=null;
-  const dkey='bs-bub-'+S.uid;
-  const dism=()=>{try{return JSON.parse(localStorage.getItem(dkey)||'[]');}catch(e){return [];}};
-  const hide=id=>{try{const l=dism();if(!l.includes(id)){l.push(id);localStorage.setItem(dkey,JSON.stringify(l.slice(-300)));}}catch(e){}};
-  function bubbles(){
-    const sl=slides[i];
-    const want=(sl&&sl.k==='t')?Object.entries(S.comments).filter(([id,c])=>c&&c.per===per.id&&c.tid===sl.x.t.id&&c.uid!==S.uid&&!dism().includes(id)).slice(0,8):[];
-    const ids=new Set(want.map(x=>x[0]));
-    [...layer.children].forEach(b=>{if(!ids.has(b.dataset.id))b.remove();});
-    want.forEach(([id,c])=>{if(![...layer.children].some(b=>b.dataset.id===id))layer.append(bubbleEl(id,c,hide));});
-  }
-  S.cerRefresh=bubbles;
+  S.cerRefresh=null;
   show();
   document.getElementById('cer-next').focus();
+}
+/* ---------- livre des saisons : tous les livres d'or des saisons terminées (icône livre du classement) ---------- */
+function openSeasonBook(){
+  const old=document.getElementById('sb-ov');if(old)old.remove();
+  const done=plist().filter(p=>!p.virtual&&periodState(p)==='done').reverse();
+  const esc=e=>{if(e.key==='Escape')close();};
+  const close=()=>{ov.remove();document.removeEventListener('keydown',esc);};
+  const body=h('div',{class:'cer-body'}),nav=h('div',{class:'row'});
+  const ov=h('div',{class:'cer',id:'sb-ov',role:'dialog','aria-modal':'true','aria-label':'Livre des saisons'},
+    h('div',{class:'cer-top'},h('div',{class:'gb-bt'},'Livre des saisons'),h('button',{class:'btn sm',type:'button',onclick:close},'Fermer')),body,nav);
+  function shelf(){
+    body.className='cer-body';nav.replaceChildren();
+    if(!done.length){body.replaceChildren(h('div',{class:'cer-in'},h('h2',{class:'day'},'Le livre est encore vide'),
+      h('p',{class:'cer-sub'},'Il s’écrit à la fin de chaque saison : les trophées et leurs gagnants y sont inscrits en lettres d’or.')));return;}
+    body.replaceChildren(h('div',{class:'gb-shelf'},done.map(p=>h('button',{type:'button',class:'gb-vol',onclick:()=>openSeason(p.id)},
+      h('span',{class:'gb-vt'},seasonTag(p)),h('span',{class:'gb-vs'},seasonLabel(p)+' · '+fmtShort(p.start)+' → '+fmtShort(p.end))))));
+  }
+  function openSeason(pid,gid0){
+    const per=plist().find(x=>x.id===pid);if(!per){shelf();return;}
+    const gid=gid0!==undefined?gid0:scopeOf(S.uid,per);
+    const {board,wins}=bookWins(per,gid);
+    const ranked=board.rows.filter(r=>r.sessions>0&&inScope(r.uid,gid,per)),nS=ranked.reduce((a,r)=>a+r.sessions,0);
+    const bk=goldenBook(per,gid,wins,{animate:false,onGroup:x=>openSeason(pid,x),
+      stats:ranked.length+' athlète'+(ranked.length>1?'s':'')+' · '+nS+' séance'+(nS>1?'s':'')+' · '+wins.length+' trophée'+(wins.length>1?'s':'')});
+    body.className='cer-body gbb';body.replaceChildren(bk.el);
+    nav.replaceChildren(h('button',{class:'btn',type:'button',onclick:shelf},'← Les saisons'),
+      h('button',{class:'btn primary',type:'button',onclick:()=>{close();openCeremony(pid,gid);}},'Revoir la remise'));
+  }
+  document.body.append(ov);document.addEventListener('keydown',esc);
+  shelf();
 }
 /* ---------- minuteur du metcon ---------- */
 /* Plein écran, 10 s de préparation puis :
@@ -5486,7 +5676,7 @@ function partCard(p,w,date){
     h('div',{class:'phead'},h('h3',{},p.name||KIND[p.kind]||'Partie'),
       h('span',{class:'chip'+(metcon?' live':'')},metcon?'Metcon · points au classement':(KIND[p.kind]||'Autre')),
       metcon&&p.focus&&FOCUS[p.focus]?h('span',{class:'chip'},FOCUS[p.focus]):null,
-      metcon&&INTENS[p.intensity]?h('span',{class:'chip',title:INTENS[p.intensity].d},'Intensité : '+INTENS[p.intensity].l):null,
+      metcon&&intInfo(p)?h('span',{class:'chip',title:intInfo(p).d},'Intensité : '+intInfo(p).l):null,
       metcon&&p.test?h('span',{class:'chip live'},'TEST'):null,
       metcon&&p.redo===false?h('span',{class:'chip miss'},'Pas de REDO'):null,
       p.kind==='force'&&p.movement?h('span',{class:'chip'},p.movement):null),
@@ -6895,6 +7085,7 @@ const ICO_GLOBE='<svg '+SVGB+'><circle cx="12" cy="12" r="9"/><path d="M3 12h18M
 const ICO_GROUP='<svg '+SVGB+'><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.5 2.6-5.5 6-5.5s6 2 6 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M17 14.5c2.6 0 4.5 1.6 4.5 4.5"/></svg>';
 const ICO_CROWN='<svg class="crown" viewBox="0 0 26 20" aria-hidden="true"><path d="M2 17L.5 5l6.5 5L13 1l6 9 6.5-5L24 17z" fill="currentColor"/><rect x="2" y="17.5" width="22" height="2.5" rx="1" fill="currentColor"/></svg>';
 const svgOf=s=>{const d=document.createElement('div');d.innerHTML=s;return d.firstChild;};
+const ICO_BOOK='<svg '+SVGB+'><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z"/><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3"/><path d="M12 6.6l1 2.1 2.3.3-1.7 1.6.4 2.3-2-1.1-2 1.1.4-2.3-1.7-1.6 2.3-.3z"/></svg>';
 /* points avec séparateur de milliers : 7 250 */
 const fmtPts=n=>{const s=fmtN(n).split(',');s[0]=s[0].replace(/\B(?=(\d{3})+(?!\d))/g,'\u202f');return s.join(',');};
 const arHex=(n,rk)=>h('span',{class:'hex'+(rk?' r'+rk:'')},h('b',{},n));
@@ -6966,6 +7157,7 @@ function viewBoard(){
       h('div',{class:'ar-tag nw'},(p.virtual?'Toutes les séances':seasonLabel(p)+' · '+fmtShort(p.start)+' → '+fmtShort(p.end))+' · '+(isGroup?(gname(gsel)||'Groupe'):'Global')+' · '+(gm?'GOAT':'Scratch'))),
     h('div',{class:'ar-hb'},
       h('button',{class:'ar-cup',type:'button','data-tour':'board-set','aria-label':'Réglages du classement',title:'Réglages du classement','aria-expanded':String(!!S.boardSet),onclick:()=>{S.boardSet=!S.boardSet;render();}},svgOf(ICO_GEAR)),
+      h('button',{class:'ar-cup',type:'button','aria-label':'Livre des saisons',title:'Livre des saisons',onclick:()=>openSeasonBook()},svgOf(ICO_BOOK)),
       h('button',{class:'ar-cup',type:'button','data-tour':'board-detail','aria-label':'Trophées et détails',title:'Trophées et détails',onclick:()=>{S.boardDetail=true;S.boardSet=false;render();window.scrollTo(0,0);}},svgOf(ICO_CUP2))));
   /* réglages : un bouton à deux états par choix (ON / OFF), la liste du classement garde toute sa place */
   const tg=(label,onTxt,offTxt,icoOn,icoOff,isOn,fn)=>h('div',{class:'ar-trow'},h('span',{class:'ar-tl'},label),
@@ -9204,8 +9396,7 @@ function paceSpm(kind){
 const SPREAD={
   FT:{l:'For Time',d:6,min:1,max:30,h:'Écart entre deux paliers consécutifs, en % du temps du palier à 10 points. 6 % : 10:00 devient 10:36, puis 11:12…'},
   AMRAP:{l:'AMRAP',d:4,min:1,max:10,h:'Écart entre deux paliers consécutifs, en % du palier à 10 points, arrondi à la rep près. 5 % : 247 reps, puis 235, 222…'},
-  DEAD:{l:'EMOM Dead by',d:null,min:1,max:50,h:'Écart entre deux paliers consécutifs, en % du time cap (arrondi à l’intervalle). Vide = un intervalle par point, ou plusieurs si le cap en compte plus de 10.'},
-  CAP:{l:'For Time : palier time cap',d:90,min:10,max:100,h:'Pourcentage des reps totales à atteindre au time cap pour marquer 1 point (arrondi à la fin d’un exercice, sauf si cela ferait baisser le palier de plus de 5 % du total : dans ce cas, à la rep près).'}
+  DEAD:{l:'EMOM Dead by',d:null,min:1,max:50,h:'Écart entre deux paliers consécutifs, en % du time cap (arrondi à l’intervalle). Vide = un intervalle par point, ou plusieurs si le cap en compte plus de 10.'}
 };
 const spreadPct=k=>{const D=SPREAD[k],v=parseNum(String(((S.prof&&S.prof.spread)||{})[k]??''));return(v!==null&&v>=D.min&&v<=D.max)?v:D.d;};
 /* repères d'un time cap : reps cumulées (réelles) à la fin de chaque exercice, dans l'ordre où l'athlète les enchaîne */
@@ -9288,6 +9479,20 @@ function deadTiers(D,iv,pct){ /* Dead by : temps tenu décroissant depuis le tim
 /* f = multiplicateur appliqué au temps « pur » (reps x secondes par rep) : transitions, fatigue, respirations */
 const INTENS={max:{l:'À fond',f:1.2,d:'Tu pousses du début à la fin.'},allure:{l:'Gestion d’allure',f:1.45,d:'Tu gardes un rythme régulier, sans te vider.'},cool:{l:'Pas à fond',f:1.8,d:'Séance tranquille : tu gardes de la marge.'}};
 const intF=k=>{const v=parseNum(String((S.prof&&S.prof.intf&&S.prof.intf[k])??''));return (v!==null&&v>=0.5&&v<=5)?v:INTENS[k].f;};
+/* intensités créées par le coach (onglet Configuration des mouvements) : clé « c_… », ajoutées à INTENS pour servir partout comme les intensités de base */
+function syncIntens(){
+  Object.keys(INTENS).forEach(k=>{if(k.slice(0,2)==='c_')delete INTENS[k];});
+  const L=(S.prof&&Array.isArray(S.prof.intCustom))?S.prof.intCustom:[];
+  L.forEach(x=>{
+    if(!x||!x.id)return;
+    const f=parseNum(String(x.f??'')),l=String(x.l||'').trim();
+    if(!l||f===null||!(f>=0.5&&f<=5))return;
+    INTENS['c_'+x.id]={l,f,d:'Coefficient '+String(f).replace('.',',')+'.',custom:true};
+  });
+}
+const intList=()=>{syncIntens();return Object.entries(INTENS);};
+/* intensité d'une partie : celle de la liste, sinon le nom gardé dans la séance (intensité du coach absente du profil de l'athlète) */
+const intInfo=p=>INTENS[p.intensity]||((p.intensity&&p.intensityL)?{l:String(p.intensityL),d:''}:null);
 const SEC_EXTRA={'Back Squat':3.5,'Bench Press':3,'Shoulder Press':3,'Jerk':4,'Down Up':3,'Crunch mains sur les cuisses':2,'Sauts sans corde':.5,'Pompes sur genoux':2,'Snatch':4,'Clean':4};
 const SEC_MAP={'Snatch':'Power Snatch','Row (rameur)':'Rameur'};
 let _secAl=null;
@@ -9372,11 +9577,25 @@ function calcTiers(p){
   const ft=p.format==='FT',dur=parseNum(p.dur||'');
   if(!ft&&!(dur>0)){toast('Indique la durée de l’AMRAP (min) pour calculer les paliers.',true);return;}
   /* mêmes paliers pour tous les niveaux : ce sont les variantes d'exercices qui font la différence */
+  /* For Time : les paliers se calculent comme s'il n'y avait pas de time cap. Un palier qui dépasse le time cap s'écrit en reps (ou tours + reps) atteintes au time cap. */
+  const ftOut={tiers:[],capTiers:[]};
+  if(ft){
+    const capS=dur>0?dur*60:0,times=spreadTimesPct(e.T*I.f,spreadPct('FT'),0);
+    const cm={format:p.format,content:p.content,repsRound:Number(p.repsRound)||0,lineRounds:p.format==='FT'&&!!p.lineRounds};
+    const bnd=capBoundaries(cm,e),total=bnd.length?bnd[bnd.length-1]:e.R;
+    let prev=Infinity;
+    times.forEach((t,j)=>{
+      if(!(capS>0)||t<=capS){ftOut.tiers.push({t:fmtTime(t),p:String(10-j)});return;}
+      let v=Math.floor(total*capS/t+1e-9);
+      if(v>=prev)v=prev-1;
+      if(v<1)return;
+      prev=v;ftOut.capTiers.push({t:capInput(cm,v),p:String(10-j)});
+    });
+  }
   const build=k=>{
     const out=[];
     if(ft){
-      const base=e.T*I.f,cap=dur>0?dur*60:0;
-      spreadTimesPct(base,spreadPct('FT'),cap).forEach((t,j)=>out.push({t:fmtTime(t),p:String(10-j)}));
+      ftOut.tiers.forEach(x=>out.push({...x}));
     }else{
       const est=dur*60/(e.roundTime*I.f);
       const tot=eqTotal(amrapModel(p)),rr=(tot>0)?tot:e.roundReps;
@@ -9391,12 +9610,11 @@ function calcTiers(p){
     lv.tiers=build(k);lv.pend=null;
   });
   p.levels[2].tiers=build(2);p.levels[2].pend=null;
-  if(ft){ /* palier time cap recalculé, comme les autres paliers, dans l'unité des scores (reps réelles cumulées) */
-    const ct=[{t:capTierValue(p,e,spreadPct('CAP')),p:'1'}];
-    p.levels.forEach((lv,k)=>{if(k===2||(lv.mode==='custom'&&!p.syncTiers))lv.capTiers=blankCapTiers().map((c,i)=>ct[i]||c);});
+  if(ft){ /* paliers au-delà du time cap : reps réelles cumulées au time cap (affichées en tours + reps si le WOD a des tours) */
+    p.levels.forEach((lv,k)=>{if(k===2||(lv.mode==='custom'&&!p.syncTiers))lv.capTiers=ftOut.capTiers.length?ftOut.capTiers.map(c=>({...c})):blankCapTiers();});
   }
-  const top=p.levels[2].tiers[0];
-  p.estInfo=(ft?'Palier max (10 pts) : '+top.t+' pour tous les niveaux, '+I.l.toLowerCase()+'.':'Palier max (10 pts) : '+top.t+' tours pour tous les niveaux, '+I.l.toLowerCase()+'.')
+  const top=p.levels[2].tiers[0]||(ft&&ftOut.capTiers[0]?{t:ftOut.capTiers[0].t+' au time cap'}:{t:'—'});
+  p.estInfo=(ft?'Palier max (10 pts) : '+top.t+' pour tous les niveaux, '+I.l.toLowerCase()+'.'+(ftOut.capTiers.length?' '+ftOut.capTiers.length+' palier'+(ftOut.capTiers.length>1?'s':'')+' au-delà du time cap, écrit'+(ftOut.capTiers.length>1?'s':'')+' en reps (ou tours + reps) atteintes au time cap.':''):'Palier max (10 pts) : '+top.t+' tours pour tous les niveaux, '+I.l.toLowerCase()+'.')
     +' Temps pur estimé '+fmtTime(Math.round(e.T))+' ('+fmtN(Math.round(e.R))+' reps)'+(ft?'':' par tour : '+fmtTime(Math.round(e.roundTime)))
     +(e.unknown.length?' · Mouvement non reconnu (3 s par rep supposées) : '+e.unknown.join(', '):'')+'. À ajuster à ta façon de coacher.';
   render();
@@ -9545,7 +9763,7 @@ function draftToWod(d){
           o.deadBy=true;
         }
       }
-      o.format=p.format;o.detail=p.detail.trim();o.focus=p.focus;if(INTENS[p.intensity])o.intensity=p.intensity;o.capV=2; /* capV 2 : paliers time cap en reps cumulées */
+      o.format=p.format;o.detail=p.detail.trim();o.focus=p.focus;if(INTENS[p.intensity]){o.intensity=p.intensity;o.intensityL=INTENS[p.intensity].l;}o.capV=2; /* capV 2 : paliers time cap en reps cumulées */
       if(String(p.repsRound||'').trim()!==''){const n=parseNum(p.repsRound);if(n===null||n<=0||n%1)throw new Error('Reps par tour illisibles ('+o.label+').');o.repsRound=n;}
       /* si des reps équivalentes sont définies dans le contenu, le total de reps réelles du tour s'en déduit */
       if(p.format==='FT'&&p.lineRounds)delete o.repsRound;
@@ -9984,6 +10202,9 @@ function mvCfgSave(){
   const fi=S.prof.intf||{};
   for(const k of Object.keys(INTENS)){const fv=parseNum(String(fi[k]??''));if(fv!==null&&fv>=0.5&&fv<=5)fi[k]=Math.round(fv*100)/100;else delete fi[k];}
   S.prof.intf=fi;
+  /* intensités du coach : un nom et un coefficient entre 0,5 et 5, sinon la ligne est retirée */
+  S.prof.intCustom=(S.prof.intCustom||[]).map(x=>{const f=parseNum(String((x&&x.f)??'')),l=String((x&&x.l)||'').trim().slice(0,40);return (x&&x.id&&l&&f!==null&&f>=0.5&&f<=5)?{id:String(x.id),l,f:Math.round(f*100)/100}:null;}).filter(Boolean);
+  syncIntens();
   const pc=S.prof.pace||{};
   for(const k of ['row','run']){const raw=String(pc[k]??'').trim();let v=raw?parseTime(raw):null;if(raw&&v===null){const n=parseNum(raw);if(n!==null&&n>0)v=n;}if(v!==null&&v>=20&&v<=1800)pc[k]=fmtTime(Math.round(v));else delete pc[k];}
   S.prof.pace=pc;
@@ -10023,14 +10244,26 @@ function spreadCard(){
   return box;
 }
 function intensCard(){
-  const keys=Object.keys(INTENS);
+  syncIntens();
+  const keys=Object.keys(INTENS).filter(k=>!INTENS[k].custom);
   S.prof.intf=S.prof.intf||{};
+  S.prof.intCustom=S.prof.intCustom||[];
   const box=h('section',{class:'card'},h('h2',{class:'h2'},'Intensités du metcon'),
     h('p',{class:'muted'},'Coefficient appliqué au temps « pur » du metcon pour calculer les paliers. Plus il est grand, moins l’effort est intense (donc moins de reps). Vide = valeur par défaut.'));
   keys.forEach(k=>{
     const I=INTENS[k];
     box.append(field(I.l,h('input',{id:'intf-'+k,type:'text',inputmode:'decimal',value:(S.prof.intf[k]!==undefined&&S.prof.intf[k]!==null)?String(S.prof.intf[k]):'',placeholder:String(I.f).replace('.',','),'aria-label':'Coefficient '+I.l,oninput:ev=>{S.prof.intf[k]=ev.target.value;}}),I.d+' Défaut : '+String(I.f).replace('.',',')+'.'));
   });
+  box.append(h('div',{class:'flabel'},'Mes intensités'),
+    h('p',{class:'hint'},'Crée tes propres intensités : un nom et un coefficient (entre 0,5 et 5). Elles apparaissent dans le créateur de séance, à côté des intensités ci-dessus, et servent à calculer les paliers.'));
+  S.prof.intCustom.forEach((x,j)=>{
+    box.append(h('div',{class:'lvl-edit'},
+      h('div',{class:'grid2'},
+        field('Nom',h('input',{id:'intc-l-'+j,type:'text',maxlength:'40',value:x.l||'',placeholder:'Ex : Sprint','aria-label':'Nom de l’intensité',oninput:ev=>{x.l=ev.target.value;}})),
+        field('Coefficient',h('input',{id:'intc-f-'+j,type:'text',inputmode:'decimal',value:(x.f!==undefined&&x.f!==null)?String(x.f).replace('.',','):'',placeholder:'1,3','aria-label':'Coefficient de l’intensité',oninput:ev=>{x.f=ev.target.value;}}))),
+      h('div',{class:'row'},h('button',{type:'button',class:'btn sm','aria-label':'Supprimer cette intensité',onclick:()=>{S.prof.intCustom.splice(j,1);render();}},'Supprimer'))));
+  });
+  box.append(h('div',{class:'row'},h('button',{type:'button',class:'btn sm',id:'intc-add',onclick:()=>{S.prof.intCustom.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,5),l:'',f:''});render();}},'Ajouter une intensité')));
   return box;
 }
 function mvCfgCard(name){
@@ -10311,7 +10544,7 @@ function wodIssues(w,editing){
     const lvs=p.levels||[];
     lvs.forEach((l,k)=>{
       const nm=LEVEL_NAMES[k];
-      if(!l.tiers||!l.tiers.length)W(L+' · '+nm+' : aucun palier, donc pas de points de performance.');
+      if((!l.tiers||!l.tiers.length)&&!(p.format==='FT'&&l.capTiers&&l.capTiers.length))W(L+' · '+nm+' : aucun palier, donc pas de points de performance.');
       else for(let j=1;j<l.tiers.length;j++)if(l.tiers[j].p>l.tiers[j-1].p){W(L+' · '+nm+' : un moins bon score rapporte plus de points (paliers incohérents).');break;}
       if(!!l.loadF!==!!l.loadH)W(L+' · '+nm+' : charge '+(l.loadF?'hommes':'femmes')+' manquante.');
       const f=kgNum(l.loadF),hh=kgNum(l.loadH);
@@ -10442,8 +10675,8 @@ function wodEditor(modal){
         box.append(field('Mot du coach (affiché près du metcon et pendant les 10 s de préparation)',wta),
           words.length?h('div',{class:'chips'},words.map(wd=>h('button',{type:'button',class:'chip load',style:'cursor:pointer',title:wd,onclick:()=>{p.word=wd;wta.value=wd;}},trunc(wd,32)))):h('p',{class:'hint'},'Enregistre des mots prédéfinis dans Préférences (roue dentée).'));}
       box.append(h('div',{class:'field'},h('span',{class:'flabel'},'Intensité du metcon'),
-        h('div',{class:'seg',role:'group','aria-label':'Intensité du metcon'},Object.entries(INTENS).map(([k,v])=>h('button',{type:'button',class:'btn sm','aria-pressed':p.intensity===k?'true':'false',title:v.d,onclick:()=>{p.intensity=(p.intensity===k?'':k);p.estInfo='';render();}},v.l))),
-        h('p',{class:'hint'},p.intensity?INTENS[p.intensity].d+' L’intensité est affichée aux athlètes.':'Précise aux athlètes s’il faut y aller à fond, en gestion d’allure ou pas à fond. Elle sert aussi à calculer les paliers.')),
+        h('div',{class:'seg',role:'group','aria-label':'Intensité du metcon'},intList().map(([k,v])=>h('button',{type:'button',class:'btn sm','aria-pressed':p.intensity===k?'true':'false',title:v.d,onclick:()=>{p.intensity=(p.intensity===k?'':k);p.estInfo='';render();}},v.l))),
+        h('p',{class:'hint'},(p.intensity&&INTENS[p.intensity])?INTENS[p.intensity].d+' L’intensité est affichée aux athlètes.':'Précise aux athlètes s’il faut y aller à fond, en gestion d’allure ou pas à fond (ou une intensité créée dans la configuration des mouvements). Elle sert aussi à calculer les paliers.')),
         h('div',{class:'row'},h('button',{class:'btn',type:'button',id:'p'+i+'-calc',onclick:()=>calcTiers(p)},'Calculer les paliers')),
         h('p',{class:'hint'},p.estInfo||'Lit les mouvements, les reps et les tours du contenu, estime le temps selon l’intensité choisie et remplit les 10 paliers (10 points pour le palier max). Remplace les paliers déjà saisis.'));
       const tab=p.lvTab===undefined?2:p.lvTab;
@@ -10989,6 +11222,35 @@ function loginPitch(){
       cgvButton()),
     h('p',{class:'hint'},'Cette appli ne remplace pas un avis médical. Consulte un médecin avant de commencer ou de reprendre une activité intense.'));
 }
+/* écran de connexion : mettre l'appli sur l'écran d'accueil (un bouton Apple, un bouton Android), avec les consignes de chaque système */
+function installCard(){
+  if(isStandalone())return null; /* déjà installée : rien à proposer */
+  const goApple=async()=>{
+    /* iOS ne permet pas d'ajouter l'icône par code : on ouvre la feuille de partage, où il reste à toucher « Sur l'écran d'accueil » */
+    if(navigator.share){try{await navigator.share({title:'Box Score',url:location.href.split('#')[0]});}catch(e){}}
+    else toast('Ouvre cette page dans Safari, touche Partager puis « Sur l’écran d’accueil ».',true);
+  };
+  const goAndroid=async(btn)=>{
+    /* Chrome Android : l'invite d'installation s'ouvre directement ; sinon on renvoie au menu de Chrome */
+    const ev=installEv;
+    if(ev){
+      installEv=null;
+      try{ev.prompt();const c=await ev.userChoice;if(c&&c.outcome==='accepted'){btn.textContent='Installée ✓';btn.disabled=true;return;}}catch(e){}
+    }
+    toast('Ouvre cette page dans Chrome, touche les trois points puis « Ajouter à l’écran d’accueil » (ou « Installer l’application »).',true);
+  };
+  const steps=a=>h('ol',{style:'margin:8px 0 0 18px;padding:0;display:grid;gap:4px'},...a.map(t=>h('li',{},t)));
+  return h('section',{class:'card',id:'install-card'},
+    h('h2',{class:'h2'},'Mettre l’appli sur ton écran d’accueil'),
+    h('p',{class:'muted'},'Elle s’ouvre alors comme une vraie appli, en plein écran. Choisis ton téléphone :'),
+    h('div',{style:'display:grid;gap:14px'},
+      h('div',{},
+        h('button',{class:'btn'+(isIOS()?' primary':''),type:'button',id:'install-apple',onclick:goApple},'iPhone / iPad (Apple)'),
+        steps(['Ouvre cette page dans Safari (pas dans un autre navigateur).','Touche le bouton Partager (le carré avec une flèche vers le haut), ou le bouton ci-dessus.','Fais défiler, puis choisis « Sur l’écran d’accueil ».','Touche « Ajouter » : l’icône apparaît sur ton écran d’accueil.'])),
+      h('div',{},
+        h('button',{class:'btn'+(isAndroid()?' primary':''),type:'button',id:'install-android',onclick:e=>goAndroid(e.currentTarget)},'Android'),
+        steps(['Ouvre cette page dans Chrome.','Touche le bouton ci-dessus : une fenêtre propose d’installer l’appli, confirme.','Si rien ne s’ouvre : touche les trois points en haut à droite, puis « Ajouter à l’écran d’accueil » (ou « Installer l’application »).','Confirme : l’icône apparaît sur ton écran d’accueil.']))));
+}
 function loginView(){
   const email=h('input',{id:'auth-email',type:'email',autocomplete:'email',placeholder:'toi@exemple.fr'});
   const pw=h('input',{id:'auth-pw',type:'password',autocomplete:'current-password',placeholder:'6 caractères minimum'});
@@ -11018,6 +11280,7 @@ function loginView(){
           if(!email.value.trim()){msg.textContent='Écris ton e-mail ci-dessus, puis clique à nouveau.';return;}
           await sendPasswordResetEmail(auth,email.value.trim());msg.textContent='Si ce compte existe, un e-mail de réinitialisation vient d’être envoyé.';})},'Mot de passe oublié'),
         h('button',{class:'link',type:'button',onclick:()=>attempt(()=>signInWithPopup(auth,new GoogleAuthProvider()))},'Continuer avec Google'))),
+    installCard(),
     loginPitch(),
     h('p',{class:'ver'},'Version '+APP_VERSION));
 }
@@ -12024,7 +12287,7 @@ function startFirebase(){
     unsubs.push(S.db.collection('comments').onSnapshot(sn=>{S.comments=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));if(S.cerRefresh)S.cerRefresh();},()=>{}));
     /* réactions emoji : si les règles ne sont pas publiées, on ignore l'erreur */
     unsubs.push(S.db.collection('reactions').onSnapshot(sn=>{S.reactions=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));scheduleRender();},()=>{}));
-    unsubs.push(S.db.doc('users/'+S.uid+'/private/profile').onSnapshot(sn=>{const d=sn.exists?sn.data():null;const _op=S.prof;S.prof={plan:(d&&d.plan&&typeof d.plan==='object')?JSON.parse(JSON.stringify(d.plan)):null,pend:(d&&d.pend&&typeof d.pend==='object')?JSON.parse(JSON.stringify(d.pend)):{},prs:(d&&d.prs)?JSON.parse(JSON.stringify(d.prs)):{},sex:(d&&d.sex)||'',birth:(d&&typeof d.birth==='string')?d.birth:'',genEx:(d&&Array.isArray(d.genEx))?d.genEx:null,genAll:(d&&Array.isArray(d.genAll))?d.genAll:null,words:(d&&Array.isArray(d.words))?d.words:[],mvcfg:(d&&d.mvcfg&&typeof d.mvcfg==='object')?JSON.parse(JSON.stringify(d.mvcfg)):{},revd:(d&&d.revd&&typeof d.revd==='object')?JSON.parse(JSON.stringify(d.revd)):{},intf:(d&&d.intf&&typeof d.intf==='object')?JSON.parse(JSON.stringify(d.intf)):{},pace:(d&&d.pace&&typeof d.pace==='object')?JSON.parse(JSON.stringify(d.pace)):{},spread:(d&&d.spread&&typeof d.spread==='object')?JSON.parse(JSON.stringify(d.spread)):{},weight:(d&&Number(d.weight)>0)?Number(d.weight):0,rewardDraft:(d&&typeof d.rewardDraft==='string')?d.rewardDraft:''};if(planSaveT!==null&&_op){S.prof.plan=_op.plan||null;S.prof.pend=_op.pend||{};}if(rwT!==null&&_op)S.prof.rewardDraft=_op.rewardDraft||'';S.profLoaded=true;scheduleRender();selfSync();planSync();},fail));
+    unsubs.push(S.db.doc('users/'+S.uid+'/private/profile').onSnapshot(sn=>{const d=sn.exists?sn.data():null;const _op=S.prof;S.prof={plan:(d&&d.plan&&typeof d.plan==='object')?JSON.parse(JSON.stringify(d.plan)):null,pend:(d&&d.pend&&typeof d.pend==='object')?JSON.parse(JSON.stringify(d.pend)):{},prs:(d&&d.prs)?JSON.parse(JSON.stringify(d.prs)):{},sex:(d&&d.sex)||'',birth:(d&&typeof d.birth==='string')?d.birth:'',genEx:(d&&Array.isArray(d.genEx))?d.genEx:null,genAll:(d&&Array.isArray(d.genAll))?d.genAll:null,words:(d&&Array.isArray(d.words))?d.words:[],mvcfg:(d&&d.mvcfg&&typeof d.mvcfg==='object')?JSON.parse(JSON.stringify(d.mvcfg)):{},revd:(d&&d.revd&&typeof d.revd==='object')?JSON.parse(JSON.stringify(d.revd)):{},intf:(d&&d.intf&&typeof d.intf==='object')?JSON.parse(JSON.stringify(d.intf)):{},intCustom:(d&&Array.isArray(d.intCustom))?JSON.parse(JSON.stringify(d.intCustom)):[],pace:(d&&d.pace&&typeof d.pace==='object')?JSON.parse(JSON.stringify(d.pace)):{},spread:(d&&d.spread&&typeof d.spread==='object')?JSON.parse(JSON.stringify(d.spread)):{},weight:(d&&Number(d.weight)>0)?Number(d.weight):0,rewardDraft:(d&&typeof d.rewardDraft==='string')?d.rewardDraft:''};if(planSaveT!==null&&_op){S.prof.plan=_op.plan||null;S.prof.pend=_op.pend||{};}if(rwT!==null&&_op)S.prof.rewardDraft=_op.rewardDraft||'';syncIntens();S.profLoaded=true;scheduleRender();selfSync();planSync();},fail));
     render();
   });
 }
