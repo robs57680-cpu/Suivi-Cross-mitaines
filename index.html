@@ -535,6 +535,10 @@ section.feed-card>.feed-badge{position:absolute!important;top:8px;right:12px;z-i
 .wu-main{min-height:68px;font-size:17px}
 .wu-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .tm.wu .tm-bot .btn{min-height:52px}
+.tm.wu .wu-nx{display:flex;align-items:center;justify-content:center;gap:12px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,.1);border:2px solid var(--panel-accent,#FFB703);font-family:var(--f-display);font-size:clamp(24px,7vw,34px);line-height:1.1;text-transform:uppercase;text-align:center;overflow-wrap:anywhere;visibility:hidden}
+.tm.wu .wu-nx .ar{flex:none;font-size:1.3em;color:var(--panel-accent,#FFB703)}
+.tm.wu .wu-nx.on{visibility:visible;animation:wuNx .35s ease-out}
+@keyframes wuNx{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
 .tm.wu .tm-bot .btn.sm{min-height:40px}
 .wu-check{width:96px;height:96px;border-radius:50%;background:var(--panel-accent);color:var(--panel);display:grid;place-items:center;font-family:var(--f-display);font-size:64px;line-height:1}
 .wu-tip{max-width:34ch;margin-top:4px;padding:12px 16px;border-radius:12px;border:1px solid var(--panel-accent);background:color-mix(in srgb,var(--panel-accent) 14%,transparent);color:var(--panel-ink);font-size:16px;line-height:1.4;text-align:center;text-wrap:balance}
@@ -4662,7 +4666,7 @@ function openWarmup(mode,start){
   const items=wuItems(),n=items.length;
   if(!n){toast('Aucun exercice dans l’échauffement.',true);return;}
   /* phase : run (compte à rebours en cours) · wait (répétitions ou mode libre, action manuelle) · paused · done · closed */
-  const st={mode,idx:Math.min(Math.max(0,start||0),n-1),phase:mode==='guided'?'run':'wait',endAt:0,rem:0,tid:null,gen:0,muted:tmMuted(),ac:null,wake:null,vid:null,lastK:-1,done:0,shown:-1,infoIdx:-1};
+  const st={mode,idx:Math.min(Math.max(0,start||0),n-1),phase:mode==='guided'?'run':'wait',endAt:0,rem:0,prep:false,tid:null,gen:0,muted:tmMuted(),ac:null,wake:null,vid:null,lastK:-1,done:0,shown:-1,infoIdx:-1};
   try{st.ac=new (window.AudioContext||window.webkitAudioContext)();if(st.ac.resume)st.ac.resume();}catch(e){}
   const beep=(f,ms)=>{
     if(!st.muted&&st.ac){try{const o=st.ac.createOscillator(),g=st.ac.createGain();o.type='sine';o.frequency.value=f;g.gain.value=.25;o.connect(g);g.connect(st.ac.destination);o.start();o.stop(st.ac.currentTime+ms/1000);}catch(e){}}
@@ -4684,7 +4688,8 @@ function openWarmup(mode,start){
   const cur=()=>items[st.idx];
   const clearT=()=>{clearTimeout(st.tid);st.tid=null;st.gen++;};
   const ov=h('div',{class:'tm wu',id:'tm-ov',role:'dialog','aria-modal':'true','aria-label':'Échauffement'});
-  let timeEl=null,barEl=null;
+  let timeEl=null,barEl=null,nextEl=null;
+  const PREP_MS=5000; /* mode guidé : 5 s de préparation avant le premier exercice */
 
   /* Un seul minuteur à la fois : st.tid. Il ne sert qu'à réveiller l'écran à la prochaine seconde ou à la fin
      de l'exercice ; le temps restant est toujours recalculé à partir de st.endAt (heure réelle). */
@@ -4700,6 +4705,11 @@ function openWarmup(mode,start){
     if(st.phase!=='run')return;
     const now=Date.now();let moved=false;
     while(st.phase==='run'&&now>=st.endAt){
+      if(st.prep){ /* fin de la préparation : le premier exercice démarre pile à ce moment */
+        st.prep=false;st.lastK=-1;moved=true;
+        if(cur().mode==='time')st.endAt+=cur().target*1000;else st.phase='wait';
+        continue;
+      }
       st.done=Math.max(st.done,st.idx+1);
       if(st.idx>=n-1){finish(true);return;}
       st.idx++;moved=true;st.lastK=-1;
@@ -4710,7 +4720,7 @@ function openWarmup(mode,start){
     schedule();
   }
   function startItem(){
-    clearT();st.lastK=-1;
+    clearT();st.lastK=-1;st.prep=false;
     const x=cur();
     if(st.mode==='guided'&&x.mode==='time'){
       if(st.phase==='paused')st.rem=x.target*1000;
@@ -4718,6 +4728,8 @@ function openWarmup(mode,start){
     }else st.phase='wait';
     draw();schedule();
   }
+  function startPrep(){clearT();st.lastK=-1;st.prep=true;st.phase='run';st.endAt=Date.now()+PREP_MS;draw();schedule();}
+  function skipPrep(){st.prep=false;st.phase='wait';startItem();}
   function next(){
     st.done=Math.max(st.done,st.idx+1);
     if(st.idx>=n-1){finish(true);return;}
@@ -4727,8 +4739,8 @@ function openWarmup(mode,start){
   function pause(){if(st.phase!=='run')return;st.rem=Math.max(0,st.endAt-Date.now());st.phase='paused';clearT();draw();}
   function resume(){if(st.phase!=='paused')return;st.endAt=Date.now()+st.rem;st.phase='run';lock();draw();schedule();}
   function finish(full){clearT();st.phase='done';if(full)st.done=n;beep(880,full?700:200);release();drawDone();}
-  function restart(){st.idx=0;st.done=0;st.shown=-1;st.phase=st.mode==='guided'?'run':'wait';lock();startItem();}
-  function toGuided(){st.mode='guided';st.phase='wait';lock();startItem();}
+  function restart(){st.idx=0;st.done=0;st.shown=-1;lock();if(st.mode==='guided')startPrep();else{st.phase='wait';startItem();}}
+  function toGuided(){st.mode='guided';st.phase='wait';lock();startPrep();}
   const onVis=()=>{
     if(document.hidden||st.phase==='closed')return;
     if(st.phase!=='done')lock();
@@ -4755,25 +4767,27 @@ function openWarmup(mode,start){
     const x=cur();
     const left=st.phase==='run'?Math.max(0,st.endAt-Date.now()):st.rem;
     const k=Math.ceil(left/1000);
-    timeEl.textContent=wuMMSS(k);
-    barEl.style.width=Math.max(0,Math.min(100,100*(1-left/(x.target*1000))))+'%';
-    ov.classList.toggle('alert',st.phase==='run'&&k>0&&k<=3);
+    timeEl.textContent=st.prep?String(k):wuMMSS(k);
+    barEl.style.width=Math.max(0,Math.min(100,100*(1-left/(st.prep?PREP_MS:x.target*1000))))+'%';
+    ov.classList.toggle('alert',st.phase==='run'&&!st.prep&&k>0&&k<=3);
+    if(nextEl)nextEl.classList.toggle('on',!st.prep&&k>0&&k<=5); /* le prochain mouvement apparaît 5 s avant la fin */
     if(st.phase==='run'&&k!==st.lastK){st.lastK=k;if(k>0&&k<=3&&!document.hidden)beep(660,120);}
   }
   function draw(){
     if(st.phase==='done'||st.phase==='closed')return;
     const x=cur(),timed=st.mode==='guided'&&x.mode==='time',paused=st.phase==='paused',last=st.idx>=n-1;
-    ov.className='tm wu'+(paused?' prep':'');
+    ov.className='tm wu'+(paused||st.prep?' prep':'');
     const anim=st.shown!==st.idx;st.shown=st.idx;
-    timeEl=null;barEl=null;
+    timeEl=null;barEl=null;nextEl=null;
     const mid=h('div',{class:'tm-mid'+(anim?' wu-anim':'')},
-      h('p',{class:'eyebrow tm-eb','aria-live':'polite'},'Exercice '+(st.idx+1)+' / '+n),
+      h('p',{class:'eyebrow tm-eb','aria-live':'polite'},st.prep?'Prépare-toi · exercice '+(st.idx+1)+' / '+n:'Exercice '+(st.idx+1)+' / '+n),
       h('div',{class:'wu-seg',role:'img','aria-label':'Progression : exercice '+(st.idx+1)+' sur '+n},items.map((_,i)=>h('i',{class:i<st.idx?'on':i===st.idx?'cur':''}))),
       h('h1',{class:'wu-name'},x.name));
-    if(timed){
+    if(st.prep||timed){
       timeEl=h('div',{class:'tm-time wu-time'},'');barEl=h('i',{});
       mid.append(timeEl,h('div',{class:'bar wu-bar'},barEl));
       if(paused)mid.append(h('p',{class:'tm-sub'},'En pause'));
+      else if(st.prep)mid.append(h('p',{class:'tm-sub'},'L’échauffement démarre dans quelques secondes.'));
     }else{
       mid.append(h('div',{class:'wu-obj'},x.mode==='time'?String(x.target):String(x.target),
         h('small',{},x.mode==='time'?'secondes · sans chrono en mode libre':x.perSide?'répétitions par côté ('+x.target*2+' au total)':'répétitions')));
@@ -4799,7 +4813,10 @@ function openWarmup(mode,start){
     const endB=h('button',{class:'btn',type:'button'},'Terminer l’échauffement');
     endB.addEventListener('click',wuArmed(endB,'Terminer ?',()=>finish(false)));
     let bot;
-    if(timed){
+    if(st.prep){
+      bot=[h('button',{class:'btn primary wu-main',type:'button',id:'wu-pause',onclick:paused?resume:pause},paused?'Reprendre':'Pause'),
+        h('div',{class:'wu-two'},h('button',{class:'btn',type:'button',id:'wu-skip',onclick:skipPrep},'Commencer maintenant'),endB)];
+    }else if(timed){
       bot=[h('button',{class:'btn primary wu-main',type:'button',id:'wu-pause',onclick:paused?resume:pause},paused?'Reprendre':'Pause'),
         h('div',{class:'wu-two'},prevB,h('button',{class:'btn',type:'button',id:'wu-next',onclick:next},last?'Terminer':'Suivant →')),
         last?null:endB];
@@ -4808,11 +4825,14 @@ function openWarmup(mode,start){
         h('div',{class:'wu-two'},prevB,last?h('span',{}):endB)];
       if(st.mode==='manual')bot.push(h('button',{class:'btn sm',type:'button',id:'wu-toguided',onclick:toGuided},'Lancer le mode guidé à partir d’ici'));
     }
-    ov.replaceChildren(top(),mid,h('div',{class:'tm-bot'},bot));
+    /* mode guidé : une flèche puis le nom du prochain mouvement, en gros, pendant les 5 dernières secondes (place réservée pour que rien ne bouge) */
+    const nx=(timed&&!st.prep&&!last)?items[st.idx+1]:null;
+    if(nx)nextEl=h('div',{class:'wu-nx',role:'status','aria-label':'Prochain mouvement : '+nx.name},h('span',{class:'ar','aria-hidden':'true'},'→'),h('span',{class:'nm'},nx.name));
+    ov.replaceChildren(top(),mid,h('div',{class:'tm-bot'},nextEl?[nextEl].concat(bot):bot));
     upd();
   }
   function drawDone(){
-    ov.className='tm wu';timeEl=null;barEl=null;
+    ov.className='tm wu';timeEl=null;barEl=null;nextEl=null;
     const full=st.done>=n;
     ov.replaceChildren(top(),
       h('div',{class:'tm-mid wu-end wu-anim'},
@@ -4826,7 +4846,7 @@ function openWarmup(mode,start){
   document.body.append(ov);
   document.addEventListener('visibilitychange',onVis);window.addEventListener('pageshow',onVis);window.addEventListener('focus',onVis);
   lock();
-  startItem();
+  if(mode==='guided')startPrep();else startItem();
   if(mode==='guided')beep(880,150);
 }
 
@@ -11346,6 +11366,8 @@ function plansCarousel(buy){
       h('p',{class:'plan-sub'},'Renouvelé toutes les 4 semaines.'),
       h('p',{class:'plan-sub'},'Sans engagement : tu arrêtes quand tu veux.')],'4w'),
     plan('best',SEASON_WEEKS+' semaines',eur(PRICE_SEASON)+' / '+SEASON_WEEKS+' semaines',[
+      h('p',{class:'plan-old'},'au lieu de ',h('s',{},eur(PRICE_4W*SEASON_WEEKS/4)),' en 3 forfaits de 4 semaines'),
+      h('p',{class:'plan-save'},'−'+Math.round((1-PRICE_SEASON/(PRICE_4W*SEASON_WEEKS/4))*100)+' % de réduction'),
       h('p',{class:'plan-free'},'Les 2 premières semaines sont offertes à l’inscription.'),
       h('p',{class:'plan-sub'},'Renouvelé toutes les '+SEASON_WEEKS+' semaines.'),
       h('p',{class:'plan-sub'},'Sans engagement : tu arrêtes quand tu veux.')],'season'));
