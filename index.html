@@ -1421,6 +1421,36 @@ a.btn.primary{color:var(--accent-ink)}
 .wk.wk-sub{border:3px solid var(--plate-blue);background:color-mix(in srgb,var(--plate-blue) 8%,var(--surface));margin-top:6px}
 .rwd-peek{display:grid;gap:8px}
 .rwd-peek textarea,.rwd-area{width:100%;font-family:var(--f-mono);font-size:14px;line-height:1.5}
+
+/* ===== Bots (objectifs de points) : couleur propre à chaque bot, jamais signalés comme bots ===== */
+.pav.bot .pav-c{background:#0c0d12}
+.bot-img{--k:2.3;position:absolute;max-width:none;display:block;width:calc(var(--k)*100%);height:auto;left:calc((.5 - var(--fx)*var(--k))*100%);top:calc((.5 - var(--fy)*var(--k)*2.764)*100%);user-select:none;-webkit-user-drag:none}
+.bot-face{position:relative;flex:none;width:44px;height:44px;border-radius:50%;overflow:hidden;border:2px solid rgb(var(--bc));background:#0c0d12}
+.ar-row.bot{border-color:rgba(var(--bc),.7);background:linear-gradient(100deg,rgba(var(--bc),.24),rgba(var(--bc),.05));box-shadow:0 0 14px rgba(var(--bc),.28),inset 0 0 0 1px rgba(var(--bc),.14)}
+.ar-row.bot .ar-nm>.t,.pod-c.bot .pod-nm{color:rgb(var(--bc));text-shadow:0 0 10px rgba(var(--bc),.45)}
+.ar-row.bot .ar-pts,.pod-c.bot .pod-pts{color:rgb(var(--bc))}
+.ar-row.bot .ar-sub .chip.lv,.pod-c.bot .pod-meta .chip.lv{background:rgba(var(--bc),.18);color:rgb(var(--bc))}
+.rt-pill.bot .rt-nm{color:rgb(var(--bc));border-color:rgba(var(--bc),.7)}
+.rt-pill.bot .pav{box-shadow:0 0 0 2px rgba(var(--bc),.9),0 0 10px 1px rgba(var(--bc),.45)}
+.rt-pill.bot .rt-pt{color:rgb(var(--bc))}
+.rt-world.done .rt-pill.bot-beat{opacity:1}
+.rt-pill.bot-beat{z-index:4}
+.rt-pill.bot-beat .pav{box-shadow:0 0 0 3px rgb(var(--bc)),0 0 22px 6px rgba(var(--bc),.75)}
+.rt-pill.bot-beat .rt-nm{background:rgba(var(--bc),.9);color:#0b0c10;border-color:#fff;box-shadow:0 0 14px rgba(var(--bc),.9)}
+.rt-pill.bot-burst .pav{animation:botBurst 1.7s ease-out 1}
+.rt-pill.bot-burst::after{content:"";position:absolute;left:50%;top:var(--bo,34px);width:calc(var(--s)*1.2);height:calc(var(--s)*1.2);margin:calc(var(--s)*-.6) 0 0 calc(var(--s)*-.6);border-radius:50%;pointer-events:none;border:3px solid rgb(var(--bc));box-shadow:0 0 26px 8px rgba(var(--bc),.9);animation:botRing 1.3s ease-out 1 forwards}
+@keyframes botBurst{0%{transform:scale(1)}14%{transform:scale(1.5);box-shadow:0 0 0 4px #fff,0 0 52px 20px rgb(var(--bc))}45%{transform:scale(1.22);box-shadow:0 0 0 4px rgb(var(--bc)),0 0 40px 14px rgba(var(--bc),.95)}100%{transform:scale(1);box-shadow:0 0 0 3px rgb(var(--bc)),0 0 22px 6px rgba(var(--bc),.75)}}
+@keyframes botRing{0%{opacity:1;transform:scale(.7)}100%{opacity:0;transform:scale(2.6)}}
+@media (prefers-reduced-motion:reduce){.rt-pill.bot-burst .pav{animation:none}.rt-pill.bot-burst::after{display:none}}
+.bot-prof{display:grid;grid-template-columns:minmax(0,150px) minmax(0,1fr);gap:14px;align-items:stretch;border-radius:14px;overflow:hidden;border:1px solid rgba(var(--bc),.7);background:linear-gradient(120deg,rgba(var(--bc),.22),rgba(8,10,16,.9));box-shadow:0 0 22px rgba(var(--bc),.3)}
+.bot-prof img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 0}
+.bot-prof .bot-pi{padding:14px 14px 14px 0;display:flex;flex-direction:column;justify-content:center;gap:6px;min-width:0}
+.bot-prof h1{color:rgb(var(--bc))}
+.bot-set{display:grid;gap:10px;padding:10px 0;border-top:1px solid var(--line,rgba(128,128,128,.25))}
+.bot-set:first-of-type{border-top:0}
+.bot-set .bot-hd{display:flex;align-items:center;gap:10px}
+.bot-set .bot-hd b{color:rgb(var(--bc))}
+.bot-set .bot-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
 </style>
 </head>
 <body>
@@ -2695,7 +2725,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-25.68';
+const APP_VERSION='2026-10-26.69';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -3174,7 +3204,7 @@ const tied=(a,b)=>tot2(a)===tot2(b)&&lv2(a)===lv2(b);
 const rowCmp=(a,b)=>tot2(b)-tot2(a)||lv2(b)-lv2(a)||a.pseudo.localeCompare(b.pseudo);
 function posList(list){const out=[];list.forEach((r,i)=>out.push(i>0&&tied(list[i-1],r)?out[i-1]:i+1));return out;}
 const posOf=(list,r)=>{const i=list.indexOf(r);return i<0?0:posList(list)[i];};
-function computeBoard(period){
+function computeBoard(period,withBots){
   const allWods=Object.values(S.wods).sort((a,b)=>a.date<b.date?-1:1);
   const wods=Object.values(S.wods).filter(w=>inP(w.date,period)).sort((a,b)=>a.date<b.date?-1:1);
   const metconCount=wods.filter(metconOf).length;
@@ -3285,6 +3315,7 @@ function computeBoard(period){
     r.goalMet=r.goal>0&&currentDays.length>0&&currentDays.filter(d=>lg.entries&&lg.entries[d]).length+redoWk(currentWeek)>=Math.min(r.goal,currentDays.length);
     return r;
   });
+  if(withBots)for(const b of botsOn())rows.push(botRow(b,period,wods));
   rows.sort(rowCmp);
   return {rows,wods,metconCount,catCount,weekKeys,period};
 }
@@ -3663,9 +3694,72 @@ function maybeFreeze(){
   if(!S.owner||!ready()||!S.groups||!S.groups.loaded||S._freezing)return;
   const snap=freezeSnap();if(!snap)return;
   S._freezing=true;
-  S.db.doc('config/groups').set({list:groupsList(),of:S.groups.of||{},snap}).catch(()=>{S._freezing=false;});
+  S.db.doc('config/groups').set({list:groupsList(),of:S.groups.of||{},snap,bots:S.groups.bots||{}}).catch(()=>{S._freezing=false;});
 }
-const saveGroups=(list,of,msg)=>run(async()=>{const snap=freezeSnap()||(S.groups&&S.groups.snap)||{};await S.db.doc('config/groups').set({list,of,snap});if(msg)toast(msg);});
+const saveGroups=(list,of,msg)=>run(async()=>{const snap=freezeSnap()||(S.groups&&S.groups.snap)||{};await S.db.doc('config/groups').set({list,of,snap,bots:(S.groups&&S.groups.bots)||{}});if(msg)toast(msg);});
+/* ---------- bots : des objectifs de points ----------
+   Cinq personnages (Rookie, Régulier, Challenger, Machine, Boss) qui « font » chaque séance publiée (date passée ou du jour) et marquent
+   une part réglable des points : % des points de séance, % des points maximum du metcon, niveau choisi sur le metcon.
+   - Ils figurent dans le classement (Global ET dans chaque groupe, une seule ligne chacun) et dans le résumé de la semaine, avec leur couleur,
+     sans jamais être présentés comme des bots.
+   - Ils ne participent à aucun trophée, badge, récompense ni statistique : computeBoard n'ajoute leurs lignes que sur demande (withBots).
+   - Réglages : config/groups.bots = { rookie:{on,sess,met,lvl}, … } (même document que les groupes, donc aucune règle Firestore à ajouter).
+   - Images : assets/embedded/bot-<id>.webp. Identifiant « uid » d'un bot : 'bot:<id>'. */
+const BOT_DEFS=[
+  {id:'rookie',name:'Le Rookie',img:'assets/embedded/bot-rookie.webp',fx:.51,fy:.29,rgb:'196,200,207',sess:100,met:0,lvl:'deb'},
+  {id:'regulier',name:'Le Régulier',img:'assets/embedded/bot-regulier.webp',fx:.48,fy:.30,rgb:'45,156,255',sess:100,met:25,lvl:'deb'},
+  {id:'challenger',name:'Le Challenger',img:'assets/embedded/bot-challenger.webp',fx:.52,fy:.28,rgb:'150,80,255',sess:100,met:50,lvl:'int'},
+  {id:'machine',name:'La Machine',img:'assets/embedded/bot-machine.webp',fx:.46,fy:.31,rgb:'255,154,31',sess:100,met:75,lvl:'intp'},
+  {id:'boss',name:'Le Boss',img:'assets/embedded/bot-boss.webp',fx:.44,fy:.29,rgb:'255,45,61',sess:100,met:95,lvl:'rx'}];
+/* niveaux proposés : [clé, libellé, rang 0 Débutant / 1 Intermédiaire / 2 Rx, bonus de niveau : « Intermédiaire + » = 2,65 de niveau moyen, affiché INT+] */
+const BOT_LV=[['deb','Débutant',0,0],['int','Intermédiaire',1,0],['intp','Intermédiaire +',1,.15],['rx','Rx',2,0]];
+const isBot=uid=>typeof uid==='string'&&uid.slice(0,4)==='bot:';
+/* visage d'un bot, centré et agrandi dans un cercle (fx, fy = position du visage dans l'image, en fraction) */
+const botFaceImg=b=>h('img',{class:'bot-img',src:b.img,alt:'',draggable:'false',decoding:'async',style:'--fx:'+b.fx+';--fy:'+b.fy});
+const botOf=uid=>isBot(uid)?(botList().find(b=>b.id===uid.slice(4))||null):null;
+const pseudoOf=uid=>isBot(uid)?((BOT_DEFS.find(d=>d.id===uid.slice(4))||{}).name||'Athlète'):((S.logs[uid]||{}).pseudo||'Athlète');
+function botList(){
+  const c=(S.groups&&S.groups.bots)||{};
+  const pc=(v,f)=>{const n=Number(v);return (v===undefined||v===null||v===''||isNaN(n))?f:Math.max(0,Math.min(100,n));};
+  return BOT_DEFS.map(d=>{
+    const o=c[d.id]||{};
+    const lv=BOT_LV.find(x=>x[0]===o.lvl)||BOT_LV.find(x=>x[0]===d.lvl);
+    return Object.assign({},d,{on:o.on!==false,sess:pc(o.sess,d.sess),met:pc(o.met,d.met),lvl:lv[0],rank:lv[2],bonus:lv[3]});
+  });
+}
+const botsOn=()=>botList().filter(b=>b.on);
+/* points d'un bot sur une séance : part des points de séance, part des points maximum du metcon au niveau choisi */
+function botPts(b,w,period){
+  const base=Math.round(basePts(w,period)*b.sess)/100;
+  const m=metconOf(w);
+  if(!m||!(b.met>0))return {base,perf:0,lv:null};
+  const L=levelsOf(m);
+  const idx=okLvl(m,Math.max(0,Math.min(L.length-1,b.rank-Math.max(0,3-L.length))));
+  const mx=((L[idx]||L[0]).tiers||[]).reduce((a,x)=>Math.max(a,Number(x.p)||0),0);
+  const lv=Math.max(LV_MIN,Math.min(LV_MAX,LV_VAL[lvRank(m,idx)]+b.bonus));
+  return {base,perf:Math.round(mx*b.met)/100,lv};
+}
+/* ligne de classement d'un bot : mêmes champs que celles des athlètes */
+function botRow(b,period,wods){
+  const t=todayStr();
+  const r={uid:'bot:'+b.id,pseudo:b.name,bot:true,sessions:0,base:0,perf:0,perfN:0,redo:0,redoN:0,lvlSum:0,lvlN:0,items:[],streak:0,tonnage:0,strength:0,ratio:0,flameCur:0,flameTopCur:0,
+    cat:{cardio:{sum:0,n:0},gym:{sum:0,n:0},haltero:{sum:0,n:0}}};
+  for(const w of wods){
+    if(w.date>t)continue;
+    const x=botPts(b,w,period);
+    r.sessions++;r.base+=x.base;r.perf+=x.perf;
+    if(x.lv!==null){r.perfN++;r.lvlSum+=x.lv;r.lvlN++;}
+  }
+  r.base=Math.round(r.base*100)/100;r.perf=Math.round(r.perf*100)/100;
+  r.total=Math.round((r.base+r.perf)*100)/100;
+  r.perfAvg=r.perfN?r.perf/r.perfN:0;
+  r.lvlAvg=r.lvlN?r.lvlSum/r.lvlN:0;
+  r.mult=r.lvlN?r.lvlAvg/LEVEL_DIV:1;
+  r.perfAvgW=r.perfAvg*r.mult;
+  r.weighted=Math.round((r.base+r.perf*r.mult)*10)/10;
+  return r;
+}
+
 /* Poids de corps privé : il vit dans users/{uid}/private/profile. Chaque athlète publie seulement son rapport charge ÷ poids, par saison
    (logs/{uid}.ratios), que les autres lisent pour le classement « Poids / puissance ». Comme le coach peut corriger des résultats sans connaître
    le poids, l'athlète recalcule et republie son rapport à l'ouverture de l'appli si besoin. Cette fonction migre aussi l'ancien poids public. */
@@ -3980,7 +4074,7 @@ function launchRecapMaybe(){
     const m=rcLatest();if(!m)return;
     const per=rcPeriodOf(m),gl=gListFor(per),mg=scopeOf(S.uid,per);
     const D=rcCompute(m,per,(mg&&gl.some(g=>g.id===mg))?mg:'all','goat');
-    if(!D.snaps[D.last].rows.length)return; /* classement vide : rien à animer */
+    if(!D.snaps[D.last].hum)return; /* aucun athlète classé : rien à animer */
     (S.rc||(S.rc={})).week=m;
     go('recap');
   }catch(e){}
@@ -6520,9 +6614,10 @@ function rxReceived(){
 function openAthlete(uid){S.viewUser=uid;render();window.scrollTo(0,0);}
 /* profil public d'un athlète : avatar, stats, dernière séance, récompenses. Ni PR ni poids. */
 function viewAthlete(uid){
+  if(isBot(uid))return viewBot(uid);
   const el=h('div',{class:'stack'});
   el.append(h('div',{class:'row'},h('button',{class:'btn sm',type:'button',onclick:()=>{S.viewUser=null;render();window.scrollTo(0,0);}},S.tab==='feed'?'← Fil':S.tab==='recap'?'← Résumé':'← Classement')));
-  const p=selPeriod(),board=computeBoard(p),rank=board.rows.findIndex(r=>r.uid===uid),me=board.rows[rank];
+  const p=selPeriod(),board=computeBoard(p,true),rank=board.rows.findIndex(r=>r.uid===uid),me=board.rows[rank];
   if(!me){el.append(h('div',{class:'empty'},h('p',{},'Athlète introuvable.')));return el;}
   const asx=((S.logs[uid]||{}).sex==='F')?'f':'h';
   const avatar=sexKnown(uid)?avatarEl(asx,avEq(uid),114,()=>openAvatar(uid),'Avatar de '+me.pseudo+', touche pour l’agrandir'):noAvatarEl(uid,114,false);
@@ -6563,6 +6658,26 @@ function viewAthlete(uid){
   el.append(trophiesSection(uid,'Récompenses','Aucune récompense pour l’instant.'));
   return el;
 }
+/* fiche d'un bot : image, points et niveau, comme un athlète (rien n'indique que c'est un bot) */
+function viewBot(uid){
+  const el=h('div',{class:'stack'}),b=botOf(uid);
+  el.append(h('div',{class:'row'},h('button',{class:'btn sm',type:'button',onclick:()=>{S.viewUser=null;render();window.scrollTo(0,0);}},S.tab==='feed'?'← Fil':S.tab==='recap'?'← Résumé':'← Classement')));
+  const p=selPeriod(),board=computeBoard(p,true),me=board.rows.find(r=>r.uid===uid);
+  if(!b||!me){el.append(h('div',{class:'empty'},h('p',{},'Athlète introuvable.')));return el;}
+  const ranked=board.rows.filter(r=>r.sessions>0).length;
+  el.append(h('section',{class:'bot-prof',style:'--bc:'+b.rgb},
+    h('img',{src:b.img,alt:b.name,draggable:'false',decoding:'async'}),
+    h('div',{class:'bot-pi'},h('p',{class:'eyebrow'},p.virtual?'Saison':seasonLabel(p)+' · '+p.name),h('h1',{class:'day'},b.name),
+      me.lvlN?h('div',{},lvPill(me)):null,
+      h('div',{class:'pod-pts',style:'justify-content:flex-start'},svgOf(ICO_STAR),fmtPts(me.total),h('small',{},'pts')))));
+  el.append(h('div',{class:'stats'},
+    h('div',{class:'stat'},h('b',{},fmtN(me.total)),h('span',{},'points bruts')),
+    h('div',{class:'stat'},h('b',{},fmtN(me.weighted||0)),h('span',{},'XP pondérée')),
+    h('div',{class:'stat'},h('b',{},me.sessions>0?posOf(board.rows,me):'–'),h('span',{},'rang sur '+ranked)),
+    h('div',{class:'stat'},h('b',{},me.sessions),h('span',{},'séances')),
+    h('div',{class:'stat'},h('b',{},fmtN(me.perfAvg)),h('span',{},'pts par metcon'))));
+  return el;
+}
 /* ===== Classement « Arène » : podium, pastilles Global / Groupe, liste qui défile seule, bandeau rang + points ===== */
 const SVGB='viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
 const ICO_CUP2='<svg '+SVGB+'><path d="M7.5 4h9v5.2a4.5 4.5 0 0 1-9 0z"/><path d="M7.5 6H4.8c0 3 1.3 4.6 3.4 5M16.5 6h2.7c0 3-1.3 4.6-3.4 5"/><path d="M12 13.8V17M8.6 20h6.8M9.8 17h4.4"/></svg>';
@@ -6586,6 +6701,11 @@ function arLazy(box,build){
 }
 /* avatar + cadre équipé (comme dans le fil) ; sans cadre : anneau lumineux de la couleur du rang */
 function arAvatar(uid,rk,eager,size){
+  if(isBot(uid)){
+    const b=botOf(uid)||BOT_DEFS[0];
+    return h('div',{class:'pav bot'+(rk?' r'+rk:''),style:'--rc:'+b.rgb+';--bc:'+b.rgb},rk?h('span',{class:'aura'}):null,
+      h('div',{class:'pav-c'},botFaceImg(b)),h('span',{class:'ring'}));
+  }
   const lg=S.logs[uid]||{},pseudo=lg.pseudo||'Athlète';
   const fid=bannerOf(uid).avframe,fr=(fid&&BN.avframe[fid])?BN.avframe[fid]:null;
   const circle=h('div',{class:'pav-c'});
@@ -6613,14 +6733,14 @@ function viewBoard(){
   if(!ready()){el.append(h('p',{class:'muted'},'Chargement…'));return el;}
   if(S.viewUser)return viewAthlete(S.viewUser);
   if(S.boardDetail)return viewBoardDetail();
-  const p=selPeriod(),board=computeBoard(p),st=periodState(p),l=plist();
+  const p=selPeriod(),board=computeBoard(p,true),st=periodState(p),l=plist(); /* true : les bots figurent dans le classement */
   /* Global / Groupe : par défaut, mon groupe s'il existe (comme avant) */
   const gl=gListFor(p),gname=id=>{const g=gl.find(x=>x.id===id);return g?g.name:'';};
   const mine=scopeOf(S.uid,p);
   let gsel=S.boardGroup!==undefined?S.boardGroup:(mine||'all');
   if(gsel!=='all'&&!gname(gsel))gsel='all';
   const isGroup=gsel!=='all',glob=!isGroup;
-  const rows=isGroup?board.rows.filter(r=>scopeOf(r.uid,p)===gsel):board.rows;
+  const rows=isGroup?board.rows.filter(r=>r.bot||scopeOf(r.uid,p)===gsel):board.rows; /* un bot est présent dans tous les groupes */
   const ps=posList(rows);
   const posIn=r=>ps[rows.indexOf(r)];
   const podRows=rows.filter(r=>r.sessions>0).slice(0,3);
@@ -6651,7 +6771,7 @@ function viewBoard(){
     if(!r)return h('div',{class:'pod-c p'+k+' empty'},h('div',{class:'pod-av'},h('div',{class:'pav'},h('div',{class:'pav-c'},h('div',{class:'noav-dot'},'–')))),
       h('div',{class:'pod-base'},h('div',{class:'pod-nm'},'—'),h('div',{class:'pod-sub'},'place libre')));
     const pos=posIn(r),rk=Math.min(pos,3),g=glob?grpOf(r):'';
-    return h('div',{class:'pod-c p'+k,role:'button',tabindex:0,'data-uid':r.uid,onclick:open(r.uid),onkeydown:e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openAthlete(r.uid);}}},
+    return h('div',{class:'pod-c p'+k+(r.bot?' bot':''),style:r.bot?'--bc:'+botOf(r.uid).rgb:null,role:'button',tabindex:0,'data-uid':r.uid,onclick:open(r.uid),onkeydown:e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openAthlete(r.uid);}}},
       h('div',{class:'pod-av'},k===1?svgOf(ICO_CROWN):null,arAvatar(r.uid,rk,true,size),h('div',{class:'medal'},arHex(pos,rk))),
       h('div',{class:'pod-base'},
         h('div',{class:'pod-nm'},r.pseudo+(r.uid===S.uid?' (toi)':'')),
@@ -6668,7 +6788,7 @@ function viewBoard(){
   else if(!rest.length&&podRows.length)list.append(h('li',{class:'ar-empty'},'Les autres athlètes apparaîtront ici.'));
   rest.forEach(r=>{
     const g=glob?grpOf(r):'';
-    list.append(h('li',{class:'ar-row'+(r.uid===S.uid?' me':''),role:'button',tabindex:0,'data-uid':r.uid,onclick:open(r.uid),onkeydown:e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openAthlete(r.uid);}}},
+    list.append(h('li',{class:'ar-row'+(r.uid===S.uid?' me':'')+(r.bot?' bot':''),style:r.bot?'--bc:'+botOf(r.uid).rgb:null,role:'button',tabindex:0,'data-uid':r.uid,onclick:open(r.uid),onkeydown:e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openAthlete(r.uid);}}},
       arHex(posIn(r)),
       arAvatar(r.uid,0,false,44),
       h('div',{style:'min-width:0'},
@@ -6769,6 +6889,12 @@ function rcCompute(mon,per,gsel,mode){
     }
     if(a.length)ev[uid]=a;
   }
+  /* bots : présents dans tous les groupes, une seule fois ; chaque séance publiée compte le jour de la séance */
+  for(const b of botsOn()){
+    const a=[];
+    for(const w of wods){const x=botPts(b,w,per);a.push({d:w.date,pts:x.base+x.perf,b:x.base,f:x.perf,lv:x.lv,s:1});}
+    if(a.length)ev['bot:'+b.id]=a;
+  }
   const cmp=gm?(a,b)=>tot2(b)-tot2(a)||Math.round(b.raw*100)-Math.round(a.raw*100)||a.pseudo.localeCompare(b.pseudo):rowCmp;
   const tie=gm?(a,b)=>tot2(a)===tot2(b)&&Math.round(a.raw*100)===Math.round(b.raw*100):tied;
   const posL=l=>{const o=[];l.forEach((r,i)=>o.push(i>0&&tie(l[i-1],r)?o[i-1]:i+1));return o;};
@@ -6780,24 +6906,24 @@ function rcCompute(mon,per,gsel,mode){
       for(const x of a)if(x.d<=D){total+=x.pts;base+=x.b;pf+=x.f;ss+=x.s;if(x.lv!==null){ls+=x.lv;ln++;}}
       if(ss>0){
         const lvlAvg=ln?ls/ln:0;
-        rows.push({uid,pseudo:(S.logs[uid]||{}).pseudo||'Athlète',total:gm?Math.round((base+pf*(ln?lvlAvg/LEVEL_DIV:1))*10)/10:total,raw:total,lvlAvg,sessions:ss});
+        rows.push({uid,pseudo:pseudoOf(uid),total:gm?Math.round((base+pf*(ln?lvlAvg/LEVEL_DIV:1))*10)/10:total,raw:total,lvlAvg,sessions:ss});
       }
     }
     rows.sort(cmp);
     const ps=posL(rows),rank={},pts={};
     rows.forEach((r,i2)=>{rank[r.uid]=ps[i2];pts[r.uid]=r.total;});
-    return {rank,pts,rows,pos:ps,n:rows.length};
+    return {rank,pts,rows,pos:ps,n:rows.length,hum:rows.filter(r=>!isBot(r.uid)).length};
   });
   /* activité de la semaine */
   const sess={},gain={};let tSess=0,tPts=0;const active=new Set();
   for(const [uid,a] of Object.entries(ev))for(const x of a)if(x.d>days[0]&&x.d<=days[last]){
-    sess[uid]=(sess[uid]||0)+x.s;gain[uid]=(gain[uid]||0)+x.pts;tSess+=x.s;tPts+=x.pts;active.add(uid);
+    sess[uid]=(sess[uid]||0)+x.s;gain[uid]=(gain[uid]||0)+x.pts;if(!isBot(uid)){tSess+=x.s;tPts+=x.pts;active.add(uid);} /* les bots ne comptent pas dans les chiffres de la semaine */
   }
   const s0=snaps[0],sN=snaps[last];
   /* en GOAT, les points de la semaine = écart de points pondérés entre dimanche et dimanche (le multiplicateur change avec le niveau moyen) */
-  if(gm){tPts=0;for(const uid of Object.keys(gain)){const g=Math.round(((sN.pts[uid]||0)-(s0.pts[uid]||0))*10)/10;gain[uid]=g;tPts+=g;}}
+  if(gm){tPts=0;for(const uid of Object.keys(gain)){const g=Math.round(((sN.pts[uid]||0)-(s0.pts[uid]||0))*10)/10;gain[uid]=g;if(!isBot(uid))tPts+=g;}}
   /* plus grosse progression : places gagnées (un nouvel entrant part de la dernière place), puis points gagnés */
-  const mv=Object.keys(sN.rank).map(uid=>{
+  const mv=Object.keys(sN.rank).filter(uid=>!isBot(uid)).map(uid=>{
     const a=s0.rank[uid]||(s0.n+1),b=sN.rank[uid];
     return {uid,from:s0.rank[uid]||0,to:b,gain:a-b,pts:(sN.pts[uid]||0)-(s0.pts[uid]||0)};
   });
@@ -6806,7 +6932,7 @@ function rcCompute(mon,per,gsel,mode){
   if(mv.length&&mv[0].gain>0)spot=Object.assign({kind:'rank'},mv[0]);
   else{const bp=mv.slice().sort((x,y)=>y.pts-x.pts||x.to-y.to)[0];if(bp&&bp.pts>0)spot=Object.assign({kind:'pts'},bp);}
   const leaders=sN.rows.slice(0,3).map((r,i)=>({uid:r.uid,pseudo:r.pseudo,total:r.total,pos:sN.pos[i],week:gain[r.uid]||0,sessions:r.sessions,lvlAvg:r.lvlAvg}));
-  return {mon,per,gsel,mode,days,last,snaps,sess,gain,spot,leaders,stats:{sess:tSess,pts:tPts,active:active.size,n:sN.n}};
+  return {mon,per,gsel,mode,days,last,snaps,sess,gain,spot,leaders,stats:{sess:tSess,pts:tPts,active:active.size,n:sN.hum}};
 }
 /* bilan personnel d'un athlète sur la semaine */
 function rcPersonal(D,uid){
@@ -6870,6 +6996,7 @@ function rcTrackBuild(D,meUid,o){
     full.fill(false);let k=0;
     const add=i=>{if(i>=0&&i<n&&!full[i]&&k<RT.FULL){full[i]=true;k++;}};
     add(meRow);
+    rows.forEach((r,i)=>{if(isBot(r.uid))add(i);});                  /* les bots gardent toujours leur avatar */
     for(let i=0;i<10;i++)add(i);                                  /* haut du classement (rows est dans l'ordre du classement) */
     if(D.spot)add(rows.findIndex(r=>r.uid===D.spot.uid));          /* plus grosse progression */
     if(meRow>=0)for(let d=1;d<=5;d++){add(meRow-d);add(meRow+d);}  /* voisins de l'athlète */
@@ -6892,7 +7019,8 @@ function rcTrackBuild(D,meUid,o){
     if(full[i]){
       const txt=r.pseudo.length>maxChars?r.pseudo.slice(0,maxChars-1)+'…':r.pseudo;
       const pt=h('span',{class:'rt-pt'},'0');
-      const el=h('div',Object.assign({class:'rt-pill'+(me?' me':''),'data-uid':r.uid,style:'--s:'+size+'px;width:'+laneW+'px;left:0'},pick),
+      const bt=botOf(r.uid);
+      const el=h('div',Object.assign({class:'rt-pill'+(me?' me':'')+(bt?' bot':''),'data-uid':r.uid,style:'--s:'+size+'px;width:'+laneW+'px;left:0'+(bt?';--bc:'+bt.rgb+';--bo:'+off+'px':'')},pick),
         h('span',{class:'rt-nm'},txt),arAvatar(r.uid,rk,false,size),pt);
       world.append(el);
       return {el,pt,total:r.total,from:r.from,full:true,hh:size+41,off,vis:null,y:null,ln:-1,txt:''};
@@ -6994,6 +7122,10 @@ function rcTrackBuild(D,meUid,o){
     if(meRow>=0)rows.forEach((r,j)=>{if(j===meRow)return;const a=r.from>rows[meRow].from,b=r.total>rows[meRow].total;if(a&&!b)passed++;else if(!a&&b)overtaken++;});
     return {passed,overtaken};
   };
+  /* bots doublés par l'athlète mis en avant : leur couleur brille fortement à l'instant du dépassement, puis le halo reste */
+  const beatIdx=()=>{const o2=[];if(meRow>=0)rows.forEach((r,j)=>{if(isBot(r.uid)&&r.from>rows[meRow].from&&!(r.total>rows[meRow].total))o2.push(j);});return o2;};
+  const glowBot=(i,burst)=>{const el=pills[i].el;if(burst&&!rtReduced()){el.classList.remove('bot-burst');void el.offsetWidth;el.classList.add('bot-burst');}el.classList.add('bot-beat');};
+  if(!o.animate)beatIdx().forEach(i=>glowBot(i,false)); /* piste statique : le halo est directement là */
   const maxTop=()=>Math.max(0,H-scroll.clientHeight);
   const clampTop=t=>Math.max(0,Math.min(maxTop(),t));
   const leftFor=()=>meRow<0?0:Math.max(0,Math.min(W-scroll.clientWidth,X(lane[meRow])+laneW/2-scroll.clientWidth/2));
@@ -7022,7 +7154,7 @@ function rcTrackBuild(D,meUid,o){
       camStep();
       frame(u,now,false);
       follow();
-      while(ei<evs.length&&evs[ei][0]<=u){const e=evs[ei++];if(full[e[1]])upN[e[1]]++;if(full[e[2]])downN[e[2]]++;}
+      while(ei<evs.length&&evs[ei][0]<=u){const e=evs[ei++];if(full[e[1]])upN[e[1]]++;if(full[e[2]])downN[e[2]]++;if(e[1]===meRow&&meRow>=0&&isBot(rows[e[2]].uid))glowBot(e[2],true);}
       for(const i of fi){
         if((upN[i]||downN[i])&&pills[i].vis&&now-lastF[i]>=150){
           if(upN[i])flash(i,'up',upN[i],i!==meRow);
@@ -7048,14 +7180,14 @@ function rcTrackBuild(D,meUid,o){
   });
   return {el:scroll,rows,pts,meRow,moving,frame,play,skip,stop,focusMe,flash,moves,label,follow,
     instant:()=>world.classList.add('nt'),
-    done:()=>{scroll.classList.remove('anim');if(meRow>=0)world.classList.add('done');}};
+    done:()=>{scroll.classList.remove('anim');if(meRow>=0)world.classList.add('done');beatIdx().forEach(i=>glowBot(i,false));}};
 }
 
 /* piste dans l'onglet résumé : positions finales, défilable, ta pastille en surbrillance */
 function rcTrackCard(D,meUid,mon,R){
   const sn=D.snaps[D.last];
   const title=h('div',{class:'rc-ctitle'},h('b',{},'La piste'),h('span',{},(D.mode==='scratch'?'points bruts':'points pondérés (GOAT)')+' de la saison · un échelon tous les '+RT.RUNG+' pts'));
-  if(!sn.rows.length)return h('div',{class:'rc-card rt-card'},title,h('p',{class:'rc-txt'},'Personne n’est encore classé.'));
+  if(!sn.hum)return h('div',{class:'rc-card rt-card'},title,h('p',{class:'rc-txt'},'Personne n’est encore classé.'));
   const key=mon+'|'+D.gsel+'|'+D.mode+'|'+(meUid||'');
   const T=rcTrackBuild(D,meUid,{width:Math.max(280,(main.clientWidth||window.innerWidth)-48),onPick:openAthlete,restore:(R.ts&&R.ts.key===key)?R.ts:null});
   T.el.addEventListener('scroll',()=>{R.ts={key,top:T.el.scrollTop,left:T.el.scrollLeft};},{passive:true});
@@ -7074,7 +7206,7 @@ function rcOpenIntro(D,meUid,mon,o){
   o=o||{};
   if(rcOv)return;
   const sn=D.snaps[D.last];
-  if(!sn||!sn.rows.length){if(o.onClose)o.onClose();return;}
+  if(!sn||!sn.hum){if(o.onClose)o.onClose();return;}
   const reduced=rtReduced();
   const T=rcTrackBuild(D,meUid,{animate:!reduced,width:window.innerWidth-24});
   let startTo=null,finished=false;
@@ -7194,7 +7326,7 @@ function rcLeaders(D){
     const r=ls[k-1],size=k===1?60:46;
     if(!r)return h('div',{class:'pod-c p'+k+' empty'},h('div',{class:'pod-av'},h('div',{class:'pav'},h('div',{class:'pav-c'},h('div',{class:'noav-dot'},'–')))),h('div',{class:'pod-base'},h('div',{class:'pod-nm'},'—'),h('div',{class:'pod-sub'},'place libre')));
     const rk=Math.min(r.pos,3),g=(glob&&gl.length)?scopeName(scopeOf(r.uid,D.per),D.per):'';
-    return h('div',{class:'pod-c p'+k,role:'button',tabindex:0,'data-uid':r.uid,onclick:()=>openAthlete(r.uid),onkeydown:e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openAthlete(r.uid);}}},
+    return h('div',{class:'pod-c p'+k+(isBot(r.uid)?' bot':''),style:isBot(r.uid)?'--bc:'+botOf(r.uid).rgb:null,role:'button',tabindex:0,'data-uid':r.uid,onclick:()=>openAthlete(r.uid),onkeydown:e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openAthlete(r.uid);}}},
       h('div',{class:'pod-av'},k===1?svgOf(ICO_CROWN):null,arAvatar(r.uid,rk,true,size),h('div',{class:'medal'},arHex(r.pos,rk))),
       h('div',{class:'pod-base'},
         h('div',{class:'pod-nm'},r.pseudo+(r.uid===S.uid?' (toi)':'')),
@@ -7290,7 +7422,7 @@ function viewRecap(){
     R.intro=wk.mon;
     const introG=(mineG&&gl.some(g=>g.id===mineG))?mineG:'all';
     const DI=(introG===gsel&&mode==='goat')?DG:rcCompute(wk.mon,per,introG,'goat');
-    if(DI.snaps[DI.last].rows.length)setTimeout(()=>{if(S.tab==='recap'&&!rcOv)rcOpenIntro(DI,viewUid,wk.mon,{onClose:()=>saveLog({recapSeen:wk.mon})});},350);
+    if(DI.snaps[DI.last].hum)setTimeout(()=>{if(S.tab==='recap'&&!rcOv)rcOpenIntro(DI,viewUid,wk.mon,{onClose:()=>saveLog({recapSeen:wk.mon})});},350);
     else setTimeout(()=>saveLog({recapSeen:wk.mon}),900);
   }
   return el;
@@ -8324,7 +8456,7 @@ function viewProfile(){
   if(!S.uid){el.append(h('h1',{class:'day'},'Mon profil'),h('div',{class:'empty'},h('p',{},'Ton profil est privé. Connecte-toi pour le voir.')));return el;}
   if(!ready()){el.append(h('p',{class:'muted'},'Chargement…'));return el;}
   {const bk=S.tab+'|'+(S.profView||'');if(S._bk!==bk){S._bk=bk;S._bt=Date.now();}}
-  const p=selPeriod(),board=computeBoard(p),rank=board.rows.findIndex(r=>r.uid===S.uid);
+  const p=selPeriod(),board=computeBoard(p,true),rank=board.rows.findIndex(r=>r.uid===S.uid);
   const me=board.rows[rank]||{total:0,sessions:0,perfAvg:0,streak:0,items:[]};
   const pseudo=(S.logs[S.uid]&&S.logs[S.uid].pseudo)||'';
   el.append(bannerEl(S.uid,[h('div',{class:'feed-head'},h('div',{class:'feed-meta'},h('p',{class:'eyebrow'},'Clique ici pour personnaliser ta bannière'),h('h1',{class:'day'},pseudo||'Mon profil',badgeMini(S.uid,40)),bannerTitle(S.uid)))],true));
@@ -9096,6 +9228,7 @@ function coachMenu(){
   const items=[['wod','Entrer un WOD',pl_(Object.keys(S.wods).length,'séance')+' publiée'+(Object.keys(S.wods).length>1?'s':'')+(nP?' · '+nP+' en attente':'')],
     ['plan','Planificateur de saison','Force, renfo et méthodes sur toute la saison'],
     ['groups','Gérer les groupes',pl_(groupsList().length,'groupe')],
+    ['bots','Gérer les bots',pl_(botsOn().length,'bot')+' actif'+(botsOn().length>1?'s':'')+' sur '+BOT_DEFS.length],
     ['results','Gérer les résultats',pl_(nA,'athlète')+(unusualAll().length?' · '+unusualAll().length+' à vérifier':'')],
     ['seasons','Gérer les saisons',pl_(plist().length,'saison')],
     ['draft','Récompenses brouillon','Feuille libre : idées de récompenses et XP requis'],
@@ -9449,13 +9582,14 @@ function viewCoach(){
   const el=h('div',{class:'stack'});
   if(!S.owner){el.append(h('div',{class:'empty'},h('p',{},'Cet espace est réservé au coach.')));return el;}
   if(!S.coach.wod)S.coach.wod=blankWod();
-  const v=S.coach.view,titles={wod:'Entrer un WOD',groups:'Gérer les groupes',results:'Gérer les résultats',seasons:'Gérer les saisons',avatar:'Objets secrets',rivals:'Messages du fil',message:'Message aux athlètes',mvcfg:'Configurer les mouvements',plan:'Planificateur de saison',draft:'Récompenses brouillon'};
+  const v=S.coach.view,titles={wod:'Entrer un WOD',groups:'Gérer les groupes',bots:'Gérer les bots',results:'Gérer les résultats',seasons:'Gérer les saisons',avatar:'Objets secrets',rivals:'Messages du fil',message:'Message aux athlètes',mvcfg:'Configurer les mouvements',plan:'Planificateur de saison',draft:'Récompenses brouillon'};
   if(v==='plan'){el.append(planView());return el;} /* plein écran, sans la ligne de retour ni le titre : voir planPlace */
   if(titles[v])el.append(h('div',{class:'row'},h('button',{class:'btn sm',type:'button',onclick:()=>{S.coach.view=null;S.entry=null;S.confirm=null;render();window.scrollTo(0,0);}},'← Coach')));
   el.append(h('div',{class:'row',style:'justify-content:space-between;flex-wrap:nowrap;align-items:flex-start'},h('div',{style:'min-width:0'},h('p',{class:'eyebrow'},'Espace coach'),h('h1',{class:'day'},titles[v]||'Programmation')),coachIcons()));
   if(!titles[v])el.append(coachMenu());
   else if(v==='wod'){el.append(...[wodLauncher(),wodWeeks()].filter(Boolean));const ov=wodOverlay();if(ov)el.append(ov);}
   else if(v==='groups')el.append(groupsCard());
+  else if(v==='bots')el.append(botsCard());
   else if(v==='results')el.append(resultsSection());
   else if(v==='avatar')el.append(avatarCoach());
   else if(v==='rivals')el.append(rivalryCoach());
@@ -10330,6 +10464,34 @@ function groupsCard(){
           const o=Object.assign({},of);if(v)o[a.uid]=v;else delete o[a.uid];
           saveGroups(list,o);},{'aria-label':'Groupe de '+a.pseudo,id:'grp-'+a.uid}))))):h('p',{class:'muted'},'Personne dans cette liste.'));
   }else if(list.length)sec.append(h('p',{class:'muted'},'Les athlètes apparaîtront ici dès qu’ils auront choisi leur pseudo.'));
+  return sec;
+}
+/* bots : le coach règle, pour chacun, la part des points de séance, la part des points du metcon et le niveau choisi sur le metcon */
+const saveBots=(bots,msg)=>run(async()=>{const snap=freezeSnap()||(S.groups&&S.groups.snap)||{};await S.db.doc('config/groups').set({list:groupsList(),of:(S.groups&&S.groups.of)||{},snap,bots});if(msg)toast(msg);});
+function botsCard(){
+  const per=selPeriod(),wods=Object.values(S.wods).filter(w=>inP(w.date,per)).sort((a,b)=>a.date<b.date?-1:1);
+  const sec=h('section',{class:'card'},h('h2',{class:'h2'},'Bots'),
+    h('p',{class:'muted'},'Cinq objectifs de points, visibles dans le classement (Global et chaque groupe, une seule fois) et dans le résumé de la semaine. Ils comptent chaque séance publiée dont la date est passée, sans jamais gagner de trophée.'),
+    h('p',{class:'hint'},'« % points de séance » : part des points de base de la séance. « % points du metcon » : part des points maximum du niveau choisi (0 = ne marque rien au metcon). Niveau : celui que le bot choisit sur le metcon ; il pondère ses points comme pour un athlète.'));
+  const upd=(id,patch,msg)=>{
+    const c=Object.assign({},(S.groups&&S.groups.bots)||{});
+    c[id]=Object.assign({},c[id]||{},patch);
+    saveBots(c,msg);
+  };
+  const num=(b,key,label)=>field(label,h('input',{type:'number',min:'0',max:'100',step:'1',inputmode:'numeric',value:String(b[key]),'aria-label':label+' : '+b.name,id:'bot-'+b.id+'-'+key,
+    onchange:e=>{let v=Math.round(Number(String(e.target.value).replace(',','.')));if(isNaN(v)){render();return;}v=Math.max(0,Math.min(100,v));upd(b.id,{[key]:v},b.name+' mis à jour');}}));
+  botList().forEach(b=>{
+    const row=botRow(b,per,wods);
+    sec.append(h('div',{class:'bot-set',style:'--bc:'+b.rgb},
+      h('div',{class:'bot-hd'},h('span',{class:'bot-face'},botFaceImg(b)),
+        h('div',{style:'flex:1;min-width:0'},h('b',{},b.name),h('div',{class:'sub'},(per.virtual?'Toutes les séances':seasonLabel(per))+' : '+fmtPts(row.total)+' pts · '+row.sessions+' séance'+(row.sessions>1?'s':''))),
+        h('label',{class:'chk'},h('input',{type:'checkbox',checked:b.on,'aria-label':'Bot actif : '+b.name,onchange:e=>upd(b.id,{on:e.target.checked},e.target.checked?b.name+' activé':b.name+' masqué')}),h('span',{},'Actif'))),
+      h('div',{class:'bot-grid'},
+        num(b,'sess','% points de séance'),
+        num(b,'met','% points du metcon'),
+        field('Niveau du metcon',sel(BOT_LV.map(x=>[x[0],x[1]]),b.lvl,v=>upd(b.id,{lvl:v},b.name+' mis à jour'),{'aria-label':'Niveau du metcon : '+b.name,id:'bot-'+b.id+'-lvl'}))),
+      h('div',{class:'row'},h('button',{class:'btn sm',type:'button',onclick:()=>{const c=Object.assign({},(S.groups&&S.groups.bots)||{});delete c[b.id];saveBots(c,'Valeurs par défaut rétablies');}},'Valeurs par défaut'))));
+  });
   return sec;
 }
 function nextSeasonNum(){const l=plist();return String(l.reduce((m,p)=>Math.max(m,seasonNum(p)),0)+1);}
@@ -11606,7 +11768,7 @@ function startFirebase(){
     unsubs.push(S.db.doc('subs/'+S.uid).onSnapshot(sn=>{S.pay={loaded:true,doc:sn.exists?sn.data():null,err:false};scheduleRender();},()=>{S.pay={loaded:true,doc:null,err:true};scheduleRender();}));
     unsubs.push(S.db.doc('config/coach').onSnapshot(sn=>{S.coachUid=sn.exists?(sn.data().uid||null):null;S.coachLoaded=true;S.owner=!!S.coachUid&&S.coachUid===S.uid;wuMaybeSeed();scheduleRender();launchRecapMaybe();},fail));
     /* les groupes ne bloquent jamais l'appli : si les règles ne sont pas encore publiées, on ignore l'erreur */
-    unsubs.push(S.db.doc('config/groups').onSnapshot(sn=>{const d=sn.exists?sn.data():null;S.groups={list:(d&&Array.isArray(d.list))?d.list:[],of:(d&&d.of&&typeof d.of==='object')?d.of:{},snap:(d&&d.snap&&typeof d.snap==='object')?d.snap:{},loaded:true};S._freezing=false;scheduleRender();},()=>{}));
+    unsubs.push(S.db.doc('config/groups').onSnapshot(sn=>{const d=sn.exists?sn.data():null;S.groups={list:(d&&Array.isArray(d.list))?d.list:[],of:(d&&d.of&&typeof d.of==='object')?d.of:{},snap:(d&&d.snap&&typeof d.snap==='object')?d.snap:{},bots:(d&&d.bots&&typeof d.bots==='object')?d.bots:{},loaded:true};S._freezing=false;scheduleRender();},()=>{}));
     /* message du coach : si les règles ne sont pas publiées, on ignore l'erreur */
     unsubs.push(S.db.doc('config/announcement').onSnapshot(sn=>{S.ann=sn.exists?sn.data():null;S.annLoaded=true;scheduleRender();},()=>{S.annLoaded=true;scheduleRender();}));
     /* échauffement guidé : si les règles ne sont pas publiées, l'appli utilise la version intégrée et ne tente aucune écriture */
