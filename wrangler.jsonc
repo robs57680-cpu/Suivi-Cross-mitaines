@@ -8,7 +8,7 @@
     "run_worker_first": ["/api/*"]
   },
   "vars": {
-    "FIREBASE_API_KEY": "COLLE_ICI_LE_apiKey_DE_firebase-config.js",
+    "FIREBASE_API_KEY": "AIzaSyCuWJnsxTBCdaHI4zkLRUZ1UpiLXE0Q8wE",
     "PRICE_4W": "prod_VUzigLnojalMq1",
     "PRICE_SEASON": "prod_VUzjfngTSA2jIA",
     "PAY_OPEN": "2026-11-02T00:00:00+01:00"
