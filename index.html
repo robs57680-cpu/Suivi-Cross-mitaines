@@ -3717,19 +3717,21 @@ const isBot=uid=>typeof uid==='string'&&uid.slice(0,4)==='bot:';
 /* visage d'un bot, centré et agrandi dans un cercle (fx, fy = position du visage dans l'image, en fraction) */
 const botFaceImg=b=>h('img',{class:'bot-img',src:b.img,alt:'',draggable:'false',decoding:'async',style:'--fx:'+b.fx+';--fy:'+b.fy});
 const botOf=uid=>isBot(uid)?(botList().find(b=>b.id===uid.slice(4))||null):null;
-const pseudoOf=uid=>isBot(uid)?((BOT_DEFS.find(d=>d.id===uid.slice(4))||{}).name||'Athlète'):((S.logs[uid]||{}).pseudo||'Athlète');
+const pseudoOf=uid=>isBot(uid)?((botOf(uid)||{}).name||'Athlète'):((S.logs[uid]||{}).pseudo||'Athlète');
 function botList(){
   const c=(S.groups&&S.groups.bots)||{};
   const pc=(v,f)=>{const n=Number(v);return (v===undefined||v===null||v===''||isNaN(n))?f:Math.max(0,Math.min(100,n));};
   return BOT_DEFS.map(d=>{
     const o=c[d.id]||{};
     const lv=BOT_LV.find(x=>x[0]===o.lvl)||BOT_LV.find(x=>x[0]===d.lvl);
-    return Object.assign({},d,{on:o.on!==false,sess:pc(o.sess,d.sess),met:pc(o.met,d.met),lvl:lv[0],rank:lv[2],bonus:lv[3]});
+    const nm=typeof o.name==='string'?o.name.trim().slice(0,24):'';
+    return Object.assign({},d,{name:nm||d.name,defName:d.name,on:o.on!==false,sess:pc(o.sess,d.sess),met:pc(o.met,d.met),lvl:lv[0],rank:lv[2],bonus:lv[3]});
   });
 }
 const botsOn=()=>botList().filter(b=>b.on);
 /* points d'un bot sur une séance : part des points de séance, part des points maximum du metcon au niveau choisi */
 function botPts(b,w,period){
+  if(w.date>todayStr())return {base:0,perf:0,lv:null}; /* séance à venir : rien avant le jour prévu */
   const base=Math.round(basePts(w,period)*b.sess)/100;
   const m=metconOf(w);
   if(!m||!(b.met>0))return {base,perf:0,lv:null};
@@ -6889,10 +6891,10 @@ function rcCompute(mon,per,gsel,mode){
     }
     if(a.length)ev[uid]=a;
   }
-  /* bots : présents dans tous les groupes, une seule fois ; chaque séance publiée compte le jour de la séance */
+  /* bots : présents dans tous les groupes, une seule fois ; chaque séance compte le jour prévu de la séance, jamais avant */
   for(const b of botsOn()){
     const a=[];
-    for(const w of wods){const x=botPts(b,w,per);a.push({d:w.date,pts:x.base+x.perf,b:x.base,f:x.perf,lv:x.lv,s:1});}
+    for(const w of wods){if(w.date>t)continue;const x=botPts(b,w,per);a.push({d:w.date,pts:x.base+x.perf,b:x.base,f:x.perf,lv:x.lv,s:1});}
     if(a.length)ev['bot:'+b.id]=a;
   }
   const cmp=gm?(a,b)=>tot2(b)-tot2(a)||Math.round(b.raw*100)-Math.round(a.raw*100)||a.pseudo.localeCompare(b.pseudo):rowCmp;
@@ -10471,7 +10473,7 @@ const saveBots=(bots,msg)=>run(async()=>{const snap=freezeSnap()||(S.groups&&S.g
 function botsCard(){
   const per=selPeriod(),wods=Object.values(S.wods).filter(w=>inP(w.date,per)).sort((a,b)=>a.date<b.date?-1:1);
   const sec=h('section',{class:'card'},h('h2',{class:'h2'},'Bots'),
-    h('p',{class:'muted'},'Cinq objectifs de points, visibles dans le classement (Global et chaque groupe, une seule fois) et dans le résumé de la semaine. Ils comptent chaque séance publiée dont la date est passée, sans jamais gagner de trophée.'),
+    h('p',{class:'muted'},'Cinq objectifs de points, visibles dans le classement (Global et chaque groupe, une seule fois) et dans le résumé de la semaine. Ils marquent les points d’une séance le jour prévu de la séance (jamais avant), sans jamais gagner de trophée. Tu peux renommer chaque bot.'),
     h('p',{class:'hint'},'« % points de séance » : part des points de base de la séance. « % points du metcon » : part des points maximum du niveau choisi (0 = ne marque rien au metcon). Niveau : celui que le bot choisit sur le metcon ; il pondère ses points comme pour un athlète.'));
   const upd=(id,patch,msg)=>{
     const c=Object.assign({},(S.groups&&S.groups.bots)||{});
@@ -10487,6 +10489,8 @@ function botsCard(){
         h('div',{style:'flex:1;min-width:0'},h('b',{},b.name),h('div',{class:'sub'},(per.virtual?'Toutes les séances':seasonLabel(per))+' : '+fmtPts(row.total)+' pts · '+row.sessions+' séance'+(row.sessions>1?'s':''))),
         h('label',{class:'chk'},h('input',{type:'checkbox',checked:b.on,'aria-label':'Bot actif : '+b.name,onchange:e=>upd(b.id,{on:e.target.checked},e.target.checked?b.name+' activé':b.name+' masqué')}),h('span',{},'Actif'))),
       h('div',{class:'bot-grid'},
+        h('div',{style:'grid-column:1/-1'},field('Nom du bot',h('input',{type:'text',maxlength:'24',value:b.name,placeholder:b.defName,autocomplete:'off','aria-label':'Nom du bot : '+b.defName,id:'bot-'+b.id+'-name',
+          onchange:e=>{let v=String(e.target.value).trim().slice(0,24);if(v===b.defName)v='';upd(b.id,{name:v},v?'Bot renommé : '+v:'Nom d’origine rétabli');}}))),
         num(b,'sess','% points de séance'),
         num(b,'met','% points du metcon'),
         field('Niveau du metcon',sel(BOT_LV.map(x=>[x[0],x[1]]),b.lvl,v=>upd(b.id,{lvl:v},b.name+' mis à jour'),{'aria-label':'Niveau du metcon : '+b.name,id:'bot-'+b.id+'-lvl'}))),
