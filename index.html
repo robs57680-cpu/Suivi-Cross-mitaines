@@ -1627,8 +1627,16 @@ a.btn.primary{color:var(--accent-ink)}
 .dhr{display:flex;align-items:center;gap:4px}
 .dbell{position:relative;width:38px;height:38px;border:0;background:none;color:var(--ink);display:grid;place-items:center;cursor:pointer;padding:0}
 .dbell svg{width:24px;height:24px}.dbell .ibdot{top:3px;right:3px}.dbell[aria-expanded=true]{color:var(--accent)}
-.nbar{display:grid;gap:10px;margin:0 0 10px;padding:12px 14px;border:2px solid var(--edge);border-radius:4px;background:var(--surface);max-height:60vh;overflow:auto}
+.nbar{position:absolute;top:0;right:0;z-index:2;box-sizing:border-box;width:min(300px,84vw);display:grid;gap:10px;padding:calc(14px + env(safe-area-inset-top,0px)) 14px 14px;border-left:2px solid var(--edge);border-bottom:2px solid var(--accent);background:var(--surface);color:var(--ink);box-shadow:0 12px 24px #0006;max-height:70vh;overflow:auto;animation:nbIn .2s ease}
 .nbar[hidden]{display:none}
+@keyframes nbIn{from{transform:translateY(-12px);opacity:0}to{transform:none;opacity:1}}
+.nb-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.nb-row b{font-family:var(--f-display);font-size:20px;letter-spacing:.08em;text-transform:uppercase}
+.nb-r{display:inline-flex;align-items:center;gap:4px}
+.nb-x{padding:4px 6px}
+.nbar .tgl{padding:4px 14px 4px 4px;font-size:14px}
+.nbar .tgl i{width:28px;height:28px}
+@media (prefers-reduced-motion:reduce){.nbar{animation:none}}
 .tgl{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--edge);border-radius:999px;padding:3px 12px 3px 3px;background:var(--surface);color:var(--ink);font:600 12px var(--f-mono);cursor:pointer}
 .tgl i{width:22px;height:22px;border-radius:50%;background:var(--muted)}
 .tgl.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}.tgl.on i{background:var(--accent-ink);order:2}
@@ -4307,9 +4315,9 @@ function notifBar(){
     else{try{const reg=await navigator.serviceWorker.getRegistration();on=!!(reg&&Notification.permission==='granted'&&await reg.pushManager.getSubscription());}catch(e){}}
     const can=pushSupported()&&pushConfigured()&&Notification.permission!=='denied';
     const sw=h('button',{class:'tgl'+(on?' on':''),type:'button',id:'push-toggle',role:'switch','aria-checked':String(on),disabled:!can,onclick:async()=>{try{if(on)await pushForget(true);else await pushEnable();}catch(e){toast(e&&e.message==='perm'?'Notifications refusées : autorise-les dans les réglages de ton téléphone.':'Action impossible, réessaie.',true);}await draw();render();}},h('i'),h('span',{},on?'ON':'OFF'));
-    const kids=[h('div',{class:'row',style:'justify-content:space-between;flex-wrap:nowrap'},h('b',{},'Notifications'),sw)];
-    if(msg)kids.push(h('p',{class:'hint'},msg));else kids.push(h('p',{class:'hint'},'Sur cet appareil uniquement.'));
-    if(S.owner)kids.push(reportsPanel());
+    const kids=[h('div',{class:'nb-row'},h('b',{},'Notifications'),h('span',{class:'nb-r'},sw,h('button',{class:'dx nb-x',type:'button','aria-label':'Fermer les notifications',onclick:()=>{const n=document.getElementById('nbar');if(n&&n.closeBar)n.closeBar();}},'✕')))];
+    if(msg)kids.push(h('p',{class:'hint'},msg));
+    if(S.owner&&repPosts().length)kids.push(reportsPanel());
     box.replaceChildren(...kids);
   };
   draw();return box;
@@ -12035,11 +12043,13 @@ function openDrawer(instant){
     return b;});
   const nb=h('div',{class:'nbar',id:'nbar',hidden:true});
   const bell=h('button',{class:'dbell',type:'button','data-tour':'dm-notif','aria-label':'Notifications','aria-expanded':'false',onclick:()=>{const o=nb.hidden;nb.hidden=!o;bell.setAttribute('aria-expanded',String(o));if(o)nb.replaceChildren(notifBar());}});
+  nb.closeBar=()=>{nb.hidden=true;bell.setAttribute('aria-expanded','false');};
   bell.innerHTML=ICO_BELL;if(notifDotOn())bell.append(h('span',{class:'ibdot','aria-hidden':'true'}));
   if(S.nbOpen){S.nbOpen=false;nb.hidden=false;bell.setAttribute('aria-expanded','true');nb.replaceChildren(notifBar());}
   D.append(h('aside',{class:'drawer',id:'drawer',role:'dialog','aria-label':'Menu'},
-    h('div',{class:'dh'},h('b',{},'Menu'),h('div',{class:'dhr'},bell,h('button',{class:'dx',type:'button','aria-label':'Fermer le menu',onclick:()=>closeDrawer()},'✕'))),nb,...items));
-  D._esc=e=>{if(e.key==='Escape'&&!tourEl){e.preventDefault();closeDrawer();}};
+    h('div',{class:'dh'},h('b',{},'Menu'),h('div',{class:'dhr'},bell,h('button',{class:'dx',type:'button','aria-label':'Fermer le menu',onclick:()=>closeDrawer()},'✕'))),...items));
+  D.append(nb);
+  D._esc=e=>{if(e.key==='Escape'&&!tourEl){e.preventDefault();if(!nb.hidden)nb.closeBar();else closeDrawer();}};
   document.addEventListener('keydown',D._esc,true);
   document.body.append(D);drawerEl=D;
   const bb=document.querySelector('.tab-burger');if(bb)bb.setAttribute('aria-expanded','true');
