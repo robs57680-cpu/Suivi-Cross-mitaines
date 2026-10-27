@@ -1271,6 +1271,32 @@ body.board-lock{overflow:hidden;padding-block-end:0}
 @keyframes arPulse{0%,100%{opacity:.7}50%{opacity:1}}
 @keyframes arRise{0%{transform:translateY(0) translateX(0);opacity:0}12%{opacity:.9}100%{transform:translateY(-300px) translateX(14px);opacity:0}}
 @keyframes arFlash{0%{box-shadow:0 0 0 0 rgba(255,200,87,.9)}100%{box-shadow:0 0 0 14px rgba(255,200,87,0)}}
+/* animation du classement après une validation : ligne soulevée, vol vers le podium, illumination qui dévoile l'avatar */
+.ar-list.ra-on .ar-row:not(.ra-me){opacity:.7;transition:opacity .35s}
+.ar-row.ra-me{z-index:6;border-color:rgba(255,200,87,.95);box-shadow:0 16px 30px rgba(0,0,0,.65),0 0 24px rgba(255,200,87,.6),inset 0 0 0 1px rgba(255,220,140,.55);will-change:transform}
+.ra-fly{position:absolute;margin:0;pointer-events:none;z-index:50;filter:drop-shadow(0 0 16px rgba(255,200,87,.9));will-change:transform,opacity}
+.pod-c.ra-lift .pod-av{transform:translateY(-8px) scale(1.12);transition:transform .3s;filter:drop-shadow(0 0 14px rgba(255,200,87,.95))}
+.pod:has(.rv-go){z-index:3}
+.pod-c.rv-wait .pod-av{opacity:0}
+@keyframes rvAv{0%{opacity:0;transform:scale(.2);filter:brightness(5) blur(12px)}35%{opacity:1;transform:scale(1.35);filter:brightness(2.4) blur(2px)}100%{opacity:1;transform:none;filter:none}}
+@keyframes rvBurst{0%{opacity:0;transform:translate(-50%,-50%) scale(.1)}22%{opacity:1;transform:translate(-50%,-50%) scale(.9)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.9)}}
+@keyframes rvBase{0%{box-shadow:0 0 0 0 rgba(var(--rc),0)}30%{box-shadow:0 0 34px 6px rgba(var(--rc),.85)}100%{box-shadow:0 0 0 0 rgba(var(--rc),0)}}
+@keyframes rvIn{0%{opacity:0;transform:translateY(-14px)}100%{opacity:1;transform:none}}
+.pod-c.rv-go .pod-av{animation:rvAv 1.15s cubic-bezier(.2,.9,.3,1) both}
+.pod-c.rv-go::after{content:"";position:absolute;left:50%;top:calc(var(--s)*.8);width:calc(var(--s)*3.6);height:calc(var(--s)*3.6);border-radius:50%;pointer-events:none;z-index:7;background:radial-gradient(circle,rgba(255,255,255,.98),rgba(var(--rc),.75) 28%,transparent 66%);animation:rvBurst 1.25s ease-out both}
+.pod-c.rv-go .pod-base{animation:rvBase 1.25s ease-out both}
+.pod-c.rv-shift .pod-av,.pod-c.rv-shift .pod-base{animation:rvIn .7s ease-out .25s both}
+.ar-row.rv-in{animation:rvIn .6s ease-out .2s both}
+/* compteur de points et court-circuit (pas de place gagnée) */
+.ra-ct{font-variant-numeric:tabular-nums}
+.ar-pts.ra-ct,.ar-fc b.ra-ct,.pod-pts.ra-ct{color:#FFE08A!important;text-shadow:0 0 12px rgba(255,200,87,.9)!important}
+.sc-arcs{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:8;overflow:visible;filter:drop-shadow(0 0 3px #7cc4ff) drop-shadow(0 0 9px #3a8dff)}
+.sc-arcs path{fill:none;stroke:#fff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.sc-hot{filter:brightness(1.7) saturate(1.4) hue-rotate(170deg)!important}
+.ar-row.sc-hot{border-color:#9fd4ff!important;box-shadow:0 0 26px rgba(120,190,255,.95),inset 0 0 18px rgba(160,210,255,.45)!important}
+.sc-dead{filter:brightness(.42) saturate(.15)!important}
+.ar-row.sc-dead{box-shadow:none!important;border-color:rgba(255,255,255,.1)!important}
+.sc-spark{width:5px;height:5px;border-radius:50%;background:#fff;box-shadow:0 0 8px 2px #7cc4ff;filter:none;z-index:60}
 @media (max-height:700px){.arena{--s1:50px;--s2:38px;--s3:38px}.ar-title{font-size:25px}.ar-fc b{font-size:24px}}
 @media (prefers-reduced-motion:reduce){.arena *{animation:none!important}}
 
@@ -4314,7 +4340,8 @@ function go(tab){closeDrawer(true);S._bk=null;S.movBack=null;S.movFocus=null;if(
 const TAB_ICO={feed:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 5h16M4 10h10M4 15h16M4 20h8"/></svg>',
  today:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8.5 9V8a3.5 3.5 0 0 1 7 0v1"/><circle cx="12" cy="14.5" r="5.5"/></svg>',
  board:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 4h9v5a4.5 4.5 0 0 1-9 0z"/><path d="M7.5 6h-3c0 3 1.2 4.6 3.2 5M16.5 6h3c0 3-1.2 4.6-3.2 5M12 13.8V17M8.5 20h7M9.8 17h4.4"/></svg>'};
-function render(){
+function render(force){
+  if(force!==true&&S.rankAnim&&S.rankAnim.busy){S.rankAnim.dirty=true;return;} /* animation du classement en cours : on ne reconstruit pas les éléments animés */
   planHide();updatePayChip();
   pending=false;S._un=null;S._aw=null;S._ob=null;applyTheme();if(document.body.dataset.tab!==(S.tab||''))document.body.dataset.tab=S.tab||'';document.body.classList.remove('modal-open');document.body.classList.remove('board-lock');
   {const tp=document.querySelector('.top');if(tp)document.documentElement.style.setProperty('--toph',tp.offsetHeight+'px');}
@@ -6757,8 +6784,10 @@ function submitRedoNow(w){
   if(r.cap){rd.cap=true;rd.capScore=v;if(r.rounds!==undefined)rd.rounds=r.rounds;rd.reps=r.reps;}
   else{rd.score=v;if(r.rounds!==undefined){rd.rounds=r.rounds;rd.reps=r.reps;}}
   S.redo=null;
-  saveLog({redos:Object.assign({},cur.redos||{},{[date]:rd})},'REDO enregistré : +'+redoPts(m,(cur.entries||{})[date],rd)+' pt'+(redoPts(m,(cur.entries||{})[date],rd)>1?'s':''));
+  const rk=rankSnap(date);
+  const sv=saveLog({redos:Object.assign({},cur.redos||{},{[date]:rd})},'REDO enregistré : +'+redoPts(m,(cur.entries||{})[date],rd)+' pt'+(redoPts(m,(cur.entries||{})[date],rd)>1?'s':''));
   render();
+  if(rk)sv.then(()=>rankAnimStart(rk));
 }
 function lastLevel(uid){
   const en=(S.logs[uid||S.uid]&&S.logs[uid||S.uid].entries)||{};
@@ -7035,8 +7064,10 @@ function submitEntryNow(w){
     }
     if(up){S.prof.prs=next;saveProf();}
   }
-  saveLog({entries:Object.assign({},cur.entries||{},{[date]:e})},coach?'Résultats enregistrés':'Séance enregistrée',uid);
+  const rk=(!coach&&uid===S.uid)?rankSnap(date):null; /* classement d'avant, pour l'animation qui suit la validation */
+  const sv=saveLog({entries:Object.assign({},cur.entries||{},{[date]:e})},coach?'Résultats enregistrés':'Séance enregistrée',uid);
   render();
+  if(rk)sv.then(()=>rankAnimStart(rk));
 }
 function recentList(t,current){
   const per=periodFor(t)||activePeriod(); /* les séances des saisons précédentes n'apparaissent pas */
@@ -7225,7 +7256,9 @@ function viewBoard(){
   if(gsel!=='all'&&!gname(gsel))gsel='all';
   const isGroup=gsel!=='all',glob=!isGroup;
   const gm=boardGoat();
-  const rows=(isGroup?board.rows.filter(r=>r.bot||scopeOf(r.uid,p)===gsel):board.rows.slice()).sort(bCmp()); /* un bot est présent dans tous les groupes */
+  const ra=S.rankAnim||null; /* animation après une validation : d'abord l'état d'avant (ra.old), puis l'état final avec la révélation */
+  const allRows=(ra&&ra.old)?board.rows.map(r=>r.uid===S.uid?ra.old:r):board.rows;
+  const rows=(isGroup?allRows.filter(r=>r.bot||scopeOf(r.uid,p)===gsel):allRows.slice()).sort(bCmp()); /* un bot est présent dans tous les groupes */
   const ps=(()=>{const t=bTied(),o=[];rows.forEach((r,i)=>o.push(i>0&&t(rows[i-1],r)?o[i-1]:i+1));return o;})();
   const posIn=r=>ps[rows.indexOf(r)];
   const podRows=rows.filter(r=>r.sessions>0).slice(0,3);
@@ -7264,7 +7297,7 @@ function viewBoard(){
     if(!r)return h('div',{class:'pod-c p'+k+' empty'},h('div',{class:'pod-av'},h('div',{class:'pav'},h('div',{class:'pav-c'},h('div',{class:'noav-dot'},'–')))),
       h('div',{class:'pod-base'},h('div',{class:'pod-nm'},'—'),h('div',{class:'pod-sub'},'place libre')));
     const pos=posIn(r),rk=Math.min(pos,3),g=glob?grpOf(r):'';
-    return h('div',{class:'pod-c p'+k+(r.bot?' bot':''),style:r.bot?'--bc:'+botOf(r.uid).rgb:null,role:'button',tabindex:0,'data-uid':r.uid,onclick:open(r.uid),onkeydown:e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openAthlete(r.uid);}}},
+    return h('div',{class:'pod-c p'+k+(r.bot?' bot':'')+(ra&&ra.reveal===r.uid?' rv-wait':'')+((ra&&ra.reveal&&ra.podB&&ra.podB[k-1]!==r.uid&&ra.reveal!==r.uid)?' rv-shift':''),style:r.bot?'--bc:'+botOf(r.uid).rgb:null,role:'button',tabindex:0,'data-uid':r.uid,onclick:open(r.uid),onkeydown:e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openAthlete(r.uid);}}},
       h('div',{class:'pod-av'},k===1?svgOf(ICO_CROWN):null,arAvatar(r.uid,rk,true,size),h('div',{class:'medal'},arHex(pos,rk))),
       h('div',{class:'pod-base'},
         h('div',{class:'pod-nm'},r.pseudo+(r.uid===S.uid?' (toi)':'')),
@@ -7281,7 +7314,7 @@ function viewBoard(){
   else if(!rest.length&&podRows.length)list.append(h('li',{class:'ar-empty'},'Les autres athlètes apparaîtront ici.'));
   rest.forEach(r=>{
     const g=glob?grpOf(r):'';
-    list.append(h('li',{class:'ar-row'+(r.uid===S.uid?' me':'')+(r.bot?' bot':''),style:r.bot?'--bc:'+botOf(r.uid).rgb:null,role:'button',tabindex:0,'data-uid':r.uid,onclick:open(r.uid),onkeydown:e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openAthlete(r.uid);}}},
+    list.append(h('li',{class:'ar-row'+(r.uid===S.uid?' me':'')+(r.bot?' bot':'')+((ra&&ra.reveal&&ra.restB&&!ra.restB.includes(r.uid))?' rv-in':''),style:r.bot?'--bc:'+botOf(r.uid).rgb:null,role:'button',tabindex:0,'data-uid':r.uid,onclick:open(r.uid),onkeydown:e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openAthlete(r.uid);}}},
       arHex(posIn(r)),
       arAvatar(r.uid,0,false,44),
       h('div',{style:'min-width:0'},
@@ -7308,6 +7341,222 @@ function viewBoard(){
 
   el.append(h('section',{class:'arena','aria-label':'Classement'},...deco,head,...setPanel,sec,pod,list,foot));
   return el;
+}
+
+/* ===== animation du classement après une validation =====
+   Quand l'athlète valide un résultat (séance ou REDO), l'onglet Classement s'ouvre, TOUJOURS en GOAT et dans son groupe (en global s'il n'a pas de groupe).
+   Sa ligne se soulève, passe au-dessus des autres lignes (qui s'écartent) et se replace à sa nouvelle place, l'écran de la liste la suivant.
+   Si la nouvelle place est sur le podium, la ligne s'envole vers la place du podium et une illumination dévoile la pastille de son avatar.
+   Le classement est d'abord affiché dans son état d'AVANT (la ligne de l'athlète, copiée avant l'enregistrement, remplace la ligne à jour), puis animé vers l'état final.
+   Pendant l'animation render() est suspendu (S.rankAnim.busy) ; un toucher n'importe où l'interrompt et affiche le classement final. Pas d'animation si l'appareil réduit les animations. */
+const rkEase=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+const rkInv=y=>{let a=0,b=1;for(let i=0;i<22;i++){const m=(a+b)/2;if(rkEase(m)<y)a=m;else b=m;}return (a+b)/2;};
+const rkClamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+function rankLay(p,gsel,over){
+  let all=computeBoard(p,true).rows;
+  if(over)all=all.map(r=>r.uid===S.uid?over:r);
+  const rows=(gsel!=='all'?all.filter(r=>r.bot||scopeOf(r.uid,p)===gsel):all.slice()).sort(bCmp());
+  const podRows=rows.filter(r=>r.sessions>0).slice(0,3);
+  const rest=rows.filter(r=>!podRows.includes(r));
+  const t=bTied(),ps=[];rows.forEach((r,i)=>ps.push(i>0&&t(rows[i-1],r)?ps[i-1]:i+1));
+  return {rows,podRows,rest,pos:u=>{const i=rows.findIndex(r=>r.uid===u);return i<0?0:ps[i];}};
+}
+/* à appeler AVANT l'enregistrement : garde la ligne de l'athlète telle qu'elle est dans le classement */
+function rankSnap(date){
+  try{
+    if(!S.uid||!ready())return null;
+    const p=periodFor(date)||selPeriod();
+    if(!p)return null;
+    const row=computeBoard(p,true).rows.find(r=>r.uid===S.uid);
+    return {pid:p.id,virtual:!!p.virtual,row:row?Object.assign({},row):null};
+  }catch(e){return null;}
+}
+function cloneLive(el){
+  const c=el.cloneNode(true),a=el.querySelectorAll('canvas'),b=c.querySelectorAll('canvas');
+  a.forEach((cv,i)=>{try{const t=b[i];if(t){t.width=cv.width;t.height=cv.height;t.getContext('2d').drawImage(cv,0,0);}}catch(e){}});
+  c.removeAttribute('data-uid');
+  return c;
+}
+function rankEnd(st){
+  document.removeEventListener('pointerdown',rankSkip,true);
+  st.dead=true;
+  document.querySelectorAll('.ra-fly').forEach(x=>x.remove());
+  if(S.rankAnim===st){S.rankAnim=null;render(true);}
+}
+function rankSkip(){const st=S.rankAnim;if(st)rankEnd(st);}
+function rankAnimStart(rk){
+  if(!rk||!S.uid||S.rankAnim)return;
+  let prevMode=S.boardMode;
+  try{
+    const p=rk.virtual?selPeriod():(plist().find(x=>x.id===rk.pid)||null);
+    if(!p||(!p.virtual&&periodState(p)==='done'))return;
+    S.boardMode='goat';
+    const gsel=scopeOf(S.uid,p)||'all';
+    const A=rankLay(p,gsel,null),meA=A.rows.find(r=>r.uid===S.uid);
+    if(!meA){S.boardMode=prevMode;return;}
+    const old=rk.row||Object.assign({},meA,{sessions:0,perfN:0,redoN:0,total:0,weighted:0});
+    const B=rankLay(p,gsel,old);
+    if(bVal(meA)===bVal(old)&&B.pos(S.uid)===A.pos(S.uid)){S.boardMode=prevMode;return;} /* rien n'a changé : pas d'animation */
+    /* on ouvre l'onglet Classement (comme go('board')), en GOAT et dans le groupe de l'athlète */
+    closeDrawer(true);
+    S.boardGroup=gsel;if(!p.virtual)S.periodId=p.id;
+    S.profView=null;S.viewUser=null;S.tip=null;S.trophOpen='';S.trophSeason='';S.tab='board';S.boardDetail=false;S.boardSet=false;S.confirm=null;S.entry=null;S.redo=null;
+    if(reducedMotion()){render();window.scrollTo(0,0);return;}
+    const st=S.rankAnim={old,busy:true};
+    render(true);
+    document.addEventListener('pointerdown',rankSkip,true);
+    rankAnimPlay(st,p,A,B,old).catch(()=>{}).finally(()=>{if(S.rankAnim===st)rankEnd(st);});
+  }catch(e){S.rankAnim=null;S.boardMode=prevMode;console.warn('animation du classement',e);}
+}
+async function rankAnimPlay(st,p,A,B,old){
+  const me=S.uid,arena=document.querySelector('.arena'),list=document.querySelector('.ar-list');
+  if(!arena||!list)return;
+  const sel=u=>'[data-uid="'+String(u).replace(/"/g,'')+'"]';
+  const rowEl=u=>list.querySelector('.ar-row'+sel(u)),podEl=u=>arena.querySelector('.pod .pod-c'+sel(u));
+  const smax=()=>Math.max(0,list.scrollHeight-list.clientHeight);
+  const anim=(d,f)=>new Promise((res,rej)=>{const t0=performance.now();const step=now=>{if(st.dead)return rej(new Error('stop'));const q=rkClamp((now-t0)/d,0,1);f(q);if(q<1)requestAnimationFrame(step);else res();};requestAnimationFrame(step);});
+  const pause=d=>anim(d,()=>{});
+  const podB=B.podRows.map(r=>r.uid),podA=A.podRows.map(r=>r.uid),restB=B.rest.map(r=>r.uid),restA=A.rest.map(r=>r.uid);
+  st.podB=podB;st.restB=restB;
+  const kB=podB.indexOf(me),kA=podA.indexOf(me),iB=restB.indexOf(me);
+  const meEl=iB>=0?rowEl(me):null,toPod=kA>=0;
+  const gain=A.pos(me)<B.pos(me); /* a-t-il gagné au moins une place ? sinon : animation du court-circuit */
+  /* compteur de points : défile très vite jusqu'au nouveau total (ligne, bandeau du bas, puis marche du podium) */
+  const v0=bVal(old),v1=bVal(A.rows.find(r=>r.uid===me)||old);
+  const txt=el=>el&&[...el.childNodes].find(n=>n.nodeType===3);
+  const fb=[...document.querySelectorAll('.ar-foot .ar-fc b')];
+  const ctNodes=[];
+  const addCt=el=>{const n=txt(el);if(n){ctNodes.push(n);el.classList.add('ra-ct');}};
+  const count=(nodes,dur)=>{const c=anim(dur,q=>{const v=q<1?Math.round(v0+(v1-v0)*(1-Math.pow(1-q,3))):v1;nodes.forEach(n=>{n.nodeValue=fmtPts(v);});});c.catch(()=>{});return c;};
+  /* vol d'un élément vers la place du podium : la copie rétrécit en glissant vers la pastille d'arrivée */
+  const fly=async(src,dst,asPod,cls)=>{
+    const ar=arena.getBoundingClientRect(),s=src.getBoundingClientRect(),d=dst.getBoundingClientRect();
+    const w0=src.offsetWidth||s.width,h0=src.offsetHeight||s.height;
+    const cx=s.left+s.width/2-ar.left,cy=s.top+s.height/2-ar.top;
+    let c=cloneLive(src);
+    if(asPod){const host=document.createElement('div');host.className='pod-c '+cls;c.style.marginTop='0';host.append(c);c=host;
+      const cs=getComputedStyle(src);['--s','--rc'].forEach(k=>{const v=cs.getPropertyValue(k);if(v)c.style.setProperty(k,v);});}
+    c.classList.add('ra-fly');
+    c.style.cssText+=';left:'+(cx-w0/2)+'px;top:'+(cy-h0/2)+'px;width:'+w0+'px;height:'+h0+'px;transform:none';
+    arena.append(c);
+    src.style.visibility='hidden';
+    const sc0=s.width/w0,sc1=Math.max(.12,d.width/w0);
+    const dx=(d.left+d.width/2)-(s.left+s.width/2),dy=(d.top+d.height/2)-(s.top+s.height/2);
+    await anim(650,q=>{const e=rkEase(q);c.style.transform='translate('+dx*e+'px,'+dy*e+'px) scale('+(sc0+(sc1-sc0)*e)+')';c.style.opacity=q<.75?'1':String(1-(q-.75)/.25);});
+    c.remove();
+  };
+  /* pas de place gagnée : la ligne (ou la pastille) essaie de se soulever, puis court-circuite (arcs électriques, étincelles, grésillement) et retombe */
+  const shortCircuit=async(el,isPod)=>{
+    const W=el.offsetWidth,H=el.offsetHeight,NS='http://www.w3.org/2000/svg';
+    const svg=document.createElementNS(NS,'svg'),path=document.createElementNS(NS,'path');
+    svg.setAttribute('class','sc-arcs');svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.append(path);svg.style.display='none';el.append(svg);
+    const ar=arena.getBoundingClientRect(),sparks=[];
+    const spawn=n=>{const r=el.getBoundingClientRect();for(let i=0;i<n;i++){const d=document.createElement('span');d.className='ra-fly sc-spark';arena.append(d);
+      sparks.push({d,x:r.left-ar.left+Math.random()*r.width,y:r.top-ar.top+r.height*(.2+Math.random()*.6),vx:(Math.random()-.5)*5,vy:-2-Math.random()*4,life:1});}};
+    const arcs=()=>{let d='';for(let k=0;k<3;k++){const steps=isPod?5:8;let x=isPod?W*Math.random():0,y=Math.random()*H;d+='M'+x.toFixed(1)+' '+y.toFixed(1);
+      for(let i=1;i<=steps;i++){x=isPod?W*Math.random():W*i/steps+(Math.random()-.5)*10;y=Math.random()*H;d+=' L'+x.toFixed(1)+' '+y.toFixed(1);}}return d;};
+    const bounce=t=>{const n=7.5625,d=2.75;if(t<1/d)return n*t*t;if(t<2/d){t-=1.5/d;return n*t*t+.75;}if(t<2.5/d){t-=2.25/d;return n*t*t+.9375;}t-=2.625/d;return n*t*t+.984375;};
+    const LIFT=-28;let lastArc=0,phase=0;
+    await anim(2300,q=>{
+      let x=0,y=0,rot=0,sc=1;
+      if(q<.24){const u=q/.24,e=1-Math.pow(1-u,3);y=LIFT*e;sc=1+.03*e;x=Math.sin(q*900)*2.2*u;} /* l'effort : elle monte en tremblant */
+      else if(q<.64){ /* le court-circuit */
+        if(phase<1){phase=1;svg.style.display='block';spawn(10);}
+        y=LIFT+(Math.random()-.5)*5;x=(Math.random()-.5)*7;rot=(Math.random()-.5)*1.4;sc=1.03;
+        const now=performance.now();
+        if(now-lastArc>55){lastArc=now;path.setAttribute('d',arcs());el.classList.toggle('sc-hot',Math.random()<.7);if(Math.random()<.35)spawn(2);}
+      }else{ /* elle s'éteint et retombe en rebondissant */
+        if(phase<2){phase=2;svg.style.display='none';el.classList.remove('sc-hot');el.classList.add('sc-dead');spawn(8);}
+        const u=rkClamp((q-.64)/.26,0,1);y=LIFT*(1-bounce(u));sc=1.03-.03*u;
+        if(q>.93)el.classList.remove('sc-dead');
+      }
+      el.style.transform='translate('+x+'px,'+y+'px) rotate('+rot+'deg) scale('+sc+')';
+      sparks.forEach(s=>{s.x+=s.vx;s.y+=s.vy;s.vy+=.22;s.life-=.018;s.d.style.left=s.x+'px';s.d.style.top=s.y+'px';s.d.style.opacity=String(Math.max(0,s.life));});
+    });
+    el.style.transform='';el.classList.remove('sc-hot','sc-dead');svg.remove();sparks.forEach(s=>s.d.remove());
+  };
+  await pause(450);
+  /* 1. l'écran de la liste se place sur la ligne de l'athlète */
+  if(meEl){
+    const s0=list.scrollTop,s1=rkClamp(meEl.offsetTop+meEl.offsetHeight/2-list.clientHeight/2,0,smax());
+    if(Math.abs(s1-s0)>2)await anim(520,q=>{list.scrollTop=s0+(s1-s0)*rkEase(q);});
+  }
+  const podMe=(!meEl&&kB>=0)?podEl(me):null;
+  if(meEl)addCt(meEl.querySelector('.ar-pts'));else if(podMe)addCt(podMe.querySelector('.pod-pts'));
+  addCt(fb[1]);
+  const cP=count(ctNodes,1500);
+  if(!gain){
+    const tgt=meEl||(podMe&&podMe.querySelector('.pod-av'));
+    if(tgt){if(meEl){meEl.classList.add('ra-me');list.classList.add('ra-on');}await shortCircuit(tgt,!meEl);}
+    await cP;await pause(300);
+    return;
+  }
+  /* 2. la ligne se soulève */
+  if(meEl){
+    meEl.classList.add('ra-me');list.classList.add('ra-on');
+    await anim(340,q=>{meEl.style.transform='scale('+(1+.045*rkEase(q))+')';});
+  }else if(podMe){
+    podMe.classList.add('ra-lift');await pause(420);
+  }
+  /* 3. elle passe au-dessus des autres lignes, qui s'écartent à son passage */
+  let meDy=0;
+  if(meEl){
+    let order=null;
+    if(toPod)order=[me].concat(restB.filter(u=>u!==me));
+    else if(restA.length===restB.length&&restA.every(u=>restB.includes(u)))order=restA;
+    const els=restB.map(rowEl);
+    if(order&&els.every(Boolean)){
+      const top0=els.map(e=>e.offsetTop),hts=els.map(e=>e.offsetHeight);
+      const gap=els.length>1?Math.max(0,top0[1]-top0[0]-hts[0]):8;
+      const topA={};let y=top0[0];order.forEach(u=>{const k=restB.indexOf(u);topA[u]=y;y+=hts[k]+gap;});
+      const dy=restB.map((u,k)=>topA[u]-top0[k]),km=restB.indexOf(me),dyMe=dy[km],cMe=top0[km]+hts[km]/2;
+      const dist=Math.abs(order.indexOf(me)-km);
+      if(dist>0&&dyMe){
+        meDy=dyMe;
+        const T=rkClamp(900+260*dist,1100,2600);
+        const tc=restB.map((u,k)=>k===km?0:rkInv(rkClamp(((top0[k]+hts[k]/2)-cMe)/dyMe,0,1)));
+        await anim(T,q=>{
+          const e=rkEase(q);
+          els.forEach((el,k)=>{
+            if(k===km){el.style.transform='translateY('+dyMe*e+'px) scale(1.045)';return;}
+            if(!dy[k])return;
+            const w=rkClamp((q-(tc[k]-.07))/.16,0,1);
+            el.style.transform='translateY('+dy[k]*(w*w*(3-2*w))+'px)';
+          });
+          const tg=rkClamp(cMe+dyMe*e-list.clientHeight/2,0,smax());
+          list.scrollTop+=(tg-list.scrollTop)*.25;
+        });
+      }
+    }
+  }
+  if(!toPod){
+    /* 4a. nouvelle place dans la liste : la ligne se pose et le rang se met à jour (les points ont déjà défilé) */
+    if(meEl){
+      const tr=txt(fb[0]);
+      meEl.classList.add('flash');
+      await anim(450,q=>{meEl.style.transform='translateY('+meDy+'px) scale('+(1.045-.045*rkEase(q))+')';});
+      if(tr)tr.nodeValue=String(A.pos(me)||'–');
+      await cP;await pause(550);
+    }
+    return;
+  }
+  /* 4b. nouvelle place sur le podium : la ligne s'envole vers la pastille, puis illumination qui dévoile l'avatar */
+  const dstSlot=arena.querySelector('.pod .pod-c.p'+(kA+1)),dstAv=dstSlot&&dstSlot.querySelector('.pod-av');
+  if(dstAv){
+    if(meEl)await fly(meEl,dstAv,false,'');
+    else if(kB>=0&&kB!==kA){const so=podEl(me),av=so&&so.querySelector('.pod-av');if(av)await fly(av,dstAv,true,'p'+(kB+1));}
+  }
+  await cP;
+  st.old=null;st.reveal=me;
+  render(true);
+  await pause(60);
+  const slot=document.querySelector('.pod .pod-c'+sel(me));
+  if(slot){
+    slot.classList.remove('rv-wait');slot.classList.add('rv-go');
+    const pp=slot.querySelector('.pod-pts'),tn=txt(pp);
+    if(tn){pp.classList.add('ra-ct');count([tn],1000);} /* les points de la marche défilent aussi */
+  }
+  await pause(1600);
 }
 
 /* ===== Résumé de la semaine =====
