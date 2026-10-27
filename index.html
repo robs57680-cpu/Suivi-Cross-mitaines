@@ -4075,7 +4075,7 @@ function annMarkSeen(a){
 const annActive=()=>{const a=S.ann;return (a&&a.active!==false&&String(a.text||'').trim())?a:null;};
 let annTries=0;
 function maybeAnnouncement(){
-  if(S._annDone||!S.uid||!ready()||!S.annLoaded)return;
+  if(S._annDone||!S.uid||!ready()||!S.annLoaded||rankHold())return;
   if(document.getElementById('ann-ov'))return;
   if(document.querySelector('#tm-ov,#cer-ov,.reward-pop,#av-ov')){if(annTries++<20)setTimeout(maybeAnnouncement,3000);return;}
   S._annDone=true;
@@ -4587,7 +4587,7 @@ function seenCer(){try{return JSON.parse(localStorage.getItem(cerKey())||'[]');}
 function markCer(id){try{const l=seenCer();if(!l.includes(id)){l.push(id);localStorage.setItem(cerKey(),JSON.stringify(l));}}catch(e){}}
 /* ouverture automatique, une fois, pour la dernière saison terminée à laquelle l'athlète a participé */
 function maybeCeremony(){
-  if(S.cerAuto||!S.uid||!ready()||document.getElementById('cer-ov'))return;
+  if(S.cerAuto||!S.uid||!ready()||rankHold()||document.getElementById('cer-ov'))return;
   const done=plist().filter(p=>periodState(p)==='done');
   if(!done.length)return;
   S.cerAuto=true;
@@ -6787,7 +6787,7 @@ function submitRedoNow(w){
   const rk=rankSnap(date);
   const sv=saveLog({redos:Object.assign({},cur.redos||{},{[date]:rd})},'REDO enregistré : +'+redoPts(m,(cur.entries||{})[date],rd)+' pt'+(redoPts(m,(cur.entries||{})[date],rd)>1?'s':''));
   render();
-  if(rk)sv.then(()=>rankAnimStart(rk));
+  if(rk){S._rankPend=true;sv.then(()=>rankAnimStart(rk)).catch(()=>{}).finally(()=>{S._rankPend=false;if(!S.rankAnim)rankFlush();});}
 }
 function lastLevel(uid){
   const en=(S.logs[uid||S.uid]&&S.logs[uid||S.uid].entries)||{};
@@ -7067,7 +7067,7 @@ function submitEntryNow(w){
   const rk=(!coach&&uid===S.uid)?rankSnap(date):null; /* classement d'avant, pour l'animation qui suit la validation */
   const sv=saveLog({entries:Object.assign({},cur.entries||{},{[date]:e})},coach?'Résultats enregistrés':'Séance enregistrée',uid);
   render();
-  if(rk)sv.then(()=>rankAnimStart(rk));
+  if(rk){S._rankPend=true;sv.then(()=>rankAnimStart(rk)).catch(()=>{}).finally(()=>{S._rankPend=false;if(!S.rankAnim)rankFlush();});}
 }
 function recentList(t,current){
   const per=periodFor(t)||activePeriod(); /* les séances des saisons précédentes n'apparaissent pas */
@@ -7376,6 +7376,12 @@ function cloneLive(el){
   a.forEach((cv,i)=>{try{const t=b[i];if(t){t.width=cv.width;t.height=cv.height;t.getContext('2d').drawImage(cv,0,0);}}catch(e){}});
   c.removeAttribute('data-uid');
   return c;
+}
+/* les fenêtres de récompense / déblocage attendent la fin de l'animation du classement (S._rankPend : validation en cours d'enregistrement, S.rankAnim : animation en cours) */
+const rankHold=()=>!!(S._rankPend||S.rankAnim);
+function rankFlush(){
+  S._rankPend=false;
+  setTimeout(maybeCeremony,400);setTimeout(maybeRewardPopup,450);setTimeout(maybeAvatarUnlockPopup,750);setTimeout(maybeAnnouncement,900);setTimeout(maybeJokerPrompt,1100);
 }
 function rankEnd(st){
   document.removeEventListener('pointerdown',rankSkip,true);
@@ -9155,7 +9161,7 @@ function jokerAsk(kind){
 }
 /* à l'ouverture de l'appli : si une flamme vient de s'éteindre et qu'un joker est disponible, on propose de l'utiliser (une seule fois par flamme éteinte) */
 function maybeJokerPrompt(){
-  if(!S.uid||!ready()||S.snapMode||S._jkOpen||S._jkBusy||S._rewardPopupOpen)return;
+  if(!S.uid||!ready()||S.snapMode||S._jkOpen||S._jkBusy||S._rewardPopupOpen||rankHold())return;
   if(document.querySelector('#tm-ov,#cer-ov,.reward-pop,#av-ov,#entry-ov'))return;
   if(!jokerLeft(S.logs[S.uid]||{}))return;
   const fl=myFlames();
@@ -11393,7 +11399,7 @@ function rewardImage(r){
   return art;
 }
 function maybeRewardPopup(){
-  if(!S.uid||!ready()||S._rewardPopupOpen)return;
+  if(!S.uid||!ready()||S._rewardPopupOpen||rankHold())return;
   const per=periodFor(todayStr())||activePeriod();
   if(!per||per.virtual||periodState(per)==='soon'||!Array.isArray(per.rewards)||!per.rewards.length)return;
   const xp=seasonXp(S.uid,per),lg=S.logs[S.uid]||{},seen=new Set(lg.rewardSeen||[]);
@@ -11453,7 +11459,7 @@ function maybeRewardPopup(){
 const AV_SEED_SILENT=false;
 let avuTries=0;
 function maybeAvatarUnlockPopup(){
-  if(!S.uid||!ready())return;
+  if(!S.uid||!ready()||rankHold())return;
   if(S._rewardPopupOpen||document.querySelector('.reward-pop,#cer-ov,#tm-ov,#av-ov,#ann-ov')){if(avuTries++<20)setTimeout(maybeAvatarUnlockPopup,3000);return;}
   const lg=S.logs[S.uid]||{},earned=avState().earned[S.uid]||{},sx=avSexOf(S.uid);
   const viaRw=new Set();
