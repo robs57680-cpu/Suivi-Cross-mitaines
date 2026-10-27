@@ -141,6 +141,7 @@ textarea{resize:vertical}
 .tro-h .h2{display:block}
 .tro-h .chev{font-size:18px;transition:transform .2s}
 .tro-h[aria-expanded="true"] .chev{transform:rotate(180deg)}
+.msg-body{margin-top:10px}.msg-body[hidden]{display:none}
 .btn-block{width:100%;min-height:52px}
 /* encart « Entrer mes résultats » : fenêtre au-dessus de la page, les champs brillent quelques fois à l'ouverture */
 body.modal-open{overflow:hidden}
@@ -4366,13 +4367,21 @@ function viewMsgs(){
   if(!list.length){el.append(h('div',{class:'empty'},h('p',{},'Aucun message pour l’instant.')));return el;}
   list.forEach(m=>{
     const k='msg-'+m.id;
-    el.append(h('section',{class:'card'},
-      h('div',{class:'row',style:'justify-content:space-between'},h('p',{class:'eyebrow'},m.at?'Publié le '+fmtDate(String(m.at).slice(0,10),{day:'numeric',month:'long'}):'Message'),a&&a.id===m.id?h('span',{class:'chip live'},'En ligne'):null),
-      m.title?h('h2',{class:'wtitle hand-t'},m.title):null,
+    /* repliés par défaut : seul le titre (ou le début du texte) est visible, on touche pour lire le message */
+    if(!S.msgOpen)S.msgOpen={};
+    const open=!!S.msgOpen[m.id],tt=m.title||(String(m.text).replace(/\s+/g,' ').trim().slice(0,45)+(String(m.text).length>45?'…':''));
+    const body=h('div',{class:'stack msg-body',id:'mb-'+m.id,hidden:!open},
       h('p',{class:'ann-text'},linkText(m.text)),
       S.owner?h('div',{class:'row'},
         h('button',{class:'btn sm',type:'button',onclick:()=>{S.coach.annDraft={title:m.title||'',text:m.text,fix:false,notify:true};S.coach.view='message';go('coach');}},'Réutiliser'),
-        S.confirm===k?h('button',{class:'btn sm danger',type:'button',onclick:()=>{S.confirm=null;annDelete(m);}},'Confirmer la suppression'):h('button',{class:'btn sm danger',type:'button',onclick:()=>{S.confirm=k;render();}},'Supprimer')):null));
+        S.confirm===k?h('button',{class:'btn sm danger',type:'button',onclick:()=>{S.confirm=null;annDelete(m);}},'Confirmer la suppression'):h('button',{class:'btn sm danger',type:'button',onclick:()=>{S.confirm=k;render();}},'Supprimer')):null);
+    const head=h('button',{type:'button',class:'tro-h msg-h','aria-expanded':open?'true':'false','aria-controls':'mb-'+m.id,onclick:()=>{const o=body.hidden;body.hidden=!o;head.setAttribute('aria-expanded',String(o));S.msgOpen[m.id]=o;}},
+      h('span',{style:'flex:1;min-width:0'},
+        h('span',{class:'eyebrow',style:'display:block'},m.at?fmtDate(String(m.at).slice(0,10),{day:'numeric',month:'long'}):'Message'),
+        h('span',{class:'wtitle hand-t',style:'display:block;overflow-wrap:anywhere'},tt)),
+      a&&a.id===m.id?h('span',{class:'chip live'},'En ligne'):null,
+      h('span',{class:'chev','aria-hidden':'true'},'▾'));
+    el.append(h('section',{class:'card'},head,body));
   });
   return el;
 }
@@ -12016,7 +12025,7 @@ function drawerItems(){
   out.push({id:'profile',label:'Profil',ico:ICO_USER,dot:profDot(),cur:S.tab==='profile'&&!S.profView,fn:()=>{S.profView=null;go('profile');}});
   if(S.owner)out.push({id:'coach',label:'Coach',ico:ICO_COACH,dot:unusualAll().length>0||pendCount()>0,cur:['coach','prefs','stats'].includes(S.tab),fn:()=>go('coach')});
   out.push({id:'recap',label:'Résumé de la semaine',ico:ICO_RECAP,dot:recapDot(),cur:S.tab==='recap',fn:()=>{const m=rcLatest();if(m&&!S.owner)(S.rc||(S.rc={})).week=m;go('recap');}});
-  if(a||S.owner||annHistory().length)out.push({id:'mail',label:'Message du coach',ico:ICO_MAIL,dot:!!a&&!annIsSeen(a),cur:S.tab==='msgs',fn:()=>go('msgs')});
+  out.push({id:'mail',label:'Message du coach',ico:ICO_MAIL,dot:!!a&&!annIsSeen(a),cur:S.tab==='msgs',fn:()=>go('msgs')});
   out.push({id:'rules',label:'Règlement',ico:ICO_RULES,dot:!rulesSeen(),cur:S.tab==='rules',fn:()=>{rulesMark();S.rulesI=0;go('rules');}});
   out.push({id:'health',label:'Santé et sécurité',ico:ICO_HEALTH,dot:!healthSeen(),cur:S.tab==='health',fn:()=>{healthMark();S.healthI=0;go('health');}});
   out.push({id:'bug',label:'Signaler un bug',ico:ICO_BUG,cur:S.tab==='bug',fn:()=>{S.bugFrom=S.tab;S.bugPv=S.profView;S.bugMsg='';S.bugTab=null;go('bug');if(S.owner)loadBugs();}});
