@@ -14,8 +14,8 @@
 <title>Box Score</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@500;600&family=Work+Sans:wght@400;500;600;700&family=Permanent+Marker&family=Rubik+Distressed&family=Great+Vibes&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<noscript><link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@500;600&family=Work+Sans:wght@400;500;600;700&family=Permanent+Marker&family=Rubik+Distressed&family=Great+Vibes&display=swap" rel="stylesheet"></noscript>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@500;600&family=Work+Sans:wght@400;500;600;700&family=Permanent+Marker&family=Rubik+Distressed&family=Great+Vibes&family=Caveat:wght@500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@500;600&family=Work+Sans:wght@400;500;600;700&family=Permanent+Marker&family=Rubik+Distressed&family=Great+Vibes&family=Caveat:wght@500;700&display=swap" rel="stylesheet"></noscript>
 <style>
 /* Layout: a gym whiteboard column. Barbell wordmark on top, scoreboard panel for stats, weight plates as ranks and trophies.
    Light = concrete floor, dark = rubber floor. Anton for headings and numerals, Work Sans for text, Plex Mono for scores. */
@@ -1619,6 +1619,23 @@ a.btn.primary{color:var(--accent-ink)}
 .bot-set .bot-hd{display:flex;align-items:center;gap:10px}
 .bot-set .bot-hd b{color:rgb(var(--bc))}
 .bot-set .bot-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.hand,.ann-text,.hand-t{font-family:'Caveat','Segoe Print','Bradley Hand',cursive}
+.ann-text{font-size:25px;line-height:1.15;font-weight:600}
+.ann-letter .wtitle.hand-t,.card .wtitle.hand-t{font-size:34px;text-transform:none;font-weight:700;letter-spacing:0}
+.hand{font-size:22px;font-weight:600;margin:4px 0}
+.inst-logo{display:inline-grid;margin-right:8px;vertical-align:middle}.inst-logo svg{width:20px;height:20px}
+.dhr{display:flex;align-items:center;gap:4px}
+.dbell{position:relative;width:38px;height:38px;border:0;background:none;color:var(--ink);display:grid;place-items:center;cursor:pointer;padding:0}
+.dbell svg{width:24px;height:24px}.dbell .ibdot{top:3px;right:3px}.dbell[aria-expanded=true]{color:var(--accent)}
+.nbar{display:grid;gap:10px;margin:0 0 10px;padding:12px 14px;border:2px solid var(--edge);border-radius:4px;background:var(--surface);max-height:60vh;overflow:auto}
+.nbar[hidden]{display:none}
+.tgl{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--edge);border-radius:999px;padding:3px 12px 3px 3px;background:var(--surface);color:var(--ink);font:600 12px var(--f-mono);cursor:pointer}
+.tgl i{width:22px;height:22px;border-radius:50%;background:var(--muted)}
+.tgl.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}.tgl.on i{background:var(--accent-ink);order:2}
+.tgl:disabled{opacity:.5;cursor:default}
+.repi{display:grid;gap:4px;padding:8px 0;border-top:1px solid var(--line)}
+.toast .tundo{margin-left:10px;pointer-events:auto;border:2px solid currentColor;background:none;color:inherit;border-radius:4px;padding:2px 10px;font-weight:700;cursor:pointer}
+.toast:has(.tundo){pointer-events:auto}
 </style>
 </head>
 <body>
@@ -2893,7 +2910,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-26.70';
+const APP_VERSION='2026-10-27.72';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -3045,7 +3062,7 @@ const BODY_BACK=[['eps','<ellipse cx="64" cy="54" rx="13" ry="11"/>'],['eps','<e
 /* ---------- état ---------- */
 const S={viewUser:null,tip:null,profView:null,tab:'feed',boardDetail:false,sort:'goat',redo:null,league:null,statRange:'season',loaded:{periods:false,wods:false,logs:false},periods:{},wods:{},logs:{},prof:{prs:{},sex:''},
   db:null,uid:null,authReady:false,coachUid:null,coachLoaded:false,meName:'',owner:false,viewDate:null,periodId:null,entry:null,confirm:null,error:null,newVersion:null,
-  coach:{wod:null,editing:false,period:null,resDate:null},groups:{list:[],of:{}},comments:{},reactions:{},cerRefresh:null,boardGroup:undefined,wu:{cfg:null,loaded:false,list:false}};
+  coach:{wod:null,editing:false,period:null,resDate:null},groups:{list:[],of:{}},reports:{},comments:{},reactions:{},cerRefresh:null,boardGroup:undefined,wu:{cfg:null,loaded:false,list:false}};
 const ready=()=>S.loaded.periods&&S.loaded.wods&&S.loaded.logs;
 
 /* ---------- saisons, points, classement ---------- */
@@ -3857,7 +3874,7 @@ function movBackGo(){
 /* ---------- écritures ---------- */
 let chain=Promise.resolve();
 function run(fn){chain=chain.then(fn).catch(e=>{toast(errMsg(e),true);});return chain;}
-const saveProf=()=>run(async()=>{await S.db.doc('users/'+S.uid+'/private/profile').set({prs:S.prof.prs||{},sex:S.prof.sex||'',birth:S.prof.birth||'',genEx:S.prof.genEx||null,genAll:S.prof.genAll||null,words:S.prof.words||[],mvcfg:S.prof.mvcfg||{},revd:S.prof.revd||{},intf:S.prof.intf||{},intn:S.prof.intn||{},intCustom:Array.isArray(S.prof.intCustom)?S.prof.intCustom:[],pace:S.prof.pace||{},spread:S.prof.spread||{},weight:Number(S.prof.weight)>0?Number(S.prof.weight):0,plan:S.prof.plan||null,pend:S.prof.pend||{},rewardDraft:String(S.prof.rewardDraft||'')});});
+const saveProf=()=>run(async()=>{await S.db.doc('users/'+S.uid+'/private/profile').set({prs:S.prof.prs||{},sex:S.prof.sex||'',birth:S.prof.birth||'',genEx:S.prof.genEx||null,genAll:S.prof.genAll||null,words:S.prof.words||[],mvcfg:S.prof.mvcfg||{},revd:S.prof.revd||{},intf:S.prof.intf||{},intn:S.prof.intn||{},intCustom:Array.isArray(S.prof.intCustom)?S.prof.intCustom:[],pace:S.prof.pace||{},spread:S.prof.spread||{},weight:Number(S.prof.weight)>0?Number(S.prof.weight):0,plan:S.prof.plan||null,pend:S.prof.pend||{},rewardDraft:String(S.prof.rewardDraft||''),trash:Array.isArray(S.prof.trash)?S.prof.trash:[]});});
 const needPseudo=()=>S.uid&&S.loaded.logs&&!(S.logs[S.uid]&&S.logs[S.uid].pseudo);
 /* groupes : un seul document config/groups {list:[{id,name}], of:{uid:idDuGroupe}}, écrit par le coach seul */
 const groupsList=()=>(S.groups&&S.groups.list)||[];
@@ -4031,9 +4048,11 @@ function saveLog(patch,msg,uid){
     if(jkr&&((jkr.fire&&jkr.fire.length)||(jkr.top&&jkr.top.length)))data.jokers={fire:jkr.fire||[],top:jkr.top||[]};
     const sbs=patch.subs!==undefined?patch.subs:cur.subs;
     if(sbs&&Object.keys(sbs).length)data.subs=sbs; /* remplacements choisis : {date:{at,sw}} */
+    const gw=patch.groupWish!==undefined?patch.groupWish:cur.groupWish;
+    if(typeof gw==='string'&&gw)data.groupWish=gw; /* souhait de groupe : 'any' (indifférent) ou id du groupe */
     await S.db.doc('logs/'+uid).set(data);
     // Keep the local log synchronized so the reward popup does not reopen.
-    S.logs[uid]=Object.assign({},cur,data);delete S.logs[uid].weight;
+    S.logs[uid]=Object.assign({},cur,data);delete S.logs[uid].weight;if(!data.groupWish)delete S.logs[uid].groupWish;
     if(msg)toast(msg);
     // Rafraîchir immédiatement la bannière après changement d'équipement.
     if(uid===S.uid)render();
@@ -4124,8 +4143,8 @@ function feedIcons(){
   const mk=(id,label,svg,dot,fn)=>{const b=h('button',{class:'ibtn',type:'button',id,'aria-label':label,title:label,onclick:fn});b.innerHTML=svg;if(dot)b.append(h('span',{class:'ibdot','aria-hidden':'true'}));return b;};
   const a=annActive(),out=[];
   if(a)out.push(mk('ib-mail','Dernier message du coach',ICO_MAIL,!annIsSeen(a),()=>openAnnouncement(a,{review:true})));
-  const notifDot=pushConfigured()&&pushSupported()&&Notification.permission==='default';
-  out.push(mk('ib-bell','Notifications',ICO_BELL,notifDot,()=>{go('profile');S.profView='notifs';render();window.scrollTo(0,0);}));
+  const notifDot=notifDotOn();
+  out.push(mk('ib-bell','Notifications',ICO_BELL,notifDot,()=>{S.nbOpen=true;openDrawer();}));
   return h('div',{class:'row',style:'flex-wrap:nowrap;gap:8px'},out);
 }
 /* page coach : écrire, tester l'aperçu, publier, retirer */
@@ -4153,6 +4172,7 @@ function annCoach(){
       const x=draft();if(!x)return;
       const keep=cur&&d.fix;
       const doc=Object.assign({id:keep?cur.id:Date.now().toString(36),at:keep?(cur.at||new Date().toISOString()):new Date().toISOString(),active:true,notify:keep?false:d.notify!==false},x);
+      doc.history=[{id:doc.id,title:doc.title||'',text:doc.text,at:doc.at}].concat(annHistory().filter(y=>y.id!==doc.id)).slice(0,60);
       await run(async()=>{await S.db.doc('config/announcement').set(doc);toast(keep?'Message corrigé':'Message publié : les athlètes le verront à l’ouverture de l’appli');});
       d.fix=false;render();}},cur?(d.fix?'Enregistrer la correction':'Publier comme nouveau message'):'Publier le message'),
     cur?(S.confirm==='ann-del'
@@ -4252,6 +4272,78 @@ function notifSection(){
   }
   draw();
   return sec;
+}
+/* cloche du menu : bandeau avec interrupteur ON / OFF ; le coach y vérifie aussi les publications signalées */
+function notifBar(){
+  const box=h('div',{class:'stack'});
+  const draw=async()=>{
+    let on=false,msg='';
+    if(!pushSupported())msg=isIOS()&&!isStandalone()?'Sur iPhone, ajoute d’abord l’appli à l’écran d’accueil, puis ouvre-la depuis l’icône.':'Ton navigateur ne gère pas les notifications.';
+    else if(!pushConfigured())msg='Les notifications ne sont pas encore configurées par le coach.';
+    else if(Notification.permission==='denied')msg='Bloquées : autorise-les dans les réglages de ton téléphone ou de ton navigateur.';
+    else{try{const reg=await navigator.serviceWorker.getRegistration();on=!!(reg&&Notification.permission==='granted'&&await reg.pushManager.getSubscription());}catch(e){}}
+    const can=pushSupported()&&pushConfigured()&&Notification.permission!=='denied';
+    const sw=h('button',{class:'tgl'+(on?' on':''),type:'button',id:'push-toggle',role:'switch','aria-checked':String(on),disabled:!can,onclick:async()=>{try{if(on)await pushForget(true);else await pushEnable();}catch(e){toast(e&&e.message==='perm'?'Notifications refusées : autorise-les dans les réglages de ton téléphone.':'Action impossible, réessaie.',true);}await draw();render();}},h('i'),h('span',{},on?'ON':'OFF'));
+    const kids=[h('div',{class:'row',style:'justify-content:space-between;flex-wrap:nowrap'},h('b',{},'Notifications'),sw)];
+    if(msg)kids.push(h('p',{class:'hint'},msg));else kids.push(h('p',{class:'hint'},'Sur cet appareil uniquement.'));
+    if(S.owner)kids.push(reportsPanel());
+    box.replaceChildren(...kids);
+  };
+  draw();return box;
+}
+const refreshNb=()=>{const n=document.getElementById('nbar');if(n&&!n.hidden)n.replaceChildren(notifBar());};
+/* signalements du fil : 3 signalements = publication retirée temporairement, jusqu'à la vérification du coach (collection « reports », 1 document par signalement : uid__date__signaleur) */
+const REP_MAX=3;
+const repList=(uid,date)=>Object.values(S.reports||{}).filter(r=>r&&r.to===uid&&r.date===date);
+const repHidden=(uid,date)=>repList(uid,date).length>=REP_MAX;
+function repPosts(){const m={};Object.values(S.reports||{}).forEach(r=>{if(r&&r.to&&r.date)(m[r.to+'__'+r.date]=m[r.to+'__'+r.date]||{uid:r.to,date:r.date,list:[]}).list.push(r);});return Object.values(m).filter(x=>x.list.length>=REP_MAX);}
+function reportPost(uid,date){
+  if(needPseudo()){toast('Choisis d’abord ton pseudo.',true);return;}
+  const id=uid+'__'+date+'__'+S.uid,d={to:uid,date,by:S.uid,at:new Date().toISOString()};
+  S.reports[id]=d;S.confirm=null;run(async()=>{await S.db.doc('reports/'+id).set(d);toast('Merci, la publication a été signalée au coach.');});render();
+}
+function repLink(uid,date){
+  if(uid===S.uid)return null;
+  if(S.reports[uid+'__'+date+'__'+S.uid])return h('p',{class:'hint',style:'margin:0;text-align:right'},'Publication signalée, merci.');
+  const k='rl-'+uid+date;
+  return S.confirm===k?h('div',{class:'row',style:'justify-content:flex-end'},h('span',{class:'hint'},'Signaler cette publication au coach ?'),h('button',{class:'btn sm danger',type:'button',onclick:()=>reportPost(uid,date)},'Signaler'),h('button',{class:'btn sm',type:'button',onclick:()=>{S.confirm=null;render();}},'Annuler'))
+    :h('div',{style:'text-align:right'},h('button',{class:'link',type:'button','aria-label':'Signaler cette publication',onclick:()=>{S.confirm=k;render();}},'⚑ Signaler'));
+}
+function reportsPanel(){
+  const ps=repPosts(),wrap=h('div',{class:'stack'},h('b',{},'Signalements à vérifier'+(ps.length?' ('+ps.length+')':'')));
+  if(!ps.length){wrap.append(h('p',{class:'hint'},'Aucune publication à vérifier.'));return wrap;}
+  ps.forEach(p=>{
+    const lg=S.logs[p.uid]||{},e=(lg.entries||{})[p.date]||{};let sure=false;
+    const clear=async()=>{await run(()=>Promise.all(p.list.map(r=>S.db.doc('reports/'+r.to+'__'+r.date+'__'+r.by).delete())));p.list.forEach(r=>delete S.reports[r.to+'__'+r.date+'__'+r.by]);refreshNb();render();};
+    wrap.append(h('div',{class:'repi'},h('div',{class:'nm'},(lg.pseudo||'Athlète')+' · '+cap(fmtShort(p.date))),h('div',{class:'sub'},p.list.length+' signalements'),
+      e.message?h('p',{class:'hand'},e.message):h('p',{class:'hint'},'Pas de message : seule la séance est publiée.'),
+      h('div',{class:'row'},
+        h('button',{class:'btn sm',type:'button',onclick:async()=>{await clear();toast('Publication rétablie');}},'Rétablir'),
+        e.message?h('button',{class:'btn sm danger',type:'button',onclick:async()=>{const en=Object.assign({},lg.entries);en[p.date]=Object.assign({},e);delete en[p.date].message;await saveLog({entries:en},'Message supprimé',p.uid);await clear();}},'Supprimer le message'):null,
+        h('button',{class:'btn sm danger',type:'button',onclick:async ev=>{if(!sure){sure=true;ev.currentTarget.textContent='Confirmer : retirer la séance';return;}removeSession(p.date,p.uid);await clear();}},'Retirer la séance'))));
+  });
+  return wrap;
+}
+/* messages du coach : historique de tous les messages envoyés (config/announcement.history) */
+const annHistory=()=>{const a=S.ann||{},l=Array.isArray(a.history)?a.history.slice():[];if(a.active!==false&&a.id&&a.text&&!l.some(x=>x&&x.id===a.id))l.push({id:a.id,title:a.title||'',text:a.text,at:a.at});return l.filter(x=>x&&x.text).sort((p,q)=>String(q.at||'').localeCompare(String(p.at||'')));};
+const annDelete=m=>{const tid=trashPush('message','Message · '+(m.title||String(m.text).slice(0,30)),{msg:m});return run(async()=>{const a=S.ann||{},doc=Object.assign({},a,{history:annHistory().filter(x=>x.id!==m.id).slice(0,60)});if(a.id===m.id)doc.active=false;await S.db.doc('config/announcement').set(doc);if(tid)toastUndo('Message supprimé',tid);else toast('Message supprimé');});};
+function viewMsgs(){
+  const a=annActive();if(a&&!annIsSeen(a))annMarkSeen(a);
+  const list=annHistory(),el=h('div',{class:'stack'});
+  el.append(h('div',{},h('p',{class:'eyebrow'},'Du coach'),h('h1',{class:'day'},'Messages')));
+  if(S.owner)el.append(h('div',{class:'row'},h('button',{class:'btn primary',type:'button',id:'msgs-new',onclick:()=>{S.coach.view='message';go('coach');}},'Écrire un message')));
+  if(!list.length){el.append(h('div',{class:'empty'},h('p',{},'Aucun message pour l’instant.')));return el;}
+  list.forEach(m=>{
+    const k='msg-'+m.id;
+    el.append(h('section',{class:'card'},
+      h('div',{class:'row',style:'justify-content:space-between'},h('p',{class:'eyebrow'},m.at?'Publié le '+fmtDate(String(m.at).slice(0,10),{day:'numeric',month:'long'}):'Message'),a&&a.id===m.id?h('span',{class:'chip live'},'En ligne'):null),
+      m.title?h('h2',{class:'wtitle hand-t'},m.title):null,
+      h('p',{class:'ann-text'},linkText(m.text)),
+      S.owner?h('div',{class:'row'},
+        h('button',{class:'btn sm',type:'button',onclick:()=>{S.coach.annDraft={title:m.title||'',text:m.text,fix:false,notify:true};S.coach.view='message';go('coach');}},'Réutiliser'),
+        S.confirm===k?h('button',{class:'btn sm danger',type:'button',onclick:()=>{S.confirm=null;annDelete(m);}},'Confirmer la suppression'):h('button',{class:'btn sm danger',type:'button',onclick:()=>{S.confirm=k;render();}},'Supprimer')):null));
+  });
+  return el;
 }
 /* ouverture depuis une notification : ?go=today|feed|board|profile|recap, ou message du service worker si l'appli est déjà ouverte */
 const GO_TABS=['feed','today','board','profile','recap'];
@@ -4361,14 +4453,14 @@ function render(force){
   const tabs=[['feed','Fil'],['today','Séance'],['board','Classement']];
   const tabEls=tabs.map(([k,l])=>{const b=h('button',{class:'tab','data-tour':'tab-'+k,'aria-current':S.tab===k?'page':null,onclick:()=>go(k)});b.innerHTML=TAB_ICO[k]+'<span>'+l+'</span>';return b;});
   {
-    const activeExtra=['profile','coach','prefs','stats','share','rules','health','bug','moves','sub','avis','recap'].includes(S.tab);
+    const activeExtra=['profile','coach','prefs','stats','share','rules','health','bug','moves','sub','avis','recap','msgs'].includes(S.tab);
     const bb=h('button',{class:'tab tab-burger','data-tour':'tab-menu','aria-current':activeExtra?'page':null,'aria-haspopup':'dialog','aria-expanded':drawerEl?'true':'false','aria-label':'Menu',title:'Menu',onclick:()=>{drawerEl?closeDrawer():openDrawer();}});
     bb.innerHTML=ICO_MENU;if(menuDot())bb.append(h('span',{class:'ibdot','aria-hidden':'true'}));
     tabEls.push(bb);
   }
   $('#tabs').classList.remove('coach-tabs');
   $('#tabs').replaceChildren(...tabEls);
-  const view={feed:viewFeed,today:viewToday,board:viewBoard,profile:viewProfile,coach:viewCoach,stats:viewStats,prefs:viewPrefs,share:viewShare,sub:viewSub,avis:viewAvis,rules:viewRules,health:viewHealth,bug:viewBug,moves:viewMoves,recap:viewRecap}[S.tab]||viewFeed;
+  const view={feed:viewFeed,today:viewToday,board:viewBoard,profile:viewProfile,coach:viewCoach,stats:viewStats,prefs:viewPrefs,share:viewShare,sub:viewSub,avis:viewAvis,rules:viewRules,health:viewHealth,bug:viewBug,moves:viewMoves,recap:viewRecap,msgs:viewMsgs}[S.tab]||viewFeed;
   const _esc=document.querySelector('.entry-sheet'),_escTop=_esc?_esc.scrollTop:0;
   const _arl=document.querySelector('.ar-list'),_arlTop=_arl?_arl.scrollTop:0,_arlKey=_arl?_arl.dataset.key:'';
   main.replaceChildren(...banners(),view());
@@ -6119,6 +6211,7 @@ function viewFeed(){
   if(!posts.length){el.append(h('div',{class:'empty'},h('p',{},'Aucune séance publiée dans le fil pour le moment.'),h('p',{class:'muted'},'Les séances apparaîtront ici après validation des résultats par les athlètes.')));return el;}
   const visiblePosts=posts.slice(0,feedShown);
   visiblePosts.forEach(post=>{
+    if(repHidden(post.uid,post.date)){if(!S.owner){el.append(h('section',{class:'card'},h('p',{class:'muted'},'Publication retirée temporairement : elle est en attente de vérification par le coach.')));return;}el.append(h('p',{class:'hint'},'⚑ Masquée pour les athlètes (3 signalements) : à vérifier avec la cloche du menu.'));}
     const {uid,lg,date,e,w}=post,m=metconOf(w),mine=(S.reactions[uid+'__'+date+'__'+S.uid]||{}).emoji;
     const avwrap=avatarFramed(uid,()=>openAthlete(uid));
     
@@ -6134,7 +6227,7 @@ function viewFeed(){
       const n=Object.values(S.reactions).filter(r=>r&&r.to===uid&&r.date===date&&r.emoji===em).length;
       return h('button',{type:'button',class:'rxb','aria-pressed':mine===em?'true':'false','aria-label':RXN[em],onclick:()=>reactTo(uid,date,em)},em,n?h('small',{},n):null);
     }));
-    el.append(h('section',{class:'card feed-card'+cardTheme(uid)+(fb?' feed-has-badge':'')},head,fbEl,h('div',{class:'feed-wod-head'},h('h2',{class:'wtitle',style:'font-size:24px;margin:0'},w.title,feedLvBadge(m,e)),h('span',{class:'sub feed-wod-date'},'Réalisée le '+cap(fmtShort(dfmt(new Date(e.at)))))),results.length?h('div',{class:'feed-result'},results):h('p',{class:'muted'},'Résultat détaillé non renseigné.'),e.message?h('p',{class:'feed-message',style:'white-space:pre-wrap;overflow-wrap:anywhere;margin:0'},e.message):null,h('div',{class:'rxwrap'},rx,feedPts(w,e))));
+    el.append(h('section',{class:'card feed-card'+cardTheme(uid)+(fb?' feed-has-badge':'')},head,fbEl,h('div',{class:'feed-wod-head'},h('h2',{class:'wtitle',style:'font-size:24px;margin:0'},w.title,feedLvBadge(m,e)),h('span',{class:'sub feed-wod-date'},'Réalisée le '+cap(fmtShort(dfmt(new Date(e.at)))))),results.length?h('div',{class:'feed-result'},results):h('p',{class:'muted'},'Résultat détaillé non renseigné.'),e.message?h('p',{class:'feed-message',style:'white-space:pre-wrap;overflow-wrap:anywhere;margin:0'},e.message):null,h('div',{class:'rxwrap'},rx,feedPts(w,e)),repLink(uid,date)));
   });
   if(posts.length>visiblePosts.length){
     el.append(h('div',{class:'row',style:'justify-content:center'},
@@ -6701,8 +6794,9 @@ function removeSession(date,uid){
   uid=uid||S.uid;
   const lg=S.logs[uid]||{};
   const en=Object.assign({},lg.entries),rd=Object.assign({},lg.redos);
+  const tid=(S.owner&&uid!==S.uid&&(en[date]||rd[date]))?trashPush('result','Résultat de '+(lg.pseudo||'athlète')+' · '+fmtShort(date),{uid,date,entry:en[date]||null,redo:rd[date]||null}):null;
   delete en[date];delete rd[date];S.confirm=null;
-  saveLog({entries:en,redos:rd},'Séance retirée',uid);
+  saveLog({entries:en,redos:rd},tid?null:'Séance retirée',uid).then(()=>{if(tid)toastUndo('Résultat retiré',tid);});
 }
 function removeRedo(date){
   if(lockedDate(date)||lockedDate(todayStr())){toast(LOCKMSG,true);return;}
@@ -9288,7 +9382,8 @@ function viewProfile(){
     field('Poids de corps (kg)',win,'Sert au trophée poids / puissance. Seul ton rapport charge ÷ poids apparaît dans l’appli, jamais ton poids.'),
     field('Date de naissance',bin,'Sert aux trophées Seniors (18 à 34 ans) et Vétérans (35 ans et +). Seule ta catégorie apparaît dans l’appli, jamais ta date de naissance.'),
     h('div',{class:'row'},h('button',{class:'btn',type:'submit'},'Enregistrer mes infos')),
-    field('Sexe',sx,'Sert à afficher la bonne charge dans les metcons et à attribuer le trophée LA GOAT.')));
+    field('Sexe',sx,'Sert à afficher la bonne charge dans les metcons et à attribuer le trophée LA GOAT.'),
+    (()=>{const gw=lgMe.groupWish||'';return field('Souhait de groupe',sel([['','Je n’ai pas choisi'],['any','Indifférent : un groupe à mon niveau']].concat(groupsList().filter(g=>!g.noWish||gw===g.id).map(g=>[g.id,g.name+(g.noWish?' (fermé aux souhaits)':'')])),(gw==='any'||groupName(gw))?gw:'',v=>saveLog({groupWish:v},'Souhait enregistré'),{id:'gwish-select'}),'Pour être avec tes potes, choisis leur groupe. Le coach voit ton souhait quand il compose les groupes, sans garantie.');})()));
   const pv=S.profView;
   if(pv){
     return h('div',{class:'stack'},
@@ -9297,7 +9392,7 @@ function viewProfile(){
       pv==='infos'?infosForm:pv==='notifs'?notifSection():pv==='badges'?badgesSection():pv==='banner'?bannerSection():pv==='prog'?progSection():prSection());
   }
   const nB=(awards()[S.uid]||[]).length,nP=Object.keys(S.prof.prs||{}).length;
-  const pitems=[['infos','Mes infos',infosDot()?'\u00c0 compl\u00e9ter : '+infosMissing().join(', '):(pseudo||'Pseudo, poids, sexe')],['badges','Mes badges',nB+' badge'+(nB>1?'s':'')],['banner','Ma bannière','Identité visuelle'],['prog','Progression','Carnet de PR · '+prEvents(S.uid).length+' record'+(prEvents(S.uid).length>1?'s':'')],['prs','Mes PR',nP+' PR'],['notifs','Notifications',notifStatus()]];
+  const pitems=[['infos','Mes infos',infosDot()?'\u00c0 compl\u00e9ter : '+infosMissing().join(', '):(pseudo||'Pseudo, poids, sexe')],['badges','Mes badges',nB+' badge'+(nB>1?'s':'')],['banner','Ma bannière','Identité visuelle'],['prog','Progression','Carnet de PR · '+prEvents(S.uid).length+' record'+(prEvents(S.uid).length>1?'s':'')],['prs','Mes PR',nP+' PR']];
   el.append(h('div',{class:'stack'},pitems.map(([k,t,sub])=>blinkIf(k==='infos'&&infosDot(),h('button',{class:'mbtn',type:'button',id:'pm-'+k,onclick:()=>{S.profView=k;render();window.scrollTo(0,0);}},h('div',{},h('b',{},t),h('span',{},sub)),k==='infos'&&infosDot()?h('span',{class:'ibdot','aria-hidden':'true'}):null,h('i',{},'›'))))));
   el.append(h('div',{class:'row'},h('button',{class:'btn',onclick:async()=>{try{await pushForget();}catch(e){}signOut(auth);}},'Se déconnecter')),h('p',{class:'ver'},'Version '+APP_VERSION));
   return el;
@@ -10032,8 +10127,9 @@ function coachMenu(){
     ['avatar','Objets secrets',pl_(AV_ITEMS.length,'objet')+' d’avatar à débloquer'],
     ['mvcfg','Configurer les mouvements',pl_(mvCfgCount(),'mouvement')+' configuré'+(mvCfgCount()>1?'s':'')],
     ['warmup','Gérer l’échauffement',pl_(wuItems().length,'exercice')],
+    ['trash','Corbeille',(S.prof.trash||[]).length?pl_((S.prof.trash||[]).length,'élément')+' récupérable'+((S.prof.trash||[]).length>1?'s':''):'Rétablir une suppression par erreur'],
     ['message','Message aux athlètes',annActive()?'Un message est en ligne':'Aucun message en ligne']];
-  return h('div',{class:'stack'},items.map(([k,t,sub])=>h('button',{class:'mbtn',type:'button',id:'cm-'+k,onclick:()=>{if(k==='warmup'){openWarmupEdit();return;}S.coach.view=k;render();window.scrollTo(0,0);}},h('div',{},h('b',{},t),h('span',{},sub)),((k==='results'&&unusualAll().length)||(k==='wod'&&nP))?h('span',{class:'ibdot','aria-hidden':'true'}):null,h('i',{},'›'))));
+  return h('div',{class:'stack'},items.map(([k,t,sub])=>h('button',{class:'mbtn',type:'button',id:'cm-'+k,onclick:()=>{if(k==='warmup'){openWarmupEdit();return;}if(k==='message'){go('msgs');return;}S.coach.view=k;render();window.scrollTo(0,0);}},h('div',{},h('b',{},t),h('span',{},sub)),((k==='results'&&unusualAll().length)||(k==='wod'&&nP))?h('span',{class:'ibdot','aria-hidden':'true'}):null,h('i',{},'›'))));
 }
 
 /* ---------- coach ---------- */
@@ -10379,7 +10475,7 @@ function viewCoach(){
   const el=h('div',{class:'stack'});
   if(!S.owner){el.append(h('div',{class:'empty'},h('p',{},'Cet espace est réservé au coach.')));return el;}
   if(!S.coach.wod)S.coach.wod=blankWod();
-  const v=S.coach.view,titles={wod:'Entrer un WOD',groups:'Gérer les groupes',bots:'Gérer les bots',results:'Gérer les résultats',seasons:'Gérer les saisons',avatar:'Objets secrets',rivals:'Messages du fil',message:'Message aux athlètes',mvcfg:'Configurer les mouvements',plan:'Planificateur de saison',draft:'Récompenses brouillon'};
+  const v=S.coach.view,titles={wod:'Entrer un WOD',groups:'Gérer les groupes',bots:'Gérer les bots',results:'Gérer les résultats',seasons:'Gérer les saisons',avatar:'Objets secrets',rivals:'Messages du fil',message:'Message aux athlètes',trash:'Corbeille',mvcfg:'Configurer les mouvements',plan:'Planificateur de saison',draft:'Récompenses brouillon'};
   if(v==='plan'){el.append(planView());return el;} /* plein écran, sans la ligne de retour ni le titre : voir planPlace */
   if(titles[v])el.append(h('div',{class:'row'},h('button',{class:'btn sm',type:'button',onclick:()=>{S.coach.view=null;S.entry=null;S.confirm=null;render();window.scrollTo(0,0);}},'← Coach')));
   el.append(h('div',{class:'row',style:'justify-content:space-between;flex-wrap:nowrap;align-items:flex-start'},h('div',{style:'min-width:0'},h('p',{class:'eyebrow'},'Espace coach'),h('h1',{class:'day'},titles[v]||'Programmation')),coachIcons()));
@@ -10391,6 +10487,7 @@ function viewCoach(){
   else if(v==='avatar')el.append(avatarCoach());
   else if(v==='rivals')el.append(rivalryCoach());
   else if(v==='message')el.append(annCoach());
+  else if(v==='trash')el.append(trashCard());
   else if(v==='mvcfg')el.append(mvCfgSection());
   else if(v==='draft')el.append(rewardDraftCard());
   else el.append(periodEditor(),periodList());
@@ -11106,7 +11203,7 @@ function wodRow(w){
     h('div',{class:'l'},h('div',{class:'nm'},cap(fmtShort(w.date))+' · '+w.title),h('div',{class:'sub'},(w.parts||[]).length+' parties · '+n+' athlète'+(n>1?'s':'')+' ont validé')),
     h('div',{class:'row'},
       h('button',{class:'btn sm',onclick:()=>{S.coach.wod=wodToDraft(w);S.coach.editing=true;S.coach.wodOpen=true;render();}},'Modifier'),
-      S.confirm==='wod-'+w.date?h('button',{class:'btn sm danger',onclick:()=>{S.confirm=null;run(async()=>{await S.db.doc('wods/'+w.date).delete();toast('Séance supprimée');});}},'Confirmer')
+      S.confirm==='wod-'+w.date?h('button',{class:'btn sm danger',onclick:()=>{S.confirm=null;const tid=trashPush('wod','Séance du '+fmtShort(w.date)+' · '+w.title,{date:w.date,wod:S.wods[w.date]});run(async()=>{await S.db.doc('wods/'+w.date).delete();if(tid)toastUndo('Séance supprimée',tid);else toast('Séance supprimée');});}},'Confirmer')
                                 :h('button',{class:'btn sm danger',onclick:()=>{S.confirm='wod-'+w.date;render();}},'Supprimer')));
 }
 /* séances par semaine : la semaine en cours est dépliée, les autres repliées ; point rouge = moins de séances publiées que prévu
@@ -11253,6 +11350,42 @@ function resultsSection(){
   })));
   return sec;
 }
+/* corbeille du coach : toute suppression importante est copiée dans S.prof.trash (profil privé du coach, 30 jours, 25 éléments) et peut être rétablie */
+const TRASH_KIND={wod:'Séance',period:'Saison',result:'Résultat d’athlète',group:'Groupe',message:'Message'};
+function toastUndo(msg,id){
+  const t=h('div',{class:'toast'},msg,h('button',{class:'tundo',type:'button',onclick:()=>{t.remove();trashRestore(id);}},'Annuler'));
+  $('#toast').append(t);setTimeout(()=>t.remove(),9000);
+}
+function trashPush(kind,label,data){
+  if(!S.owner)return null;
+  const id=Date.now().toString(36)+Math.random().toString(36).slice(2,5),lim=Date.now()-30*864e5;
+  let l=[{id,kind,label,at:new Date().toISOString(),data:JSON.parse(JSON.stringify(data))}].concat((S.prof.trash||[]).filter(x=>x&&new Date(x.at).getTime()>lim)).slice(0,25);
+  while(l.length>1&&JSON.stringify(l).length>700000)l.pop();
+  S.prof.trash=l;saveProf();return id;
+}
+const trashDrop=id=>{S.prof.trash=(S.prof.trash||[]).filter(x=>x.id!==id);saveProf();};
+async function trashRestore(id){
+  const x=(S.prof.trash||[]).find(y=>y.id===id);if(!x)return;
+  const d=x.data;let ok=true;
+  try{
+    if(x.kind==='wod'){if(S.wods[d.date]){toast('Une séance existe déjà à cette date : supprime-la d’abord.',true);return;}await S.db.doc('wods/'+d.date).set(d.wod);}
+    else if(x.kind==='period'){if(S.periods[d.id]){toast('Cette saison existe déjà.',true);return;}await S.db.doc('periods/'+d.id).set(d.period);}
+    else if(x.kind==='result'){const lg=S.logs[d.uid];if(!lg){toast('Cet athlète n’a plus de compte.',true);return;}const en=Object.assign({},lg.entries),rd=Object.assign({},lg.redos);if(d.entry)en[d.date]=d.entry;if(d.redo)rd[d.date]=d.redo;await saveLog({entries:en,redos:rd},null,d.uid);}
+    else if(x.kind==='group'){const list=groupsList().filter(g=>g.id!==d.group.id).concat([d.group]),of=Object.assign({},(S.groups&&S.groups.of)||{});Object.entries(d.members||{}).forEach(([u,g])=>{if(!of[u])of[u]=g;});await saveGroups(list,of);}
+    else if(x.kind==='message'){const a=S.ann||{};await S.db.doc('config/announcement').set(Object.assign({},a,{history:[d.msg].concat(annHistory().filter(m=>m.id!==d.msg.id)).slice(0,60)}));}
+  }catch(e){ok=false;toast('Rétablissement impossible, réessaie.',true);}
+  if(ok){trashDrop(id);toast(TRASH_KIND[x.kind]+' rétabli(e)');render();}
+}
+function trashCard(){
+  const l=(S.prof.trash||[]).filter(x=>x&&x.id),el=h('div',{class:'stack'});
+  el.append(h('section',{class:'card'},h('h2',{class:'h2'},'Corbeille'),h('p',{class:'muted'},'Tes suppressions de séances, saisons, résultats d’athlètes, groupes et messages sont gardées 30 jours (25 maximum). Un toucher sur « Restaurer » remet l’élément en place.')));
+  if(!l.length){el.append(h('div',{class:'empty'},h('p',{},'Rien à rétablir pour l’instant.')));return el;}
+  el.append(h('ul',{class:'list'},l.map(x=>{let sure=false;return h('li',{},
+    h('div',{class:'l'},h('div',{class:'nm'},x.label),h('div',{class:'sub'},TRASH_KIND[x.kind]+' · supprimé(e) le '+fmtDate(String(x.at).slice(0,10),{day:'numeric',month:'long'}))),
+    h('div',{class:'row'},h('button',{class:'btn sm primary',type:'button',onclick:()=>trashRestore(x.id)},'Restaurer'),
+      h('button',{class:'btn sm danger',type:'button',onclick:e=>{if(!sure){sure=true;e.currentTarget.textContent='Confirmer';return;}trashDrop(x.id);render();}},'Effacer')));})));
+  return el;
+}
 /* groupes : le coach crée des groupes et place chaque athlète dans le sien (les séances restent les mêmes pour tous) */
 function groupsCard(){
   const list=groupsList(),of=Object.assign({},(S.groups&&S.groups.of)||{});
@@ -11267,14 +11400,16 @@ function groupsCard(){
     h('div',{style:'flex:1;min-width:160px'},field('Nouveau groupe',nameIn)),
     h('button',{class:'btn primary',type:'submit'},'Ajouter')));
   const members=id=>Object.values(of).filter(x=>x===id).length;
+  const wishers=id=>Object.entries(S.logs).filter(([u,l])=>l&&l.pseudo&&l.groupWish===id&&of[u]!==id).length;
+  const wishTxt=u=>{const w=(S.logs[u]||{}).groupWish;return w==='any'?'Souhait : indifférent (groupe de son niveau)':groupName(w)?'Souhait : '+groupName(w)+(of[u]===w?' (déjà dedans)':''):'Souhait : non renseigné';};
   if(list.length)sec.append(h('ul',{class:'list'},list.map(x=>h('li',{},
     h('div',{class:'l',style:'flex:1'},
       h('input',{type:'text',maxlength:'30',value:x.name,'aria-label':'Nom du groupe',onchange:e=>{
         const n=e.target.value.trim();if(!n){render();return;}
-        saveGroups(list.map(y=>y.id===x.id?{id:y.id,name:n}:y),of,'Groupe renommé');}}),
-      h('div',{class:'sub'},members(x.id)+' athlète'+(members(x.id)>1?'s':''))),
+        saveGroups(list.map(y=>y.id===x.id?Object.assign({},y,{name:n}):y),of,'Groupe renommé');}}),
+      h('div',{class:'sub'},members(x.id)+' athlète'+(members(x.id)>1?'s':'')+' · '+wishers(x.id)+' souhait'+(wishers(x.id)>1?'s':'')),h('label',{class:'chk'},h('input',{type:'checkbox',checked:!x.noWish,onchange:e=>{const on=e.target.checked;saveGroups(list.map(y=>y.id===x.id?Object.assign({},y,{noWish:!on}):y),of,on?'Groupe éligible aux souhaits':'Groupe fermé aux souhaits');}}),h('span',{},'Éligible aux souhaits'))),
     S.confirm==='grp-'+x.id
-      ?h('button',{class:'btn sm danger',type:'button',onclick:()=>{S.confirm=null;const o={};for(const [u,g] of Object.entries(of))if(g!==x.id)o[u]=g;saveGroups(list.filter(y=>y.id!==x.id),o,'Groupe supprimé');}},'Confirmer')
+      ?h('button',{class:'btn sm danger',type:'button',onclick:()=>{S.confirm=null;const o={},mem={};for(const [u,g] of Object.entries(of))if(g!==x.id)o[u]=g;else mem[u]=g;const tid=trashPush('group','Groupe '+x.name,{group:x,members:mem});saveGroups(list.filter(y=>y.id!==x.id),o,tid?null:'Groupe supprimé').then(()=>{if(tid)toastUndo('Groupe supprimé',tid);});}},'Confirmer')
       :h('button',{class:'btn sm danger',type:'button',onclick:()=>{S.confirm='grp-'+x.id;render();}},'Supprimer')))));
   else sec.append(h('p',{class:'muted'},'Aucun groupe pour l’instant.'));
   /* athlètes */
@@ -11286,7 +11421,7 @@ function groupsCard(){
     sec.append(h('div',{class:'flabel'},'Placer les athlètes'),
       field('Afficher',sel([['all','Tous les athlètes'],['none','Sans groupe ('+none+')']].concat(list.map(x=>[x.id,x.name])),gf,v=>{S.coach.gf=v;render();},{id:'grp-filter'})),
       shown.length?h('ul',{class:'list'},shown.map(a=>h('li',{},
-        h('div',{class:'l',style:'flex:1'},h('div',{class:'nm'},a.pseudo+(a.uid===S.uid?' (toi)':''))),
+        h('div',{class:'l',style:'flex:1'},h('div',{class:'nm'},a.pseudo+(a.uid===S.uid?' (toi)':'')),h('div',{class:'sub'},wishTxt(a.uid))),
         h('div',{style:'min-width:150px'},sel([['','Aucun groupe']].concat(list.map(x=>[x.id,x.name])),groupName(of[a.uid])?of[a.uid]:'',v=>{
           const o=Object.assign({},of);if(v)o[a.uid]=v;else delete o[a.uid];
           saveGroups(list,o);},{'aria-label':'Groupe de '+a.pseudo,id:'grp-'+a.uid}))))):h('p',{class:'muted'},'Personne dans cette liste.'));
@@ -11542,7 +11677,7 @@ function periodList(){
         h('button',{class:'btn sm'+(p.locked?' primary':''),type:'button',id:'lock-'+p.id,onclick:()=>run(async()=>{const d=Object.assign({},S.periods[p.id]);if(p.locked)delete d.locked;else d.locked=true;await S.db.doc('periods/'+p.id).set(d);toast(p.locked?'Saison déverrouillée':'Saison verrouillée');})},p.locked?'Déverrouiller':'Verrouiller'),
         h('button',{class:'btn sm',type:'button',onclick:()=>openCeremony(p.id)},'Aperçu remise'),
         h('button',{class:'btn sm',onclick:()=>{S.coach.period={id:p.id,num:String(seasonNum(p)),name:p.name,start:p.start,end:p.end,base:String(p.base),minElig:minEligOf(p)>0?String(minEligOf(p)):'',av:(p.avItems||[]),rewards:JSON.parse(JSON.stringify(p.rewards||[]))};render();window.scrollTo(0,0);}},'Modifier'),
-        S.confirm==='per-'+p.id?h('button',{class:'btn sm danger',onclick:()=>{S.confirm=null;run(async()=>{await S.db.doc('periods/'+p.id).delete();toast('Saison supprimée');});}},'Confirmer')
+        S.confirm==='per-'+p.id?h('button',{class:'btn sm danger',onclick:()=>{S.confirm=null;const tid=trashPush('period','Saison '+(p.name||p.id),{id:p.id,period:S.periods[p.id]});run(async()=>{await S.db.doc('periods/'+p.id).delete();if(tid)toastUndo('Saison supprimée',tid);else toast('Saison supprimée');});}},'Confirmer')
                                 :h('button',{class:'btn sm danger',onclick:()=>{S.confirm='per-'+p.id;render();}},'Supprimer')));}))
     :h('p',{class:'muted'},'Aucune saison programmée. En attendant, toutes les séances comptent dans une saison unique.'));
 }
@@ -11580,6 +11715,9 @@ function loginPitch(){
       cgvButton()),
     h('p',{class:'hint'},'Cette appli ne remplace pas un avis médical. Consulte un médecin avant de commencer ou de reprendre une activité intense.'));
 }
+const LOGO_APPLE='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>';
+const LOGO_ANDROID='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18a8 8 0 0 1 16 0z" fill="#3DDC84"/><path d="M7.5 6.5l1.6 2.4M16.5 6.5l-1.6 2.4" stroke="#3DDC84" stroke-width="1.6" stroke-linecap="round" fill="none"/><circle cx="9" cy="14.5" r="1.1" fill="#fff"/><circle cx="15" cy="14.5" r="1.1" fill="#fff"/></svg>';
+const logoEl=svg=>{const x=h('span',{class:'inst-logo','aria-hidden':'true'});x.innerHTML=svg;return x;};
 /* écran de connexion : mettre l'appli sur l'écran d'accueil (un bouton Apple, un bouton Android), avec les consignes de chaque système */
 function installCard(){
   if(isStandalone())return null; /* déjà installée : rien à proposer */
@@ -11603,10 +11741,10 @@ function installCard(){
     h('p',{class:'muted'},'Elle s’ouvre alors comme une vraie appli, en plein écran. Choisis ton téléphone :'),
     h('div',{style:'display:grid;gap:14px'},
       h('div',{},
-        h('button',{class:'btn'+(isIOS()?' primary':''),type:'button',id:'install-apple',onclick:goApple},'iPhone / iPad (Apple)'),
+        h('button',{class:'btn'+(isIOS()?' primary':''),type:'button',id:'install-apple',onclick:goApple},logoEl(LOGO_APPLE),'iPhone / iPad (Apple)'),
         steps(['Ouvre cette page dans Safari (pas dans un autre navigateur).','Touche le bouton Partager (le carré avec une flèche vers le haut), ou le bouton ci-dessus.','Fais défiler, puis choisis « Sur l’écran d’accueil ».','Touche « Ajouter » : l’icône apparaît sur ton écran d’accueil.'])),
       h('div',{},
-        h('button',{class:'btn'+(isAndroid()?' primary':''),type:'button',id:'install-android',onclick:e=>goAndroid(e.currentTarget)},'Android'),
+        h('button',{class:'btn'+(isAndroid()?' primary':''),type:'button',id:'install-android',onclick:e=>goAndroid(e.currentTarget)},logoEl(LOGO_ANDROID),'Android'),
         steps(['Ouvre cette page dans Chrome.','Touche le bouton ci-dessus : une fenêtre propose d’installer l’appli, confirme.','Si rien ne s’ouvre : touche les trois points en haut à droite, puis « Ajouter à l’écran d’accueil » (ou « Installer l’application »).','Confirme : l’icône apparaît sur ton écran d’accueil.']))));
 }
 function loginView(){
@@ -11809,7 +11947,7 @@ function viewHealth(){
       acts));
 }
 let drawerEl=null;
-const notifDotOn=()=>pushConfigured()&&pushSupported()&&Notification.permission==='default';
+const notifDotOn=()=>(pushConfigured()&&pushSupported()&&Notification.permission==='default')||(!!S.owner&&repPosts().length>0);
 /* infos du profil a renseigner (poids, date de naissance, sexe ; pseudo s'il manque) : la pastille reste rouge tant qu'il en manque une */
 function infosMissing(){
   if(!S.uid||!S.profLoaded||!S.loaded.logs||S.snapMode)return [];
@@ -11842,8 +11980,7 @@ function drawerItems(){
   out.push({id:'profile',label:'Profil',ico:ICO_USER,dot:profDot(),cur:S.tab==='profile'&&!S.profView,fn:()=>{S.profView=null;go('profile');}});
   if(S.owner)out.push({id:'coach',label:'Coach',ico:ICO_COACH,dot:unusualAll().length>0||pendCount()>0,cur:['coach','prefs','stats'].includes(S.tab),fn:()=>go('coach')});
   out.push({id:'recap',label:'Résumé de la semaine',ico:ICO_RECAP,dot:recapDot(),cur:S.tab==='recap',fn:()=>{const m=rcLatest();if(m&&!S.owner)(S.rc||(S.rc={})).week=m;go('recap');}});
-  out.push({id:'notif',label:'Notifications',ico:ICO_BELL,dot:notifDotOn(),cur:S.tab==='profile'&&S.profView==='notifs',fn:()=>{go('profile');S.profView='notifs';render();window.scrollTo(0,0);}});
-  if(a)out.push({id:'mail',label:'Message du coach',ico:ICO_MAIL,dot:!annIsSeen(a),fn:()=>openAnnouncement(a,{review:true})});
+  if(a||S.owner||annHistory().length)out.push({id:'mail',label:'Message du coach',ico:ICO_MAIL,dot:!!a&&!annIsSeen(a),cur:S.tab==='msgs',fn:()=>go('msgs')});
   out.push({id:'rules',label:'Règlement',ico:ICO_RULES,dot:!rulesSeen(),cur:S.tab==='rules',fn:()=>{rulesMark();S.rulesI=0;go('rules');}});
   out.push({id:'health',label:'Santé et sécurité',ico:ICO_HEALTH,dot:!healthSeen(),cur:S.tab==='health',fn:()=>{healthMark();S.healthI=0;go('health');}});
   out.push({id:'bug',label:'Signaler un bug',ico:ICO_BUG,cur:S.tab==='bug',fn:()=>{S.bugFrom=S.tab;S.bugPv=S.profView;S.bugMsg='';S.bugTab=null;go('bug');if(S.owner)loadBugs();}});
@@ -11868,8 +12005,12 @@ function openDrawer(instant){
     b.innerHTML=it.ico;b.append(h('span',{},it.label));
     if(it.dot)b.append(h('span',{class:'ibdot','aria-hidden':'true'}));
     return b;});
+  const nb=h('div',{class:'nbar',id:'nbar',hidden:true});
+  const bell=h('button',{class:'dbell',type:'button','data-tour':'dm-notif','aria-label':'Notifications','aria-expanded':'false',onclick:()=>{const o=nb.hidden;nb.hidden=!o;bell.setAttribute('aria-expanded',String(o));if(o)nb.replaceChildren(notifBar());}});
+  bell.innerHTML=ICO_BELL;if(notifDotOn())bell.append(h('span',{class:'ibdot','aria-hidden':'true'}));
+  if(S.nbOpen){S.nbOpen=false;nb.hidden=false;bell.setAttribute('aria-expanded','true');nb.replaceChildren(notifBar());}
   D.append(h('aside',{class:'drawer',id:'drawer',role:'dialog','aria-label':'Menu'},
-    h('div',{class:'dh'},h('b',{},'Menu'),h('button',{class:'dx',type:'button','aria-label':'Fermer le menu',onclick:()=>closeDrawer()},'✕')),...items));
+    h('div',{class:'dh'},h('b',{},'Menu'),h('div',{class:'dhr'},bell,h('button',{class:'dx',type:'button','aria-label':'Fermer le menu',onclick:()=>closeDrawer()},'✕'))),nb,...items));
   D._esc=e=>{if(e.key==='Escape'&&!tourEl){e.preventDefault();closeDrawer();}};
   document.addEventListener('keydown',D._esc,true);
   document.body.append(D);drawerEl=D;
@@ -12367,7 +12508,7 @@ const TOURS={
     {sel:'.flames',title:'Tes flammes',text:'La série en cours compte tes séances d’affilée. « Temps au top » compte tes metcons d’affilée à 90 % des points ou plus. Touche le « ? » de la carte pour le détail.'},
     {sel:'[data-tour=goal]',title:'Ton objectif de séances',text:'Choisis combien de séances par semaine tu vises. Si tu tiens ton objectif, tu gagnes le trophée et tu gardes ta flamme.'},
     {sel:'.jcoin-btn',title:'Tes jokers',text:'Les jokers protègent ta flamme quand tu rates une semaine. Touche la pièce pour en savoir plus.'},
-    {sel:'#pm-infos',title:'Le menu du profil',text:'Tes informations, tes badges, ta bannière, ta progression et tes records (PR), et tes notifications : chaque rubrique s’ouvre d’un toucher.'},
+    {sel:'#pm-infos',title:'Le menu du profil',text:'Tes informations, tes badges, ta bannière, ta progression et tes records (PR) : chaque rubrique s’ouvre d’un toucher.'},
     {sel:'#pseudo-edit',title:'Tes informations',text:'Ton pseudo apparaît dans le classement. Tu peux le modifier ici.'}]
 };
 TOURS.cards=()=>[
@@ -12644,8 +12785,9 @@ function startFirebase(){
     /* messages de la remise des trophées : si les règles ne sont pas publiées, on ignore l'erreur */
     unsubs.push(S.db.collection('comments').onSnapshot(sn=>{S.comments=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));if(S.cerRefresh)S.cerRefresh();},()=>{}));
     /* réactions emoji : si les règles ne sont pas publiées, on ignore l'erreur */
+    unsubs.push(S.db.collection('reports').onSnapshot(sn=>{S.reports=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));scheduleRender();},()=>{}));
     unsubs.push(S.db.collection('reactions').onSnapshot(sn=>{S.reactions=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));scheduleRender();},()=>{}));
-    unsubs.push(S.db.doc('users/'+S.uid+'/private/profile').onSnapshot(sn=>{const d=sn.exists?sn.data():null;const _op=S.prof;S.prof={plan:(d&&d.plan&&typeof d.plan==='object')?JSON.parse(JSON.stringify(d.plan)):null,pend:(d&&d.pend&&typeof d.pend==='object')?JSON.parse(JSON.stringify(d.pend)):{},prs:(d&&d.prs)?JSON.parse(JSON.stringify(d.prs)):{},sex:(d&&d.sex)||'',birth:(d&&typeof d.birth==='string')?d.birth:'',genEx:(d&&Array.isArray(d.genEx))?d.genEx:null,genAll:(d&&Array.isArray(d.genAll))?d.genAll:null,words:(d&&Array.isArray(d.words))?d.words:[],mvcfg:(d&&d.mvcfg&&typeof d.mvcfg==='object')?JSON.parse(JSON.stringify(d.mvcfg)):{},revd:(d&&d.revd&&typeof d.revd==='object')?JSON.parse(JSON.stringify(d.revd)):{},intf:(d&&d.intf&&typeof d.intf==='object')?JSON.parse(JSON.stringify(d.intf)):{},intn:(d&&d.intn&&typeof d.intn==='object')?JSON.parse(JSON.stringify(d.intn)):{},intCustom:(d&&Array.isArray(d.intCustom))?JSON.parse(JSON.stringify(d.intCustom)):[],pace:(d&&d.pace&&typeof d.pace==='object')?JSON.parse(JSON.stringify(d.pace)):{},spread:(d&&d.spread&&typeof d.spread==='object')?JSON.parse(JSON.stringify(d.spread)):{},weight:(d&&Number(d.weight)>0)?Number(d.weight):0,rewardDraft:(d&&typeof d.rewardDraft==='string')?d.rewardDraft:''};if(planSaveT!==null&&_op){S.prof.plan=_op.plan||null;S.prof.pend=_op.pend||{};}if(rwT!==null&&_op)S.prof.rewardDraft=_op.rewardDraft||'';syncIntens();S.profLoaded=true;scheduleRender();selfSync();planSync();},fail));
+    unsubs.push(S.db.doc('users/'+S.uid+'/private/profile').onSnapshot(sn=>{const d=sn.exists?sn.data():null;const _op=S.prof;S.prof={plan:(d&&d.plan&&typeof d.plan==='object')?JSON.parse(JSON.stringify(d.plan)):null,pend:(d&&d.pend&&typeof d.pend==='object')?JSON.parse(JSON.stringify(d.pend)):{},prs:(d&&d.prs)?JSON.parse(JSON.stringify(d.prs)):{},sex:(d&&d.sex)||'',birth:(d&&typeof d.birth==='string')?d.birth:'',genEx:(d&&Array.isArray(d.genEx))?d.genEx:null,genAll:(d&&Array.isArray(d.genAll))?d.genAll:null,words:(d&&Array.isArray(d.words))?d.words:[],mvcfg:(d&&d.mvcfg&&typeof d.mvcfg==='object')?JSON.parse(JSON.stringify(d.mvcfg)):{},revd:(d&&d.revd&&typeof d.revd==='object')?JSON.parse(JSON.stringify(d.revd)):{},intf:(d&&d.intf&&typeof d.intf==='object')?JSON.parse(JSON.stringify(d.intf)):{},intn:(d&&d.intn&&typeof d.intn==='object')?JSON.parse(JSON.stringify(d.intn)):{},intCustom:(d&&Array.isArray(d.intCustom))?JSON.parse(JSON.stringify(d.intCustom)):[],pace:(d&&d.pace&&typeof d.pace==='object')?JSON.parse(JSON.stringify(d.pace)):{},spread:(d&&d.spread&&typeof d.spread==='object')?JSON.parse(JSON.stringify(d.spread)):{},weight:(d&&Number(d.weight)>0)?Number(d.weight):0,rewardDraft:(d&&typeof d.rewardDraft==='string')?d.rewardDraft:'',trash:(d&&Array.isArray(d.trash))?JSON.parse(JSON.stringify(d.trash)):[]};if(planSaveT!==null&&_op){S.prof.plan=_op.plan||null;S.prof.pend=_op.pend||{};}if(rwT!==null&&_op)S.prof.rewardDraft=_op.rewardDraft||'';syncIntens();S.profLoaded=true;scheduleRender();selfSync();planSync();},fail));
     render();
   });
 }
