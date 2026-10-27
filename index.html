@@ -2910,7 +2910,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-27.72';
+const APP_VERSION='2026-10-27.74';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -3901,7 +3901,7 @@ function freezeSnap(){
   const snap=Object.assign({},(S.groups&&S.groups.snap)||{});let ch=false;
   for(const per of plist()){
     if(periodState(per)!=='done'||snap[per.id])continue;
-    snap[per.id]={list:groupsList().map(g=>({id:g.id,name:g.name})),of:Object.assign({},(S.groups&&S.groups.of)||{})};ch=true;
+    snap[per.id]={list:groupsList().map(g=>({id:g.id,name:g.name})),of:Object.assign({},(S.groups&&S.groups.of)||{}),bots:JSON.parse(JSON.stringify((S.groups&&S.groups.bots)||{}))};ch=true;
   }
   return ch?snap:null;
 }
@@ -3933,17 +3933,40 @@ const isBot=uid=>typeof uid==='string'&&uid.slice(0,4)==='bot:';
 const botFaceImg=b=>h('img',{class:'bot-img',src:b.img,alt:'',draggable:'false',decoding:'async',style:'--fx:'+b.fx+';--fy:'+b.fy});
 const botOf=uid=>isBot(uid)?(botList().find(b=>b.id===uid.slice(4))||null):null;
 const pseudoOf=uid=>isBot(uid)?((botOf(uid)||{}).name||'Athlète'):((S.logs[uid]||{}).pseudo||'Athlète');
-function botList(){
-  const c=(S.groups&&S.groups.bots)||{};
+function botList(cfg){
+  const c=cfg||(S.groups&&S.groups.bots)||{};
   const pc=(v,f)=>{const n=Number(v);return (v===undefined||v===null||v===''||isNaN(n))?f:Math.max(0,Math.min(100,n));};
   return BOT_DEFS.map(d=>{
     const o=c[d.id]||{};
     const lv=BOT_LV.find(x=>x[0]===o.lvl)||BOT_LV.find(x=>x[0]===d.lvl);
     const nm=typeof o.name==='string'?o.name.trim().slice(0,24):'';
-    return Object.assign({},d,{name:nm||d.name,defName:d.name,on:o.on!==false,sess:pc(o.sess,d.sess),met:pc(o.met,d.met),lvl:lv[0],rank:lv[2],bonus:lv[3]});
+    return Object.assign({},d,{name:nm||d.name,defName:d.name,title:typeof o.title==='string'?o.title.trim().slice(0,40):'',on:o.on!==false,sess:pc(o.sess,d.sess),met:pc(o.met,d.met),lvl:lv[0],rank:lv[2],bonus:lv[3]});
   });
 }
 const botsOn=()=>botList().filter(b=>b.on);
+/* titres des bots : réglés dans « Gérer les bots » (config/groups.bots[id].title). À la fin d'une saison, celui qui termine devant un bot aux points reçoit son titre
+   (calculé à la lecture, rien n'est stocké). Les réglages des bots sont figés à la fin de chaque saison (snap[saison].bots). */
+const botTitleOn=(per,b)=>!!(b.on&&b.title&&(per.botTitles||[]).includes(b.id)); /* le titre d'un bot n'est gagnable que sur les saisons où le coach l'a coché */
+function botTitleChecks(d){
+  if(!Array.isArray(d.botTitles))d.botTitles=[];
+  return [h('p',{class:'hint'},'Titres de bots : gagnés à la fin de la saison par celui qui termine devant le bot aux points. Le titre de chaque bot se règle dans « Gérer les bots ».')].concat(botList().map(b=>h('label',{class:'chk'},
+    h('input',{type:'checkbox',checked:d.botTitles.includes(b.id),'aria-label':'Titre de bot : '+b.name,onchange:e=>{d.botTitles=d.botTitles.filter(x=>x!==b.id);if(e.target.checked)d.botTitles.push(b.id);}}),
+    h('span',{},b.name+' : '+(b.title||'titre non réglé')))));
+}
+const botTitleCfg=per=>{const sn=snapOf(per);return (sn&&sn.bots)||(S.groups&&S.groups.bots)||{};};
+function botTitlesFor(uid){
+  const out=[];
+  for(const per of plist()){
+    if(per.virtual||periodState(per)!=='done')continue;
+    const bl=botList(botTitleCfg(per)).filter(b=>botTitleOn(per,b));
+    if(!bl.length)continue;
+    const row=computeBoard(per).rows.find(r=>r.uid===uid);
+    if(!row||!(row.sessions>0))continue;
+    const wods=Object.values(S.wods).filter(w=>inP(w.date,per)).sort((a,b)=>a.date<b.date?-1:1);
+    bl.forEach(b=>{if(row.total>botRow(b,per,wods).total)out.push({id:'bt:'+b.id+':'+per.id,name:b.title,perName:per.name||seasonLabel(per),per:per.id});});
+  }
+  return out;
+}
 /* points d'un bot sur une séance : part des points de séance, part des points maximum du metcon au niveau choisi */
 function botPts(b,w,period){
   if(w.date>todayStr())return {base:0,perf:0,lv:null}; /* séance à venir : rien avant le jour prévu */
@@ -9037,6 +9060,7 @@ const bgRemoved=r=>r.type==='bg'&&r.asset==='halloween';
 const bgRewardClass=r=>(BG_ASSETS[r.asset]||{}).cls||'bn-bg-base reward-bg';
 const BN_DEFAULT={bg:'base',frame:'',title:'',avframe:''};
 function bannerOf(uid){
+  for(const per of plist())if(!per.virtual&&periodState(per)==='done')botList(botTitleCfg(per)).forEach(b=>{if(botTitleOn(per,b))BN.title['bt:'+b.id+':'+per.id]={text:b.title};});
   for(const per of plist())for(const r of (per.rewards||[])){
     if(r.type==='title')BN.title[r.id]={text:r.name||'Champion'};
     if(r.type==='frame')BN.frame[r.id]={name:r.name||'Encadré',cls:'reward-frame'};
@@ -9079,6 +9103,7 @@ function bannerSection(){
     if(!owned.has(pid+':'+r.id))continue;
     if(['title','frame','bg','avframe'].includes(r.type)&&!bgRemoved(r))unlocked.push({id:r.id,type:r.type,name:r.name||'Récompense',per:pid,asset:r.asset});
   }
+  botTitlesFor(S.uid).forEach(t=>unlocked.push({id:t.id,type:'title',name:t.name+' · '+t.perName,per:t.per}));
   const sec=h('section',{class:'card'},h('h2',{class:'h2'},'Ma bannière'),
     h('p',{class:'muted'},'Clique sur ta bannière dans le profil pour revenir à ce menu. Choisis ici les éléments que tu as débloqués.'),
     bannerEl(S.uid,[bannerRow(S.uid,true,()=>openAvatar())],false,'lg'));
@@ -11451,6 +11476,8 @@ function botsCard(){
       h('div',{class:'bot-grid'},
         h('div',{style:'grid-column:1/-1'},field('Nom du bot',h('input',{type:'text',maxlength:'24',value:b.name,placeholder:b.defName,autocomplete:'off','aria-label':'Nom du bot : '+b.defName,id:'bot-'+b.id+'-name',
           onchange:e=>{let v=String(e.target.value).trim().slice(0,24);if(v===b.defName)v='';upd(b.id,{name:v},v?'Bot renommé : '+v:'Nom d’origine rétabli');}}))),
+        h('div',{style:'grid-column:1/-1'},field('Titre décerné à ceux qui le battent',h('input',{type:'text',maxlength:'40',value:b.title,placeholder:'Ex. Tueur de '+b.defName,autocomplete:'off','aria-label':'Titre décerné : '+b.name,id:'bot-'+b.id+'-title',
+          onchange:e=>{const v=String(e.target.value).trim().slice(0,40);upd(b.id,{title:v},v?'Titre enregistré : '+v:'Titre retiré');}}),'À la fin de la saison, celui qui termine devant ce bot aux points reçoit ce titre (vide = aucun titre). À cocher aussi dans la saison (Gérer les saisons, Titres gagnables) pour qu’il soit gagnable. Il le choisit dans « Ma bannière ».')),
         num(b,'sess','% points de séance'),
         num(b,'met','% points du metcon'),
         field('Niveau du metcon',sel(BOT_LV.map(x=>[x[0],x[1]]),b.lvl,v=>upd(b.id,{lvl:v},b.name+' mis à jour'),{'aria-label':'Niveau du metcon : '+b.name,id:'bot-'+b.id+'-lvl'}))),
@@ -11478,6 +11505,7 @@ function avPick(d){
         return h('div',{},h('div',{style:'display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line)'},h('label',{class:'chk',style:'flex:1;min-width:0;border-bottom:0'},cb,h('span',{style:'min-width:0;overflow-wrap:anywhere'},x.name)),q),tip);}))),cnt,
     h('div',{class:'stack',style:'margin-top:12px'},h('div',{class:'flabel'},'Titres gagnables cette saison'),
       ...(()=>{const rid='rat-laboratoire';let r=(d.rewards||[]).find(x=>x.id===rid&&x.type==='title');const cb=h('input',{type:'checkbox',checked:!!r,'aria-label':'Rat de laboratoire',onchange:e=>{if(e.target.checked){if(!Array.isArray(d.rewards))d.rewards=[];if(!d.rewards.some(x=>x.id===rid))d.rewards.push({id:rid,type:'title',name:'Rat de laboratoire',xp:'100',asset:'',image:''});}else d.rewards=(d.rewards||[]).filter(x=>x.id!==rid);render();}});const row=h('div',{class:'reward-edit'},h('label',{class:'chk'},cb,h('span',{},'Rat de laboratoire')),r?field('XP nécessaire',h('input',{type:'number',min:'0',step:'1',value:r.xp,oninput:e=>r.xp=e.target.value,placeholder:'100'})):null);return [row];})(),
+      ...botTitleChecks(d),
       null));
 }
 
@@ -11664,7 +11692,7 @@ function periodEditor(){
         if(!d.name.trim()||!d.start||!d.end||b===null||b<0||!(n>=1)){toast('Renseigne le numéro, le nom, la date de début, le nombre de semaines et les points.',true);return;}
         if(d.end<d.start){toast('La fin doit être après le début.',true);return;}
         const col=S.db.collection('periods');const ref=d.id?col.doc(d.id):col.doc();
-        await run(async()=>{await ref.set(Object.assign({num:n,name:d.name.trim(),start:d.start,end:d.end,base:b,avItems:d.av||[],subs:(d.id&&S.periods[d.id]&&Array.isArray(S.periods[d.id].subs))?S.periods[d.id].subs:[],minElig:(parseInt(d.minElig,10)>0?parseInt(d.minElig,10):0),rewards:(d.rewards||[]).map(r=>({id:r.id||('rw'+Date.now().toString(36)),type:r.type||'title',name:String(r.name||'').trim(),xp:Math.max(0,Number(r.xp)||0),asset:r.asset||'',image:String(r.image||'').trim()}))},d.id&&S.periods[d.id]&&S.periods[d.id].locked?{locked:true}:{}));toast('Saison enregistrée');});
+        await run(async()=>{await ref.set(Object.assign({num:n,name:d.name.trim(),start:d.start,end:d.end,base:b,avItems:d.av||[],botTitles:Array.isArray(d.botTitles)?d.botTitles:[],subs:(d.id&&S.periods[d.id]&&Array.isArray(S.periods[d.id].subs))?S.periods[d.id].subs:[],minElig:(parseInt(d.minElig,10)>0?parseInt(d.minElig,10):0),rewards:(d.rewards||[]).map(r=>({id:r.id||('rw'+Date.now().toString(36)),type:r.type||'title',name:String(r.name||'').trim(),xp:Math.max(0,Number(r.xp)||0),asset:r.asset||'',image:String(r.image||'').trim()}))},d.id&&S.periods[d.id]&&S.periods[d.id].locked?{locked:true}:{}));toast('Saison enregistrée');});
         S.coach.period=null;render();}},d.id?'Enregistrer la saison':'Créer la saison'),
       d.id?h('button',{class:'btn',type:'button',onclick:()=>{S.coach.period=null;render();}},'Annuler'):null));
 }
@@ -11676,7 +11704,7 @@ function periodList(){
       h('div',{class:'row'},
         h('button',{class:'btn sm'+(p.locked?' primary':''),type:'button',id:'lock-'+p.id,onclick:()=>run(async()=>{const d=Object.assign({},S.periods[p.id]);if(p.locked)delete d.locked;else d.locked=true;await S.db.doc('periods/'+p.id).set(d);toast(p.locked?'Saison déverrouillée':'Saison verrouillée');})},p.locked?'Déverrouiller':'Verrouiller'),
         h('button',{class:'btn sm',type:'button',onclick:()=>openCeremony(p.id)},'Aperçu remise'),
-        h('button',{class:'btn sm',onclick:()=>{S.coach.period={id:p.id,num:String(seasonNum(p)),name:p.name,start:p.start,end:p.end,base:String(p.base),minElig:minEligOf(p)>0?String(minEligOf(p)):'',av:(p.avItems||[]),rewards:JSON.parse(JSON.stringify(p.rewards||[]))};render();window.scrollTo(0,0);}},'Modifier'),
+        h('button',{class:'btn sm',onclick:()=>{S.coach.period={id:p.id,num:String(seasonNum(p)),name:p.name,start:p.start,end:p.end,base:String(p.base),minElig:minEligOf(p)>0?String(minEligOf(p)):'',av:(p.avItems||[]),botTitles:(p.botTitles||[]).slice(),rewards:JSON.parse(JSON.stringify(p.rewards||[]))};render();window.scrollTo(0,0);}},'Modifier'),
         S.confirm==='per-'+p.id?h('button',{class:'btn sm danger',onclick:()=>{S.confirm=null;const tid=trashPush('period','Saison '+(p.name||p.id),{id:p.id,period:S.periods[p.id]});run(async()=>{await S.db.doc('periods/'+p.id).delete();if(tid)toastUndo('Saison supprimée',tid);else toast('Saison supprimée');});}},'Confirmer')
                                 :h('button',{class:'btn sm danger',onclick:()=>{S.confirm='per-'+p.id;render();}},'Supprimer')));}))
     :h('p',{class:'muted'},'Aucune saison programmée. En attendant, toutes les séances comptent dans une saison unique.'));
