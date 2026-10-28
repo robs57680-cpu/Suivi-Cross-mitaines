@@ -445,6 +445,11 @@ section.feed-card>.feed-badge{position:absolute!important;top:8px;right:12px;z-i
 .cer-in{display:grid;justify-items:center;text-align:center;gap:14px;width:100%}
 .cer-eb{color:var(--panel-muted)}
 .cer-sub{color:var(--panel-muted);font-size:14px;max-width:44ch}
+.cer-prog{display:grid;gap:8px;width:100%;max-width:440px;text-align:left}
+.cpr{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--panel-muted);border-radius:4px}
+.cpr .l{min-width:0;display:grid;gap:2px}.cpr .l b{overflow-wrap:anywhere}.cpr .l .sub{font-size:13px}
+.cpr .v{text-align:right;font-family:var(--f-display);font-size:22px;line-height:1.15;flex:none;max-width:48%;overflow-wrap:anywhere}
+.cpr .v small{display:block;font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
 .cer .sub{color:var(--panel-muted)}
 .cer .btn{color:var(--panel-ink);border-color:var(--panel-muted)}
 .cer .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
@@ -1635,6 +1640,8 @@ a.btn.primary{color:var(--accent-ink)}
 .nb-row b{font-family:var(--f-display);font-size:20px;letter-spacing:.08em;text-transform:uppercase}
 .nb-r{display:inline-flex;align-items:center;gap:4px}
 .nb-x{padding:4px 6px}
+.qr-box{width:min(240px,70vw);margin:0 auto;border:2px solid var(--edge);border-radius:4px;overflow:hidden;background:#fff;line-height:0}
+.qr-box svg{display:block;width:100%;height:auto}
 .nbar .tgl{padding:4px 14px 4px 4px;font-size:14px}
 .nbar .tgl i{width:28px;height:28px}
 @media (prefers-reduced-motion:reduce){.nbar{animation:none}}
@@ -4915,6 +4922,49 @@ function goldenBook(per,gid,wins,o){
   }
   return {el:stage,start,stop:()=>{clearAll();stopGlide();},revealAll,done:()=>phase==='done',animated:animate};
 }
+/* ---------- bilan personnel de fin de saison : PR battus + progression sur les metcons test ----------
+   PR : pour chaque mouvement / nombre de reps, le meilleur PR de la saison comparé au record d'avant la saison (ou « premier record »).
+   Metcons test : un metcon marqué TEST (même nom, à défaut même contenu) fait plusieurs fois dans la saison (début de saison, puis dernière semaine) ;
+   on compare le premier et le dernier résultat de l'athlète et on ne montre que les améliorations. Ce n'est pas un REDO : on compare la performance elle-même
+   (niveau plus haut, ou même niveau et meilleur score : temps plus court / plus de tours), même si les deux passages rapportent les mêmes points. */
+function seasonProgress(per){
+  const out={prs:[],tests:[]};if(!S.uid||!per)return out;
+  const by={};
+  for(const ev of prEvents(S.uid)){
+    if(!inP(ev.date,per))continue;
+    const o=by[ev.key];
+    if(!o)by[ev.key]={mv:ev.mv,reps:ev.reps,from:ev.prevKg,best:ev.kg};else if(ev.kg>o.best)o.best=ev.kg;
+  }
+  for(const o of Object.values(by))if(o.from===null||o.best>o.from+1e-9)out.prs.push(o);
+  out.prs.sort((a,b)=>String(a.mv).localeCompare(String(b.mv))||a.reps-b.reps);
+  const en=((S.logs[S.uid]||{}).entries)||{},groups={};
+  for(const w0 of Object.values(S.wods)){
+    if(!inP(w0.date,per))continue;
+    const e=en[w0.date];if(!e)continue;
+    const w=wodFor(w0,e),m=metconOf(w);
+    if(!m||!m.test||!hasScore(e))continue;
+    const nm=String(m.name||'').trim(),gen=!nm||norm(nm)==='metcon';
+    const key=gen?norm(String(m.content||'')).replace(/\s+/g,' ').trim():norm(nm);
+    if(!key)continue;
+    (groups[key]=groups[key]||[]).push({date:w.date,m,e,nm:gen?(w.title||'Metcon test'):nm.replace(/^Metcon\s*·\s*/i,'')});
+  }
+  for(const g of Object.values(groups)){
+    g.sort((a,b)=>a.date<b.date?-1:1);
+    if(g.length<2)continue;
+    const a=g[0],b=g[g.length-1],m=b.m;
+    const lvA=lvVal(a.e,a.m),lvB=lvVal(b.e,m),sameLv=Math.abs(lvB-lvA)<1e-9,both=!a.e.cap&&!b.e.cap;
+    if(!(lvB>lvA+1e-9||(sameLv&&cmpKey(scoreKey(m,b.e),scoreKey(a.m,a.e))>0)))continue;
+    let d='';
+    if(sameLv&&both&&m.format==='FT'&&!isDead(m)&&a.e.score>b.e.score){const x=Math.round(a.e.score-b.e.score);d=(x>=60?fmtTime(x):x+' s')+' plus rapide';}
+    else if(sameLv&&both&&isDead(m)&&b.e.score>a.e.score){const x=Math.round(b.e.score-a.e.score);d=(x>=60?fmtTime(x):x+' s')+' de plus';}
+    else if(sameLv&&both&&m.format==='AMRAP'&&eqTotal(m)>0&&Math.round((b.e.score-a.e.score)*eqTotal(m))>0)d='+'+Math.round((b.e.score-a.e.score)*eqTotal(m))+' reps';
+    else if(lvB>lvA+1e-9)d='niveau supérieur';
+    else{const x=Math.round((perfOf(m,b.e)-perfOf(a.m,a.e))*10)/10;if(x>0)d='+'+fmtN(x)+' pts';}
+    out.tests.push({nm:b.nm,a,b,d});
+  }
+  out.tests.sort((x,y)=>x.a.date<y.a.date?-1:1);
+  return out;
+}
 /* ---------- remise des trophées ---------- */
 function openCeremony(pid,gid0){
   const per=plist().find(x=>x.id===pid);if(!per)return;
@@ -4926,7 +4976,8 @@ function openCeremony(pid,gid0){
   const {board,wins}=bookWins(per,gid);
   const ranked=board.rows.filter(r=>r.sessions>0&&inScope(r.uid,gid,per));
   const mineW=wins.filter(x=>x.ws.some(r=>r.uid===S.uid)).reverse();
-  const slides=[{k:'book'}].concat(ranked.length?[{k:'podium'}]:[]).concat([{k:'mine'}]);
+  const prog=seasonProgress(per);
+  const slides=[{k:'book'}].concat(ranked.length?[{k:'podium'}]:[]).concat([{k:'mine'}]).concat((prog.prs.length||prog.tests.length)?[{k:'prog'}]:[]);
   let i=0,bk=null,bookSeen=false,stopFw=null;
   const esc=e=>{if(e.key==='Escape')close();else if(e.key==='ArrowRight')next();else if(e.key==='ArrowLeft')prev();};
   const close=()=>{if(bk)bk.stop();if(stopFw)stopFw();S.cerRefresh=null;ov.remove();document.removeEventListener('keydown',esc);};
@@ -4957,6 +5008,15 @@ function openCeremony(pid,gid0){
       };
       return h('div',{class:'cer-in'},h('p',{class:'eyebrow cer-eb'},'Points bruts de la saison'),h('h2',{class:'day'},'Le podium'),
         h('div',{class:'cpodium'},pod(ranked[1],2),pod(ranked[0],1),pod(ranked[2],3)));
+    }
+    if(s.k==='prog'){
+      const row=(t,sub,val,note)=>h('div',{class:'cpr'},h('div',{class:'l'},h('b',{},t),h('span',{class:'sub'},sub)),h('div',{class:'v'},val,note?h('small',{},note):null));
+      const parts=[];
+      if(prog.prs.length)parts.push(h('p',{class:'eyebrow cer-eb'},prog.prs.length>1?'Records battus ('+prog.prs.length+')':'Record battu'),
+        h('div',{class:'cer-prog'},prog.prs.map(o=>row(o.mv+' · '+prType(o.reps),o.from===null?'Premier record':'Ancien record : '+prKg(o.from),prKg(o.best),o.from===null?'Nouveau':'+'+fmtN(Math.round((o.best-o.from)*100)/100)+' kg'))));
+      if(prog.tests.length)parts.push(h('p',{class:'eyebrow cer-eb'},'Metcons test : tu as progressé'),
+        h('div',{class:'cer-prog'},prog.tests.map(t=>row(t.nm,'Début de saison : '+lvlLab(t.a.m,t.a.e)+' · '+scoreText(t.a.m,t.a.e.score,t.a.e),scoreText(t.b.m,t.b.e.score,t.b.e),t.d||'Amélioré')))); 
+      return h('div',{class:'cer-in'},h('p',{class:'eyebrow cer-eb'},'Ton bilan de saison'),h('h2',{class:'day'},'Ta progression'),...parts);
     }
     if(!mineW.length)return h('div',{class:'cer-in'},h('h2',{class:'day'},'Pas de badge cette fois'),h('p',{class:'cer-sub'},'Rendez-vous à la prochaine saison !'));
     const btns=[];
@@ -9690,7 +9750,7 @@ function progSection(){
   el.append(sheet);
   /* historique */
   el.append(h('section',{class:'card'},h('h2',{class:'h2'},'Historique des PR'),
-    h('ul',{class:'list'},flt.slice().reverse().map(ev=>h('li',{},
+    h('ul',{class:'list'},flt.slice(-10).reverse().map(ev=>h('li',{},
       h('div',{class:'l'},h('div',{class:'nm'},ev.mv+' · '+prType(ev.reps)),
         h('div',{class:'sub'},cap(fmtShort(ev.date))+(ev.title?' · '+ev.title:'')+(ev.prevKg!==null?' · ancien record '+prKg(ev.prevKg)+' ('+(ev.diff>0?'+':'')+fmtN(ev.diff)+' kg)':' · premier PR')),
         ev.diff!==null&&ev.diff<=0?h('span',{class:'chip miss'},ev.diff<0?'En dessous du précédent':'Égal au précédent'):null),
@@ -12481,6 +12541,105 @@ function viewSub(){
     h('p',{class:'hint'},'Résiliation possible à tout moment. TVA non applicable, art. 293 B du CGI.'),
     cgvButton());
 }
+/* ---------- QR code (mode octets, correction M, versions 1 à 10) : généré dans l'appli, rien à charger ---------- */
+function qrMatrix(text){
+  const data=Array.from(new TextEncoder().encode(String(text)));
+  const EC=[0,10,16,26,18,24,16,18,22,22,26],NB=[0,1,1,1,2,2,4,4,4,5,5];
+  const raw=v=>{let r=(16*v+128)*v+64;if(v>=2){const n=Math.floor(v/7)+2;r-=(25*n-10)*n-55;if(v>=7)r-=36;}return r;};
+  let ver=1,cap=0;
+  for(;;ver++){
+    if(ver>10)return null;
+    cap=Math.floor(raw(ver)/8)-EC[ver]*NB[ver];
+    if(4+(ver<10?8:16)+8*data.length<=cap*8)break;
+  }
+  const bits=[],put=(v,n)=>{for(let i=n-1;i>=0;i--)bits.push((v>>>i)&1);};
+  put(4,4);put(data.length,ver<10?8:16);data.forEach(b=>put(b,8));
+  put(0,Math.min(4,cap*8-bits.length));put(0,(8-bits.length%8)%8);
+  for(let p=0xEC;bits.length<cap*8;p^=0xEC^0x11)put(p,8);
+  const cw=[];for(let i=0;i<bits.length;i+=8){let b=0;for(let j=0;j<8;j++)b=b<<1|bits[i+j];cw.push(b);}
+  const mul=(x,y)=>{let z=0;for(let i=7;i>=0;i--){z=(z<<1)^((z>>>7)*0x11D);z^=((y>>>i)&1)*x;}return z;};
+  const ecl=EC[ver],nb=NB[ver],rawCw=Math.floor(raw(ver)/8),nShort=nb-rawCw%nb,sLen=Math.floor(rawCw/nb);
+  const div=new Array(ecl).fill(0);div[ecl-1]=1;
+  for(let i=0,root=1;i<ecl;i++){for(let j=0;j<ecl;j++){div[j]=mul(div[j],root);if(j+1<ecl)div[j]^=div[j+1];}root=mul(root,2);}
+  const blocks=[];
+  for(let i=0,k=0;i<nb;i++){
+    const d=cw.slice(k,k+sLen-ecl+(i<nShort?0:1));k+=d.length;
+    const r=new Array(ecl).fill(0);
+    for(const b of d){const f=b^r.shift();r.push(0);div.forEach((c,x)=>{r[x]^=mul(c,f);});}
+    if(i<nShort)d.push(0);
+    blocks.push(d.concat(r));
+  }
+  const all=[];
+  for(let i=0;i<blocks[0].length;i++)blocks.forEach((b,j)=>{if(i!==sLen-ecl||j>=nShort)all.push(b[i]);});
+  const size=ver*4+17,m=[],fn=[];
+  for(let i=0;i<size;i++){m.push(new Array(size).fill(false));fn.push(new Array(size).fill(false));}
+  const set=(g,x,y,d)=>{g[y][x]=d;fn[y][x]=true;};
+  for(let i=0;i<size;i++){set(m,6,i,i%2===0);set(m,i,6,i%2===0);}
+  const finder=(cx,cy)=>{for(let dy=-4;dy<=4;dy++)for(let dx=-4;dx<=4;dx++){const d=Math.max(Math.abs(dx),Math.abs(dy)),x=cx+dx,y=cy+dy;if(x>=0&&x<size&&y>=0&&y<size)set(m,x,y,d!==2&&d!==4);}};
+  finder(3,3);finder(size-4,3);finder(3,size-4);
+  if(ver>=2){
+    const n=Math.floor(ver/7)+2,step=Math.ceil((ver*4+4)/(n*2-2))*2,pos=[6];
+    for(let p=size-7;pos.length<n;p-=step)pos.splice(1,0,p);
+    for(let i=0;i<n;i++)for(let j=0;j<n;j++){
+      if((i===0&&j===0)||(i===0&&j===n-1)||(i===n-1&&j===0))continue;
+      for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++)set(m,pos[i]+dx,pos[j]+dy,Math.max(Math.abs(dx),Math.abs(dy))!==1);
+    }
+  }
+  const fmt=(g,mask)=>{ /* correction M = 00 */
+    let rem=mask;for(let i=0;i<10;i++)rem=(rem<<1)^((rem>>>9)*0x537);
+    const b=((mask<<10)|rem)^0x5412,bit=i=>((b>>>i)&1)!==0;
+    for(let i=0;i<=5;i++)set(g,8,i,bit(i));
+    set(g,8,7,bit(6));set(g,8,8,bit(7));set(g,7,8,bit(8));
+    for(let i=9;i<15;i++)set(g,14-i,8,bit(i));
+    for(let i=0;i<8;i++)set(g,size-1-i,8,bit(i));
+    for(let i=8;i<15;i++)set(g,8,size-15+i,bit(i));
+    set(g,8,size-8,true);
+  };
+  fmt(m,0);
+  if(ver>=7){
+    let rem=ver;for(let i=0;i<12;i++)rem=(rem<<1)^((rem>>>11)*0x1F25);
+    const b=(ver<<12)|rem;
+    for(let i=0;i<18;i++){const c=((b>>>i)&1)!==0,a=size-11+i%3,d=Math.floor(i/3);set(m,a,d,c);set(m,d,a,c);}
+  }
+  let n=0;
+  for(let right=size-1;right>=1;right-=2){
+    if(right===6)right=5;
+    for(let vert=0;vert<size;vert++)for(let j=0;j<2;j++){
+      const x=right-j,y=((right+1)&2)===0?size-1-vert:vert;
+      if(!fn[y][x]&&n<all.length*8){m[y][x]=((all[n>>>3]>>>(7-(n&7)))&1)!==0;n++;}
+    }
+  }
+  const MF=[(x,y)=>(x+y)%2===0,(x,y)=>y%2===0,(x,y)=>x%3===0,(x,y)=>(x+y)%3===0,(x,y)=>(Math.floor(x/3)+Math.floor(y/2))%2===0,(x,y)=>x*y%2+x*y%3===0,(x,y)=>(x*y%2+x*y%3)%2===0,(x,y)=>((x+y)%2+x*y%3)%2===0];
+  const penalty=g=>{
+    let p=0,dark=0;
+    for(let a=0;a<size;a++)for(const col of [false,true]){
+      let run=0,last=null;
+      for(let b=0;b<size;b++){const v=col?g[b][a]:g[a][b];if(v===last)run++;else{if(run>=5)p+=run-2;run=1;last=v;}}
+      if(run>=5)p+=run-2;
+    }
+    for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+      if(g[y][x])dark++;
+      if(x<size-1&&y<size-1&&g[y][x]===g[y][x+1]&&g[y][x]===g[y+1][x]&&g[y][x]===g[y+1][x+1])p+=3;
+    }
+    return p+Math.floor(Math.abs(dark*20-size*size*10)/(size*size))*10;
+  };
+  let best=null,bp=1e9;
+  for(let k=0;k<8;k++){
+    const g=m.map(r=>r.slice());
+    for(let y=0;y<size;y++)for(let x=0;x<size;x++)if(!fn[y][x]&&MF[k](x,y))g[y][x]=!g[y][x];
+    fmt(g,k);
+    const pn=penalty(g);if(pn<bp){bp=pn;best=g;}
+  }
+  return best;
+}
+/* QR en SVG : modules noirs sur fond blanc avec marge de 4 modules (lisible quel que soit le thème) */
+function qrSvg(text){
+  const g=qrMatrix(text);if(!g)return null;
+  const n=g.length;let d='';
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++)if(g[y][x])d+='M'+(x+4)+' '+(y+4)+'h1v1h-1z';
+  return '<svg viewBox="0 0 '+(n+8)+' '+(n+8)+'" shape-rendering="crispEdges" role="img" aria-label="QR code du lien de l’appli"><rect width="100%" height="100%" fill="#fff"/><path d="'+d+'" fill="#000"/></svg>';
+}
+
 function viewShare(){
   const url=appUrl();
   const inp=h('input',{id:'share-url',type:'text',readonly:true,value:url,'aria-label':'Lien de l’appli',onfocus:e=>e.target.select()});
@@ -12492,6 +12651,7 @@ function viewShare(){
     }
     toast('Lien copié');
   };
+  let qs=null;try{qs=qrSvg(url);}catch(e){qs=null;}
   const btns=[h('button',{class:'btn primary',type:'button',id:'share-copy',onclick:copy},'Copier le lien')];
   if(navigator.share)btns.push(h('button',{class:'btn',type:'button',id:'share-native',onclick:()=>{navigator.share({title:'Box Score',text:'Rejoins le classement de notre groupe de Crosstraining sur Box Score.',url}).catch(()=>{});}},'Envoyer par…'));
   return h('div',{class:'stack'},
@@ -12499,7 +12659,8 @@ function viewShare(){
     h('section',{class:'card'},
       h('p',{class:'muted'},'Copie ce lien et envoie-le par message à quelqu’un de ton groupe. Il crée son compte avec un e-mail et un mot de passe, et le guide l’accompagne pas à pas.'),
       field('Lien de l’appli',inp),
-      h('div',{class:'row'},...btns)));
+      h('div',{class:'row'},...btns),
+      qs?h('div',{class:'stack',style:'margin-top:14px'},h('div',{class:'qr-box'},svgOf(qs)),h('p',{class:'hint',style:'text-align:center'},'Ou fais scanner ce QR code avec l’appareil photo du téléphone.')):null));
 }
 
 /* ---------- didacticiel : flèches qui se dessinent, texte par-dessus la page, un clic = une étape ---------- */
