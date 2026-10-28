@@ -1174,6 +1174,17 @@ body.board-lock{overflow:hidden;padding-block-end:0}
 .ar-set{position:absolute;z-index:7;top:62px;left:12px;right:12px;display:grid;gap:10px;padding:12px;border-radius:14px;background:#12141C;border:1px solid rgba(255,120,70,.55);box-shadow:0 10px 30px rgba(0,0,0,.6),0 0 16px rgba(255,90,54,.25)}
 .ar-set .ar-grp{padding:0}
 .ar-set .hint{margin:0;color:var(--ar-mute);font-size:12px}
+.ar-set.ps{max-height:calc(100% - 74px);overflow-y:auto}
+.ps-list{display:grid;gap:4px;max-height:38vh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.ps-it{border:1px solid rgba(255,255,255,.12);border-radius:10px;background:#0D0F16}
+.ps-it.mod{border-color:rgba(255,120,70,.8)}
+.ps-it.on{border-color:rgba(255,120,70,.9);background:rgba(255,90,54,.12)}
+.ps-b{display:flex;justify-content:space-between;gap:10px;align-items:center;width:100%;min-height:40px;padding:6px 10px;border:0;background:none;color:#fff;font:600 13px var(--f-body);text-align:left;cursor:pointer}
+.ps-n{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ps-p{flex:none;color:var(--ar-mute);font-variant-numeric:tabular-nums}
+.ps-it.mod .ps-p{color:#FF9A6B}
+.ps-ed{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:0 10px 10px}
+.ps-ed input{width:84px;min-height:36px;padding:0 8px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:#05060A;color:#fff;font:600 14px var(--f-body)}
 .ar-seasonset{flex:none;width:100%}
 .ar-trow{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .ar-tl{font-family:var(--f-display);font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#E9DCCB}
@@ -3546,8 +3557,9 @@ function computeBoard(period,withBots,gid){
     r.goalMet=r.goal>0&&currentDays.length>0&&currentDays.filter(d=>lg.entries&&lg.entries[d]).length+redoWk(currentWeek)>=Math.min(r.goal,currentDays.length);
     return r;
   });
-  if(withBots)for(const b of botsOn())rows.push(botRow(b,period,wods));
-  if(withBots&&gid===PROMO_GID&&promoOn())for(const b of promoList())rows.push(botRow(b,period,wods)); /* seulement dans le groupe Promo */
+  const simB=r=>{const x=gid===PROMO_GID&&S.promoSim&&S.promoSim.base[r.uid];if(x){r.base=Math.round((r.base+x)*100)/100;r.total=Math.round((r.total+x)*100)/100;r.weighted=Math.round((r.weighted+x)*10)/10;}return r;}; /* simulation Promo : points ajoutés à la main (coach) */
+  if(withBots)for(const b of botsOn())rows.push(simB(botRow(b,period,wods)));
+  if(withBots&&gid===PROMO_GID&&promoOn())for(const b of promoList())rows.push(simB(botRow(b,period,wods))); /* seulement dans le groupe Promo */
   rows.sort(rowCmp);
   return {rows,wods,metconCount,catCount,weekKeys,period};
 }
@@ -4537,6 +4549,7 @@ function render(force){
   $('#tabs').replaceChildren(...tabEls);
   const view={feed:viewFeed,today:viewToday,board:viewBoard,profile:viewProfile,coach:viewCoach,stats:viewStats,prefs:viewPrefs,share:viewShare,sub:viewSub,avis:viewAvis,rules:viewRules,health:viewHealth,bug:viewBug,moves:viewMoves,recap:viewRecap,msgs:viewMsgs}[S.tab]||viewFeed;
   const _esc=document.querySelector('.entry-sheet'),_escTop=_esc?_esc.scrollTop:0;
+  const _psl=document.querySelector('.ps-list'),_pslTop=_psl?_psl.scrollTop:0;
   const _arl=document.querySelector('.ar-list'),_arlTop=_arl?_arl.scrollTop:0,_arlKey=_arl?_arl.dataset.key:'';
   /* on garde la position de défilement quand on reste sur la même vue (ex. réaction dans le fil) : sinon la page saute */
   const _vk=[S.tab,S.viewUser,S.viewDate,S.profView,S.boardDetail,S.coach&&S.coach.view].join('|'),_sy=window.scrollY||0,_keep=render._vk===_vk;
@@ -4544,6 +4557,7 @@ function render(force){
   render._vk=_vk;
   if(_keep&&_sy>0&&Math.abs((window.scrollY||0)-_sy)>1)window.scrollTo(0,_sy);
   fitArena();planPlace();
+  {const n=document.querySelector('.ps-list');if(n&&_psl)n.scrollTop=_pslTop;}
   {const n=document.querySelector('.ar-list');if(n&&_arl&&n.dataset.key===_arlKey)n.scrollTop=_arlTop;}
   {const n=document.querySelector('.entry-sheet');if(n&&_esc)n.scrollTop=_escTop;document.body.classList.toggle('modal-open',!!document.getElementById('entry-ov'));}
   document.querySelectorAll('.bubs.rxfloat').forEach(x=>x.remove());
@@ -7494,7 +7508,7 @@ function viewBoard(){
   const isGroup=gsel!=='all',glob=!isGroup;
   const gm=boardGoat();
   const ra=S.rankAnim||null; /* animation après une validation : d'abord l'état d'avant (ra.old), puis l'état final avec la révélation */
-  const allRows=(ra&&ra.old)?board.rows.map(r=>r.uid===S.uid?ra.old:r):board.rows;
+  const allRows=(ra&&ra.old)?board.rows.map(r=>r.uid===(ra.uid||S.uid)?ra.old:r):board.rows;
   const rows=(isGroup?allRows.filter(r=>r.bot||scopeOf(r.uid,p)===gsel||(gsel===PROMO_GID&&r.uid===S.uid)):allRows.slice()).sort(bCmp()); /* un bot est présent dans tous les groupes ; le groupe Promo contient aussi le coach */
   const ps=(()=>{const t=bTied(),o=[];rows.forEach((r,i)=>o.push(i>0&&t(rows[i-1],r)?o[i-1]:i+1));return o;})();
   const posIn=r=>ps[rows.indexOf(r)];
@@ -7518,11 +7532,12 @@ function viewBoard(){
     h('button',{class:'ar-tg',type:'button',role:'switch','aria-checked':String(isOn),'aria-label':label+' : '+(isOn?onTxt:offTxt),onclick:fn},
       h('span',{class:'o'+(isOn?' on':'')},icoOn?svgOf(icoOn):null,onTxt),h('span',{class:'o'+(isOn?'':' on')},icoOff?svgOf(icoOff):null,offTxt)));
   const setPanel=S.boardSet?[h('div',{class:'ar-set-bd',onclick:()=>{S.boardSet=false;render();}}),
-    h('div',{class:'ar-set',role:'dialog','aria-label':'Réglages du classement'},
+    h('div',{class:'ar-set'+((S.owner&&gsel===PROMO_GID)?' ps':''),role:'dialog','aria-label':'Réglages du classement'},
       gl.length?tg('Classement','Groupe','Global',ICO_GROUP,ICO_GLOBE,isGroup,()=>{S.boardGroup=isGroup?'all':(mine||gl[0].id);render();}):null,
       (isGroup&&gl.length>1)?h('div',{class:'ar-grp'},gl.map(g=>h('button',{type:'button','aria-pressed':String(g.id===gsel),onclick:()=>{S.boardGroup=g.id;render();}},g.name))):null,
       tg('Score','GOAT','Scratch',null,null,gm,()=>{S.boardMode=gm?'scratch':'goat';render();}),
       h('p',{class:'hint'},gm?'GOAT : points de séance + points des metcons pondérés par le niveau moyen choisi.':'Scratch : points bruts, sans pondération par le niveau.'),
+      ...((S.owner&&gsel===PROMO_GID)?promoSimPanel(rows.filter(r=>r.bot)):[]),
       l.length?h('label',{class:'ar-season ar-seasonset','aria-label':'Saison'},h('span',{class:'dot'+(st==='live'?' live':'')}),
         sel(l.map(x=>[x.id,seasonLabel(x)+' · '+x.name]),p.id,v=>{S.periodId=v;render();},{id:'period-select','aria-label':'Saison'}),h('span',{class:'chev'})):null)]:[];
   const ctl=null,chips=null;
@@ -7589,9 +7604,9 @@ function viewBoard(){
 const rkEase=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
 const rkInv=y=>{let a=0,b=1;for(let i=0;i<22;i++){const m=(a+b)/2;if(rkEase(m)<y)a=m;else b=m;}return (a+b)/2;};
 const rkClamp=(x,a,b)=>Math.max(a,Math.min(b,x));
-function rankLay(p,gsel,over){
+function rankLay(p,gsel,over,ouid){
   let all=computeBoard(p,true,gsel).rows;
-  if(over)all=all.map(r=>r.uid===S.uid?over:r);
+  if(over)all=all.map(r=>r.uid===(ouid||S.uid)?over:r);
   const rows=(gsel!=='all'?all.filter(r=>r.bot||scopeOf(r.uid,p)===gsel||(gsel===PROMO_GID&&r.uid===S.uid)):all.slice()).sort(bCmp());
   const podRows=rows.filter(r=>r.sessions>0).slice(0,3);
   const rest=rows.filter(r=>!podRows.includes(r));
@@ -7652,7 +7667,7 @@ function rankAnimStart(rk){
   }catch(e){S.rankAnim=null;S.boardMode=prevMode;console.warn('animation du classement',e);}
 }
 async function rankAnimPlay(st,p,A,B,old){
-  const me=S.uid,arena=document.querySelector('.arena'),list=document.querySelector('.ar-list');
+  const me=st.uid||S.uid,own=me===S.uid,arena=document.querySelector('.arena'),list=document.querySelector('.ar-list');
   if(!arena||!list)return;
   const sel=u=>'[data-uid="'+String(u).replace(/"/g,'')+'"]';
   const rowEl=u=>list.querySelector('.ar-row'+sel(u)),podEl=u=>arena.querySelector('.pod .pod-c'+sel(u));
@@ -7726,8 +7741,9 @@ async function rankAnimPlay(st,p,A,B,old){
   }
   const podMe=(!meEl&&kB>=0)?podEl(me):null;
   if(meEl)addCt(meEl.querySelector('.ar-pts'));else if(podMe)addCt(podMe.querySelector('.pod-pts'));
-  addCt(fb[1]);
+  if(own)addCt(fb[1]);
   const cP=count(ctNodes,1500);
+  if(!gain&&!own){await cP;await pause(400);return;} /* simulation : un bot qui gagne des points sans changer de place voit seulement son compteur défiler */
   if(!gain){
     const tgt=meEl||(podMe&&podMe.querySelector('.pod-av'));
     if(tgt){if(meEl){meEl.classList.add('ra-me');list.classList.add('ra-on');}await shortCircuit(tgt,!meEl);}
@@ -7775,7 +7791,7 @@ async function rankAnimPlay(st,p,A,B,old){
   if(!toPod){
     /* 4a. nouvelle place dans la liste : la ligne se pose et le rang se met à jour (les points ont déjà défilé) */
     if(meEl){
-      const tr=txt(fb[0]);
+      const tr=own?txt(fb[0]):null;
       meEl.classList.add('flash');
       await anim(450,q=>{meEl.style.transform='translateY('+meDy+'px) scale('+(1.045-.045*rkEase(q))+')';});
       if(tr)tr.nodeValue=String(A.pos(me)||'–');
@@ -7800,6 +7816,62 @@ async function rankAnimPlay(st,p,A,B,old){
     if(tn){pp.classList.add('ra-ct');count([tn],1000);} /* les points de la marche défilent aussi */
   }
   await pause(1600);
+}
+
+/* ===== Simulation Promo (coach) =====
+   Réglages du classement, groupe Promo : on touche un bot, on lui ajoute des points (S.promoSim.add), puis « Jouer l'animation » ferme le panneau
+   et, 3 s plus tard, chaque bot modifié monte à sa nouvelle place avec l'animation du classement. Les points joués restent (S.promoSim.base) jusqu'à « Réinitialiser ».
+   Rien n'est enregistré : tout est en mémoire et ne concerne que le groupe Promo. */
+function promoSimPanel(bots){
+  const ps=S.promoSim||(S.promoSim={base:{},add:{},sel:null,timer:null}),nAdd=Object.values(ps.add).filter(x=>x>0).length;
+  const setAdd=(u,v)=>{v=Math.max(0,Math.round(v*100)/100);if(v>0)ps.add[u]=v;else delete ps.add[u];render();};
+  return [h('div',{class:'ar-sec ps-t'},h('span',{},'Simulation Promo')),
+    h('p',{class:'hint'},'Touche un bot pour lui ajouter des points, puis « Jouer l’animation » : le panneau se ferme et l’animation démarre 3 secondes plus tard.'),
+    h('div',{class:'ps-list'},bots.map(r=>{
+      const a=ps.add[r.uid]||0,open=ps.sel===r.uid;
+      return h('div',{class:'ps-it'+(open?' on':'')+(a?' mod':'')},
+        h('button',{type:'button',class:'ps-b','aria-expanded':String(open),onclick:()=>{ps.sel=open?null:r.uid;render();}},h('span',{class:'ps-n'},r.pseudo),h('span',{class:'ps-p'},fmtPts(bVal(r))+' pts'+(a?' +'+fmtPts(a):''))),
+        open?h('div',{class:'ps-ed'},[1,5,10,25].map(n=>h('button',{type:'button',class:'btn sm',onclick:()=>setAdd(r.uid,a+n)},'+'+n)),
+          h('input',{type:'number',min:'0',step:'1',inputmode:'decimal','aria-label':'Points à ajouter à '+r.pseudo,value:a?String(a):'',placeholder:'0',onchange:e=>setAdd(r.uid,parseFloat(String(e.target.value).replace(',','.'))||0)}),
+          a?h('button',{type:'button',class:'btn sm',onclick:()=>setAdd(r.uid,0)},'Retirer'):null):null);
+    })),
+    h('div',{class:'row'},
+      h('button',{type:'button',class:'btn primary',id:'ps-play',onclick:promoSimPlay},'Jouer l’animation'+(nAdd?' ('+nAdd+')':'')),
+      h('button',{type:'button',class:'btn',id:'ps-reset',onclick:()=>{clearTimeout(ps.timer);ps.base={};ps.add={};ps.sel=null;render();}},'Réinitialiser'))];
+}
+function promoSimPlay(){
+  const ps=S.promoSim;if(!ps||!S.owner)return;
+  if(!Object.values(ps.add).some(x=>x>0)){toast('Ajoute d’abord des points à un bot.',true);return;}
+  S.boardSet=false;ps.sel=null;render();
+  clearTimeout(ps.timer);
+  ps.timer=setTimeout(()=>{ps.timer=null;promoSimRun().catch(e=>console.warn('simulation promo',e));},3000);
+}
+async function promoSimRun(){
+  const ps=S.promoSim;if(!ps||!S.owner||S.rankAnim)return;
+  const p=selPeriod(),queue=Object.keys(ps.add).filter(u=>ps.add[u]>0);
+  if(!p||!queue.length)return;
+  const commit=u=>{ps.base[u]=Math.round(((ps.base[u]||0)+(ps.add[u]||0))*100)/100;delete ps.add[u];};
+  closeDrawer(true);
+  S.boardGroup=PROMO_GID;if(!p.virtual)S.periodId=p.id;
+  S.profView=null;S.viewUser=null;S.tip=null;S.trophOpen='';S.trophSeason='';S.tab='board';S.boardDetail=false;S.boardSet=false;S.confirm=null;S.entry=null;S.redo=null;
+  if(reducedMotion()){queue.forEach(commit);render(true);window.scrollTo(0,0);return;}
+  render(true);window.scrollTo(0,0);
+  for(let i=0;i<queue.length;i++){
+    const u=queue[i],before=rankLay(p,PROMO_GID,null),old=before.rows.find(r=>r.uid===u);
+    if(!old){commit(u);continue;}
+    const oldCopy=Object.assign({},old);
+    commit(u);
+    const A=rankLay(p,PROMO_GID,null),B=rankLay(p,PROMO_GID,oldCopy,u);
+    if(bVal(A.rows.find(r=>r.uid===u)||oldCopy)===bVal(oldCopy)&&B.pos(u)===A.pos(u))continue;
+    const st=S.rankAnim={old:oldCopy,uid:u,busy:true};
+    render(true);
+    document.addEventListener('pointerdown',rankSkip,true);
+    let ok=true;
+    await rankAnimPlay(st,p,A,B,oldCopy).catch(()=>{ok=false;});
+    if(S.rankAnim===st)rankEnd(st);
+    if(!ok){queue.slice(i+1).forEach(commit);render(true);return;} /* un toucher interrompt : le classement final s'affiche */
+    await new Promise(r=>setTimeout(r,500));
+  }
 }
 
 /* ===== Résumé de la semaine =====
@@ -13010,7 +13082,7 @@ function startFirebase(){
   onAuthStateChanged(auth,user=>{
     unsubs.forEach(u=>u());unsubs=[];
     S.loaded={periods:false,wods:false,logs:false};S.periods={};S.wods={};S.logs={};S.prof={prs:{},sex:'',weight:0};S.profLoaded=false;
-    S.sexSync=null;S.coachUid=null;S.coachLoaded=false;S.owner=false;S.error=null;S.entry=null;S.redo=null;S.viewDate=null;S.confirm=null;S.cerAuto=false;S._annDone=false;S.ann=null;S.annLoaded=false;S._aw=null;S.groups={list:[],of:{},snap:{}};S._freezing=false;S.boardGroup=undefined;S.comments={};S.cacheMode=false;S.snapMode=false;S._srv={};S._netOff=false;clearTimeout(cacheT);S.reactions={};S.wu={cfg:null,loaded:false,list:false};
+    S.sexSync=null;S.coachUid=null;S.coachLoaded=false;S.owner=false;S.error=null;S.entry=null;S.redo=null;S.viewDate=null;S.confirm=null;S.cerAuto=false;S._annDone=false;S.ann=null;S.annLoaded=false;S._aw=null;S.groups={list:[],of:{},snap:{}};S._freezing=false;S.boardGroup=undefined;S.comments={};S.cacheMode=false;S.snapMode=false;S._srv={};S._netOff=false;clearTimeout(cacheT);S.reactions={};S.promoSim=null;S.wu={cfg:null,loaded:false,list:false};
     S.coach={wod:null,editing:false,period:null,resDate:null};S.avisFor=null;S.profView=null;S.viewUser=null;S.tip=null;S.tab=user?takeInitialTab():'feed';S.authReady=true;
     if(!user){S.uid=null;S.pre=null;try{localStorage.removeItem(SNAP_KEY);localStorage.removeItem(WC_KEY);}catch(e){}render();return;}
     S.pre=null;{const wc=wcRead();if(wc&&wc.uid===user.uid&&Object.keys(wc.wods||{}).length){S.pre=true;S.wods=wc.wods;S.periods=wc.periods||{};S._wcSeen=wc.seen||{};if(wc.mylog)S.logs={[user.uid]:wc.mylog};}}
