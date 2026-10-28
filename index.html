@@ -4538,7 +4538,11 @@ function render(force){
   const view={feed:viewFeed,today:viewToday,board:viewBoard,profile:viewProfile,coach:viewCoach,stats:viewStats,prefs:viewPrefs,share:viewShare,sub:viewSub,avis:viewAvis,rules:viewRules,health:viewHealth,bug:viewBug,moves:viewMoves,recap:viewRecap,msgs:viewMsgs}[S.tab]||viewFeed;
   const _esc=document.querySelector('.entry-sheet'),_escTop=_esc?_esc.scrollTop:0;
   const _arl=document.querySelector('.ar-list'),_arlTop=_arl?_arl.scrollTop:0,_arlKey=_arl?_arl.dataset.key:'';
+  /* on garde la position de défilement quand on reste sur la même vue (ex. réaction dans le fil) : sinon la page saute */
+  const _vk=[S.tab,S.viewUser,S.viewDate,S.profView,S.boardDetail,S.coach&&S.coach.view].join('|'),_sy=window.scrollY||0,_keep=render._vk===_vk;
   main.replaceChildren(...banners(),view());
+  render._vk=_vk;
+  if(_keep&&_sy>0&&Math.abs((window.scrollY||0)-_sy)>1)window.scrollTo(0,_sy);
   fitArena();planPlace();
   {const n=document.querySelector('.ar-list');if(n&&_arl&&n.dataset.key===_arlKey)n.scrollTop=_arlTop;}
   {const n=document.querySelector('.entry-sheet');if(n&&_esc)n.scrollTop=_escTop;document.body.classList.toggle('modal-open',!!document.getElementById('entry-ov'));}
