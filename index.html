@@ -4481,7 +4481,7 @@ function movBackGo(){
 /* ---------- écritures ---------- */
 let chain=Promise.resolve();
 function run(fn){chain=chain.then(fn).catch(e=>{toast(errMsg(e),true);});return chain;}
-const saveProf=()=>run(async()=>{await S.db.doc('users/'+S.uid+'/private/profile').set({prs:S.prof.prs||{},sex:S.prof.sex||'',birth:S.prof.birth||'',health:S.prof.health||null,genEx:S.prof.genEx||null,genAll:S.prof.genAll||null,words:S.prof.words||[],mvcfg:S.prof.mvcfg||{},revd:S.prof.revd||{},intf:S.prof.intf||{},intn:S.prof.intn||{},intCustom:Array.isArray(S.prof.intCustom)?S.prof.intCustom:[],pace:S.prof.pace||{},spread:S.prof.spread||{},weight:Number(S.prof.weight)>0?Number(S.prof.weight):0,plan:S.prof.plan||null,pend:S.prof.pend||{},rewardDraft:String(S.prof.rewardDraft||''),rewardPlan:S.prof.rewardPlan||null,pf:S.prof.pf||{},trash:Array.isArray(S.prof.trash)?S.prof.trash:[]});});
+const saveProf=()=>run(async()=>{await S.db.doc('users/'+S.uid+'/private/profile').set({prs:S.prof.prs||{},sex:S.prof.sex||'',birth:S.prof.birth||'',health:S.prof.health||null,consent:S.prof.consent||null,genEx:S.prof.genEx||null,genAll:S.prof.genAll||null,words:S.prof.words||[],mvcfg:S.prof.mvcfg||{},revd:S.prof.revd||{},intf:S.prof.intf||{},intn:S.prof.intn||{},intCustom:Array.isArray(S.prof.intCustom)?S.prof.intCustom:[],pace:S.prof.pace||{},spread:S.prof.spread||{},weight:Number(S.prof.weight)>0?Number(S.prof.weight):0,plan:S.prof.plan||null,pend:S.prof.pend||{},rewardDraft:String(S.prof.rewardDraft||''),rewardPlan:S.prof.rewardPlan||null,pf:S.prof.pf||{},trash:Array.isArray(S.prof.trash)?S.prof.trash:[]});});
 const needPseudo=()=>S.uid&&S.loaded.logs&&!(S.logs[S.uid]&&S.logs[S.uid].pseudo);
 /* groupes : un seul document config/groups {list:[{id,name}], of:{uid:idDuGroupe}}, écrit par le coach seul */
 const groupsList=()=>(S.groups&&S.groups.list)||[];
@@ -13553,6 +13553,12 @@ function buyBtn(key){
   const b=h('button',{class:'btn primary btn-block',type:'button'},'S’abonner');
   b.onclick=async()=>{
     if(b.disabled)return;
+    if(!S.payAgree){ /* CGV + demande d'exécution immédiate : obligatoires avant de payer */
+      toast('Coche d’abord la case des conditions de vente, sous les forfaits.',true);
+      const c=document.getElementById('pay-agree');if(c){c.scrollIntoView({block:'center',behavior:'smooth'});c.focus();}
+      return;
+    }
+    try{if(S.prof&&S.profLoaded){S.prof.consent={cgv:CGV_VERSION,at:new Date().toISOString(),plan:key,immediate:true};saveProf();}}catch(e){}
     const t0=b.textContent;b.disabled=true;b.textContent='Ouverture du paiement…';
     try{
       const tok=await auth.currentUser.getIdToken();
@@ -13616,7 +13622,14 @@ function plansCarousel(buy){
       h('p',{class:'plan-sub'},'Sans engagement : tu arrêtes quand tu veux.')],'season'));
   const dots=[0,1].map(i=>h('button',{type:'button',class:'plan-dot','aria-label':i?'Forfait '+SEASON_WEEKS+' semaines':'Forfait 4 semaines','aria-current':i?null:'true',onclick:()=>track.scrollTo({left:i*(track.scrollWidth-track.clientWidth),behavior:'smooth'})}));
   track.addEventListener('scroll',()=>{const mx=track.scrollWidth-track.clientWidth,i=mx>0&&track.scrollLeft>mx/2?1:0;dots.forEach((d,k)=>{if(k===i)d.setAttribute('aria-current','true');else d.removeAttribute('aria-current');});},{passive:true});
-  return h('div',{class:'plans-wrap'},track,h('div',{class:'plan-dots'},...dots),h('p',{class:'hint',style:'text-align:center'},'Fais glisser pour comparer les deux forfaits.'));
+  return h('div',{class:'plans-wrap'},track,h('div',{class:'plan-dots'},...dots),h('p',{class:'hint',style:'text-align:center'},'Fais glisser pour comparer les deux forfaits.'),buy?payConsent():null);
+}
+/* case obligatoire avant « S’abonner » : acceptation des CGV, demande de début immédiat du service, information sur la part due en cas de rétractation (art. L221-25 du Code de la consommation) */
+function payConsent(){
+  return h('div',{id:'pay-consent',style:'display:grid;gap:4px;margin-top:10px'},
+    h('label',{class:'chk'},h('input',{type:'checkbox',id:'pay-agree',checked:!!S.payAgree,onchange:e=>{S.payAgree=e.target.checked;}}),
+      h('span',{},'J’ai lu et j’accepte les conditions générales de vente. Je demande que le service commence immédiatement et je reconnais que, si je me rétracte dans les 14 jours, je devrai payer la part du service déjà fourni.')),
+    h('button',{class:'link',type:'button',onclick:openCGV},'Lire les conditions générales de vente'));
 }
 /* ---------- CGV : conditions générales de vente (bouton sous les forfaits, ouvre une fenêtre) ---------- */
 const CGV_VERSION='29 octobre 2026';
@@ -13657,7 +13670,7 @@ function cgvSections(){
       'L’éditeur peut offrir un accès gratuit à certaines personnes, à titre gracieux. Cet accès peut être retiré et n’ouvre aucun droit pour l’avenir.']},
     {t:'7. Droit de rétractation',p:[
       'Si tu es consommateur, tu disposes de 14 jours à compter de la souscription pour te rétracter, sans motif.',
-      'En créant ton compte et en utilisant l’appli, tu demandes que le service commence immédiatement. Si tu te rétractes, tu paies uniquement la part du service déjà fourni jusqu’à ta demande. L’essai gratuit n’entraîne aucun paiement.',
+      'Avant de t’abonner, tu coches une case par laquelle tu demandes que le service commence immédiatement et tu reconnais que, si tu te rétractes, tu paies la part du service déjà fourni jusqu’à ta demande, proportionnelle au prix du forfait. Sans cette case, l’abonnement ne peut pas être souscrit. L’essai gratuit n’entraîne aucun paiement.',
       'Pour te rétracter, envoie une demande claire par e-mail à '+I.email+'. Le remboursement éventuel est effectué dans les 14 jours, par le même moyen de paiement.']},
     {t:'8. Résiliation',p:[
       'Tu peux résilier à tout moment, sans motif ni pénalité, depuis la gestion de ton abonnement dans l’appli ou par e-mail à '+I.email+'.',
@@ -14201,7 +14214,7 @@ function startFirebase(){
     /* réactions emoji : si les règles ne sont pas publiées, on ignore l'erreur */
     unsubs.push(S.db.collection('reports').onSnapshot(sn=>{S.reports=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));scheduleRender();},()=>{}));
     unsubs.push(S.db.collection('reactions').onSnapshot(sn=>{S.reactions=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));scheduleRender();},()=>{}));
-    unsubs.push(S.db.doc('users/'+S.uid+'/private/profile').onSnapshot(sn=>{const d=sn.exists?sn.data():null;const _op=S.prof;S.prof={plan:(d&&d.plan&&typeof d.plan==='object')?JSON.parse(JSON.stringify(d.plan)):null,pend:(d&&d.pend&&typeof d.pend==='object')?JSON.parse(JSON.stringify(d.pend)):{},prs:(d&&d.prs)?JSON.parse(JSON.stringify(d.prs)):{},sex:(d&&d.sex)||'',birth:(d&&typeof d.birth==='string')?d.birth:'',health:(d&&d.health&&typeof d.health==='object')?JSON.parse(JSON.stringify(d.health)):null,genEx:(d&&Array.isArray(d.genEx))?d.genEx:null,genAll:(d&&Array.isArray(d.genAll))?d.genAll:null,words:(d&&Array.isArray(d.words))?d.words:[],mvcfg:(d&&d.mvcfg&&typeof d.mvcfg==='object')?JSON.parse(JSON.stringify(d.mvcfg)):{},revd:(d&&d.revd&&typeof d.revd==='object')?JSON.parse(JSON.stringify(d.revd)):{},intf:(d&&d.intf&&typeof d.intf==='object')?JSON.parse(JSON.stringify(d.intf)):{},intn:(d&&d.intn&&typeof d.intn==='object')?JSON.parse(JSON.stringify(d.intn)):{},intCustom:(d&&Array.isArray(d.intCustom))?JSON.parse(JSON.stringify(d.intCustom)):[],pace:(d&&d.pace&&typeof d.pace==='object')?JSON.parse(JSON.stringify(d.pace)):{},spread:(d&&d.spread&&typeof d.spread==='object')?JSON.parse(JSON.stringify(d.spread)):{},weight:(d&&Number(d.weight)>0)?Number(d.weight):0,rewardDraft:(d&&typeof d.rewardDraft==='string')?d.rewardDraft:'',rewardPlan:(d&&d.rewardPlan&&typeof d.rewardPlan==='object')?JSON.parse(JSON.stringify(d.rewardPlan)):null,pf:(d&&d.pf&&typeof d.pf==='object')?JSON.parse(JSON.stringify(d.pf)):{},trash:(d&&Array.isArray(d.trash))?JSON.parse(JSON.stringify(d.trash)):[]};if(planSaveT!==null&&_op){S.prof.plan=_op.plan||null;S.prof.pend=_op.pend||{};}if(rwT!==null&&_op)S.prof.rewardDraft=_op.rewardDraft||'';if(rwpSaveT!==null&&_op)S.prof.rewardPlan=_op.rewardPlan||null;if(pfT!==null&&_op)S.prof.pf=_op.pf||{};syncIntens();S.profLoaded=true;scheduleRender();selfSync();planSync();rwpSync();},fail));
+    unsubs.push(S.db.doc('users/'+S.uid+'/private/profile').onSnapshot(sn=>{const d=sn.exists?sn.data():null;const _op=S.prof;S.prof={plan:(d&&d.plan&&typeof d.plan==='object')?JSON.parse(JSON.stringify(d.plan)):null,pend:(d&&d.pend&&typeof d.pend==='object')?JSON.parse(JSON.stringify(d.pend)):{},prs:(d&&d.prs)?JSON.parse(JSON.stringify(d.prs)):{},sex:(d&&d.sex)||'',birth:(d&&typeof d.birth==='string')?d.birth:'',health:(d&&d.health&&typeof d.health==='object')?JSON.parse(JSON.stringify(d.health)):null,consent:(d&&d.consent&&typeof d.consent==='object')?JSON.parse(JSON.stringify(d.consent)):null,genEx:(d&&Array.isArray(d.genEx))?d.genEx:null,genAll:(d&&Array.isArray(d.genAll))?d.genAll:null,words:(d&&Array.isArray(d.words))?d.words:[],mvcfg:(d&&d.mvcfg&&typeof d.mvcfg==='object')?JSON.parse(JSON.stringify(d.mvcfg)):{},revd:(d&&d.revd&&typeof d.revd==='object')?JSON.parse(JSON.stringify(d.revd)):{},intf:(d&&d.intf&&typeof d.intf==='object')?JSON.parse(JSON.stringify(d.intf)):{},intn:(d&&d.intn&&typeof d.intn==='object')?JSON.parse(JSON.stringify(d.intn)):{},intCustom:(d&&Array.isArray(d.intCustom))?JSON.parse(JSON.stringify(d.intCustom)):[],pace:(d&&d.pace&&typeof d.pace==='object')?JSON.parse(JSON.stringify(d.pace)):{},spread:(d&&d.spread&&typeof d.spread==='object')?JSON.parse(JSON.stringify(d.spread)):{},weight:(d&&Number(d.weight)>0)?Number(d.weight):0,rewardDraft:(d&&typeof d.rewardDraft==='string')?d.rewardDraft:'',rewardPlan:(d&&d.rewardPlan&&typeof d.rewardPlan==='object')?JSON.parse(JSON.stringify(d.rewardPlan)):null,pf:(d&&d.pf&&typeof d.pf==='object')?JSON.parse(JSON.stringify(d.pf)):{},trash:(d&&Array.isArray(d.trash))?JSON.parse(JSON.stringify(d.trash)):[]};if(planSaveT!==null&&_op){S.prof.plan=_op.plan||null;S.prof.pend=_op.pend||{};}if(rwT!==null&&_op)S.prof.rewardDraft=_op.rewardDraft||'';if(rwpSaveT!==null&&_op)S.prof.rewardPlan=_op.rewardPlan||null;if(pfT!==null&&_op)S.prof.pf=_op.pf||{};syncIntens();S.profLoaded=true;scheduleRender();selfSync();planSync();rwpSync();},fail));
     render();
   });
 }
