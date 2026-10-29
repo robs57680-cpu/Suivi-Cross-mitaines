@@ -4657,13 +4657,15 @@ function saveLog(patch,msg,uid){
     if(sbs&&Object.keys(sbs).length)data.subs=sbs; /* remplacements choisis : {date:{at,sw}} */
     const mo=patch.motto!==undefined?patch.motto:cur.motto;
     if(typeof mo==='string'&&mo.trim())data.motto=mo.trim().slice(0,60); /* devise, visible sur le profil des autres */
+    const tp=patch.troph!==undefined?patch.troph:cur.troph;
+    if(Array.isArray(tp)&&tp.length)data.troph=tp.filter(x=>typeof x==='string'&&x.length<=80).slice(0,4); /* badges épinglés sur le profil (ids « saison|trophée »), visibles sur le profil des autres */
     const fc=patch.focus!==undefined?patch.focus:cur.focus;
     if(Array.isArray(fc)&&fc.length)data.focus=fc.filter(x=>typeof x==='string').slice(0,7); /* priorités choisies (clés de PF_FOCUS), visibles sur le profil des autres */
     const gw=patch.groupWish!==undefined?patch.groupWish:cur.groupWish;
     if(typeof gw==='string'&&gw)data.groupWish=gw; /* souhait de groupe : 'any' (indifférent) ou id du groupe */
     await S.db.doc('logs/'+uid).set(data);
     // Keep the local log synchronized so the reward popup does not reopen.
-    S.logs[uid]=Object.assign({},cur,data);delete S.logs[uid].weight;if(!data.groupWish)delete S.logs[uid].groupWish;if(!data.motto)delete S.logs[uid].motto;if(!data.focus)delete S.logs[uid].focus;
+    S.logs[uid]=Object.assign({},cur,data);delete S.logs[uid].weight;if(!data.groupWish)delete S.logs[uid].groupWish;if(!data.motto)delete S.logs[uid].motto;if(!data.troph)delete S.logs[uid].troph;if(!data.focus)delete S.logs[uid].focus;
     if(msg)toast(msg);
     // Rafraîchir immédiatement la bannière après changement d'équipement.
     if(uid===S.uid)render();
@@ -7903,8 +7905,10 @@ function pf2HeadOther(uid,pseudo){
   const asx=((S.logs[uid]||{}).sex==='F')?'f':'h';
   const av=sexKnown(uid)?avatarEl(asx,avEq(uid),88,()=>openAvatar(uid),'Avatar de '+pseudo+', touche pour l’agrandir'):noAvatarEl(uid,66,false);
   const l2=(gn||ttl)?h('div',{class:'pf2-l2'},gn?h('span',{class:'pf2-grp'},gn):null,ttl?h('span',{class:'ttl'},ttl):null):null;
-  const pb=badgeOf(uid);
-  const pins=pb?h('div',{class:'pf2-pins'},h('span',{class:'pf2-pin',title:trophyName(pb.tid)+' · '+pb.per.name},badgeEl(pb.tid,pb.per.name,40,null,pb.per))):null;
+  const aw=awards()[uid]||[],ids=Array.isArray((S.logs[uid]||{}).troph)?S.logs[uid].troph:[];
+  let list=ids.map(id=>aw.find(a=>a.id===id)).filter(Boolean).slice(0,4);
+  if(!list.length){const pb=badgeOf(uid);if(pb)list=[pb];}
+  const pins=list.length?h('div',{class:'pf2-pins'},list.map(a=>h('span',{class:'pf2-pin',title:trophyName(a.tid)+' · '+a.per.name},badgeEl(a.tid,a.per.name,32,null,a.per)))):null;
   const logo=h('img',{class:'pf2-logo',src:PF_LOGO,alt:'',draggable:'false','aria-hidden':'true'});
   const mt=String((S.logs[uid]||{}).motto||'').trim();
   const motto=mt?h('p',{class:'pf2-motto-ro'},mt):null;
@@ -9998,17 +10002,18 @@ function trophiesSection(uid,title,emptyTxt){
 let pfT=null;
 const pfGet=()=>(S.prof&&S.prof.pf&&typeof S.prof.pf==='object')?S.prof.pf:{};
 function pfSet(patch){S.prof.pf=Object.assign({},pfGet(),patch);clearTimeout(pfT);pfT=setTimeout(()=>{pfT=null;saveProf();},500);
-  if(patch&&('motto' in patch||'focus' in patch)){clearTimeout(S._pubT);S._pubT=setTimeout(pfPubSync,700);}
+  if(patch&&('motto' in patch||'focus' in patch||'troph' in patch)){clearTimeout(S._pubT);S._pubT=setTimeout(pfPubSync,700);}
 }
 /* devise et priorités : copiées dans le journal public (logs/{uid}) pour apparaître sur le profil des autres ; une seule écriture par valeur */
 function pfPubSync(){
   if(!S.uid||!ready()||!S.profLoaded||S.snapMode)return;
   const lg=S.logs[S.uid];if(!lg||!lg.pseudo)return;
-  const pf=pfGet(),mo=String(pf.motto||'').trim().slice(0,60),fc=Array.isArray(pf.focus)?pf.focus.filter(x=>typeof x==='string').slice(0,7):[];
-  const key=JSON.stringify([mo,fc]);
+  const pf=pfGet(),mo=String(pf.motto||'').trim().slice(0,60),fc=Array.isArray(pf.focus)?pf.focus.filter(x=>typeof x==='string').slice(0,7):[],
+    tp=Array.isArray(pf.troph)?pf.troph.filter(x=>typeof x==='string'&&x.length<=80).slice(0,4):[];
+  const key=JSON.stringify([mo,fc,tp]);
   if(S._pubKey===key)return;
-  if(mo===(lg.motto||'')&&JSON.stringify(fc)===JSON.stringify(lg.focus||[])){S._pubKey=key;return;}
-  S._pubKey=key;saveLog({motto:mo,focus:fc});
+  if(mo===(lg.motto||'')&&JSON.stringify(fc)===JSON.stringify(lg.focus||[])&&JSON.stringify(tp)===JSON.stringify(lg.troph||[])){S._pubKey=key;return;}
+  S._pubKey=key;saveLog({motto:mo,focus:fc,troph:tp});
 }
 const PF_IC={
   user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',
