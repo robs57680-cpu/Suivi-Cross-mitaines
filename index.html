@@ -143,6 +143,7 @@ textarea{resize:vertical}
 .tro-h[aria-expanded="true"] .chev{transform:rotate(180deg)}
 .msg-body{margin-top:10px}.msg-body[hidden]{display:none}
 .btn-block{width:100%;min-height:52px}
+.hg-warn{border-left:4px solid var(--danger);padding:8px 10px;background:color-mix(in srgb,var(--danger) 10%,var(--surface));display:grid;gap:6px}.hg-warn p,.hg-par p{margin:0}.hg-par{border:2px solid var(--accent);padding:10px;display:grid;gap:6px;border-radius:4px}.hg-par h3{margin:0;font-size:15px;text-transform:uppercase;letter-spacing:.04em}.hg-wait{font-weight:700}
 /* encart « Entrer mes résultats » : fenêtre au-dessus de la page, les champs brillent quelques fois à l'ouverture */
 body.modal-open{overflow:hidden}
 .ov.entry-ov{z-index:35;background:var(--bg);align-items:stretch;justify-items:center;padding:calc(8px + env(safe-area-inset-top,0px)) 8px calc(8px + env(safe-area-inset-bottom,0px))}
@@ -2108,99 +2109,148 @@ MDA7bWluLXdpZHRoOjEyMHB4fQoubm1pbntmbGV4OjEgMSAxMDAlO3dpZHRoOjEwMCU7cGFkZGluZzo4
 LWJkKTtib3JkZXItcmFkaXVzOjEwcHg7YmFja2dyb3VuZDp2YXIoLS1iZyk7Y29sb3I6dmFyKC0tdHgpO2ZvbnQ6aW5oZXJpdDtmb250LXNpemU6Ljk1cmVt
 fQoueHB7ZGlzcGxheTpmbGV4O2FsaWduLWl0ZW1zOmNlbnRlcjtnYXA6NnB4O2ZvbnQtc2l6ZTouODVyZW07Y29sb3I6dmFyKC0tbXUpfQouY2hre2Rpc3Bs
 YXk6ZmxleDthbGlnbi1pdGVtczpjZW50ZXI7Z2FwOjZweDtmb250LXNpemU6Ljg4cmVtO2N1cnNvcjpwb2ludGVyO3VzZXItc2VsZWN0Om5vbmV9Ci5jaGsg
-aW5wdXR7d2lkdGg6MjBweDtoZWlnaHQ6MjBweDthY2NlbnQtY29sb3I6dmFyKC0tYWMpfQpoMntmb250OjQwMCAxLjFyZW0gdmFyKC0tZmQpO2xldHRlci1z
-cGFjaW5nOi4wM2VtO3RleHQtdHJhbnNmb3JtOnVwcGVyY2FzZTttYXJnaW46MjJweCAwIDhweDtkaXNwbGF5OmZsZXg7anVzdGlmeS1jb250ZW50OnNwYWNl
-LWJldHdlZW47YWxpZ24taXRlbXM6YmFzZWxpbmV9CmgyIHNtYWxse2NvbG9yOnZhcigtLW11KTtmb250OjUwMCAuODVyZW0gdmFyKC0tZmIpO3RleHQtdHJh
-bnNmb3JtOm5vbmU7bGV0dGVyLXNwYWNpbmc6MH0KLmhpc3R7Zm9udC1zaXplOi44NXJlbTtjb2xvcjp2YXIoLS1tdSk7YmFja2dyb3VuZDp2YXIoLS1jYXJk
-KTtib3JkZXI6MXB4IHNvbGlkIHZhcigtLWJkKTtib3JkZXItcmFkaXVzOjEycHg7cGFkZGluZzoxMHB4IDEycHg7bWFyZ2luLWJvdHRvbTo4cHg7b3ZlcmZs
-b3cteDphdXRvfQouaGlzdCBie2NvbG9yOnZhcigtLXR4KX0KLm5vdGV7Zm9udC1zaXplOi44MnJlbTtjb2xvcjp2YXIoLS1tdSk7bWFyZ2luLXRvcDoxMnB4
-fQouZW1wdHl7Y29sb3I6dmFyKC0tbXUpO3RleHQtYWxpZ246Y2VudGVyO3BhZGRpbmc6MzBweCAwfQo8L3N0eWxlPjwvaGVhZD4KPGJvZHk+PG1haW4+Cjxo
-MT5Sw6ljb21wZW5zZXMgZGUgc2Fpc29uPC9oMT4KPHAgY2xhc3M9InN1YiI+MTIgaXRlbXMgaGViZG9tYWRhaXJlcyArIDMgZXhjbHVzaXZpdMOpcy4gTOKA
-mW9yZHJlIGNoYW5nZSDDoCBjaGFxdWUgc2Fpc29uLjwvcD4KPGRpdiBjbGFzcz0iYmFyIj48aW5wdXQgdHlwZT0idGV4dCIgaWQ9Im5hbWUiIHBsYWNlaG9s
-ZGVyPSJOb20gZGUgbGEgc2Fpc29uIChleC4gU2Fpc29uIDQpIj48YnV0dG9uIGNsYXNzPSJwIiBpZD0iZ2VuIj7wn46yIEfDqW7DqXJlcjwvYnV0dG9uPjwv
-ZGl2Pgo8ZGl2IGlkPSJvdXQiPjwvZGl2Pgo8ZGl2IGNsYXNzPSJiYXIiIGlkPSJhY3Rpb25zIiBzdHlsZT0ibWFyZ2luLXRvcDoxNHB4O2Rpc3BsYXk6bm9u
-ZSI+PGJ1dHRvbiBjbGFzcz0icCIgaWQ9InNhdmUiPuKchSBUZXJtaW5lciBsYSBzYWlzb248L2J1dHRvbj48YnV0dG9uIGlkPSJjb3B5Ij7wn5OLIENvcGll
-cjwvYnV0dG9uPjwvZGl2Pgo8aDI+SGlzdG9yaXF1ZSBkZXMgc2Fpc29ucyB0ZXJtaW7DqWVzPC9oMj4KPGRpdiBpZD0iaGlzdCI+PC9kaXY+CjxidXR0b24g
-aWQ9InJlc2V0IiBzdHlsZT0iZGlzcGxheTpub25lIj5FZmZhY2VyIGzigJloaXN0b3JpcXVlPC9idXR0b24+CjxwIGNsYXNzPSJub3RlIj7CqyBUZXJtaW5l
-ciBsYSBzYWlzb24gwrsgbOKAmWFqb3V0ZSDDoCBs4oCZaGlzdG9yaXF1ZSA6IGxlIGfDqW7DqXJhdGV1ciBz4oCZZW4gc2VydCBwb3VyIMOpcXVpbGlicmVy
-IGxlcyBwb3NpdGlvbnMgZGUgY2hhcXVlIHR5cGUgZOKAmWl0ZW0gYXUgZmlsIGRlcyBzYWlzb25zIGV0IMOpdml0ZXIgZGUgcmVwcm9kdWlyZSBsZSBtw6pt
-ZSBvcmRyZS4gVGEgc2Fpc29uIGVuIGNvdXJzIChzZXVpbHMgZOKAmVhQIGV0IGNhc2VzIGNvY2jDqWVzKSBlc3Qgc2F1dmVnYXJkw6llIGF1dG9tYXRpcXVl
-bWVudCBkYW5zIHRvbiBwcm9maWwgY29hY2guPC9wPgo8L21haW4+CjxzY3JpcHQ+CmNvbnN0IFRZUEVTPVsKe246IlNraW4gaGF1dCBkdSBjb3JwcyIsaToi
-8J+RlSJ9LHtuOiJTa2luIGJhcyBkdSBjb3JwcyIsaToi8J+RliJ9LHtuOiJPYmpldCB0ZW51IixpOiLwn4+L77iPIn0sCntuOiJDaGFwZWF1IixpOiLwn6ei
-In0se246Ikl0ZW0gYXUgcG9pZ25ldCIsaToi4oyaIn0se246IlRow6htZSBk4oCZYXBwbGkgLyBkw6ljb3IiLGk6IvCfjqgifSwKe246IkZvbmQgZGUgYmFu
-bmnDqHJlIixpOiLwn5a877iPIn0se246IkNhZHJlIGTigJlhdmF0YXIiLGk6IvCflLIifSx7bjoiVGl0cmUiLGk6IvCfj4YifV07CmNvbnN0IExLPSJic19y
-d3BfbG9jYWwiOwpsZXQgaGlzdG9yeT1bXSxjdXJyZW50PW51bGwsc3RhbXA9MDsKY29uc3QgJD1pZD0+ZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoaWQpOwpj
-b25zdCBlc2M9cz0+U3RyaW5nKHMpLnJlcGxhY2UoL1smPD4iXS9nLGM9Pih7IiYiOiImYW1wOyIsIjwiOiImbHQ7IiwiPiI6IiZndDsiLCciJzoiJnF1b3Q7
-In1bY10pKTsKCmZ1bmN0aW9uIGFwcGx5KGQpewogIGlmKCFkfHx0eXBlb2YgZCE9PSJvYmplY3QifHwhKChkLnR8fDApPnN0YW1wKSlyZXR1cm47CiAgc3Rh
-bXA9ZC50O2hpc3Rvcnk9QXJyYXkuaXNBcnJheShkLmhpc3RvcnkpP2QuaGlzdG9yeTpbXTtjdXJyZW50PWQuY3VycmVudHx8bnVsbDsKICB0cnl7bG9jYWxT
-dG9yYWdlLnNldEl0ZW0oTEssSlNPTi5zdHJpbmdpZnkoZCkpfWNhdGNoKGUpe30KICByZW5kZXJIaXN0KCk7cmVuZGVyKCk7Cn0KZnVuY3Rpb24gc2F2ZSgp
-ewogIHN0YW1wPURhdGUubm93KCk7CiAgY29uc3QgZD17dDpzdGFtcCxoaXN0b3J5LGN1cnJlbnR9OwogIHRyeXtsb2NhbFN0b3JhZ2Uuc2V0SXRlbShMSyxK
-U09OLnN0cmluZ2lmeShkKSl9Y2F0Y2goZSl7fQogIHRyeXtpZihwYXJlbnQhPT13aW5kb3cpcGFyZW50LnBvc3RNZXNzYWdlKHtyd3A6MSx0eXBlOiJzZXQi
-LGRhdGE6ZH0sIioiKX1jYXRjaChlKXt9Cn0KZnVuY3Rpb24gbG9vayh2KXsKICBpZighdilyZXR1cm47Y29uc3Qgcj1kb2N1bWVudC5kb2N1bWVudEVsZW1l
-bnQuc3R5bGUsbT17Ii0tYmciOiItLWJnIiwiLS1jYXJkIjoiLS1zdXJmYWNlIiwiLS10eCI6Ii0tZmciLCItLW11IjoiLS1tdXRlZCIsIi0tYmQiOiItLWxp
-bmUiLCItLWFjIjoiLS1hY2NlbnQiLCItLWFjMiI6Ii0tYWNjZW50LWZnIn07CiAgZm9yKGNvbnN0IGsgaW4gbSlpZih2W21ba11dKXIuc2V0UHJvcGVydHko
-ayx2W21ba11dKTsKICBpZih2WyItLWZvbnQtZGlzcGxheSJdKXIuc2V0UHJvcGVydHkoIi0tZmQiLHZbIi0tZm9udC1kaXNwbGF5Il0pOwogIGlmKHZbIi0t
-Zm9udC1ib2R5Il0pci5zZXRQcm9wZXJ0eSgiLS1mYiIsdlsiLS1mb250LWJvZHkiXSk7Cn0Kd2luZG93LmFkZEV2ZW50TGlzdGVuZXIoIm1lc3NhZ2UiLGU9
-PnsKICBjb25zdCBtPWUuZGF0YTtpZighbXx8bS5yd3AhPT0xKXJldHVybjsKICBpZihtLnZhcnMpbG9vayhtLnZhcnMpOwogIGlmKG0udHlwZT09PSJpbml0
-Inx8bS50eXBlPT09ImRvY3MiKWFwcGx5KG0uZGF0YSk7Cn0pOwoKY29uc3Qgc2h1ZmZsZT1hPT57YT1bLi4uYV07Zm9yKGxldCBpPWEubGVuZ3RoLTE7aT4w
-O2ktLSl7Y29uc3Qgaj1NYXRoLmZsb29yKE1hdGgucmFuZG9tKCkqKGkrMSkpO1thW2ldLGFbal1dPVthW2pdLGFbaV1dfXJldHVybiBhfTsKY29uc3QgY291
-bnQ9KHQsZm4pPT5oaXN0b3J5LnJlZHVjZSgocyxoKT0+cytmbihoKS5maWx0ZXIoeD0+eD09PXQpLmxlbmd0aCwwKTsKY29uc3QgYnlSYXJpdHk9KGZuLHBl
-bik9PlRZUEVTLm1hcCgoXyx0KT0+KHt0LHM6Y291bnQodCxmbikrKHBlbiYmcGVuLmluY2x1ZGVzKHQpPzEwMDowKStNYXRoLnJhbmRvbSgpKi45fSkpLnNv
-cnQoKGEsYik9PmEucy1iLnMpLm1hcChvPT5vLnQpOwpmdW5jdGlvbiBzY29yZShjKXsKICBsZXQgcz0wO2NvbnN0IGxhc3Q9aGlzdG9yeVtoaXN0b3J5Lmxl
-bmd0aC0xXTsKICBmb3IobGV0IHQ9MDt0PFRZUEVTLmxlbmd0aDt0KyspewogICAgY29uc3QgYWxsPVtdO2MuZm9yRWFjaCgoeCxpKT0+e2lmKHg9PT10KWFs
+aW5wdXR7d2lkdGg6MjBweDtoZWlnaHQ6MjBweDthY2NlbnQtY29sb3I6dmFyKC0tYWMpfQpzZWxlY3R7cGFkZGluZzo4cHggMTBweDtib3JkZXI6MXB4IHNv
+bGlkIHZhcigtLWJkKTtib3JkZXItcmFkaXVzOjEwcHg7YmFja2dyb3VuZDp2YXIoLS1jYXJkKTtjb2xvcjp2YXIoLS10eCk7Zm9udDppbmhlcml0O2ZvbnQt
+c2l6ZTouOTJyZW07bWF4LXdpZHRoOjEwMCV9Ci50c2Vse2ZsZXg6MTttaW4td2lkdGg6MTUwcHg7Zm9udC13ZWlnaHQ6NjAwfQouYXZse2Rpc3BsYXk6Zmxl
+eDthbGlnbi1pdGVtczpjZW50ZXI7Z2FwOjZweDtmb250LXNpemU6Ljg1cmVtO2NvbG9yOnZhcigtLW11KTtmbGV4OjEgMSAxMDAlfQouYXZsIHNlbGVjdHtm
+bGV4OjF9Ci5yb3cuYXZye2JhY2tncm91bmQ6cmdiYSgxMjAsOTAsMjMwLC4xMik7Ym9yZGVyLWNvbG9yOiM3YTVhZTZ9Ci5hdnN7YmFja2dyb3VuZDp2YXIo
+LS1jYXJkKTtib3JkZXI6MXB4IHNvbGlkIHZhcigtLWJkKTtib3JkZXItcmFkaXVzOjEycHg7cGFkZGluZzoxMHB4IDEycHg7bWFyZ2luLWJvdHRvbTo4cHh9
+Ci5jaGlwe2Rpc3BsYXk6aW5saW5lLWZsZXg7YWxpZ24taXRlbXM6Y2VudGVyO2dhcDo2cHg7YmFja2dyb3VuZDp2YXIoLS1iZyk7Ym9yZGVyOjFweCBzb2xp
+ZCB2YXIoLS1iZCk7Ym9yZGVyLXJhZGl1czo5OXB4O3BhZGRpbmc6NHB4IDZweCA0cHggMTJweDttYXJnaW46MCA2cHggNnB4IDA7Zm9udC1zaXplOi45cmVt
+fQouY2hpcCBidXR0b257cGFkZGluZzowIDhweDtib3JkZXItcmFkaXVzOjk5cHg7Zm9udC1zaXplOi45cmVtO2xpbmUtaGVpZ2h0OjEuNn0KaDJ7Zm9udDo0
+MDAgMS4xcmVtIHZhcigtLWZkKTtsZXR0ZXItc3BhY2luZzouMDNlbTt0ZXh0LXRyYW5zZm9ybTp1cHBlcmNhc2U7bWFyZ2luOjIycHggMCA4cHg7ZGlzcGxh
+eTpmbGV4O2p1c3RpZnktY29udGVudDpzcGFjZS1iZXR3ZWVuO2FsaWduLWl0ZW1zOmJhc2VsaW5lfQpoMiBzbWFsbHtjb2xvcjp2YXIoLS1tdSk7Zm9udDo1
+MDAgLjg1cmVtIHZhcigtLWZiKTt0ZXh0LXRyYW5zZm9ybTpub25lO2xldHRlci1zcGFjaW5nOjB9Ci5oaXN0e2ZvbnQtc2l6ZTouODVyZW07Y29sb3I6dmFy
+KC0tbXUpO2JhY2tncm91bmQ6dmFyKC0tY2FyZCk7Ym9yZGVyOjFweCBzb2xpZCB2YXIoLS1iZCk7Ym9yZGVyLXJhZGl1czoxMnB4O3BhZGRpbmc6MTBweCAx
+MnB4O21hcmdpbi1ib3R0b206OHB4O292ZXJmbG93LXg6YXV0b30KLmhpc3QgYntjb2xvcjp2YXIoLS10eCl9Ci5ub3Rle2ZvbnQtc2l6ZTouODJyZW07Y29s
+b3I6dmFyKC0tbXUpO21hcmdpbi10b3A6MTJweH0KLmVtcHR5e2NvbG9yOnZhcigtLW11KTt0ZXh0LWFsaWduOmNlbnRlcjtwYWRkaW5nOjMwcHggMH0KPC9z
+dHlsZT48L2hlYWQ+Cjxib2R5PjxtYWluPgo8aDE+UsOpY29tcGVuc2VzIGRlIHNhaXNvbjwvaDE+CjxwIGNsYXNzPSJzdWIiPjEgYXZhdGFyIGRlIHNhaXNv
+biArIDEyIGl0ZW1zIGhlYmRvbWFkYWlyZXMgKyAzIGV4Y2x1c2l2aXTDqXMuIEzigJlvcmRyZSBjaGFuZ2Ugw6AgY2hhcXVlIHNhaXNvbi4gQ2hhcXVlIGl0
+ZW0gZXN0IGF0dHJpYnXDqSDDoCB1biBkZSB0ZXMgYXZhdGFycy48L3A+CjxkaXYgY2xhc3M9ImJhciI+PGlucHV0IHR5cGU9InRleHQiIGlkPSJuYW1lIiBw
+bGFjZWhvbGRlcj0iTm9tIGRlIGxhIHNhaXNvbiAoZXguIFNhaXNvbiA0KSI+PGJ1dHRvbiBjbGFzcz0icCIgaWQ9ImdlbiI+8J+OsiBHw6luw6lyZXI8L2J1
+dHRvbj48L2Rpdj4KPGgyPk1lcyBhdmF0YXJzIDxzbWFsbCBpZD0icC1hdiI+PC9zbWFsbD48L2gyPgo8ZGl2IGNsYXNzPSJhdnMiPjxkaXYgaWQ9ImF2bGlz
+dCI+PC9kaXY+PGRpdiBjbGFzcz0iYmFyIiBzdHlsZT0ibWFyZ2luOjZweCAwIDAiPjxpbnB1dCB0eXBlPSJ0ZXh0IiBpZD0iYXZuYW1lIiBwbGFjZWhvbGRl
+cj0iTm9tIGTigJl1biBhdmF0YXIgZXhpc3RhbnQgKGV4LiBMw6lhKSIgbWF4bGVuZ3RoPSI0MCI+PGJ1dHRvbiBpZD0iYXZhZGQiPu+8iyBBam91dGVyPC9i
+dXR0b24+PC9kaXY+PC9kaXY+CjxkaXYgaWQ9Im91dCI+PC9kaXY+CjxkaXYgY2xhc3M9ImJhciIgaWQ9ImFjdGlvbnMiIHN0eWxlPSJtYXJnaW4tdG9wOjE0
+cHg7ZGlzcGxheTpub25lIj48YnV0dG9uIGNsYXNzPSJwIiBpZD0ic2F2ZSI+4pyFIFRlcm1pbmVyIGxhIHNhaXNvbjwvYnV0dG9uPjxidXR0b24gaWQ9InJl
+cm9sbCI+8J+OsiBSw6lhdHRyaWJ1ZXIgbGVzIGF2YXRhcnM8L2J1dHRvbj48YnV0dG9uIGlkPSJjb3B5Ij7wn5OLIENvcGllcjwvYnV0dG9uPjwvZGl2Pgo8
+aDI+SGlzdG9yaXF1ZSBkZXMgc2Fpc29ucyB0ZXJtaW7DqWVzPC9oMj4KPGRpdiBpZD0iaGlzdCI+PC9kaXY+CjxidXR0b24gaWQ9InJlc2V0IiBzdHlsZT0i
+ZGlzcGxheTpub25lIj5FZmZhY2VyIGzigJloaXN0b3JpcXVlPC9idXR0b24+CjxwIGNsYXNzPSJub3RlIj7CqyBUZXJtaW5lciBsYSBzYWlzb24gwrsgbOKA
+mWFqb3V0ZSDDoCBs4oCZaGlzdG9yaXF1ZSA6IGxlIGfDqW7DqXJhdGV1ciBz4oCZZW4gc2VydCBwb3VyIMOpcXVpbGlicmVyIGxlcyBwb3NpdGlvbnMgZGUg
+Y2hhcXVlIHR5cGUgZOKAmWl0ZW0gYXUgZmlsIGRlcyBzYWlzb25zIGV0IMOpdml0ZXIgZGUgcmVwcm9kdWlyZSBsZSBtw6ptZSBvcmRyZS4gVGEgc2Fpc29u
+IGVuIGNvdXJzIChzZXVpbHMgZOKAmVhQIGV0IGNhc2VzIGNvY2jDqWVzKSBlc3Qgc2F1dmVnYXJkw6llIGF1dG9tYXRpcXVlbWVudCBkYW5zIHRvbiBwcm9m
+aWwgY29hY2guPC9wPgo8L21haW4+CjxzY3JpcHQ+CmNvbnN0IFRZUEVTPVsKe246IlNraW4gaGF1dCBkdSBjb3JwcyIsaToi8J+RlSJ9LHtuOiJTa2luIGJh
+cyBkdSBjb3JwcyIsaToi8J+RliJ9LHtuOiJPYmpldCB0ZW51IixpOiLwn4+L77iPIn0sCntuOiJDaGFwZWF1IixpOiLwn6eiIn0se246Ikl0ZW0gYXUgcG9p
+Z25ldCIsaToi4oyaIn0se246IlRow6htZSBk4oCZYXBwbGkgLyBkw6ljb3IiLGk6IvCfjqgifSwKe246IkZvbmQgZGUgYmFubmnDqHJlIixpOiLwn5a877iP
+In0se246IkNhZHJlIGTigJlhdmF0YXIiLGk6IvCflLIifSx7bjoiVGl0cmUiLGk6IvCfj4YifSx7bjoiQXZhdGFyIixpOiLwn6eRIn1dOwpjb25zdCBHRU49
+OSxBVj05OyAvKiBsZXMgOSBwcmVtaWVycyB0eXBlcyBzZXJ2ZW50IMOgIGxhIGfDqW7DqXJhdGlvbiA7IMKrIEF2YXRhciDCuyAoOSkgZXN0IGzigJlpdGVt
+IGdhZ27DqSBlbiBwcmVtaWVyIGNoYXF1ZSBzYWlzb24sIGhvcnMgZ8OpbsOpcmF0aW9uICovCmNvbnN0IExLPSJic19yd3BfbG9jYWwiOwpsZXQgaGlzdG9y
+eT1bXSxjdXJyZW50PW51bGwsc3RhbXA9MCxhdmF0YXJzPVtdOwpjb25zdCAkPWlkPT5kb2N1bWVudC5nZXRFbGVtZW50QnlJZChpZCk7CmNvbnN0IGVzYz1z
+PT5TdHJpbmcocykucmVwbGFjZSgvWyY8PiJdL2csYz0+KHsiJiI6IiZhbXA7IiwiPCI6IiZsdDsiLCI+IjoiJmd0OyIsJyInOiImcXVvdDsifVtjXSkpOwoK
+ZnVuY3Rpb24gYXBwbHkoZCl7CiAgaWYoIWR8fHR5cGVvZiBkIT09Im9iamVjdCJ8fCEoKGQudHx8MCk+c3RhbXApKXJldHVybjsKICBzdGFtcD1kLnQ7aGlz
+dG9yeT1BcnJheS5pc0FycmF5KGQuaGlzdG9yeSk/ZC5oaXN0b3J5OltdO2N1cnJlbnQ9ZC5jdXJyZW50fHxudWxsO2F2YXRhcnM9QXJyYXkuaXNBcnJheShk
+LmF2YXRhcnMpP2QuYXZhdGFycy5maWx0ZXIoeD0+dHlwZW9mIHg9PT0ic3RyaW5nIik6W107CiAgdHJ5e2xvY2FsU3RvcmFnZS5zZXRJdGVtKExLLEpTT04u
+c3RyaW5naWZ5KGQpKX1jYXRjaChlKXt9CiAgcmVuZGVySGlzdCgpO3JlbmRlcigpO3JlbmRlckF2KCk7Cn0KZnVuY3Rpb24gc2F2ZSgpewogIHN0YW1wPURh
+dGUubm93KCk7CiAgY29uc3QgZD17dDpzdGFtcCxoaXN0b3J5LGN1cnJlbnQsYXZhdGFyc307CiAgdHJ5e2xvY2FsU3RvcmFnZS5zZXRJdGVtKExLLEpTT04u
+c3RyaW5naWZ5KGQpKX1jYXRjaChlKXt9CiAgdHJ5e2lmKHBhcmVudCE9PXdpbmRvdylwYXJlbnQucG9zdE1lc3NhZ2Uoe3J3cDoxLHR5cGU6InNldCIsZGF0
+YTpkfSwiKiIpfWNhdGNoKGUpe30KfQpmdW5jdGlvbiBsb29rKHYpewogIGlmKCF2KXJldHVybjtjb25zdCByPWRvY3VtZW50LmRvY3VtZW50RWxlbWVudC5z
+dHlsZSxtPXsiLS1iZyI6Ii0tYmciLCItLWNhcmQiOiItLXN1cmZhY2UiLCItLXR4IjoiLS1mZyIsIi0tbXUiOiItLW11dGVkIiwiLS1iZCI6Ii0tbGluZSIs
+Ii0tYWMiOiItLWFjY2VudCIsIi0tYWMyIjoiLS1hY2NlbnQtZmcifTsKICBmb3IoY29uc3QgayBpbiBtKWlmKHZbbVtrXV0pci5zZXRQcm9wZXJ0eShrLHZb
+bVtrXV0pOwogIGlmKHZbIi0tZm9udC1kaXNwbGF5Il0pci5zZXRQcm9wZXJ0eSgiLS1mZCIsdlsiLS1mb250LWRpc3BsYXkiXSk7CiAgaWYodlsiLS1mb250
+LWJvZHkiXSlyLnNldFByb3BlcnR5KCItLWZiIix2WyItLWZvbnQtYm9keSJdKTsKfQp3aW5kb3cuYWRkRXZlbnRMaXN0ZW5lcigibWVzc2FnZSIsZT0+ewog
+IGNvbnN0IG09ZS5kYXRhO2lmKCFtfHxtLnJ3cCE9PTEpcmV0dXJuOwogIGlmKG0udmFycylsb29rKG0udmFycyk7CiAgaWYobS50eXBlPT09ImluaXQifHxt
+LnR5cGU9PT0iZG9jcyIpYXBwbHkobS5kYXRhKTsKfSk7Cgpjb25zdCBzaHVmZmxlPWE9PnthPVsuLi5hXTtmb3IobGV0IGk9YS5sZW5ndGgtMTtpPjA7aS0t
+KXtjb25zdCBqPU1hdGguZmxvb3IoTWF0aC5yYW5kb20oKSooaSsxKSk7W2FbaV0sYVtqXV09W2Fbal0sYVtpXV19cmV0dXJuIGF9Owpjb25zdCBjb3VudD0o
+dCxmbik9Pmhpc3RvcnkucmVkdWNlKChzLGgpPT5zK2ZuKGgpLmZpbHRlcih4PT54PT09dCkubGVuZ3RoLDApOwpjb25zdCBieVJhcml0eT0oZm4scGVuKT0+
+VFlQRVMuc2xpY2UoMCxHRU4pLm1hcCgoXyx0KT0+KHt0LHM6Y291bnQodCxmbikrKHBlbiYmcGVuLmluY2x1ZGVzKHQpPzEwMDowKStNYXRoLnJhbmRvbSgp
+Ki45fSkpLnNvcnQoKGEsYik9PmEucy1iLnMpLm1hcChvPT5vLnQpOwpmdW5jdGlvbiBzY29yZShjKXsKICBsZXQgcz0wO2NvbnN0IGxhc3Q9aGlzdG9yeVto
+aXN0b3J5Lmxlbmd0aC0xXTsKICBmb3IobGV0IHQ9MDt0PEdFTjt0KyspewogICAgY29uc3QgYWxsPVtdO2MuZm9yRWFjaCgoeCxpKT0+e2lmKHg9PT10KWFs
 bC5wdXNoKGkrMSl9KTsKICAgIGhpc3RvcnkuZm9yRWFjaChoPT5oLndlZWtzLmZvckVhY2goKHgsaSk9PntpZih4PT09dClhbGwucHVzaChpKzEpfSkpOwog
 ICAgY29uc3QgbT1hbGwucmVkdWNlKChhLGIpPT5hK2IsMCkvYWxsLmxlbmd0aDtzKz0obS02LjUpKioyOwogIH0KICBjLmZvckVhY2goKHgsaSk9PntpZihp
 JiZjW2ktMV09PT14KXMrPTQwO2lmKGxhc3QmJmxhc3Qud2Vla3NbaV09PT14KXMrPTIwfSk7CiAgcmV0dXJuIHM7Cn0KZnVuY3Rpb24gZ2VuZXJhdGUoKXsK
-ICBpZihjdXJyZW50JiYoY3VycmVudC53ZWVrcy5zb21lKHc9PncuZG9uZSl8fGN1cnJlbnQuZXhjbC5zb21lKHc9PncuZG9uZSkpJiYhY29uZmlybSgiVW5l
-IHNhaXNvbiBlbiBjb3VycyBjb250aWVudCBkZXMgaXRlbXMgY29jaMOpcy4gTGEgcmVtcGxhY2VyID8iKSlyZXR1cm47CiAgY29uc3QgbGFzdD1oaXN0b3J5
-W2hpc3RvcnkubGVuZ3RoLTFdOwogIGNvbnN0IGV4dHJhcz1ieVJhcml0eShoPT5oLndlZWtzKS5zbGljZSgwLDMpOwogIGNvbnN0IHBvb2w9Wy4uLlRZUEVT
-Lm1hcCgoXyxpKT0+aSksLi4uZXh0cmFzXTsKICBsZXQgYmVzdD1udWxsLGJzPUluZmluaXR5OwogIGZvcihsZXQgaz0wO2s8MzAwMDtrKyspe2NvbnN0IGM9
-c2h1ZmZsZShwb29sKSxzPXNjb3JlKGMpO2lmKHM8YnMpe2JzPXM7YmVzdD1jfX0KICBjb25zdCBleGNsPXNodWZmbGUoYnlSYXJpdHkoaD0+aC5leGNsLGxh
-c3Q/bGFzdC5leGNsOltdKS5zbGljZSgwLDMpKTsKICBjb25zdCBtaz10PT4oe3QsbmFtZToiIix4cDoiIixkb25lOmZhbHNlfSk7CiAgY3VycmVudD17bmFt
-ZTokKCJuYW1lIikudmFsdWUudHJpbSgpLHdlZWtzOmJlc3QubWFwKG1rKSxleGNsOmV4Y2wubWFwKG1rKX07CiAgc2F2ZSgpO3JlbmRlcigpOwp9CmZ1bmN0
-aW9uIHJvd0h0bWwoaXQsbGlzdCxpZHgsbGFiZWwsY2xzKXsKICByZXR1cm4gYDxkaXYgY2xhc3M9InJvdyAke2Nsc30gJHtpdC5kb25lPyJkb25lIjoiIn0i
-IGlkPSJyLSR7bGlzdH0tJHtpZHh9Ij48c3BhbiBjbGFzcz0id2siPiR7bGFiZWx9PC9zcGFuPjxzcGFuIGNsYXNzPSJpYyI+JHtUWVBFU1tpdC50XS5pfTwv
-c3Bhbj48c3BhbiBjbGFzcz0ibm0iPiR7VFlQRVNbaXQudF0ubn08L3NwYW4+CiAgPGlucHV0IHR5cGU9InRleHQiIGNsYXNzPSJubWluIiBwbGFjZWhvbGRl
-cj0iTm9tIGRlIGxhIHLDqWNvbXBlbnNlIChleC4gdF9zaGlydF9yb3NlKSIgdmFsdWU9IiR7ZXNjKGl0Lm5hbWV8fCIiKX0iIGRhdGEtbD0iJHtsaXN0fSIg
-ZGF0YS1pPSIke2lkeH0iIG1heGxlbmd0aD0iNjAiIGF1dG9jYXBpdGFsaXplPSJvZmYiIGF1dG9jb21wbGV0ZT0ib2ZmIiBzcGVsbGNoZWNrPSJmYWxzZSI+
-CiAgPGxhYmVsIGNsYXNzPSJ4cCI+WFAgPGlucHV0IHR5cGU9Im51bWJlciIgbWluPSIwIiBzdGVwPSIxMDAiIGlucHV0bW9kZT0ibnVtZXJpYyIgcGxhY2Vo
-b2xkZXI9IjAiIHZhbHVlPSIke2VzYyhpdC54cCl9IiBkYXRhLWw9IiR7bGlzdH0iIGRhdGEtaT0iJHtpZHh9IiBjbGFzcz0ieHBpbiI+PC9sYWJlbD4KICA8
-bGFiZWwgY2xhc3M9ImNoayI+PGlucHV0IHR5cGU9ImNoZWNrYm94IiAke2l0LmRvbmU/ImNoZWNrZWQiOiIifSBkYXRhLWw9IiR7bGlzdH0iIGRhdGEtaT0i
-JHtpZHh9IiBjbGFzcz0iZG4iPiBDcsOpw6k8L2xhYmVsPjwvZGl2PmA7Cn0KZnVuY3Rpb24gcHJvZ3Jlc3MoKXsKICBjb25zdCBhPSQoInAtdyIpLGI9JCgi
-cC1lIik7aWYoIWN1cnJlbnQpcmV0dXJuOwogIGlmKGEpYS50ZXh0Q29udGVudD1jdXJyZW50LndlZWtzLmZpbHRlcih4PT54LmRvbmUpLmxlbmd0aCsiIC8g
-MTIgY3LDqcOpcyI7CiAgaWYoYiliLnRleHRDb250ZW50PWN1cnJlbnQuZXhjbC5maWx0ZXIoeD0+eC5kb25lKS5sZW5ndGgrIiAvIDMgY3LDqcOpcyI7Cn0K
-ZnVuY3Rpb24gcmVuZGVyKCl7CiAgY29uc3Qgb3V0PSQoIm91dCIpLGFjdD0kKCJhY3Rpb25zIik7CiAgaWYoIWN1cnJlbnQpe291dC5pbm5lckhUTUw9Jzxk
-aXYgY2xhc3M9ImVtcHR5Ij5DbGlxdWUgc3VyIMKrIEfDqW7DqXJlciDCuyBwb3VyIGNyw6llciB1biBwbGFubmluZy48L2Rpdj4nO2FjdC5zdHlsZS5kaXNw
-bGF5PSJub25lIjtyZXR1cm59CiAgaWYoY3VycmVudC5uYW1lKSQoIm5hbWUiKS52YWx1ZT1jdXJyZW50Lm5hbWU7CiAgb3V0LmlubmVySFRNTD1gPGgyIHN0
-eWxlPSJtYXJnaW4tdG9wOjAiPkl0ZW1zIGhlYmRvbWFkYWlyZXMgPHNtYWxsIGlkPSJwLXciPjwvc21hbGw+PC9oMj5gCiAgICArY3VycmVudC53ZWVrcy5t
-YXAoKGl0LGkpPT5yb3dIdG1sKGl0LCJ3IixpLCJTIisoaSsxKSwiIikpLmpvaW4oIiIpCiAgICArYDxoMj7irZAgRXhjbHVzaXZpdMOpcyBkZSBzYWlzb24g
-PHNtYWxsIGlkPSJwLWUiPjwvc21hbGw+PC9oMj5gCiAgICArY3VycmVudC5leGNsLm1hcCgoaXQsaSk9PnJvd0h0bWwoaXQsImUiLGksIuKtkCIsImV4ciIp
-KS5qb2luKCIiKTsKICBhY3Quc3R5bGUuZGlzcGxheT0iZmxleCI7cHJvZ3Jlc3MoKTsKfQokKCJvdXQiKS5hZGRFdmVudExpc3RlbmVyKCJpbnB1dCIsZT0+
-ewogIGNvbnN0IGVsPWUudGFyZ2V0O2lmKCFjdXJyZW50fHwhZWwuZGF0YXNldC5sKXJldHVybjsKICBjb25zdCBpdD1jdXJyZW50W2VsLmRhdGFzZXQubD09
-PSJ3Ij8id2Vla3MiOiJleGNsIl1bK2VsLmRhdGFzZXQuaV07CiAgaWYoZWwuY2xhc3NMaXN0LmNvbnRhaW5zKCJ4cGluIikpaXQueHA9ZWwudmFsdWU7CiAg
-aWYoZWwuY2xhc3NMaXN0LmNvbnRhaW5zKCJubWluIikpaXQubmFtZT1lbC52YWx1ZTsKICBpZihlbC5jbGFzc0xpc3QuY29udGFpbnMoImRuIikpe2l0LmRv
-bmU9ZWwuY2hlY2tlZDskKGByLSR7ZWwuZGF0YXNldC5sfS0ke2VsLmRhdGFzZXQuaX1gKS5jbGFzc0xpc3QudG9nZ2xlKCJkb25lIixlbC5jaGVja2VkKTtw
-cm9ncmVzcygpfQogIHNhdmUoKTsKfSk7CiQoIm5hbWUiKS5hZGRFdmVudExpc3RlbmVyKCJpbnB1dCIsZT0+e2lmKGN1cnJlbnQpe2N1cnJlbnQubmFtZT1l
-LnRhcmdldC52YWx1ZTtzYXZlKCl9fSk7CmZ1bmN0aW9uIHJlbmRlckhpc3QoKXsKICAkKCJyZXNldCIpLnN0eWxlLmRpc3BsYXk9aGlzdG9yeS5sZW5ndGg/
-ImlubGluZS1ibG9jayI6Im5vbmUiOwogICQoImhpc3QiKS5pbm5lckhUTUw9aGlzdG9yeS5sZW5ndGg/Wy4uLmhpc3RvcnldLnJldmVyc2UoKS5tYXAoaD0+
-YDxkaXYgY2xhc3M9Imhpc3QiPjxiPiR7ZXNjKGgubmFtZSl9PC9iPiDigJQgJHtoLndlZWtzLm1hcCh0PT5UWVBFU1t0XS5pKS5qb2luKCIgIil9IHwg4q2Q
-ICR7aC5leGNsLm1hcCh0PT5UWVBFU1t0XS5pKS5qb2luKCIgIil9PC9kaXY+YCkuam9pbigiIik6YDxkaXYgY2xhc3M9Imhpc3QiPkF1Y3VuZSBzYWlzb24g
-dGVybWluw6llIHBvdXIgbOKAmWluc3RhbnQuPC9kaXY+YDsKfQpmdW5jdGlvbiBhc1RleHQoKXsKICBjb25zdCBsaW5lPShpdCxsKT0+YCR7bH0gOiAke1RZ
-UEVTW2l0LnRdLm59JHtpdC5uYW1lPyIgwqsgIitpdC5uYW1lKyIgwrsiOiIifSR7aXQueHAhPT0iIj8iIOKAlCAiK2l0LnhwKyIgWFAiOiIifSR7aXQuZG9u
-ZT8iIOKclCI6IiJ9XG5gOwogIGxldCBzPSgkKCJuYW1lIikudmFsdWUudHJpbSgpfHwiU2Fpc29uIikrIlxuXG5JdGVtcyBoZWJkb21hZGFpcmVzXG4iOwog
-IGN1cnJlbnQud2Vla3MuZm9yRWFjaCgoaXQsaSk9PnMrPWxpbmUoaXQsIlNlbWFpbmUgIisoaSsxKSkpOwogIHMrPSJcbkV4Y2x1c2l2aXTDqXNcbiI7Y3Vy
-cmVudC5leGNsLmZvckVhY2goKGl0LGkpPT5zKz1saW5lKGl0LCJFeGNsdXNpZiAiKyhpKzEpKSk7CiAgcmV0dXJuIHM7Cn0KJCgiZ2VuIikub25jbGljaz1n
-ZW5lcmF0ZTsKJCgic2F2ZSIpLm9uY2xpY2s9KCk9PnsKICBpZighY3VycmVudHx8IWNvbmZpcm0oIlRlcm1pbmVyIGxhIHNhaXNvbiBldCBs4oCZYWpvdXRl
-ciDDoCBs4oCZaGlzdG9yaXF1ZSA/IikpcmV0dXJuOwogIGhpc3RvcnkucHVzaCh7bmFtZTokKCJuYW1lIikudmFsdWUudHJpbSgpfHwiU2Fpc29uICIrKGhp
-c3RvcnkubGVuZ3RoKzEpLHdlZWtzOmN1cnJlbnQud2Vla3MubWFwKHg9PngudCksZXhjbDpjdXJyZW50LmV4Y2wubWFwKHg9PngudCl9KTsKICBjdXJyZW50
-PW51bGw7c2F2ZSgpO3JlbmRlckhpc3QoKTtyZW5kZXIoKTskKCJuYW1lIikudmFsdWU9IiI7CiAgJCgib3V0IikuaW5uZXJIVE1MPSc8ZGl2IGNsYXNzPSJl
-bXB0eSI+U2Fpc29uIGVucmVnaXN0csOpZSDinIUgR8OpbsOocmUgbGEgc3VpdmFudGUgcXVhbmQgdHUgdmV1eC48L2Rpdj4nOwp9OwokKCJjb3B5Iikub25j
-bGljaz1hc3luYyBlPT57CiAgdHJ5e2F3YWl0IG5hdmlnYXRvci5jbGlwYm9hcmQud3JpdGVUZXh0KGFzVGV4dCgpKTtlLnRhcmdldC50ZXh0Q29udGVudD0i
-4pyUIENvcGnDqSJ9Y2F0Y2goeCl7ZS50YXJnZXQudGV4dENvbnRlbnQ9IkNvcGllIGltcG9zc2libGUifQogIHNldFRpbWVvdXQoKCk9PmUudGFyZ2V0LnRl
-eHRDb250ZW50PSLwn5OLIENvcGllciIsMTUwMCk7Cn07CiQoInJlc2V0Iikub25jbGljaz0oKT0+e2lmKGNvbmZpcm0oIkVmZmFjZXIgdG91dCBs4oCZaGlz
-dG9yaXF1ZSA/Iikpe2hpc3Rvcnk9W107c2F2ZSgpO3JlbmRlckhpc3QoKX19OwoKdHJ5e2FwcGx5KEpTT04ucGFyc2UobG9jYWxTdG9yYWdlLmdldEl0ZW0o
-TEspfHwibnVsbCIpKX1jYXRjaChlKXt9CnJlbmRlckhpc3QoKTtyZW5kZXIoKTsKdHJ5e2lmKHBhcmVudCE9PXdpbmRvdylwYXJlbnQucG9zdE1lc3NhZ2Uo
-e3J3cDoxLHR5cGU6InJlYWR5In0sIioiKX1jYXRjaChlKXt9Cjwvc2NyaXB0PjwvYm9keT48L2h0bWw+Cg==
+ICBpZihjdXJyZW50JiYoY3VycmVudC53ZWVrcy5zb21lKHc9PncuZG9uZSl8fGN1cnJlbnQuZXhjbC5zb21lKHc9PncuZG9uZSl8fChjdXJyZW50LmF2JiZj
+dXJyZW50LmF2LmRvbmUpKSYmIWNvbmZpcm0oIlVuZSBzYWlzb24gZW4gY291cnMgY29udGllbnQgZGVzIGl0ZW1zIGNvY2jDqXMuIExhIHJlbXBsYWNlciA/
+IikpcmV0dXJuOwogIGNvbnN0IGxhc3Q9aGlzdG9yeVtoaXN0b3J5Lmxlbmd0aC0xXTsKICBjb25zdCBleHRyYXM9YnlSYXJpdHkoaD0+aC53ZWVrcykuc2xp
+Y2UoMCwzKTsKICBjb25zdCBwb29sPVsuLi5UWVBFUy5zbGljZSgwLEdFTikubWFwKChfLGkpPT5pKSwuLi5leHRyYXNdOwogIGxldCBiZXN0PW51bGwsYnM9
+SW5maW5pdHk7CiAgZm9yKGxldCBrPTA7azwzMDAwO2srKyl7Y29uc3QgYz1zaHVmZmxlKHBvb2wpLHM9c2NvcmUoYyk7aWYoczxicyl7YnM9cztiZXN0PWN9
+fQogIGNvbnN0IGV4Y2w9c2h1ZmZsZShieVJhcml0eShoPT5oLmV4Y2wsbGFzdD9sYXN0LmV4Y2w6W10pLnNsaWNlKDAsMykpOwogIGNvbnN0IG1rPXQ9Pih7
+dCxuYW1lOiIiLHhwOiIiLGRvbmU6ZmFsc2UsYXY6IiJ9KTsKICBjdXJyZW50PXtuYW1lOiQoIm5hbWUiKS52YWx1ZS50cmltKCksYXY6e3Q6QVYsbmFtZToi
+Iix4cDoiIixkb25lOmZhbHNlfSx3ZWVrczpiZXN0Lm1hcChtayksZXhjbDpleGNsLm1hcChtayl9OwogIGFzc2lnbkF2KCk7c2F2ZSgpO3JlbmRlcigpOwp9
+CmZ1bmN0aW9uIGFzc2lnbkF2KCl7CiAgaWYoIWN1cnJlbnR8fCFhdmF0YXJzLmxlbmd0aCl7aWYoY3VycmVudClbLi4uY3VycmVudC53ZWVrcywuLi5jdXJy
+ZW50LmV4Y2xdLmZvckVhY2goeD0+eC5hdj0iIik7cmV0dXJufQogIGNvbnN0IGl0ZW1zPVsuLi5jdXJyZW50LndlZWtzLC4uLmN1cnJlbnQuZXhjbF07bGV0
+IGJhZz1bXTsKICBpdGVtcy5mb3JFYWNoKHg9PntpZighYmFnLmxlbmd0aCliYWc9c2h1ZmZsZShhdmF0YXJzKTt4LmF2PWJhZy5wb3AoKX0pOwp9CmNvbnN0
+IGl0ZW1PZj0obCxpKT0+bD09PSJhIj9jdXJyZW50LmF2OmN1cnJlbnRbbD09PSJ3Ij8id2Vla3MiOiJleGNsIl1bK2ldOwpjb25zdCBvcHRzPShzZWwsbGlz
+dCxlbXB0eSk9PmA8b3B0aW9uIHZhbHVlPSIiPiR7ZW1wdHl9PC9vcHRpb24+YCtsaXN0Lm1hcChhPT5gPG9wdGlvbiB2YWx1ZT0iJHtlc2MoYSl9IiAke2E9
+PT1zZWw/InNlbGVjdGVkIjoiIn0+JHtlc2MoYSl9PC9vcHRpb24+YCkuam9pbigiIik7CmZ1bmN0aW9uIHJlbmRlckF2KCl7CiAgJCgiYXZsaXN0IikuaW5u
+ZXJIVE1MPWF2YXRhcnMubGVuZ3RoP2F2YXRhcnMubWFwKChhLGkpPT5gPHNwYW4gY2xhc3M9ImNoaXAiPiR7ZXNjKGEpfTxidXR0b24gZGF0YS1ybT0iJHtp
+fSIgYXJpYS1sYWJlbD0iUmV0aXJlciAke2VzYyhhKX0iPuKclTwvYnV0dG9uPjwvc3Bhbj5gKS5qb2luKCIiKTonPHNwYW4gY2xhc3M9InN1YiIgc3R5bGU9
+Im1hcmdpbjowIj5BdWN1biBhdmF0YXIgcG91ciBs4oCZaW5zdGFudCA6IGFqb3V0ZS1sZXMgaWNpIGF1IGZ1ciBldCDDoCBtZXN1cmUuPC9zcGFuPic7CiAg
+Y29uc3QgcD0kKCJwLWF2Iik7aWYocClwLnRleHRDb250ZW50PWF2YXRhcnMubGVuZ3RoKyIgYXZhdGFyIisoYXZhdGFycy5sZW5ndGg+MT8icyI6IiIpOwp9
+CmZ1bmN0aW9uIHJvd0h0bWwoaXQsbGlzdCxpZHgsbGFiZWwsY2xzKXsKICByZXR1cm4gYDxkaXYgY2xhc3M9InJvdyAke2Nsc30gJHtpdC5kb25lPyJkb25l
+IjoiIn0iIGlkPSJyLSR7bGlzdH0tJHtpZHh9Ij48c3BhbiBjbGFzcz0id2siPiR7bGFiZWx9PC9zcGFuPjxzcGFuIGNsYXNzPSJpYyI+JHtUWVBFU1tpdC50
+XS5pfTwvc3Bhbj48c2VsZWN0IGNsYXNzPSJ0c2VsIHRwIiBkYXRhLWw9IiR7bGlzdH0iIGRhdGEtaT0iJHtpZHh9IiBhcmlhLWxhYmVsPSJUeXBlIGTigJlp
+dGVtIj4ke1RZUEVTLm1hcCgoeCxrKT0+YDxvcHRpb24gdmFsdWU9IiR7a30iICR7az09PWl0LnQ/InNlbGVjdGVkIjoiIn0+JHt4Lm59PC9vcHRpb24+YCku
+am9pbigiIil9PC9zZWxlY3Q+CiAgPGlucHV0IHR5cGU9InRleHQiIGNsYXNzPSJubWluIiBwbGFjZWhvbGRlcj0iTm9tIGRlIGxhIHLDqWNvbXBlbnNlIChl
+eC4gdF9zaGlydF9yb3NlKSIgdmFsdWU9IiR7ZXNjKGl0Lm5hbWV8fCIiKX0iIGRhdGEtbD0iJHtsaXN0fSIgZGF0YS1pPSIke2lkeH0iIG1heGxlbmd0aD0i
+NjAiIGF1dG9jYXBpdGFsaXplPSJvZmYiIGF1dG9jb21wbGV0ZT0ib2ZmIiBzcGVsbGNoZWNrPSJmYWxzZSI+CiAgPGxhYmVsIGNsYXNzPSJ4cCI+WFAgPGlu
+cHV0IHR5cGU9Im51bWJlciIgbWluPSIwIiBzdGVwPSIxMDAiIGlucHV0bW9kZT0ibnVtZXJpYyIgcGxhY2Vob2xkZXI9IjAiIHZhbHVlPSIke2VzYyhpdC54
+cCl9IiBkYXRhLWw9IiR7bGlzdH0iIGRhdGEtaT0iJHtpZHh9IiBjbGFzcz0ieHBpbiI+PC9sYWJlbD4KICA8bGFiZWwgY2xhc3M9ImNoayI+PGlucHV0IHR5
+cGU9ImNoZWNrYm94IiAke2l0LmRvbmU/ImNoZWNrZWQiOiIifSBkYXRhLWw9IiR7bGlzdH0iIGRhdGEtaT0iJHtpZHh9IiBjbGFzcz0iZG4iPiBDcsOpw6k8
+L2xhYmVsPgogICR7bGlzdD09PSJhIj9gPGJ1dHRvbiB0eXBlPSJidXR0b24iIGNsYXNzPSJhdmFkZDIiIGRhdGEtbD0iYSIgZGF0YS1pPSIwIj7vvIsgQWpv
+dXRlciDDoCBtZXMgYXZhdGFyczwvYnV0dG9uPmA6YDxsYWJlbCBjbGFzcz0iYXZsIj5BdmF0YXIgYXR0cmlidcOpIDxzZWxlY3QgY2xhc3M9ImF2czIiIGRh
+dGEtbD0iJHtsaXN0fSIgZGF0YS1pPSIke2lkeH0iPiR7b3B0cyhpdC5hdnx8IiIsYXZhdGFycywi4oCUIEF1Y3VuIOKAlCIpfTwvc2VsZWN0PjwvbGFiZWw+
+YH08L2Rpdj5gOwp9CmZ1bmN0aW9uIHByb2dyZXNzKCl7CiAgY29uc3QgYT0kKCJwLXciKSxiPSQoInAtZSIpO2lmKCFjdXJyZW50KXJldHVybjsKICBpZihh
+KWEudGV4dENvbnRlbnQ9Y3VycmVudC53ZWVrcy5maWx0ZXIoeD0+eC5kb25lKS5sZW5ndGgrIiAvIDEyIGNyw6nDqXMiOwogIGlmKGIpYi50ZXh0Q29udGVu
+dD1jdXJyZW50LmV4Y2wuZmlsdGVyKHg9PnguZG9uZSkubGVuZ3RoKyIgLyAzIGNyw6nDqXMiOwp9CmZ1bmN0aW9uIHJlbmRlcigpewogIGNvbnN0IG91dD0k
+KCJvdXQiKSxhY3Q9JCgiYWN0aW9ucyIpOwogIGlmKCFjdXJyZW50KXtvdXQuaW5uZXJIVE1MPSc8ZGl2IGNsYXNzPSJlbXB0eSI+Q2xpcXVlIHN1ciDCqyBH
+w6luw6lyZXIgwrsgcG91ciBjcsOpZXIgdW4gcGxhbm5pbmcuPC9kaXY+JzthY3Quc3R5bGUuZGlzcGxheT0ibm9uZSI7cmV0dXJufQogIGlmKGN1cnJlbnQu
+bmFtZSkkKCJuYW1lIikudmFsdWU9Y3VycmVudC5uYW1lOwogIGlmKCFjdXJyZW50LmF2KWN1cnJlbnQuYXY9e3Q6QVYsbmFtZToiIix4cDoiIixkb25lOmZh
+bHNlfTsKICBvdXQuaW5uZXJIVE1MPWA8aDIgc3R5bGU9Im1hcmdpbi10b3A6MCI+8J+nkSBBdmF0YXIgZGUgbGEgc2Fpc29uIDxzbWFsbD5nYWduw6kgZW4g
+cHJlbWllciwgaG9ycyBnw6luw6lyYXRpb248L3NtYWxsPjwvaDI+YAogICAgK3Jvd0h0bWwoY3VycmVudC5hdiwiYSIsMCwi8J+nkSIsImF2ciIpCiAgICAr
+YDxoMj5JdGVtcyBoZWJkb21hZGFpcmVzIDxzbWFsbCBpZD0icC13Ij48L3NtYWxsPjwvaDI+YAogICAgK2N1cnJlbnQud2Vla3MubWFwKChpdCxpKT0+cm93
+SHRtbChpdCwidyIsaSwiUyIrKGkrMSksIiIpKS5qb2luKCIiKQogICAgK2A8aDI+4q2QIEV4Y2x1c2l2aXTDqXMgZGUgc2Fpc29uIDxzbWFsbCBpZD0icC1l
+Ij48L3NtYWxsPjwvaDI+YAogICAgK2N1cnJlbnQuZXhjbC5tYXAoKGl0LGkpPT5yb3dIdG1sKGl0LCJlIixpLCLirZAiLCJleHIiKSkuam9pbigiIik7CiAg
+YWN0LnN0eWxlLmRpc3BsYXk9ImZsZXgiO3Byb2dyZXNzKCk7Cn0KJCgib3V0IikuYWRkRXZlbnRMaXN0ZW5lcigiaW5wdXQiLGU9PnsKICBjb25zdCBlbD1l
+LnRhcmdldDtpZighY3VycmVudHx8IWVsLmRhdGFzZXQubClyZXR1cm47CiAgY29uc3QgaXQ9aXRlbU9mKGVsLmRhdGFzZXQubCxlbC5kYXRhc2V0LmkpOwog
+IGlmKGVsLmNsYXNzTGlzdC5jb250YWlucygieHBpbiIpKWl0LnhwPWVsLnZhbHVlOwogIGlmKGVsLmNsYXNzTGlzdC5jb250YWlucygibm1pbiIpKWl0Lm5h
+bWU9ZWwudmFsdWU7CiAgaWYoZWwuY2xhc3NMaXN0LmNvbnRhaW5zKCJkbiIpKXtpdC5kb25lPWVsLmNoZWNrZWQ7JChgci0ke2VsLmRhdGFzZXQubH0tJHtl
+bC5kYXRhc2V0Lml9YCkuY2xhc3NMaXN0LnRvZ2dsZSgiZG9uZSIsZWwuY2hlY2tlZCk7cHJvZ3Jlc3MoKX0KICBzYXZlKCk7Cn0pOwokKCJvdXQiKS5hZGRF
+dmVudExpc3RlbmVyKCJjaGFuZ2UiLGU9PnsKICBjb25zdCBlbD1lLnRhcmdldDtpZighY3VycmVudHx8IWVsLmRhdGFzZXQubClyZXR1cm47CiAgY29uc3Qg
+aXQ9aXRlbU9mKGVsLmRhdGFzZXQubCxlbC5kYXRhc2V0LmkpOwogIGlmKGVsLmNsYXNzTGlzdC5jb250YWlucygidHAiKSl7aXQudD0rZWwudmFsdWU7c2F2
+ZSgpO3JlbmRlcigpO30KICBlbHNlIGlmKGVsLmNsYXNzTGlzdC5jb250YWlucygiYXZzMiIpKXtpdC5hdj1lbC52YWx1ZTtzYXZlKCk7fQp9KTsKJCgib3V0
+IikuYWRkRXZlbnRMaXN0ZW5lcigiY2xpY2siLGU9PnsKICBjb25zdCBiPWUudGFyZ2V0LmNsb3Nlc3QoIi5hdmFkZDIiKTtpZighYnx8IWN1cnJlbnQpcmV0
+dXJuOwogIGNvbnN0IG49KGN1cnJlbnQuYXYubmFtZXx8IiIpLnRyaW0oKTsKICBpZighbil7YWxlcnQoIsOJY3JpcyBk4oCZYWJvcmQgbGUgbm9tIGRlIGzi
+gJlhdmF0YXIgZGFucyBsZSBjaGFtcCBjaS1kZXNzdXMuIik7cmV0dXJufQogIGlmKCFhdmF0YXJzLmluY2x1ZGVzKG4pKXthdmF0YXJzLnB1c2gobik7c2F2
+ZSgpO3JlbmRlckF2KCk7cmVuZGVyKCk7fQp9KTsKZnVuY3Rpb24gYWRkQXYoKXtjb25zdCBuPSQoImF2bmFtZSIpLnZhbHVlLnRyaW0oKTtpZighbnx8YXZh
+dGFycy5pbmNsdWRlcyhuKSlyZXR1cm47YXZhdGFycy5wdXNoKG4pOyQoImF2bmFtZSIpLnZhbHVlPSIiO3NhdmUoKTtyZW5kZXJBdigpO3JlbmRlcigpfQok
+KCJhdmFkZCIpLm9uY2xpY2s9YWRkQXY7CiQoImF2bmFtZSIpLmFkZEV2ZW50TGlzdGVuZXIoImtleWRvd24iLGU9PntpZihlLmtleT09PSJFbnRlciIpYWRk
+QXYoKX0pOwokKCJhdmxpc3QiKS5hZGRFdmVudExpc3RlbmVyKCJjbGljayIsZT0+ewogIGNvbnN0IGI9ZS50YXJnZXQuY2xvc2VzdCgiW2RhdGEtcm1dIik7
+aWYoIWIpcmV0dXJuOwogIGNvbnN0IGE9YXZhdGFyc1srYi5kYXRhc2V0LnJtXTtpZighY29uZmlybSgiUmV0aXJlciDCqyAiK2ErIiDCuyBkZSBsYSBsaXN0
+ZSA/IikpcmV0dXJuOwogIGF2YXRhcnMuc3BsaWNlKCtiLmRhdGFzZXQucm0sMSk7CiAgaWYoY3VycmVudClbLi4uY3VycmVudC53ZWVrcywuLi5jdXJyZW50
+LmV4Y2xdLmZvckVhY2goeD0+e2lmKHguYXY9PT1hKXguYXY9IiJ9KTsKICBzYXZlKCk7cmVuZGVyQXYoKTtyZW5kZXIoKTsKfSk7CiQoInJlcm9sbCIpLm9u
+Y2xpY2s9KCk9PntpZighY3VycmVudClyZXR1cm47aWYoIWF2YXRhcnMubGVuZ3RoKXthbGVydCgiQWpvdXRlIGTigJlhYm9yZCBkZXMgYXZhdGFycy4iKTty
+ZXR1cm59YXNzaWduQXYoKTtzYXZlKCk7cmVuZGVyKCl9OwokKCJuYW1lIikuYWRkRXZlbnRMaXN0ZW5lcigiaW5wdXQiLGU9PntpZihjdXJyZW50KXtjdXJy
+ZW50Lm5hbWU9ZS50YXJnZXQudmFsdWU7c2F2ZSgpfX0pOwpmdW5jdGlvbiByZW5kZXJIaXN0KCl7CiAgJCgicmVzZXQiKS5zdHlsZS5kaXNwbGF5PWhpc3Rv
+cnkubGVuZ3RoPyJpbmxpbmUtYmxvY2siOiJub25lIjsKICAkKCJoaXN0IikuaW5uZXJIVE1MPWhpc3RvcnkubGVuZ3RoP1suLi5oaXN0b3J5XS5yZXZlcnNl
+KCkubWFwKGg9PmA8ZGl2IGNsYXNzPSJoaXN0Ij48Yj4ke2VzYyhoLm5hbWUpfTwvYj4g4oCUICR7aC53ZWVrcy5tYXAodD0+VFlQRVNbdF0uaSkuam9pbigi
+ICIpfSB8IOKtkCAke2guZXhjbC5tYXAodD0+VFlQRVNbdF0uaSkuam9pbigiICIpfTwvZGl2PmApLmpvaW4oIiIpOmA8ZGl2IGNsYXNzPSJoaXN0Ij5BdWN1
+bmUgc2Fpc29uIHRlcm1pbsOpZSBwb3VyIGzigJlpbnN0YW50LjwvZGl2PmA7Cn0KZnVuY3Rpb24gYXNUZXh0KCl7CiAgY29uc3QgbGluZT0oaXQsbCk9PmAk
+e2x9IDogJHtUWVBFU1tpdC50XS5ufSR7aXQuYXY/IiDihpIgIitpdC5hdjoiIn0ke2l0Lm5hbWU/IiDCqyAiK2l0Lm5hbWUrIiDCuyI6IiJ9JHtpdC54cCE9
+PSIiPyIg4oCUICIraXQueHArIiBYUCI6IiJ9JHtpdC5kb25lPyIg4pyUIjoiIn1cbmA7CiAgbGV0IHM9KCQoIm5hbWUiKS52YWx1ZS50cmltKCl8fCJTYWlz
+b24iKSsiXG5cbkF2YXRhciBkZSBsYSBzYWlzb25cbiIrbGluZShjdXJyZW50LmF2LCJBdmF0YXIiKSsiXG5JdGVtcyBoZWJkb21hZGFpcmVzXG4iOwogIGN1
+cnJlbnQud2Vla3MuZm9yRWFjaCgoaXQsaSk9PnMrPWxpbmUoaXQsIlNlbWFpbmUgIisoaSsxKSkpOwogIHMrPSJcbkV4Y2x1c2l2aXTDqXNcbiI7Y3VycmVu
+dC5leGNsLmZvckVhY2goKGl0LGkpPT5zKz1saW5lKGl0LCJFeGNsdXNpZiAiKyhpKzEpKSk7CiAgcmV0dXJuIHM7Cn0KJCgiZ2VuIikub25jbGljaz1nZW5l
+cmF0ZTsKJCgic2F2ZSIpLm9uY2xpY2s9KCk9PnsKICBpZighY3VycmVudHx8IWNvbmZpcm0oIlRlcm1pbmVyIGxhIHNhaXNvbiBldCBs4oCZYWpvdXRlciDD
+oCBs4oCZaGlzdG9yaXF1ZSA/IikpcmV0dXJuOwogIGhpc3RvcnkucHVzaCh7bmFtZTokKCJuYW1lIikudmFsdWUudHJpbSgpfHwiU2Fpc29uICIrKGhpc3Rv
+cnkubGVuZ3RoKzEpLHdlZWtzOmN1cnJlbnQud2Vla3MubWFwKHg9PngudCksZXhjbDpjdXJyZW50LmV4Y2wubWFwKHg9PngudCl9KTsKICBjdXJyZW50PW51
+bGw7c2F2ZSgpO3JlbmRlckhpc3QoKTtyZW5kZXIoKTskKCJuYW1lIikudmFsdWU9IiI7CiAgJCgib3V0IikuaW5uZXJIVE1MPSc8ZGl2IGNsYXNzPSJlbXB0
+eSI+U2Fpc29uIGVucmVnaXN0csOpZSDinIUgR8OpbsOocmUgbGEgc3VpdmFudGUgcXVhbmQgdHUgdmV1eC48L2Rpdj4nOwp9OwokKCJjb3B5Iikub25jbGlj
+az1hc3luYyBlPT57CiAgdHJ5e2F3YWl0IG5hdmlnYXRvci5jbGlwYm9hcmQud3JpdGVUZXh0KGFzVGV4dCgpKTtlLnRhcmdldC50ZXh0Q29udGVudD0i4pyU
+IENvcGnDqSJ9Y2F0Y2goeCl7ZS50YXJnZXQudGV4dENvbnRlbnQ9IkNvcGllIGltcG9zc2libGUifQogIHNldFRpbWVvdXQoKCk9PmUudGFyZ2V0LnRleHRD
+b250ZW50PSLwn5OLIENvcGllciIsMTUwMCk7Cn07CiQoInJlc2V0Iikub25jbGljaz0oKT0+e2lmKGNvbmZpcm0oIkVmZmFjZXIgdG91dCBs4oCZaGlzdG9y
+aXF1ZSA/Iikpe2hpc3Rvcnk9W107c2F2ZSgpO3JlbmRlckhpc3QoKX19OwoKdHJ5e2FwcGx5KEpTT04ucGFyc2UobG9jYWxTdG9yYWdlLmdldEl0ZW0oTEsp
+fHwibnVsbCIpKX1jYXRjaChlKXt9CnJlbmRlckhpc3QoKTtyZW5kZXIoKTtyZW5kZXJBdigpOwp0cnl7aWYocGFyZW50IT09d2luZG93KXBhcmVudC5wb3N0
+TWVzc2FnZSh7cndwOjEsdHlwZToicmVhZHkifSwiKiIpfWNhdGNoKGUpe30KPC9zY3JpcHQ+PC9ib2R5PjwvaHRtbD4K
 </script>
 <script type="text/plain" id="plan-src">
 PCFkb2N0eXBlIGh0bWw+CjxodG1sIGxhbmc9ImZyIj48aGVhZD48bWV0YSBjaGFyc2V0PSJ1dGYtOCI+Cjx0aXRsZT5QbGFuaWZpY2F0ZXVyIGRlIHNhaXNvbjwvdGl0bGU+CjxtZXRhIG5hbWU9InZpZXdwb3J0
@@ -4431,7 +4481,7 @@ function movBackGo(){
 /* ---------- écritures ---------- */
 let chain=Promise.resolve();
 function run(fn){chain=chain.then(fn).catch(e=>{toast(errMsg(e),true);});return chain;}
-const saveProf=()=>run(async()=>{await S.db.doc('users/'+S.uid+'/private/profile').set({prs:S.prof.prs||{},sex:S.prof.sex||'',birth:S.prof.birth||'',genEx:S.prof.genEx||null,genAll:S.prof.genAll||null,words:S.prof.words||[],mvcfg:S.prof.mvcfg||{},revd:S.prof.revd||{},intf:S.prof.intf||{},intn:S.prof.intn||{},intCustom:Array.isArray(S.prof.intCustom)?S.prof.intCustom:[],pace:S.prof.pace||{},spread:S.prof.spread||{},weight:Number(S.prof.weight)>0?Number(S.prof.weight):0,plan:S.prof.plan||null,pend:S.prof.pend||{},rewardDraft:String(S.prof.rewardDraft||''),rewardPlan:S.prof.rewardPlan||null,pf:S.prof.pf||{},trash:Array.isArray(S.prof.trash)?S.prof.trash:[]});});
+const saveProf=()=>run(async()=>{await S.db.doc('users/'+S.uid+'/private/profile').set({prs:S.prof.prs||{},sex:S.prof.sex||'',birth:S.prof.birth||'',health:S.prof.health||null,genEx:S.prof.genEx||null,genAll:S.prof.genAll||null,words:S.prof.words||[],mvcfg:S.prof.mvcfg||{},revd:S.prof.revd||{},intf:S.prof.intf||{},intn:S.prof.intn||{},intCustom:Array.isArray(S.prof.intCustom)?S.prof.intCustom:[],pace:S.prof.pace||{},spread:S.prof.spread||{},weight:Number(S.prof.weight)>0?Number(S.prof.weight):0,plan:S.prof.plan||null,pend:S.prof.pend||{},rewardDraft:String(S.prof.rewardDraft||''),rewardPlan:S.prof.rewardPlan||null,pf:S.prof.pf||{},trash:Array.isArray(S.prof.trash)?S.prof.trash:[]});});
 const needPseudo=()=>S.uid&&S.loaded.logs&&!(S.logs[S.uid]&&S.logs[S.uid].pseudo);
 /* groupes : un seul document config/groups {list:[{id,name}], of:{uid:idDuGroupe}}, écrit par le coach seul */
 const groupsList=()=>(S.groups&&S.groups.list)||[];
@@ -7095,8 +7145,73 @@ function viewCards(){
   return el;
 }
 function backToCards(){S.carDate=S.viewDate||S.carDate;S.viewDate=null;S.entry=null;S.redo=null;S.tip=null;S.confirm=null;render();window.scrollTo(0,0);}
+/* ---------- prévention des risques : déclaration sur l'honneur avant la première séance (tous ; autorisation parentale en plus pour les mineurs) ---------- */
+const HG_VER='1'; /* à changer pour redemander la déclaration après une modification du texte */
+const HG_SEC=10; /* secondes de lecture avant de pouvoir cocher */
+const HG_MIN=16; /* âge minimum : en dessous, l'appli est inaccessible */
+const hgAge=b=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(b||'');if(!m||b>todayStr())return -1;const n=new Date();let a=n.getFullYear()-(+m[1]);if(n.getMonth()+1<+m[2]||(n.getMonth()+1===+m[2]&&n.getDate()<+m[3]))a--;return a>=0&&a<120?a:-1;};
+const needHealthGate=()=>{if(!S.uid||!S.profLoaded)return false;const a=hgAge(S.prof.birth);return (a>=0&&a<HG_MIN)||!(S.prof.health&&S.prof.health.v===HG_VER);};
+function viewHealthGate(){
+  const g=S.hg||(S.hg={birth:S.prof.birth||'',t0:Date.now(),ck:false,par:false,minor:null});
+  const left=()=>Math.max(0,Math.ceil(HG_SEC-(Date.now()-g.t0)/1000));
+  const ageOf=()=>hgAge(g.birth);
+  const validBirth=()=>ageOf()>=0;
+  const blocked=()=>validBirth()&&ageOf()<HG_MIN;
+  const isMinor=()=>validBirth()&&ageOf()<18;
+  const dyn=h('div',{style:'display:grid;gap:10px'});
+  const bin=h('input',{type:'date',id:'hg-birth',value:g.birth,max:todayStr(),onchange:e=>{g.birth=e.target.value;paint();}});
+  const go=h('button',{class:'btn primary btn-block',type:'button',id:'hg-ok',disabled:true,onclick:()=>{
+    if(!validBirth()||blocked()||left()>0||!g.ck||(isMinor()&&!g.par))return;
+    const minor=isMinor();
+    S.prof.birth=g.birth;
+    S.prof.health={v:HG_VER,at:new Date().toISOString(),minor:minor,parental:minor?true:false};
+    saveProf();S.hg=null;render();window.scrollTo(0,0);
+  }},'Accéder aux séances');
+  const wait=h('p',{class:'hint hg-wait',id:'hg-wait'});
+  const root=h('div',{class:'stack'});
+  function paint(){
+    const minor=isMinor();
+    if(g.minor!==null&&g.minor!==minor){g.t0=Date.now();g.ck=false;g.par=false;} /* le texte change : on relit */
+    g.minor=minor;
+    const age=ageOf(),lock=left()>0||!validBirth()||blocked();
+    dyn.replaceChildren();
+    if(!validBirth()){dyn.append(h('p',{class:'hint'},'Renseigne ta date de naissance pour afficher le message de prévention.'));}
+    else if(blocked()){
+      dyn.append(h('div',{class:'hg-warn',id:'hg-blocked',role:'alert'},
+        h('p',{},...rlText('**L’appli est inaccessible aux moins de '+HG_MIN+' ans**, pour des raisons de sécurité. Tu pourras l’utiliser à partir de tes '+HG_MIN+' ans.')),
+        h('p',{},'Tu t’es trompé en saisissant ta date de naissance ? Corrige-la ci-dessus.')));
+    }
+    else{
+      dyn.append(h('div',{class:'hg-warn'},
+        h('p',{},...rlText('**Le programme Cross’mitaines est intense**, surtout sur le plan **cardiovasculaire**. **Consulte un médecin** pour t’assurer que ta santé ne contre-indique pas une activité intense comme le cross training.')),
+        h('p',{},...rlText(age>=35?'**Tu as 35 ans ou plus : une visite chez le cardiologue est fortement recommandée.**':'**Au-delà de 35 ans, une visite chez le cardiologue est fortement recommandée.**')),
+        h('p',{},...rlText('Cette appli est un **outil de suivi** : elle ne remplace pas un avis médical et **n’engage pas la responsabilité** de l’éditeur ni du coach en cas de blessure ou de dommage. Tu t’entraînes **sous ta propre responsabilité**. Au moindre malaise ou douleur : arrête et appelle le **15** ou le **112**.'))));
+      if(minor)dyn.append(h('div',{class:'hg-par'},
+        h('h3',{},'Autorisation parentale'),
+        h('p',{},...rlText('Tu as moins de 18 ans. Le **cross training** est un entraînement physique intense (charges, sauts, efforts à haute intensité). Il développe la **forme physique, la force et la confiance en soi**, mais mal pratiqué (technique, charge ou intensité inadaptées, fatigue) il expose à des **blessures** et à des **malaises**.')),
+        h('p',{},...rlText('**L’accès exige l’accord d’un responsable légal**, qui doit avoir lu ces informations.')),
+        h('label',{class:'chk'},h('input',{type:'checkbox',id:'hg-par',checked:g.par,disabled:lock,onchange:e=>{g.par=e.target.checked;sync();}}),h('span',{},'Je déclare que mon responsable légal a lu ces informations et m’autorise à suivre ce programme.'))));
+      dyn.append(h('label',{class:'chk'},h('input',{type:'checkbox',id:'hg-ck',checked:g.ck,disabled:lock,onchange:e=>{g.ck=e.target.checked;sync();}}),h('span',{},'Je déclare sur l’honneur avoir pris connaissance de ces informations et m’entraîner sous ma propre responsabilité.')));
+    }
+    sync();
+  }
+  function sync(){
+    const l=left(),ok=validBirth()&&!blocked();
+    wait.textContent=!ok?'':l>0?'Lis le message : tu pourras cocher dans '+l+' s.':'';
+    root.querySelectorAll('#hg-ck,#hg-par').forEach(c=>{c.disabled=l>0||!ok;});
+    go.disabled=!(ok&&l===0&&g.ck&&(!isMinor()||g.par));
+  }
+  root.append(h('div',{},h('p',{class:'eyebrow'},'Avant ta première séance'),h('h1',{class:'day'},'Prévention des risques')),
+    h('section',{class:'card',style:'display:grid;gap:12px'},
+      field('Ta date de naissance',bin,'Elle reste privée : seule ta catégorie d’âge est visible dans l’appli.'),
+      dyn,wait,go));
+  paint();
+  const iv=setInterval(()=>{if(!document.body.contains(root)){clearInterval(iv);return;}sync();},250);
+  return root;
+}
 function viewToday(){
   if(!hasAccess())return viewPaywall();
+  if(needHealthGate())return viewHealthGate();
   if(!S.viewDate)return viewCards();
   const t=todayStr(),date=S.viewDate||defaultDate(),w0=S.wods[date],w=w0&&myWod(w0,S.uid);
   /* même couleur que la carte sur laquelle on a cliqué (cardColor la mémorise par date) */
@@ -12985,7 +13100,7 @@ const ICO_HEALTH='<svg '+SVGA+'><path d=\"M12 20.5S3.5 15.5 3.5 9.5a4.5 4.5 0 0 
 const ICO_BUG='<svg '+SVGA+'><path d=\"M8 9a4 4 0 0 1 8 0v6a4 4 0 0 1-8 0z\"/><path d=\"M12 9v11M4 13h4M16 13h4M5 7l3 2M19 7l-3 2M5 19l3-2M19 19l-3-2\"/></svg>';
 const ICO_RULES='<svg '+SVGA+'><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9.5 14l2 2 3.5-4"/></svg>';
 /* ---------- règlement : un point à la fois, « suivant » = lu et accepté ---------- */
-const RULES_VER='3'; /* à changer pour faire réapparaître le point rouge après une modification du règlement */
+const RULES_VER='4'; /* à changer pour faire réapparaître le point rouge après une modification du règlement */
 const rulesKey=()=>'bs-rules-'+S.uid;
 const rulesSeen=()=>{try{return localStorage.getItem(rulesKey())===RULES_VER;}catch(e){return true;}}; /* stockage indisponible : pas de point rouge permanent */
 const rulesMark=()=>{try{localStorage.setItem(rulesKey(),RULES_VER);}catch(e){}};
@@ -13006,6 +13121,8 @@ const RULES=[
   'Une séance peut être réalisée n’importe quel jour de la semaine, du lundi au dimanche. Une séance rattrapée après sa semaine rapporte ses points, mais ne compte pas pour les flammes.','Chaque athlète saisit lui-même son résultat dans l’appli.']},
  {t:'Niveaux',p:['Pour chaque metcon, tu choisis le niveau auquel tu l’as réalisé : Débutant, Intermédiaire, Rx ou personnalisé. Choisis le niveau que tu as réellement fait, charges et mouvements compris. Un niveau plus élevé valorise davantage tes points de metcon dans certains classements.']},
  {t:'Points',b:['Chaque séance rapporte des points de séance, auxquels s’ajoutent les points de ton ou tes metcons.','Les points de metcon dépendent de ta performance, selon des paliers fixés par le coach.','Les paliers sont fixés dès la création du metcon mais peuvent évoluer légèrement en fonction des résultats observés pour que la compétition reste cohérente et attractive.','Si le time cap t’arrête, ton score est le nombre de répétitions réalisées, converti en points selon les paliers prévus pour ce cas.','**EMOM / E2MOM / E3MOM :** les exercices se font au début de chaque intervalle (toutes les minutes, toutes les 2 minutes…). En renforcement, un EMOM ne rapporte pas de points. En metcon, seul le **Dead by** existe : tu continues jusqu’au time cap ou jusqu’à ne plus réussir dans le temps imparti : ton score est le temps tenu, et celui qui tient le plus longtemps marque le plus de points.','**REDO :** si le coach l’autorise sur le metcon, tu peux refaire la séance. Un REDO rapporte 3 points s’il améliore ton premier résultat, 2 points s’il l’égale et 1 point s’il fait moins bien. Il compte aussi pour ton objectif de séances.']},
+ {t:'Santé et responsabilité',p:['**Le programme est intense.** Avant de commencer, consulte un médecin ; au-delà de 35 ans, une visite chez le cardiologue est fortement recommandée.'],
+  b:['**Box Score est un outil de suivi** : il ne remplace pas un avis médical et n’engage pas la responsabilité de l’éditeur ni du coach en cas de blessure ou de dommage.','**Tu t’entraînes sous ta propre responsabilité** et tu choisis un niveau adapté à ton état du jour.','**Les moins de 16 ans** ne peuvent pas utiliser l’appli. **Les 16-17 ans** ne peuvent participer qu’avec l’accord d’un responsable légal, déclaré avant la première séance.']},
  {t:'Erreurs et décisions du coach',b:['Un participant peut modifier lui-même ses résultats dans l’onglet Séance : inutile de contacter le coach.','Le coach peut retirer un résultat manifestement irréaliste.']}
 ];
 const rlText=t=>t.split('**').map((x,i)=>i%2?h('b',{},x):x);
@@ -13038,7 +13155,7 @@ function viewRules(){
       acts));
 }
 /* ---------- santé et sécurité : même principe que le règlement (un point à la fois, « suivant » = lu et accepté, jamais bloquant) ---------- */
-const HEALTH_VER='1'; /* à changer pour faire réapparaître le point rouge après une modification du texte */
+const HEALTH_VER='2'; /* à changer pour faire réapparaître le point rouge après une modification du texte */
 const healthKey=()=>'bs-health-'+S.uid;
 const healthSeen=()=>{try{return localStorage.getItem(healthKey())===HEALTH_VER;}catch(e){return true;}};
 const healthMark=()=>{try{localStorage.setItem(healthKey(),HEALTH_VER);}catch(e){}};
@@ -13051,7 +13168,8 @@ const HEALTH=[
  {t:'Choisis le bon niveau',p:['Chaque metcon propose des niveaux : Débutant, Intermédiaire et Rx, avec des charges et des variantes adaptées. **Choisis celui qui te convient aujourd’hui**, pas celui des autres.'],
   b:['La technique passe avant la charge et avant le score.','Un jour de fatigue, de stress ou de mauvais sommeil, baisse le niveau ou la charge sans te poser de question.','Tu peux toujours remplacer un mouvement par une variante plus accessible.']},
  {t:'Échauffement et récupération',b:['Fais l’échauffement guidé avant chaque séance.','Bois régulièrement avant, pendant et après l’entraînement.','Dors suffisamment et respecte des jours de repos : la progression se fait pendant la récupération.','La semaine de deload de chaque saison est là pour te laisser récupérer : profites-en.']},
- {t:'Ta responsabilité',p:['Box Score et le coach ne peuvent pas évaluer ton état de santé. Cette appli **ne remplace pas un avis médical**.','Tu t’entraînes sous ta propre responsabilité. En cas de doute sur ta capacité à pratiquer, demande conseil à un professionnel de santé avant de continuer.']}
+ {t:'Ta responsabilité',p:['Box Score et le coach ne peuvent pas évaluer ton état de santé. Cette appli **ne remplace pas un avis médical**.','Tu t’entraînes sous ta propre responsabilité. En cas de doute sur ta capacité à pratiquer, demande conseil à un professionnel de santé avant de continuer.'],
+  b:['**Moins de 16 ans :** l’appli est inaccessible pour des raisons de sécurité. **16-17 ans :** l’accord d’un responsable légal est obligatoire ; il doit avoir lu le message de prévention.','Box Score est un outil de suivi : il n’engage pas la responsabilité de l’éditeur ni du coach en cas de blessure ou de dommage.']}
 ];
 /* ---------- signaler un bug : tout le monde envoie, seul le coach lit (collection « bugs », règles Firestore dédiées) ---------- */
 const BUG_TABS=['Fil','Séance','Entrer mes résultats','Minuteur / chrono','Classement','Profil','Mes infos','Avatar','Notifications','Apprentissage des mouvements','Règlement','Santé et sécurité','Espace coach','Autre'];
@@ -13501,12 +13619,12 @@ function plansCarousel(buy){
   return h('div',{class:'plans-wrap'},track,h('div',{class:'plan-dots'},...dots),h('p',{class:'hint',style:'text-align:center'},'Fais glisser pour comparer les deux forfaits.'));
 }
 /* ---------- CGV : conditions générales de vente (bouton sous les forfaits, ouvre une fenêtre) ---------- */
-const CGV_VERSION='22 octobre 2026';
+const CGV_VERSION='29 octobre 2026';
 /* À COMPLÉTER avant d’ouvrir les paiements : ces informations s’affichent dans les articles 1 et 13 des CGV */
 const CGV_INFO={
-  nom:'BOX Score Cross’mitaines',
-  statut:'micro-entrepreneur',
-  siret:'à venir',
+  nom:'Robin Piraino, exerçant sous le nom commercial BOX Score Cross’mitaines',
+  statut:'entrepreneur individuel, micro-entrepreneur',
+  siret:'131 993 776 00015',
   adresse:'7 rue de la tuilerie, 55100 Belrupt-en-Verdunois',
   email:'crossmitaines@outlook.fr',
   mediateur:'à venir'
@@ -13520,7 +13638,7 @@ function cgvSections(){
     {t:'2. Objet',p:[
       'Ces conditions générales de vente (CGV) encadrent la vente des abonnements qui donnent accès à Box Score : le programme de Crosstraining du coach, le classement de saison, les trophées, les badges et la communauté.',
       'Créer un compte et choisir un forfait vaut acceptation des CGV. Elles sont consultables à tout moment, sur l’écran de connexion et dans la page Abonnement.',
-      'L’abonnement est réservé aux personnes majeures. Un mineur doit avoir l’autorisation de son représentant légal, qui réalise le paiement.']},
+      'L’abonnement est réservé aux personnes majeures. Pour des raisons de sécurité, Box Score est inaccessible aux moins de 16 ans. Un mineur de 16 ou 17 ans ne peut l’utiliser qu’avec l’autorisation de son représentant légal, qui accepte les présentes CGV et réalise le paiement. Cette autorisation est déclarée dans l’appli avant la première séance (voir l’article 9).']},
     {t:'3. Forfaits et prix',p:[
       'Forfait 4 semaines : '+eur(PRICE_4W)+' toutes les 4 semaines.',
       'Forfait '+SEASON_WEEKS+' semaines : '+eur(PRICE_SEASON)+' toutes les '+SEASON_WEEKS+' semaines, soit '+eur(per4)+' par 4 semaines.',
@@ -13545,15 +13663,17 @@ function cgvSections(){
       'Tu peux résilier à tout moment, sans motif ni pénalité, depuis la gestion de ton abonnement dans l’appli ou par e-mail à '+I.email+'.',
       'La résiliation prend effet à la fin de la période déjà payée (4 semaines ou '+SEASON_WEEKS+' semaines en cours) : tu gardes l’accès jusque-là. La période commencée n’est pas remboursée, sauf cas prévu par la loi.',
       'L’éditeur peut suspendre ou résilier un compte en cas de non-respect des CGV ou du règlement (triche, propos injurieux, comptes multiples), après t’avoir informé.']},
-    {t:'9. Santé et pratique sportive',p:[
-      'Box Score ne remplace pas un avis médical. Consulte un médecin avant de commencer ou de reprendre une activité physique intense.',
-      'Tu choisis ton niveau et tu restes attentif à tes sensations. Lis la page « Santé et sécurité » et le règlement de l’appli. L’éditeur ne garantit aucun résultat sportif. Cet article ne limite pas les droits que la loi te reconnaît.']},
+    {t:'9. Santé, pratique sportive et responsabilité',p:[
+      'Box Score est un **outil de suivi** de l’entraînement : l’éditeur et le coach ne dispensent aucun conseil médical et ne surveillent pas tes séances. L’appli ne remplace pas un avis médical.',
+      'Le programme est intense, notamment sur le plan cardiovasculaire. Consulte un médecin avant de commencer ou de reprendre une activité physique intense ; au-delà de 35 ans, une visite chez le cardiologue est fortement recommandée.',
+      'Avant la première séance, tu déclares sur l’honneur avoir pris connaissance du message de prévention. Si tu as 16 ou 17 ans, ton responsable légal doit avoir lu ces informations et t’autoriser à suivre le programme : tu le déclares aussi. La version du texte et la date de ta déclaration sont enregistrées dans ton profil privé.',
+      'Tu t’entraînes sous ta seule responsabilité : tu choisis ton niveau, ta charge et ton intensité, et tu restes attentif à tes sensations (voir la page « Santé et sécurité » et le règlement). Dans les limites autorisées par la loi, l’éditeur n’est pas responsable des blessures, malaises, accidents ou autres dommages survenus pendant ou après une séance, ni d’une mauvaise utilisation du programme. L’éditeur ne garantit aucun résultat sportif. Cet article ne limite pas les droits que la loi te reconnaît, ni la responsabilité de l’éditeur en cas de faute de sa part.']},
     {t:'10. Disponibilité de l’appli',p:[
       'L’éditeur met tout en œuvre pour que l’appli soit accessible, mais il ne peut pas garantir un accès sans interruption : maintenance, panne d’un prestataire, problème de connexion internet de ton côté.']},
     {t:'11. Propriété intellectuelle',p:[
       'Les programmes, textes, images, vidéos, badges, trophées et le nom Box Score sont protégés. Ton abonnement te donne un droit d’usage personnel : tu ne peux pas les copier, les diffuser ou les revendre sans l’accord de l’éditeur.']},
     {t:'12. Données personnelles',p:[
-      'Pour fournir le service, l’éditeur traite ton e-mail, ton pseudo, les informations de ton profil, tes résultats et l’état de ton abonnement. Ces données ne sont pas vendues. Elles sont hébergées par des prestataires techniques (dont Firebase et Stripe pour le paiement).',
+      'Pour fournir le service, l’éditeur traite ton e-mail, ton pseudo, les informations de ton profil (dont ta date de naissance, qui reste privée), ta déclaration de prévention santé (version et date), tes résultats et l’état de ton abonnement. Ces données ne sont pas vendues. Elles sont hébergées par des prestataires techniques (dont Firebase et Stripe pour le paiement).',
       'Tu disposes d’un droit d’accès, de rectification, d’effacement, d’opposition et de portabilité de tes données : écris à '+I.email+'. Tu peux aussi saisir la CNIL.']},
     {t:'13. Réclamations, médiation et loi applicable',p:[
       'Pour toute réclamation, écris d’abord à '+I.email+'. À défaut de solution amiable, tu peux saisir gratuitement le médiateur de la consommation : '+I.mediateur+'.',
@@ -13570,7 +13690,7 @@ function openCGV(){
       h('p',{class:'eyebrow'},'Box Score'),
       h('h2',{class:'wtitle'},'Conditions générales de vente'),
       h('p',{class:'hint'},'Version du '+CGV_VERSION),
-      ...cgvSections().map(s=>h('section',{style:'display:grid;gap:6px'},h('b',{},s.t),...s.p.map(x=>h('p',{style:'margin:0'},x)))),
+      ...cgvSections().map(s=>h('section',{style:'display:grid;gap:6px'},h('b',{},s.t),...s.p.map(x=>h('p',{style:'margin:0'},...rlText(x))))),
       h('button',{class:'btn primary',type:'button',id:'cgv-close',onclick:close},'Fermer')));
   document.body.append(ov);document.addEventListener('keydown',esc);
 }
@@ -14081,7 +14201,7 @@ function startFirebase(){
     /* réactions emoji : si les règles ne sont pas publiées, on ignore l'erreur */
     unsubs.push(S.db.collection('reports').onSnapshot(sn=>{S.reports=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));scheduleRender();},()=>{}));
     unsubs.push(S.db.collection('reactions').onSnapshot(sn=>{S.reactions=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));scheduleRender();},()=>{}));
-    unsubs.push(S.db.doc('users/'+S.uid+'/private/profile').onSnapshot(sn=>{const d=sn.exists?sn.data():null;const _op=S.prof;S.prof={plan:(d&&d.plan&&typeof d.plan==='object')?JSON.parse(JSON.stringify(d.plan)):null,pend:(d&&d.pend&&typeof d.pend==='object')?JSON.parse(JSON.stringify(d.pend)):{},prs:(d&&d.prs)?JSON.parse(JSON.stringify(d.prs)):{},sex:(d&&d.sex)||'',birth:(d&&typeof d.birth==='string')?d.birth:'',genEx:(d&&Array.isArray(d.genEx))?d.genEx:null,genAll:(d&&Array.isArray(d.genAll))?d.genAll:null,words:(d&&Array.isArray(d.words))?d.words:[],mvcfg:(d&&d.mvcfg&&typeof d.mvcfg==='object')?JSON.parse(JSON.stringify(d.mvcfg)):{},revd:(d&&d.revd&&typeof d.revd==='object')?JSON.parse(JSON.stringify(d.revd)):{},intf:(d&&d.intf&&typeof d.intf==='object')?JSON.parse(JSON.stringify(d.intf)):{},intn:(d&&d.intn&&typeof d.intn==='object')?JSON.parse(JSON.stringify(d.intn)):{},intCustom:(d&&Array.isArray(d.intCustom))?JSON.parse(JSON.stringify(d.intCustom)):[],pace:(d&&d.pace&&typeof d.pace==='object')?JSON.parse(JSON.stringify(d.pace)):{},spread:(d&&d.spread&&typeof d.spread==='object')?JSON.parse(JSON.stringify(d.spread)):{},weight:(d&&Number(d.weight)>0)?Number(d.weight):0,rewardDraft:(d&&typeof d.rewardDraft==='string')?d.rewardDraft:'',rewardPlan:(d&&d.rewardPlan&&typeof d.rewardPlan==='object')?JSON.parse(JSON.stringify(d.rewardPlan)):null,pf:(d&&d.pf&&typeof d.pf==='object')?JSON.parse(JSON.stringify(d.pf)):{},trash:(d&&Array.isArray(d.trash))?JSON.parse(JSON.stringify(d.trash)):[]};if(planSaveT!==null&&_op){S.prof.plan=_op.plan||null;S.prof.pend=_op.pend||{};}if(rwT!==null&&_op)S.prof.rewardDraft=_op.rewardDraft||'';if(rwpSaveT!==null&&_op)S.prof.rewardPlan=_op.rewardPlan||null;if(pfT!==null&&_op)S.prof.pf=_op.pf||{};syncIntens();S.profLoaded=true;scheduleRender();selfSync();planSync();rwpSync();},fail));
+    unsubs.push(S.db.doc('users/'+S.uid+'/private/profile').onSnapshot(sn=>{const d=sn.exists?sn.data():null;const _op=S.prof;S.prof={plan:(d&&d.plan&&typeof d.plan==='object')?JSON.parse(JSON.stringify(d.plan)):null,pend:(d&&d.pend&&typeof d.pend==='object')?JSON.parse(JSON.stringify(d.pend)):{},prs:(d&&d.prs)?JSON.parse(JSON.stringify(d.prs)):{},sex:(d&&d.sex)||'',birth:(d&&typeof d.birth==='string')?d.birth:'',health:(d&&d.health&&typeof d.health==='object')?JSON.parse(JSON.stringify(d.health)):null,genEx:(d&&Array.isArray(d.genEx))?d.genEx:null,genAll:(d&&Array.isArray(d.genAll))?d.genAll:null,words:(d&&Array.isArray(d.words))?d.words:[],mvcfg:(d&&d.mvcfg&&typeof d.mvcfg==='object')?JSON.parse(JSON.stringify(d.mvcfg)):{},revd:(d&&d.revd&&typeof d.revd==='object')?JSON.parse(JSON.stringify(d.revd)):{},intf:(d&&d.intf&&typeof d.intf==='object')?JSON.parse(JSON.stringify(d.intf)):{},intn:(d&&d.intn&&typeof d.intn==='object')?JSON.parse(JSON.stringify(d.intn)):{},intCustom:(d&&Array.isArray(d.intCustom))?JSON.parse(JSON.stringify(d.intCustom)):[],pace:(d&&d.pace&&typeof d.pace==='object')?JSON.parse(JSON.stringify(d.pace)):{},spread:(d&&d.spread&&typeof d.spread==='object')?JSON.parse(JSON.stringify(d.spread)):{},weight:(d&&Number(d.weight)>0)?Number(d.weight):0,rewardDraft:(d&&typeof d.rewardDraft==='string')?d.rewardDraft:'',rewardPlan:(d&&d.rewardPlan&&typeof d.rewardPlan==='object')?JSON.parse(JSON.stringify(d.rewardPlan)):null,pf:(d&&d.pf&&typeof d.pf==='object')?JSON.parse(JSON.stringify(d.pf)):{},trash:(d&&Array.isArray(d.trash))?JSON.parse(JSON.stringify(d.trash)):[]};if(planSaveT!==null&&_op){S.prof.plan=_op.plan||null;S.prof.pend=_op.pend||{};}if(rwT!==null&&_op)S.prof.rewardDraft=_op.rewardDraft||'';if(rwpSaveT!==null&&_op)S.prof.rewardPlan=_op.rewardPlan||null;if(pfT!==null&&_op)S.prof.pf=_op.pf||{};syncIntens();S.profLoaded=true;scheduleRender();selfSync();planSync();rwpSync();},fail));
     render();
   });
 }
