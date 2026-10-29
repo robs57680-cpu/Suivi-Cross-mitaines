@@ -1906,6 +1906,18 @@ body[data-pv] #main{padding-top:8px}
 @media (max-height:760px){.pf2-avin{width:56px;height:76px}}
 
 
+
+
+.pf2 .pf2-meta .pf2-motto-ro{grid-column:1/-1;margin:0;padding:3px 0;border-bottom:1px dashed var(--line);font:italic 500 14px/1.25 var(--f-body,inherit);color:var(--ink);overflow-wrap:anywhere}
+.pf2-chips.ro{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}
+.pf2 .pf2-chip.ro{cursor:default}
+/* ---------- profil d'un autre athlète : flammes ---------- */
+.pf2-flames{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pf2-fl{display:grid;justify-items:center;gap:1px;text-align:center}
+.pf2-fl b{font:700 11px var(--f-mono,monospace);letter-spacing:.05em;text-transform:uppercase}
+.pf2-fl span{font-size:11px;color:var(--muted)}
+.pf2-head .pf2-pins .pf2-pin{width:auto;min-width:0;cursor:default}
+
 /* ---------- Progrès > Graphiques : style néon (maquette Back Squat) ---------- */
 .pgn{gap:10px}
 .pgn-pick select{width:100%;padding:7px 10px;font:700 12px var(--f-mono,monospace);letter-spacing:.05em;text-transform:uppercase;border:1.5px solid rgba(120,170,220,.35);border-radius:10px;background:rgba(8,12,20,.7);color:var(--ink)}
@@ -1936,6 +1948,7 @@ body[data-pv] #main{padding-top:8px}
 .pgn-ch .pf2-ico{font-size:18px;color:#ff8a3d}
 .pgn-all{border:0;background:transparent;color:#ff8a3d;font:700 11px var(--f-mono,monospace);letter-spacing:.04em;text-transform:uppercase;cursor:pointer;padding:2px 0}
 .pgn-reps{display:flex;gap:4px}
+.pgn-tabs .pgn-repsel{flex:0 0 auto;width:auto;min-width:74px;margin:0;padding:0 22px 0 10px;border:0;border-left:1px solid rgba(120,170,220,.3);border-radius:0;background-color:transparent;color:#ff8a3d;font:800 11px var(--f-mono,monospace);letter-spacing:.04em;text-transform:uppercase}
 .pgn .pgn-reps button{padding:3px 8px;border:1px solid rgba(150,175,210,.4);border-radius:6px;background:transparent;color:#aab4c4;font:700 10px var(--f-mono,monospace);cursor:pointer}
 .pgn .pgn-reps button[aria-pressed=true]{color:#ff8a3d;border-color:#ff6a1f}
 .pgn-chart{margin:0 -2px}
@@ -4642,11 +4655,15 @@ function saveLog(patch,msg,uid){
     if(jkr&&((jkr.fire&&jkr.fire.length)||(jkr.top&&jkr.top.length)))data.jokers={fire:jkr.fire||[],top:jkr.top||[]};
     const sbs=patch.subs!==undefined?patch.subs:cur.subs;
     if(sbs&&Object.keys(sbs).length)data.subs=sbs; /* remplacements choisis : {date:{at,sw}} */
+    const mo=patch.motto!==undefined?patch.motto:cur.motto;
+    if(typeof mo==='string'&&mo.trim())data.motto=mo.trim().slice(0,60); /* devise, visible sur le profil des autres */
+    const fc=patch.focus!==undefined?patch.focus:cur.focus;
+    if(Array.isArray(fc)&&fc.length)data.focus=fc.filter(x=>typeof x==='string').slice(0,7); /* priorités choisies (clés de PF_FOCUS), visibles sur le profil des autres */
     const gw=patch.groupWish!==undefined?patch.groupWish:cur.groupWish;
     if(typeof gw==='string'&&gw)data.groupWish=gw; /* souhait de groupe : 'any' (indifférent) ou id du groupe */
     await S.db.doc('logs/'+uid).set(data);
     // Keep the local log synchronized so the reward popup does not reopen.
-    S.logs[uid]=Object.assign({},cur,data);delete S.logs[uid].weight;if(!data.groupWish)delete S.logs[uid].groupWish;
+    S.logs[uid]=Object.assign({},cur,data);delete S.logs[uid].weight;if(!data.groupWish)delete S.logs[uid].groupWish;if(!data.motto)delete S.logs[uid].motto;if(!data.focus)delete S.logs[uid].focus;
     if(msg)toast(msg);
     // Rafraîchir immédiatement la bannière après changement d'équipement.
     if(uid===S.uid)render();
@@ -5049,6 +5066,7 @@ function render(force){
   }
   if(S.uid&&ready()&&S.logs[S.uid]&&S.prof.sex&&S.logs[S.uid].sex!==S.prof.sex&&S.sexSync!==S.prof.sex){S.sexSync=S.prof.sex;saveLog({sex:S.prof.sex});}
   /* catégorie d'âge : recalculée à chaque ouverture (un athlète qui fête ses 35 ans passe chez les Vétérans) */
+  pfPubSync();
   if(S.uid&&ready()&&S.profLoaded&&S.logs[S.uid]){const ac=ageCatOf(S.prof.birth);if((S.logs[S.uid].ageCat||'')!==ac&&S.ageSync!==ac){S.ageSync=ac;saveLog({ageCat:ac});}}
   const p=selPeriod();
   $('#hdr-right').replaceChildren(h('span',{class:'chip '+(periodState(p)==='live'?'live':'done'),style:'max-width:40vw;overflow:hidden;text-overflow:ellipsis;display:block'},p.virtual?'Saison en cours':(p.name||seasonLabel(p))),helpBtn());
@@ -7880,42 +7898,43 @@ function rxReceived(){
 }
 function openAthlete(uid){S.viewUser=uid;render();window.scrollTo(0,0);}
 /* profil public d'un athlète : avatar, stats, dernière séance, récompenses. Ni PR ni poids. */
+function pf2HeadOther(uid,pseudo){
+  const t=bannerOf(uid).title,ttl=t&&BN.title[t]?BN.title[t].text:'',gn=groupName(groupOf(uid));
+  const asx=((S.logs[uid]||{}).sex==='F')?'f':'h';
+  const av=sexKnown(uid)?avatarEl(asx,avEq(uid),88,()=>openAvatar(uid),'Avatar de '+pseudo+', touche pour l’agrandir'):noAvatarEl(uid,66,false);
+  const l2=(gn||ttl)?h('div',{class:'pf2-l2'},gn?h('span',{class:'pf2-grp'},gn):null,ttl?h('span',{class:'ttl'},ttl):null):null;
+  const pb=badgeOf(uid);
+  const pins=pb?h('div',{class:'pf2-pins'},h('span',{class:'pf2-pin',title:trophyName(pb.tid)+' · '+pb.per.name},badgeEl(pb.tid,pb.per.name,40,null,pb.per))):null;
+  const logo=h('img',{class:'pf2-logo',src:PF_LOGO,alt:'',draggable:'false','aria-hidden':'true'});
+  const mt=String((S.logs[uid]||{}).motto||'').trim();
+  const motto=mt?h('p',{class:'pf2-motto-ro'},mt):null;
+  return h('section',{class:'card pf2-head'},pfAvBox(av),h('div',{class:'pf2-meta'},h('div',{class:'pf2-name'},h('h1',{},pseudo)),logo,l2,motto,pins));
+}
 function viewAthlete(uid){
   if(isBot(uid))return viewBot(uid);
-  const el=h('div',{class:'stack'});
+  const el=h('div',{class:'stack pf2'});
   el.append(h('div',{class:'row'},h('button',{class:'btn sm',type:'button',onclick:()=>{S.viewUser=null;render();window.scrollTo(0,0);}},S.tab==='feed'?'← Fil':S.tab==='recap'?'← Résumé':'← Classement')));
   const p=selPeriod(),board=computeBoard(p,true),rank=board.rows.findIndex(r=>r.uid===uid),me=board.rows[rank];
   if(!me){el.append(h('div',{class:'empty'},h('p',{},'Athlète introuvable.')));return el;}
-  const asx=((S.logs[uid]||{}).sex==='F')?'f':'h';
-  const avatar=sexKnown(uid)?avatarEl(asx,avEq(uid),114,()=>openAvatar(uid),'Avatar de '+me.pseudo+', touche pour l’agrandir'):noAvatarEl(uid,114,false);
-  const gn=groupName(groupOf(uid));
-  /* bannière : l'avatar est collé à gauche et fait toute la hauteur de la bannière ; le texte à droite passe à la ligne au lieu d'être coupé */
-  /* gros badge : la taille tient compte de la place laissée par les flammes (réduites si besoin sur petit écran) */
-  const pBadge=badgeOf(uid),BS=108;
-  const flW=(me.flameCur>0?flameSize(me.flameCur):40)+(me.flameTopCur>0?flameSize(me.flameTopCur):40)+18;
-  const availW=Math.min(window.innerWidth||390,720)-40-114-28;
-  const flK=pBadge?Math.max(.6,Math.min(1,(availW-BS-8)/flW)):1;
-  const bigBadge=pBadge?badgeEl(pBadge.tid,pBadge.per.name,BS,trophyName(pBadge.tid)+' · '+pBadge.per.name,pBadge.per):null;
-  if(bigBadge)bigBadge.classList.add('prof-badge');
-  const ban=bannerEl(uid,h('div',{class:'bn-prof-row'},avatar,
-    h('div',{class:'bn-prof-txt'},h('p',{class:'eyebrow'},(p.virtual?'Saison':seasonLabel(p)+' · '+p.name)+(gn?' · '+gn:'')),h('h1',{class:'day'},me.pseudo),bannerTitle(uid),
-      /* flammes sous le pseudo, sans encadré ; le badge choisi, en grand, à leur droite */
-      h('div',{style:'display:flex;align-items:flex-end;justify-content:space-between;gap:8px;margin-top:8px'},
-        h('div',{style:'display:flex;align-items:flex-end;gap:18px;min-width:0'+(flK<1?';zoom:'+flK.toFixed(2):'')},
-          h('div',{style:'display:grid;justify-items:center;gap:2px',title:'Série en cours (record : '+(me.flameBest||0)+')'},flameEl('fire',me.flameCur||0),h('span',{class:'sub',style:'font-size:11px'},'Série')),
-          h('div',{style:'display:grid;justify-items:center;gap:2px',title:'Temps au top (record : '+(me.flameTopBest||0)+')'},flameEl('plat',me.flameTopCur||0),h('span',{class:'sub',style:'font-size:11px'},'Top'))),
-        bigBadge))));
-  ban.classList.add('bn-prof');
-  el.append(ban);
-  const ranked=board.rows.filter(r=>r.sessions>0).length;
-  el.append(h('div',{class:'stats'},
-    h('div',{class:'stat'},h('b',{},fmtN(me.total)),h('span',{},'points bruts')),h('div',{class:'stat'},h('b',{},fmtN(me.weighted||0)),h('span',{},'XP pondérée')),
-    h('div',{class:'stat'},h('b',{},me.sessions>0?posOfM(board.rows,me):'–'),h('span',{},'rang sur '+ranked)),
-    h('div',{class:'stat'},h('b',{},me.sessions),h('span',{},'séances')),
-    h('div',{class:'stat'},h('b',{},fmtN(me.perfAvg)),h('span',{},'pts par metcon')),
-    h('div',{class:'stat'},h('b',{},me.flameBest||0),h('span',{},'série max'))));
+  /* haut de page identique à « Mon profil » : avatar, pseudo, groupe, titre, badge, puis la ligne de chiffres et la barre d'XP */
+  const xp=Number(me.weighted)||0,nextReward=(p.rewards||[]).filter(r=>Number(r.xp)>xp).sort((a,b)=>Number(a.xp)-Number(b.xp))[0];
+  el.append(pf2HeadOther(uid,me.pseudo),pf2Stats(me,board,rank,xp,nextReward));
+  /* objectifs choisis : priorités + nombre de séances par semaine */
+  {const lgO=S.logs[uid]||{},fk=Array.isArray(lgO.focus)?lgO.focus:[],goal=lgO.goals?Number(lgO.goals[p.id])||0:0;
+   const chips=PF_FOCUS.map(([k,l],i)=>({k,l,i})).filter(c=>fk.includes(c.k)).map(c=>h('span',{class:'pf2-chip c'+(c.i%5)+' ro'},c.l));
+   let goalRow=null;
+   if(goal>0){const wk=pgWeek(p,uid);goalRow=h('div',{class:'pf2-goal'},h('span',{class:'flabel'},'Séances par semaine'),h('b',{},wk.n+' / '+goal),h('div',{class:'pg-dots'},Array.from({length:Math.min(goal,7)},(_,i)=>h('i',{class:i<wk.n?'on':''}))));}
+   el.append(h('section',{class:'card pf2-card pf2-compact'},pf2Ch(PF_IC.target,'Objectifs'),
+     chips.length?h('div',{class:'pf2-chips ro'},chips):null,
+     goalRow,
+     (!chips.length&&!goalRow)?h('p',{class:'muted'},'Aucun objectif choisi pour l’instant.'):null));}
+  /* flammes */
+  const fl=(kind,n,best,label,tip)=>h('div',{class:'pf2-fl',title:tip},flameEl(kind,n||0),h('b',{},label),h('span',{},'record : '+(best||0)));
+  el.append(h('section',{class:'card pf2-card pf2-compact'},pf2Ch(PF_IC.bolt,'Flammes'),
+    h('div',{class:'pf2-flames'},fl('fire',me.flameCur,me.flameBest,'Série en cours','Série en cours (record : '+(me.flameBest||0)+')'),fl('plat',me.flameTopCur,me.flameTopBest,'Temps au top','Temps au top (record : '+(me.flameTopBest||0)+')'))));
+  /* dernière séance */
   const last=me.items[me.items.length-1];
-  el.append(h('section',{class:'card'},h('h2',{class:'h2'},'Dernière séance'),
+  el.append(h('section',{class:'card pf2-card pf2-compact'},pf2Ch(PF_IC.clock,'Dernière séance'),
     last?(()=>{const m=metconOf(last.w);return h('div',{class:'row',style:'justify-content:space-between;flex-wrap:nowrap'},
       h('div',{class:'l',style:'min-width:0'},h('div',{class:'nm'},(last.redo?'REDO · '+cap(fmtShort(last.on)):cap(fmtShort(last.w.date)))+' · '+last.w.title),
         m&&hasScore(last.e)?h('div',{class:'sub'},lvlLab(m,last.e)+' · '+scoreText(m,last.e.score,last.e)):null),
@@ -9978,7 +9997,19 @@ function trophiesSection(uid,title,emptyTxt){
    troph = badges épinglés sur le profil (4 maximum) ; le premier reste le badge affiché à côté du pseudo dans le classement (log.badge). */
 let pfT=null;
 const pfGet=()=>(S.prof&&S.prof.pf&&typeof S.prof.pf==='object')?S.prof.pf:{};
-function pfSet(patch){S.prof.pf=Object.assign({},pfGet(),patch);clearTimeout(pfT);pfT=setTimeout(()=>{pfT=null;saveProf();},500);}
+function pfSet(patch){S.prof.pf=Object.assign({},pfGet(),patch);clearTimeout(pfT);pfT=setTimeout(()=>{pfT=null;saveProf();},500);
+  if(patch&&('motto' in patch||'focus' in patch)){clearTimeout(S._pubT);S._pubT=setTimeout(pfPubSync,700);}
+}
+/* devise et priorités : copiées dans le journal public (logs/{uid}) pour apparaître sur le profil des autres ; une seule écriture par valeur */
+function pfPubSync(){
+  if(!S.uid||!ready()||!S.profLoaded||S.snapMode)return;
+  const lg=S.logs[S.uid];if(!lg||!lg.pseudo)return;
+  const pf=pfGet(),mo=String(pf.motto||'').trim().slice(0,60),fc=Array.isArray(pf.focus)?pf.focus.filter(x=>typeof x==='string').slice(0,7):[];
+  const key=JSON.stringify([mo,fc]);
+  if(S._pubKey===key)return;
+  if(mo===(lg.motto||'')&&JSON.stringify(fc)===JSON.stringify(lg.focus||[])){S._pubKey=key;return;}
+  S._pubKey=key;saveLog({motto:mo,focus:fc});
+}
 const PF_IC={
   user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',
   chart:'<path d="M5 21V11M12 21V4M19 21v-7"/>',
@@ -10176,8 +10207,8 @@ function pgForceEvol(){
   const v=[...g.values()].filter(l=>l.length>=2&&l[0].kg>0).map(l=>(Math.max(...l.map(e=>e.kg))-l[0].kg)/l[0].kg*100);
   return v.length?Math.round(v.reduce((q,x)=>q+x,0)/v.length):null;
 }
-function pgWeek(p){
-  const lg=S.logs[S.uid]||{},goal=lg.goals?Number(lg.goals[p.id])||0:0,wk=mondayOf(todayStr()),en=lg.entries||{};
+function pgWeek(p,uid){
+  const lg=S.logs[uid||S.uid]||{},goal=lg.goals?Number(lg.goals[p.id])||0:0,wk=mondayOf(todayStr()),en=lg.entries||{};
   const n=Object.keys(en).filter(d=>S.wods[d]&&mondayOf(d)===wk&&inP(d,p)).length+Object.values(lg.redos||{}).filter(x=>mondayOf(x.on)===wk&&inP(x.on,p)).length;
   const offered=Object.keys(S.wods).filter(d=>mondayOf(d)===wk&&inP(d,p)).length;
   return {n,den:goal||offered};
@@ -10328,10 +10359,13 @@ function pgGraph(){
   el.append(h('section',{class:'pgn-head'},ic,
     h('div',{class:'pgn-t'},h('h2',{},name),h('div',{class:'pgn-tags'},h('span',{class:'tag'},'Force'),order.map(r=>h('span',{class:'tag o'},prType(r)))),h('p',{class:'pgn-sub'},'Charge soulevée (kg) · Répétitions')),
     h('div',{class:'pgn-pr'},h('small',{},star,'PR record'),h('b',{},prKg(rec.kg)),h('span',{},cap(fmtShort(rec.date))+' '+rec.date.slice(0,4)),crown)));
-  el.append(h('div',{class:'pgn-tabs',role:'tablist'},PGN_TABS.map(([k,l,i])=>{const b=h('button',{type:'button',role:'tab','aria-selected':sub===k?'true':'false',class:'pgn-tab'+(sub===k?' on':''),onclick:()=>{S.pgSub=k;render();}});b.append(pfIco(i),h('span',{},l));return b;})));
+  const rp=withPts.includes(PROG.rp)?PROG.rp:(withPts.includes(rec.reps)?rec.reps:(withPts[0]||rec.reps));
+  const tabsEl=h('div',{class:'pgn-tabs',role:'tablist'},PGN_TABS.map(([k,l,i])=>{const b=h('button',{type:'button',role:'tab','aria-selected':sub===k?'true':'false',class:'pgn-tab'+(sub===k?' on':''),onclick:()=>{S.pgSub=k;render();}});b.append(pfIco(i),h('span',{},l));return b;}));
+  /* liste déroulante des répétitions (1 RM, 3 RM, 5 RM…) à la place de l'ancien onglet « Détails » : sert au graphique et à l'historique */
+  if(sub!=='rec'&&withPts.length)tabsEl.append(sel(withPts.map(r=>[String(r),prType(r)]),String(rp),v=>{PROG.rp=Number(v);render();},{class:'pgn-repsel','aria-label':'Nombre de répétitions'}));
+  el.append(tabsEl);
   if(sub!=='rec')el.append(pgSeg());
   if(!withPts.length){el.append(h('div',{class:'empty'},h('p',{},'Aucun PR sur cette période.')));return el;}
-  const rp=withPts.includes(PROG.rp)?PROG.rp:(withPts.includes(rec.reps)?rec.reps:withPts[0]);
   const evs=cats.get(rp).filter(inPer),dateFull=e=>cap(fmtShort(e.date))+' '+e.date.slice(0,4);
   const pe=evs.reduce((m,e)=>e.kg>=m.kg?e:m,evs[0]);
   const row=e=>{const hot=e===pe;
@@ -10345,13 +10379,12 @@ function pgGraph(){
         return h('div',{class:'pgn-rc'+(b===rec?' hot':'')},h('small',{},prType(r)),h('b',{},fmtN(b.kg),h('i',{},' kg')),h('span',{},dateFull(b)),h('span',{class:'sub'},'Volume : '+fmtN(b.kg*b.reps)+' kg'));}))));
     return el;}
   if(sub==='his'){
-    const list=withPts.flatMap(r=>cats.get(r).filter(inPer)).sort((a,b)=>b.date.localeCompare(a.date)||b.kg-a.kg);
-    el.append(h('section',{class:'pgn-card'},h('div',{class:'pgn-ch'},pfIco(PF_IC.clock),h('h3',{},'Historique des PR')),h('div',{class:'pgn-rows'},list.map(e=>{const r=row(e);r.querySelector('.pgn-rm small').textContent=dateFull(e)+' · '+prType(e.reps);return r;}))));
+    const list=cats.get(rp).filter(inPer).sort((a,b)=>b.date.localeCompare(a.date)||b.kg-a.kg);
+    el.append(h('section',{class:'pgn-card'},h('div',{class:'pgn-ch'},pfIco(PF_IC.clock),h('h3',{},'Historique des PR · '+prType(rp))),h('div',{class:'pgn-rows'},list.map(row))));
     return el;}
   /* évolution */
-  const pills=withPts.length>1?h('div',{class:'pgn-reps',role:'group','aria-label':'Nombre de répétitions'},withPts.map(r=>h('button',{type:'button','aria-pressed':r===rp?'true':'false',onclick:()=>{PROG.rp=r;render();}},prType(r)))):null;
   const shown=evs.length>30?evs.slice(-30):evs;
-  el.append(h('section',{class:'pgn-card'},h('div',{class:'pgn-ch'},pfIco(PF_IC.bar),h('h3',{},'Évolution du poids'),pills),pgNeonChart(shown,rp),
+  el.append(h('section',{class:'pgn-card'},h('div',{class:'pgn-ch'},pfIco(PF_IC.bar),h('h3',{},'Évolution du poids · '+prType(rp))),pgNeonChart(shown,rp),
     h('p',{class:'hint'},'Seuls les records battus sont notés : la courbe ne peut que monter.')));
   const cl=evs,prog=cl.length>=2&&cl[0].kg>0?Math.round((pe.kg-cl[0].kg)/cl[0].kg*1000)/10:null;
   el.append(h('section',{class:'pgn-best'},h('div',{class:'pgn-ch'},pfIco(PF_IC.crown),h('h3',{},'Meilleure performance')),
