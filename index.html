@@ -11136,9 +11136,9 @@ function spreadTimesPct(base,pct,cap){
   return out;
 }
 function spreadRounds(top,bottom,pct){ /* 10 nombres de tours décroissants, au quart de tour */
-  if(pct>0&&tierMode()==='prev'){ /* chaque palier = x % de moins que le précédent */
+  if(pct>0&&tierMode()==='prev'){ /* chaque écart est x % plus grand que le précédent */
     const t0=Math.max(2.5,Math.round(top*4)/4),o=[];
-    for(let j=0;j<10;j++){let v=Math.round(t0*Math.pow(1-pct/100,j)*4)/4;if(j&&v>=o[j-1])v=o[j-1]-.25;o.push(Math.max(.25,v));}
+    for(let j=0;j<10;j++){let v=Math.round(t0*(2-Math.pow(1+pct/100,j))*4)/4;if(j&&v>=o[j-1])v=o[j-1]-.25;o.push(Math.max(.25,v));}
     return o;
   }
   const t=Math.max(2.5,Math.round(top*4)/4),st=Math.max(.25,Math.round((t-bottom)/9*4)/4);
@@ -11148,7 +11148,7 @@ const tourTxt=v=>String(v).replace('.',',');
 /* AMRAP : 10 paliers en reps entières. Le palier à 10 points = tours estimés (au quart de tour) en reps, puis chaque palier est x % plus bas que le palier à 10 points, arrondi à la rep (ex. 247 reps, puis 235 à 5 %). */
 function amrapRepTiers(est,pct,rr){
   const top=Math.max(1,Math.floor(Math.max(2.5,Math.round(est*4)/4)*rr+1e-9)),stp=top*pct/100,out=[],geo=tierMode()==='prev';let prev=Infinity;
-  for(let j=0;j<10;j++){let v=Math.round(geo?top*Math.pow(1-pct/100,j):top-j*stp);if(v>=prev)v=prev-1;if(v<1)break;out.push(v);prev=v;}
+  for(let j=0;j<10;j++){let v=Math.round(geo?top*(2-Math.pow(1+pct/100,j)):top-j*stp); /* palier précédent : chaque écart est x % plus grand que le précédent (comme le For Time), pour que les moins forts marquent des points */if(v>=prev)v=prev-1;if(v<1)break;out.push(v);prev=v;}
   return out;
 }
 const repsTxt=(v,tot)=>{const q=Math.floor(v/tot),r=v%tot;return r?q+'+'+r:String(q);};
@@ -11984,7 +11984,7 @@ function spreadCard(){
   S.prof.spread=S.prof.spread||{};
   const box=h('section',{class:'card'},h('h2',{class:'h2'},'Écart entre les paliers'),
     h('p',{class:'muted'},'Réglé par type de metcon, utilisé par « Calculer les paliers ». Les paliers vont toujours de 10 à 1 point, et sont les mêmes pour tous les niveaux. Vide = valeur par défaut.'));
-  box.append(field('Base du calcul en % (For Time et AMRAP)',tierModeSel(),'« Palier à 10 pts » : écart régulier (5 % de 5:40 = 17 s à chaque palier). « Palier précédent » : chaque palier est x % au-delà du précédent, l’écart grandit. Réglage de cet appareil.'));
+  box.append(field('Base du calcul en % (For Time et AMRAP)',tierModeSel(),'« Palier à 10 pts » : écart régulier (5 % de 5:40 = 17 s à chaque palier). « Palier précédent » : l’écart grandit à chaque palier (For Time : x % de temps en plus ; AMRAP : chaque écart de reps est x % plus grand que le précédent, pour laisser les moins forts marquer des points). Réglage de cet appareil.'));
   box.append(field('Arrondi des temps For Time',tierGrainSel(),'Les temps de palier sont arrondis à 5 s (défaut) ou à la seconde. Réglage de cet appareil.'));
   Object.keys(SPREAD).forEach(k=>{
     const D=SPREAD[k];
@@ -12118,7 +12118,7 @@ function stepApply(p,txt,st,base,idx){
   if(st.pct){ /* AMRAP en % : x % de moins que le palier à 10 pts (écart régulier) ou que le palier précédent */
     const cur=tierRounds(m,t);if(cur===null||cur<0)return null;
     const hasB=base>0,b=hasB?base:cur,i=hasB?idx:1;
-    const nv=geo?cur*(1-st.pct/100):b*(1-i*st.pct/100);
+    const nv=geo?(hasB?b*(2-Math.pow(1+st.pct/100,i)):cur*(1-st.pct/100)):b*(1-i*st.pct/100);
     if(!(nv>0))return null;
     if(tot>0&&Number.isInteger(tot)){const c=Math.round(cur*tot);let nr=Math.round(nv*tot);if(nr>=c)nr=c-1;return nr<1?null:repsTxt(nr,tot);}
     let q=Math.round(nv*4)/4;if(q>=cur)q=cur-.25;return q>0?tourTxt(q):null;
