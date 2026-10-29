@@ -10207,6 +10207,14 @@ function pgForceEvol(){
   const v=[...g.values()].filter(l=>l.length>=2&&l[0].kg>0).map(l=>(Math.max(...l.map(e=>e.kg))-l[0].kg)/l[0].kg*100);
   return v.length?Math.round(v.reduce((q,x)=>q+x,0)/v.length):null;
 }
+/* points par metcon : évolution (en %) de la moyenne de la saison affichée par rapport à celle de la saison précédente */
+function pgPerfEvol(me,p){
+  const l=plist().filter(q=>!q.virtual),i=p?l.findIndex(q=>q.id===p.id):-1;
+  if(i<1)return null;
+  const r=computeBoard(l[i-1],true).rows.find(x=>x.uid===S.uid);
+  const prev=r?Number(r.perfAvg)||0:0,cur=Number(me.perfAvg)||0;
+  return (prev>0&&cur>0)?Math.round((cur-prev)/prev*100):null;
+}
 function pgWeek(p,uid){
   const lg=S.logs[uid||S.uid]||{},goal=lg.goals?Number(lg.goals[p.id])||0:0,wk=mondayOf(todayStr()),en=lg.entries||{};
   const n=Object.keys(en).filter(d=>S.wods[d]&&mondayOf(d)===wk&&inP(d,p)).length+Object.values(lg.redos||{}).filter(x=>mondayOf(x.on)===wk&&inP(x.on,p)).length;
@@ -10254,7 +10262,7 @@ function pgRewards(xp,nr){
 function pgOverview(me,board,rank,p){
   const el=h('div',{class:'stack'});
   const xp=Number(me.weighted)||0,nr=(p.rewards||[]).filter(r=>Number(r.xp)>xp).sort((a,b)=>Number(a.xp)-Number(b.xp))[0];
-  const pv=pgPrevItems(p),pe=pgPtsEvol(me,pv),we=pgWodEvol(me,p,pv),fe=pgForceEvol(),wk=pgWeek(p),ms=pgMonth(me),cats=pgCats();
+  const pv=pgPrevItems(p),pe=pgPtsEvol(me,pv),we=pgWodEvol(me,p,pv),fe=pgForceEvol(),wk=pgWeek(p),ms=pgMonth(me),cats=pgCats(),pm=pgPerfEvol(me,p);
   const av=sexKnown(S.uid)?avatarEl(avSex(),avEq(S.uid),66,()=>openAvatar(),'Mon avatar'):noAvatarEl(S.uid,66,false);
   const cell=(ico,val,lab,sub,tr)=>h('div',{class:'pg-ev'},pfIco(ico),h('b',{},val),h('span',{class:'lab'},lab),h('span',{class:'sub'},tr,sub));
   const dots=wk.den>0?h('div',{class:'pg-dots'},Array.from({length:Math.min(wk.den,7)},(_,i)=>h('i',{class:i<wk.n?'on':''}))):null;
@@ -10271,7 +10279,7 @@ function pgOverview(me,board,rank,p){
   el.append(h('div',{class:'pg-two'},
     h('section',{class:'card pf2-card'},pf2Ch(PF_IC.trophy,'Mes PRs',more),rows.length?h('div',{class:'pg-prs'},rows):h('p',{class:'muted'},'Tes records s’affichent ici dès ta 1re séance de force.')),
     h('section',{class:'card pf2-card'},pf2Ch(PF_IC.clock,'Stats clés'),
-      h('div',{class:'pg-arcs'},pgArc(ms.wod,ms.wod/12,'#ff4d6d','WOD réalisés','ce mois'),pgArc(ms.rec,ms.rec/5,'#19d3ff','Records','ce mois'),pgArc(pgPct(we),we===null?0:Math.min(1,Math.abs(we)/50),'#b46bff','WOD réalisés','vs saison préc.')))));
+      h('div',{class:'pg-arcs'},pgArc(ms.wod,ms.wod/12,'#ff4d6d','WOD réalisés','ce mois'),pgArc(pgPct(pm),pm===null?0:Math.min(1,Math.abs(pm)/50),'#19d3ff','Points/metcon','vs saison préc.'),pgArc(pgPct(we),we===null?0:Math.min(1,Math.abs(we)/50),'#b46bff','WOD réalisés','vs saison préc.')))));
   const fc=flamesCardEl(me);fc.classList.add('pf2-card','pg-ser');
   const h2=fc.querySelector('h2');if(h2&&h2.firstChild&&h2.firstChild.nodeType===3)h2.firstChild.nodeValue='Mes séries';
   const en=Object.keys((S.logs[S.uid]||{}).entries||{}).sort(),since=en.length?Math.max(0,Math.round((Date.now()-dparse(en[0]).getTime())/864e5)):0;
