@@ -3516,7 +3516,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-27.74';
+const APP_VERSION='2026-10-30.1';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -11112,6 +11112,53 @@ function capBoundaries(cm,e){
   }
   return b;
 }
+/* temps (s) et reps de chaque ligne d'un tour, dans l'ordre : une course de 800 m ne se fait pas au même rythme que des tractions, donc on ne peut pas convertir un temps en reps proportionnellement au nombre de reps */
+function capLineSecs(m){
+  const out=[];
+  for(const raw of String(m.content||'').split('\n')){
+    const s=raw.trim();if(!s)continue;
+    const w=s.match(WTAG),clean=s.replace(WTAG,'').trim();
+    if(NOT_REPS.test(clean)||/^\d+(\s*[-–\/]\s*\d+)+(\s|$)/.test(clean))continue;
+    const di=distInfo(clean,w);let n,sec;
+    if(di){n=di.n;sec=n*paceSpm(/ram|row|ski/i.test(di.rest)?'row':'run');}
+    else{
+      const lm=clean.match(/^(\d+)\s+(\S.*)$/);if(!lm)continue;
+      n=+lm[1];const f=secOf(lm[2]);sec=n*(f?f.sec:3);
+    }
+    let eq=n;
+    if(w){const a=w[1]?parseNum(w[1]):null,b=parseNum(w[2]);if(b!==null&&b>=0&&(a===null||a>0))eq=a?n*b/a:b;}
+    out.push({n,eq,sec});
+  }
+  return out;
+}
+/* reps réelles cumulées atteintes quand la fraction frac (0-1) du temps total est écoulée, en suivant le temps de chaque ligne ; null si le schéma ne se suit pas ligne par ligne (le calcul reste alors proportionnel aux reps) */
+function capRepsAtFrac(cm,e,frac){
+  const pl=planOf(cm);
+  if(!pl||(pl.nums&&!pl.lines))return null; /* schéma 21-15-9 : suivi proportionnel */
+  const segs=capLineSecs(cm);
+  if(!segs.length)return null;
+  let list;
+  if(pl.lines){
+    if(segs.length!==pl.sizes.length)return null;
+    list=segs;
+  }else{
+    if(!(pl.rm&&pl.size>0))return null;
+    if(Math.abs(segs.reduce((a,x)=>a+x.n,0)-pl.size)>1e-9)return null;
+    list=[];const rounds=Math.max(1,(e&&e.rounds)||1);
+    for(let r=0;r<rounds;r++)segs.forEach(x=>list.push(x));
+  }
+  const T=list.reduce((a,x)=>a+x.sec,0);
+  if(!(T>0))return null;
+  let left=T*frac,raw=0;
+  for(const x of list){
+    if(left>=x.sec-1e-9){raw+=x.n;left-=x.sec;continue;}
+    /* ligne en cours : reps ÉQUIVALENTES entières (ex. 45 pour 450 m avec {10=1}), comme l'athlète les saisit */
+    const eqDone=x.eq>0?Math.floor(x.eq*left/x.sec+1e-9):0;
+    raw+=x.eq>0?Math.round(eqDone*x.n/x.eq):Math.floor(x.n*left/x.sec+1e-9);
+    break;
+  }
+  return raw;
+}
 /* palier time cap : pct % des reps totales, arrondi à la fin du dernier exercice terminé, dans l'unité du score des athlètes */
 function capTierValue(p,e,pct){
   const cm={format:p.format,content:p.content,repsRound:Number(p.repsRound)||0,lineRounds:p.format==='FT'&&!!p.lineRounds};
@@ -11294,7 +11341,8 @@ function calcTiers(p){
     let prev=Infinity;
     times.forEach((t,j)=>{
       if(!(capS>0)||t<=capS){ftOut.tiers.push({t:fmtTime(t),p:String(10-j)});return;}
-      let v=Math.floor(total*capS/t+1e-9);
+      let v=capRepsAtFrac(cm,e,capS/t);
+      if(v===null)v=Math.floor(total*capS/t+1e-9);
       if(v>=prev)v=prev-1;
       if(v<1)return;
       prev=v;ftOut.capTiers.push({t:capInput(cm,v),p:String(10-j)});
