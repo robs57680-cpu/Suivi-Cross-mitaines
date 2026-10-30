@@ -6948,10 +6948,7 @@ function viewFeed(){
     (w.parts||[]).filter(p=>p.kind==='force').forEach(p=>{const kg=e.loads&&e.loads[p.label];if(kg!==undefined)results.push(h('div',{class:'feed-metric fm-force'},h('b',{},fmtKg(kg)),h('span',{},p.movement||p.name||'Force')));});
     if(m&&hasScore(e))results.push(h('div',{class:'feed-metric fm-mc'},h('b',{},scoreText(m,e.score,e)),h('span',{},'Metcon · '+(m.format==='FT'?'Temps':m.format==='AMRAP'?'Tours / reps':isDead(m)?'Dead by':'Tours'))));
     else if(m&&e.noMetcon)results.push(h('div',{class:'feed-metric'},h('b',{},'Metcon non réalisé'),h('span',{},'Pas de points de metcon')));
-    const rx=h('div',{class:'rxrow'},RX.map(em=>{
-      const n=Object.values(S.reactions).filter(r=>r&&r.to===uid&&r.date===date&&r.emoji===em).length;
-      return h('button',{type:'button',class:'rxb','aria-pressed':mine===em?'true':'false','aria-label':RXN[em],onclick:()=>reactTo(uid,date,em)},em,n?h('small',{},n):null);
-    }));
+    const rx=h('div',{class:'rxrow','data-rx-to':uid,'data-rx-date':date},rxButtons(uid,date));
     el.append(h('section',{class:'card feed-card'+cardTheme(uid)+(fb?' feed-has-badge':'')},head,fbEl,h('div',{class:'feed-wod-head'},h('h2',{class:'wtitle',style:'font-size:24px;margin:0'},w.title,feedLvBadge(m,e)),h('span',{class:'sub feed-wod-date'},'Réalisée le '+cap(fmtShort(dfmt(new Date(e.at)))))),results.length?h('div',{class:'feed-result'},results):h('p',{class:'muted'},'Résultat détaillé non renseigné.'),e.message?h('p',{class:'feed-message',style:'white-space:pre-wrap;overflow-wrap:anywhere;margin:0'},e.message):null,h('div',{class:'rxwrap'},rx,feedPts(w,e)),repLink(uid,date)));
   });
   if(posts.length>visiblePosts.length){
@@ -7982,12 +7979,25 @@ function trophyCard(t,ws,p,mine,short){
 const nameBtn=r=>h('button',{type:'button',class:'link',onclick:()=>openAthlete(r.uid)},r.pseudo+(r.uid===S.uid?' (toi)':''));
 const RX=['👑','😭','👍','💪','😂'];
 const RXN={'👑':'Couronne','😭':'Pleure','👍':'Pouce levé','💪':'Biceps','😂':'Rigole'};
+/* boutons de réaction d'une publication : mis à jour sur place (sans reconstruire tout le fil) pour que la page ne saute pas */
+function rxButtons(uid,date){
+  const mine=(S.reactions[uid+'__'+date+'__'+S.uid]||{}).emoji;
+  return RX.map(em=>{const n=Object.values(S.reactions).filter(r=>r&&r.to===uid&&r.date===date&&r.emoji===em).length;
+    return h('button',{type:'button',class:'rxb','aria-pressed':mine===em?'true':'false','aria-label':RXN[em],onclick:()=>reactTo(uid,date,em)},em,n?h('small',{},n):null);});
+}
+function rxRefresh(){
+  const rows=document.querySelectorAll('.rxrow[data-rx-to]');
+  const f=document.activeElement,fk=f&&f.closest&&f.closest('.rxrow[data-rx-to]')?(f.closest('.rxrow').dataset.rxTo+'|'+f.closest('.rxrow').dataset.rxDate+'|'+f.getAttribute('aria-label')):null;
+  rows.forEach(r=>r.replaceChildren(...rxButtons(r.dataset.rxTo,r.dataset.rxDate)));
+  if(fk)document.querySelectorAll('.rxrow[data-rx-to]').forEach(r=>r.querySelectorAll('.rxb').forEach(b=>{if(r.dataset.rxTo+'|'+r.dataset.rxDate+'|'+b.getAttribute('aria-label')===fk)b.focus({preventScroll:true});}));
+  return rows.length;
+}
 function reactTo(to,date,em){
   if(needPseudo()){toast('Choisis d’abord ton pseudo.',true);return;}
   const id=to+'__'+date+'__'+S.uid,cur=S.reactions[id];
   if(cur&&cur.emoji===em){delete S.reactions[id];run(async()=>{await S.db.doc('reactions/'+id).delete();});}
   else{const d={to,date,from:S.uid,pseudo:(S.logs[S.uid]||{}).pseudo||S.meName||'Athlète',emoji:em,at:new Date().toISOString()};S.reactions[id]=d;run(async()=>{await S.db.doc('reactions/'+id).set(d);toast('Réaction envoyée');});}
-  render();
+  if(!rxRefresh())render();
 }
 function reactSection(uid,me){
   if(uid===S.uid)return null;
@@ -7999,8 +8009,7 @@ function reactSection(uid,me){
       return h('div',{class:'lines',style:'padding:8px 0;border-top:1px solid var(--line)'},
         h('div',{class:'nm'},cap(fmtShort(d))+' · '+it.w.title),
         m&&hasScore(it.e)?h('div',{class:'sub'},lvlLab(m,it.e)+' · '+scoreText(m,it.e.score,it.e)):null,
-        h('div',{class:'rxrow'},RX.map(em=>{const n=Object.values(S.reactions).filter(r=>r&&r.to===uid&&r.date===d&&r.emoji===em).length;
-          return h('button',{type:'button',class:'rxb','aria-pressed':mine===em?'true':'false','aria-label':RXN[em],onclick:()=>reactTo(uid,d,em)},em,n?h('small',{},n):null);})));}));
+        h('div',{class:'rxrow','data-rx-to':uid,'data-rx-date':d},rxButtons(uid,d)));}));
 }
 function rxReceived(){
   const dkey='bs-rx-'+S.uid;
@@ -14213,7 +14222,7 @@ function startFirebase(){
     unsubs.push(S.db.collection('comments').onSnapshot(sn=>{S.comments=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));if(S.cerRefresh)S.cerRefresh();},()=>{}));
     /* réactions emoji : si les règles ne sont pas publiées, on ignore l'erreur */
     unsubs.push(S.db.collection('reports').onSnapshot(sn=>{S.reports=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));scheduleRender();},()=>{}));
-    unsubs.push(S.db.collection('reactions').onSnapshot(sn=>{S.reactions=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));scheduleRender();},()=>{}));
+    unsubs.push(S.db.collection('reactions').onSnapshot(sn=>{const old=S.reactions||{},nw=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));S.reactions=nw;const toMe=m=>Object.keys(m).filter(k=>m[k]&&m[k].to===S.uid).map(k=>k+'|'+m[k].emoji).sort().join();if(toMe(old)!==toMe(nw)||!rxRefresh())scheduleRender();},()=>{}));
     unsubs.push(S.db.doc('users/'+S.uid+'/private/profile').onSnapshot(sn=>{const d=sn.exists?sn.data():null;const _op=S.prof;S.prof={plan:(d&&d.plan&&typeof d.plan==='object')?JSON.parse(JSON.stringify(d.plan)):null,pend:(d&&d.pend&&typeof d.pend==='object')?JSON.parse(JSON.stringify(d.pend)):{},prs:(d&&d.prs)?JSON.parse(JSON.stringify(d.prs)):{},sex:(d&&d.sex)||'',birth:(d&&typeof d.birth==='string')?d.birth:'',health:(d&&d.health&&typeof d.health==='object')?JSON.parse(JSON.stringify(d.health)):null,consent:(d&&d.consent&&typeof d.consent==='object')?JSON.parse(JSON.stringify(d.consent)):null,genEx:(d&&Array.isArray(d.genEx))?d.genEx:null,genAll:(d&&Array.isArray(d.genAll))?d.genAll:null,words:(d&&Array.isArray(d.words))?d.words:[],mvcfg:(d&&d.mvcfg&&typeof d.mvcfg==='object')?JSON.parse(JSON.stringify(d.mvcfg)):{},revd:(d&&d.revd&&typeof d.revd==='object')?JSON.parse(JSON.stringify(d.revd)):{},intf:(d&&d.intf&&typeof d.intf==='object')?JSON.parse(JSON.stringify(d.intf)):{},intn:(d&&d.intn&&typeof d.intn==='object')?JSON.parse(JSON.stringify(d.intn)):{},intCustom:(d&&Array.isArray(d.intCustom))?JSON.parse(JSON.stringify(d.intCustom)):[],pace:(d&&d.pace&&typeof d.pace==='object')?JSON.parse(JSON.stringify(d.pace)):{},spread:(d&&d.spread&&typeof d.spread==='object')?JSON.parse(JSON.stringify(d.spread)):{},weight:(d&&Number(d.weight)>0)?Number(d.weight):0,rewardDraft:(d&&typeof d.rewardDraft==='string')?d.rewardDraft:'',rewardPlan:(d&&d.rewardPlan&&typeof d.rewardPlan==='object')?JSON.parse(JSON.stringify(d.rewardPlan)):null,pf:(d&&d.pf&&typeof d.pf==='object')?JSON.parse(JSON.stringify(d.pf)):{},trash:(d&&Array.isArray(d.trash))?JSON.parse(JSON.stringify(d.trash)):[]};if(planSaveT!==null&&_op){S.prof.plan=_op.plan||null;S.prof.pend=_op.pend||{};}if(rwT!==null&&_op)S.prof.rewardDraft=_op.rewardDraft||'';if(rwpSaveT!==null&&_op)S.prof.rewardPlan=_op.rewardPlan||null;if(pfT!==null&&_op)S.prof.pf=_op.pf||{};syncIntens();S.profLoaded=true;scheduleRender();selfSync();planSync();rwpSync();},fail));
     render();
   });
