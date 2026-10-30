@@ -3998,6 +3998,8 @@ function flameAll(lg){
 }
 /* les metcons comptent dans l'ordre où l'athlète les a réellement faits (e.at = jour de validation), pas dans l'ordre des dates de séance :
    un metcon rattrapé plus tard passe donc après ceux déjà faits. Sans horodatage (anciennes entrées), on retombe sur la date de la séance. */
+/* seuil « au top » : part des points max du niveau choisi (flamme « Temps au top » ET trophée « Top niveau », donc badge) */
+const TOP_PCT=0.8;
 function topRun(lg,wods,useJoker){
   const lvMax=lv=>((lv&&lv.tiers)||[]).reduce((a,x)=>Math.max(a,x.p),0);
   const doneAt=(w,e)=>{const t=e&&e.at?Date.parse(e.at):NaN;return isNaN(t)?Date.parse(w.date+'T12:00:00'):t;};
@@ -4013,7 +4015,7 @@ function topRun(lg,wods,useJoker){
   for(const {w,m,e} of list){
     const lvl=e.level||0,mx=lvMax(levelsOf(m)[lvl]||levelsOf(m)[0]);
     if(!(mx>0))continue;
-    if(perfOf(m,e)/adjF(e)>=0.9*mx-1e-9){tc++;tb=Math.max(tb,tc);brk=null;extra=0;}
+    if(perfOf(m,e)/adjF(e)>=TOP_PCT*mx-1e-9){tc++;tb=Math.max(tb,tc);brk=null;extra=0;}
     else if(jk&&jk.has(w.date))continue;
     else{if(tc>0){brk={day:w.date,prev:tc};extra=0;}else if(brk)extra++;tc=0;}
   }
@@ -4117,8 +4119,8 @@ function computeBoard(period,withBots,gid){
       r.cur=cur;r.curBest=curBest;
     }
     {const fa=flameAll(lg);r.flameCur=fa.cur;r.flameBest=fa.best;}
-    /* temps au top : metcons d'affilée à 90 % ou plus des points max du niveau choisi.
-       Seul un score saisi sous 90 % remet à zéro ; séance sans metcon ou sans score = neutre. */
+    /* temps au top : metcons d'affilée à 80 % ou plus des points max du niveau choisi.
+       Seul un score saisi sous 80 % remet à zéro ; séance sans metcon ou sans score = neutre. */
     {
       /* topRun sur la saison : sert au trophée « Top niveau » (plus longue série de la saison seulement) ;
          topRun sur toutes les séances : sert à la flamme « Temps au top », qui ne se réinitialise pas entre les saisons */
@@ -4174,7 +4176,7 @@ const TROPHIES=[
  {id:'points',name:'Le SCRATCH',desc:'Le plus de points bruts sur la saison, sans tenir compte des niveaux.',key:r=>[r.total,r.sessions],show:r=>fmtN(r.total)+' pts'},
  {id:'regulier',name:'Le plus régulier',desc:'Le plus de séances réalisées.',key:r=>[r.sessions,r.streak],show:r=>r.sessions+' séances'},
  {id:'serie',name:'Machine à séries',desc:'Le plus haut score de flamme (série de séances) atteint pendant la saison. Une semaine où l’objectif de séances est tenu ne casse pas la flamme.',key:r=>[r.curBest,r.sessions],show:r=>r.curBest+' d’affilée'},
- {id:'top',name:'Top niveau',desc:'La plus longue série de metcons d’affilée à 90 % ou plus des points possibles de son niveau, quel que soit le niveau choisi, atteinte pendant la saison. Un score sous 90 % remet la série à zéro. (La flamme du profil, elle, continue d’une saison à l’autre.)',key:r=>[r.topBest,r.sessions],show:r=>r.topBest+' metcon'+(r.topBest>1?'s':'')+' d’affilée au top'},
+ {id:'top',name:'Top niveau',desc:'La plus longue série de metcons d’affilée à 80 % ou plus des points possibles de son niveau, quel que soit le niveau choisi, atteinte pendant la saison. Un score sous 80 % remet la série à zéro. (La flamme du profil, elle, continue d’une saison à l’autre.)',key:r=>[r.topBest,r.sessions],show:r=>r.topBest+' metcon'+(r.topBest>1?'s':'')+' d’affilée au top'},
  {id:'perf',name:'Le plus performant',desc:'La meilleure moyenne de points de metcon, pondérée par le niveau moyen choisi (niveau moyen divisé par 2). 3 metcons minimum.',key:r=>[r.perfAvgW],show:r=>fmtN(r.perfAvgW)+' pts par metcon · '+multTxt(r),elig:(r,b)=>r.perfN>=Math.min(3,b.metconCount)},
  {id:'lafort',cat:true,name:'La plus forte',desc:'Même calcul que Le plus fort (somme des meilleures charges de force), réservé aux athlètes femmes. Le sexe se renseigne dans le profil.',key:r=>[r.strength],show:r=>fmtN(r.strength)+' kg cumulés',elig:r=>r.sex==='F'},
  {id:'fort',name:'Le plus fort',desc:'Somme des meilleures charges saisies sur chaque mouvement de force.',key:r=>[r.strength],show:r=>fmtN(r.strength)+' kg cumulés'},
@@ -10266,11 +10268,11 @@ function flamesCardEl(me){
       h('button',{type:'button',class:'qbtn','aria-label':'Informations sur les flammes','aria-expanded':S.tip==='flames'?'true':'false',onclick:()=>toggleTip('flames')},'?')),
     S.tip==='joker'?h('div',{class:'tip',role:'dialog'},
       h('div',{},h('b',{},'Le joker'),h('div',{class:'sub'},'Une pièce gagnée avec ton XP (récompense de saison). Elle sauve une flamme qui vient de s’éteindre, « Série en cours » ou « Temps au top » : la flamme garde son nombre et repart de là.')),
-      h('div',{},h('b',{},'Quand l’utiliser ?'),h('div',{class:'sub'},'Quand une flamme tombe à 0 à cause d’une seule séance ratée (ou d’un seul metcon sous 90 %). Touche la flamme éteinte pour l’utiliser. Si 2 séances ou 2 metcons d’affilée sont ratés, c’est trop tard.')),
+      h('div',{},h('b',{},'Quand l’utiliser ?'),h('div',{class:'sub'},'Quand une flamme tombe à 0 à cause d’une seule séance ratée (ou d’un seul metcon sous 80 %). Touche la flamme éteinte pour l’utiliser. Si 2 séances ou 2 metcons d’affilée sont ratés, c’est trop tard.')),
       h('div',{},h('b',{},'Bon à savoir'),h('div',{class:'sub'},'Un joker par flamme. Il ne protège pas la série pour les trophées : elle reste interrompue. Tu peux en cumuler plusieurs et ils ne disparaissent pas au changement de saison.'))):null,
     S.tip==='flames'?h('div',{class:'tip',role:'dialog'},
       h('div',{},h('b',{},'Série en cours'),h('div',{class:'sub'},'Séances d’affilée, faites pendant la bonne semaine, toutes saisons confondues. Objectif de séances respecté = flamme conservée.')),
-      h('div',{},h('b',{},'Temps au top'),h('div',{class:'sub'},'Metcons d’affilée à 90 % des points ou plus, dans l’ordre où tu les as réalisés (pas celui des dates de séance), toutes saisons confondues : la flamme ne se réinitialise pas au changement de saison.'))):null,
+      h('div',{},h('b',{},'Temps au top'),h('div',{class:'sub'},'Metcons d’affilée à 80 % des points ou plus, dans l’ordre où tu les as réalisés (pas celui des dates de séance), toutes saisons confondues : la flamme ne se réinitialise pas au changement de saison.'))):null,
     (()=>{
       const fl=myFlames(),left=jokerLeft(S.logs[S.uid]||{});
       const jk=kind=>{const f=fl[kind];if(!(f.cur===0&&f.save))return null;return {hint:left>0?'Touche pour utiliser un joker':'Pas de joker disponible',fn:()=>{if(left>0)jokerAsk(kind);else toast('Tu n’as pas de joker disponible. Ils se gagnent avec l’XP.',true);}};};
