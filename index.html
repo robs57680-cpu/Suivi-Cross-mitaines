@@ -3516,7 +3516,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-31.1';
+const APP_VERSION='2026-10-31.3';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -9437,12 +9437,14 @@ const AV_ITEMS=[
     (même format que l'avatar, fond transparent, elle recouvre exactement la partie remplacée : le haut ici).
     Chaque calque est indépendant : un futur bas (slot pants) se combinera librement avec un haut.
     iconVb = zone montrée dans l'inventaire (repère 480x968). */
- {id:'shirt_cross_blondie',slot:'shirt',name:'T-shirt Cross Mitaines (Blondie)',sex:'f',skin:'skin_blondie',ovl:'assets/embedded/tshirt_cross_mitaines_blondie.webp',iconVb:'90 150 260 280'},
- {id:'shirt_cross_mike',slot:'shirt',name:'T-shirt Cross Mitaines (Mike)',sex:'h',skin:'skin_mike',ovl:'assets/embedded/tshirt_cross_mitaines_mike.webp',iconVb:'90 150 300 320'},
+ {id:'shirt_cross_blondie',slot:'shirt',name:'T-shirt Cross Mitaines (Blondie)',sex:'f',skin:'skin_blondie',ovl:'assets/embedded/tshirt_cross_mitaines_blondie.webp',iconVb:'80 145 260 290'},
+ {id:'shirt_cross_mike',slot:'shirt',name:'T-shirt Cross Mitaines (Mike)',sex:'h',skin:'skin_mike',ovl:'assets/embedded/tshirt_cross_mitaines_mike.webp',iconVb:'90 165 305 330'},
  {id:'pants_jogging_blondie',slot:'pants',name:'Jogging noir (Blondie)',sex:'f',skin:'skin_blondie',ovl:'assets/embedded/jogging_noir_blondie.webp',iconVb:'105 410 320 330'},
  {id:'pants_jogging_mike',slot:'pants',name:'Jogging noir (Mike)',sex:'h',skin:'skin_mike',ovl:'assets/embedded/jogging_noir_mike.webp',iconVb:'45 460 400 330'},
  {id:'shirt_pull_blondie',slot:'shirt',name:'Pull beige (Blondie)',sex:'f',skin:'skin_blondie',ovl:'assets/embedded/pull_beige_blondie.webp',iconVb:'65 75 330 400'},
- {id:'shirt_pull_mike',slot:'shirt',name:'Pull beige (Mike)',sex:'h',skin:'skin_mike',ovl:'assets/embedded/pull_beige_mike.webp',iconVb:'88 140 310 340'}
+ {id:'shirt_pull_mike',slot:'shirt',name:'Pull beige (Mike)',sex:'h',skin:'skin_mike',ovl:'assets/embedded/pull_beige_mike.webp',iconVb:'88 140 310 340'},
+ {id:'hat_bonnet_blondie',slot:'hat',name:'Bonnet + casque (Blondie)',sex:'f',skin:'skin_blondie',ovl:'assets/embedded/bonnet_casque_blondie.webp',iconVb:'125 0 170 125'},
+ {id:'hat_bonnet_mike',slot:'hat',name:'Bonnet + casque (Mike)',sex:'h',skin:'skin_mike',ovl:'assets/embedded/bonnet_casque_mike.webp',iconVb:'158 8 150 135'}
 ];
 const AV_BY=Object.fromEntries(AV_ITEMS.map(x=>[x.id,x]));
 /* Avatars de base (un par sexe, toujours disponibles) : Alpha = garçon, Beta = fille. Pour inverser, échanger les deux noms ci-dessous. */
@@ -9484,8 +9486,10 @@ const AV_OBJ={
  pants_jogging_mike:{d:'Jogging noir pour l’avatar Mike. Condition à définir : en attendant, il se gagne avec de l’XP via une récompense de saison « Cosmétique avatar ». Visible seulement avec l’avatar Mike.',test:()=>false},
  shirt_pull_blondie:{d:'Pull beige pour l’avatar Blondie. Condition à définir : en attendant, il se gagne avec de l’XP via une récompense de saison « Cosmétique avatar ». Visible seulement avec l’avatar Blondie.',test:()=>false},
  shirt_pull_mike:{d:'Pull beige pour l’avatar Mike. Condition à définir : en attendant, il se gagne avec de l’XP via une récompense de saison « Cosmétique avatar ». Visible seulement avec l’avatar Mike.',test:()=>false},
+ hat_bonnet_blondie:{d:'Bonnet + casque (un seul objet) pour l’avatar Blondie. Condition à définir : en attendant, il se gagne avec de l’XP via une récompense de saison « Cosmétique avatar ». Visible seulement avec l’avatar Blondie.',test:()=>false},
+ hat_bonnet_mike:{d:'Bonnet + casque (un seul objet) pour l’avatar Mike. Condition à définir : en attendant, il se gagne avec de l’XP via une récompense de saison « Cosmétique avatar ». Visible seulement avec l’avatar Mike.',test:()=>false},
 };
-const AV_PUB={pants_jogging_blondie:'Objet de l’avatar Blondie : condition à venir.',pants_jogging_mike:'Objet de l’avatar Mike : condition à venir.',shirt_pull_blondie:'Objet de l’avatar Blondie : condition à venir.',shirt_pull_mike:'Objet de l’avatar Mike : condition à venir.',shirt_cross_blondie:'Objet de l’avatar Blondie : condition à venir.',shirt_cross_mike:'Objet de l’avatar Mike : condition à venir.',skin_blondie:'Atteindre le seuil d’XP de la récompense « Avatar Blondie » sur la saison en cours.',skin_mike:'Atteindre le seuil d’XP de la récompense « Avatar Mike » sur la saison en cours.',costume_vampire:'Réaliser au moins un WOD pendant la semaine du 26 octobre au 1er novembre.',costume_sorciere:'Réaliser au moins un WOD pendant la semaine du 26 octobre au 1er novembre.',shirt_octobre:'Définir ton nombre de séances par semaine (objectif de séances, dans ton profil) pour la saison d’octobre.',wrist_alpha:'Participer à au moins 3 séances pendant la saison Alpha.',shirt_beta:'Enregistrer un metcon avec un score pendant la saison bêta.',theme_halloween:'Valider au moins un WOD d’octobre pendant une saison qui propose ce thème.',theme_noel:'Enregistrer au moins une séance pendant le mois de décembre, sur une saison qui propose ce thème.'};
+const AV_PUB={hat_bonnet_blondie:'Objet de l’avatar Blondie : condition à venir.',hat_bonnet_mike:'Objet de l’avatar Mike : condition à venir.',pants_jogging_blondie:'Objet de l’avatar Blondie : condition à venir.',pants_jogging_mike:'Objet de l’avatar Mike : condition à venir.',shirt_pull_blondie:'Objet de l’avatar Blondie : condition à venir.',shirt_pull_mike:'Objet de l’avatar Mike : condition à venir.',shirt_cross_blondie:'Objet de l’avatar Blondie : condition à venir.',shirt_cross_mike:'Objet de l’avatar Mike : condition à venir.',skin_blondie:'Atteindre le seuil d’XP de la récompense « Avatar Blondie » sur la saison en cours.',skin_mike:'Atteindre le seuil d’XP de la récompense « Avatar Mike » sur la saison en cours.',costume_vampire:'Réaliser au moins un WOD pendant la semaine du 26 octobre au 1er novembre.',costume_sorciere:'Réaliser au moins un WOD pendant la semaine du 26 octobre au 1er novembre.',shirt_octobre:'Définir ton nombre de séances par semaine (objectif de séances, dans ton profil) pour la saison d’octobre.',wrist_alpha:'Participer à au moins 3 séances pendant la saison Alpha.',shirt_beta:'Enregistrer un metcon avec un score pendant la saison bêta.',theme_halloween:'Valider au moins un WOD d’octobre pendant une saison qui propose ce thème.',theme_noel:'Enregistrer au moins une séance pendant le mois de décembre, sur une saison qui propose ce thème.'};
 /* peut-on gagner cet objet sur la saison en cours ? */
 function avStatus(it,own){
   if(own.has(it.id))return ['✓ Déjà débloqué.',true];
