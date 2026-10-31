@@ -9432,7 +9432,13 @@ const AV_ITEMS=[
  /* Avatars à gagner (catégorie « Avatar ») : l'image remplace tout le personnage, fond transparent, ratio 480x968 (fichiers dans assets/embedded/).
     Ils se gagnent avec l'XP : récompense de saison de type « Cosmétique avatar ». sex = sexe pour lequel l'avatar est proposé (le coach voit tout). */
  {id:'skin_blondie',slot:'skin',name:'Avatar Blondie',sex:'f',img:'assets/embedded/avatar_blondie.webp'},
- {id:'skin_mike',slot:'skin',name:'Avatar Mike',sex:'h',img:'assets/embedded/avatar_mike.webp'}
+ {id:'skin_mike',slot:'skin',name:'Avatar Mike',sex:'h',img:'assets/embedded/avatar_mike.webp'},
+ /* Objets propres à un avatar à gagner (skin:'…') : ovl = image du calque posé par-dessus l'image de l'avatar
+    (même format que l'avatar, fond transparent, elle recouvre exactement la partie remplacée : le haut ici).
+    Chaque calque est indépendant : un futur bas (slot pants) se combinera librement avec un haut.
+    iconVb = zone montrée dans l'inventaire (repère 480x968). */
+ {id:'shirt_cross_blondie',slot:'shirt',name:'T-shirt Cross Mitaines (Blondie)',sex:'f',skin:'skin_blondie',ovl:'assets/embedded/tshirt_cross_mitaines_blondie.webp',iconVb:'90 150 260 280'},
+ {id:'shirt_cross_mike',slot:'shirt',name:'T-shirt Cross Mitaines (Mike)',sex:'h',skin:'skin_mike',ovl:'assets/embedded/tshirt_cross_mitaines_mike.webp',iconVb:'90 150 300 320'}
 ];
 const AV_BY=Object.fromEntries(AV_ITEMS.map(x=>[x.id,x]));
 /* Avatars de base (un par sexe, toujours disponibles) : Alpha = garçon, Beta = fille. Pour inverser, échanger les deux noms ci-dessous. */
@@ -9443,6 +9449,8 @@ const avFits=(it,sk)=>!it||it.slot==='theme'||it.slot==='skin'||(it.skin||'base'
 /* image « personnage entier » portée : l'avatar à gagner, sinon le déguisement */
 const avFull=e=>{const s=AV_BY[e.skin];if(s&&s.img)return s;const c=AV_BY[e.costume];return c&&c.img?c:null;};
 /* une récompense d'avatar réservée à l'autre sexe n'est ni annoncée ni affichée comme « prochaine récompense » (le coach voit tout) */
+/* calques posés sur l'image d'un avatar à gagner, du dessous au-dessus */
+const avOvl=e=>['pants','shirt','wrist','hand','crown','hat'].map(k=>{const it=AV_BY[e[k]];return it&&it.ovl&&it.skin===e.skin?'<image href="'+it.ovl+'" x="0" y="0" width="'+AV_W+'" height="'+AV_H+'" preserveAspectRatio="xMidYMax meet"/>':'';}).join('');
 const rwFits=(r,uid)=>{if(!r||r.type!=='avatar'||S.owner)return true;const it=AV_BY[r.asset];return !it||avSexOk(it,avSexOf(uid||S.uid));};
 /* objectifs SECRETS : d = description visible par le coach seul, test = évalué sur chaque saison (terminée = objet acquis, en cours = « en bonne voie ») */
 /* déguisements : acquis en réalisant au moins un WOD de la semaine du 26 octobre au 1er novembre 2026 */
@@ -9466,8 +9474,10 @@ const AV_OBJ={
  costume_sorciere:{d:'Cadeau : réaliser au moins un WOD de la semaine du 26 octobre au 1er novembre 2026. Disponible tout de suite, sans attendre la fin de la saison.',test:()=>false},
  skin_blondie:{d:'Avatar à gagner avec de l’XP : crée une récompense de saison de type « Cosmétique avatar », choisis « Avatar Blondie » et fixe le seuil d’XP (Gérer les saisons > Récompenses). Proposé aux athlètes féminines. Ses objets propres se règlent dans la saison qui lui correspond ; les décors sont communs.',test:()=>false},
  skin_mike:{d:'Avatar à gagner avec de l’XP : crée une récompense de saison de type « Cosmétique avatar », choisis « Avatar Mike » et fixe le seuil d’XP (Gérer les saisons > Récompenses). Proposé aux athlètes masculins. Ses objets propres se règlent dans la saison qui lui correspond ; les décors sont communs.',test:()=>false},
+ shirt_cross_blondie:{d:'T-shirt Cross Mitaines (avec le jogging) pour l’avatar Blondie. Condition à définir : en attendant, il se gagne avec de l’XP via une récompense de saison « Cosmétique avatar ». Visible seulement avec l’avatar Blondie.',test:()=>false},
+ shirt_cross_mike:{d:'T-shirt Cross Mitaines (avec le jogging) pour l’avatar Mike. Condition à définir : en attendant, il se gagne avec de l’XP via une récompense de saison « Cosmétique avatar ». Visible seulement avec l’avatar Mike.',test:()=>false},
 };
-const AV_PUB={skin_blondie:'Atteindre le seuil d’XP de la récompense « Avatar Blondie » sur la saison en cours.',skin_mike:'Atteindre le seuil d’XP de la récompense « Avatar Mike » sur la saison en cours.',costume_vampire:'Réaliser au moins un WOD pendant la semaine du 26 octobre au 1er novembre.',costume_sorciere:'Réaliser au moins un WOD pendant la semaine du 26 octobre au 1er novembre.',shirt_octobre:'Définir ton nombre de séances par semaine (objectif de séances, dans ton profil) pour la saison d’octobre.',wrist_alpha:'Participer à au moins 3 séances pendant la saison Alpha.',shirt_beta:'Enregistrer un metcon avec un score pendant la saison bêta.',theme_halloween:'Valider au moins un WOD d’octobre pendant une saison qui propose ce thème.',theme_noel:'Enregistrer au moins une séance pendant le mois de décembre, sur une saison qui propose ce thème.'};
+const AV_PUB={shirt_cross_blondie:'Objet de l’avatar Blondie : condition à venir.',shirt_cross_mike:'Objet de l’avatar Mike : condition à venir.',skin_blondie:'Atteindre le seuil d’XP de la récompense « Avatar Blondie » sur la saison en cours.',skin_mike:'Atteindre le seuil d’XP de la récompense « Avatar Mike » sur la saison en cours.',costume_vampire:'Réaliser au moins un WOD pendant la semaine du 26 octobre au 1er novembre.',costume_sorciere:'Réaliser au moins un WOD pendant la semaine du 26 octobre au 1er novembre.',shirt_octobre:'Définir ton nombre de séances par semaine (objectif de séances, dans ton profil) pour la saison d’octobre.',wrist_alpha:'Participer à au moins 3 séances pendant la saison Alpha.',shirt_beta:'Enregistrer un metcon avec un score pendant la saison bêta.',theme_halloween:'Valider au moins un WOD d’octobre pendant une saison qui propose ce thème.',theme_noel:'Enregistrer au moins une séance pendant le mois de décembre, sur une saison qui propose ce thème.'};
 /* peut-on gagner cet objet sur la saison en cours ? */
 function avStatus(it,own){
   if(own.has(it.id))return ['✓ Déjà débloqué.',true];
@@ -9637,7 +9647,7 @@ function avPaint(cv,A,eq,key){
 function avOverlay(sx,eq){
   let g='';
   const co=avFull(eq);
-  if(co)return '<svg viewBox="0 0 '+AV_W+' '+AV_H+'" aria-hidden="true"><image href="'+co.img+'" x="0" y="0" width="'+AV_W+'" height="'+AV_H+'" preserveAspectRatio="xMidYMax meet"/></svg>';
+  if(co)return '<svg viewBox="0 0 '+AV_W+' '+AV_H+'" aria-hidden="true"><image href="'+co.img+'" x="0" y="0" width="'+AV_W+'" height="'+AV_H+'" preserveAspectRatio="xMidYMax meet"/>'+(co.slot==='skin'?avOvl(eq):'')+'</svg>';
   const sh=AV_BY[eq.shirt];
   if(sh&&sh.emb)g+='<g transform="translate('+AV_CHEST[sx].x+' '+AV_CHEST[sx].y+')">'+sh.emb(sx)+'</g>';
   const hd=AV_BY[eq.hand];
@@ -9680,7 +9690,8 @@ function avatarEl(sx,eq,width,onclick,label,world){
 function avIcon(it){
   const d=document.createElement('div');
   let vb,g;
-  if(it.slot==='shirt'){vb='-50 -45 100 95';g='<path d="M-34-30L-14-38Q0-26 14-38L34-30L46-6L29 0L29 40H-29L-29 0L-46-6Z" fill="'+it.c+'" '+svgS(3)+'/>'+(it.c2?'<path d="M-29 8H29V18H-29Z" fill="'+it.c2+'"/>':'')+(it.emb?'<g transform="translate(0 8) scale(.6)">'+it.emb()+'</g>':'');}
+  if(it.ovl&&it.iconVb){vb=it.iconVb;const sk=AV_BY[it.skin];g=(sk&&sk.img?'<image href="'+sk.img+'" x="0" y="0" width="'+AV_W+'" height="'+AV_H+'"/>':'')+'<image href="'+it.ovl+'" x="0" y="0" width="'+AV_W+'" height="'+AV_H+'"/>';}
+  else if(it.slot==='shirt'){vb='-50 -45 100 95';g='<path d="M-34-30L-14-38Q0-26 14-38L34-30L46-6L29 0L29 40H-29L-29 0L-46-6Z" fill="'+it.c+'" '+svgS(3)+'/>'+(it.c2?'<path d="M-29 8H29V18H-29Z" fill="'+it.c2+'"/>':'')+(it.emb?'<g transform="translate(0 8) scale(.6)">'+it.emb()+'</g>':'');}
   else if(it.slot==='pants'){vb='-50 -45 100 95';g=it.long?'<path d="M-26-36H26L31 44H7L0-4L-7 44H-31Z" fill="'+it.c+'" '+svgS(3)+'/>':'<path d="M-30-30H30L35 18H6L0-4L-6 18H-35Z" fill="'+it.c+'" '+svgS(3)+'/>';}
   else if(it.slot==='hand'){vb='-48 -46 96 96';g='<g transform="scale(.62) translate(0 -8)">'+it.art()+'</g>';}
   else if(it.slot==='costume'){vb='90 10 300 300';g='<image href="'+it.img+'" x="0" y="0" width="'+AV_W+'" height="'+AV_H+'"/>';}
@@ -9845,7 +9856,7 @@ function avatarCoach(){
     AV_ITEMS.filter(x=>x.slot===sl).forEach(it=>{
       const got=Object.keys(st.earned).filter(u=>st.earned[u][it.id]).map(u=>nm(u)+' ('+seasonLabel(st.earned[u][it.id])+')').sort();
       const soon=Object.keys(st.prov).filter(u=>st.prov[u][it.id]&&!(st.earned[u]&&st.earned[u][it.id])).map(nm).sort();
-      sec.append(h('div',{class:'avobj'},avatarEl('h',{[sl]:it.id},84,null,it.name),
+      sec.append(h('div',{class:'avobj'},avatarEl('h',Object.assign({[sl]:it.id},it.skin?{skin:it.skin}:{}),84,null,it.name),
         h('div',{class:'stack',style:'gap:4px;min-width:0'},h('div',{class:'nm'},it.name),h('div',{},h('span',{class:'flabel'},'Condition d’obtention'),h('div',{},avOff(it)?'Désactivé : cet objet ne peut plus être gagné pour l’instant.':AV_OBJ[it.id].d)),
           h('div',{class:'sub'},got.length?'Obtenu par : '+got.join(', '):'Personne pour l’instant'),
           soon.length?h('div',{class:'sub'},'En bonne voie : '+soon.join(', ')):null)));
