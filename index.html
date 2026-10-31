@@ -6868,7 +6868,7 @@ function computeRivalry(uid){
   /* prochaine récompense de saison (celle du coach au seuil d'XP le plus proche au-dessus de l'XP de l'athlète) : toujours ajoutée, hors limite des 3 messages */
   if(!per.virtual&&Array.isArray(per.rewards)){
     const xpNow=Math.max(0,Math.floor((Number(me.weighted)||0)*10)/10);
-    const nx=per.rewards.filter(r=>Number.isFinite(Number(r.xp))&&Number(r.xp)>xpNow).sort((a,b)=>Number(a.xp)-Number(b.xp))[0];
+    const nx=per.rewards.filter(r=>Number.isFinite(Number(r.xp))&&Number(r.xp)>xpNow&&rwFits(r)).sort((a,b)=>Number(a.xp)-Number(b.xp))[0];
     if(nx){
       const left=rd(Number(nx.xp)-xpNow);
       out.push({kind:'reward',ic:'gift',h:'Prochaine récompense',text:'Encore '+fmtN(left)+' point'+(left>1?'s':'')+' pour débloquer « '+(nx.name||'Récompense')+' ».'});
@@ -8056,7 +8056,7 @@ function viewAthlete(uid){
   const p=selPeriod(),board=computeBoard(p,true),rank=board.rows.findIndex(r=>r.uid===uid),me=board.rows[rank];
   if(!me){el.append(h('div',{class:'empty'},h('p',{},'Athlète introuvable.')));return el;}
   /* haut de page identique à « Mon profil » : avatar, pseudo, groupe, titre, badge, puis la ligne de chiffres et la barre d'XP */
-  const xp=Number(me.weighted)||0,nextReward=(p.rewards||[]).filter(r=>Number(r.xp)>xp).sort((a,b)=>Number(a.xp)-Number(b.xp))[0];
+  const xp=Number(me.weighted)||0,nextReward=(p.rewards||[]).filter(r=>Number(r.xp)>xp&&rwFits(r,uid)).sort((a,b)=>Number(a.xp)-Number(b.xp))[0];
   el.append(pf2HeadOther(uid,me.pseudo),pf2Stats(me,board,rank,xp,nextReward));
   /* objectifs choisis : priorités + nombre de séances par semaine */
   {const lgO=S.logs[uid]||{},fk=Array.isArray(lgO.focus)?lgO.focus:[],goal=lgO.goals?Number(lgO.goals[p.id])||0:0;
@@ -9181,7 +9181,7 @@ const avOff=it=>AV_OFF.has(it.slot);
 /* objet réservé à un sexe (it.sex = 'h' ou 'f') : invisible et non portable pour l'autre ; le coach voit tout, pour tester */
 const avSexOk=(it,sx)=>!it.sex||it.sex===sx;
 const avSexOf=uid=>uid===S.uid?avSex():(((S.logs[uid]||{}).sex==='F')?'f':'h');
-const AV_SLOTS=[['hat','Chapeau'],['crown','Couronne'],['shirt','T-shirt'],['pants','Pantalon'],['hand','En main'],['wrist','Poignet'],['costume','Déguisements'],['theme','Décor']];
+const AV_SLOTS=[['skin','Avatar'],['hat','Chapeau'],['crown','Couronne'],['shirt','T-shirt'],['pants','Pantalon'],['hand','En main'],['wrist','Poignet'],['costume','Déguisements'],['theme','Décor']];
 const svgS=(w,c)=>'stroke="'+(c||INK)+'" stroke-width="'+w+'" stroke-linejoin="round" stroke-linecap="round"';
 /* Kettlebell : découpée directement dans les illustrations de référence (avant-bras + main + anse + cloche : 24 kg pour l'athlète, 16 kg pour l'athlète féminine).
    Calée à l'absolu sur l'avant-bras de l'avatar (même dessin, même forme) : elle remplace la main détendue par la main qui tient l'anse. */
@@ -9428,9 +9428,22 @@ const AV_ITEMS=[
  /* Déguisements complets : l'image remplace tout l'avatar (corps + tenue), elle est dessinée à l'échelle 480x968 comme l'avatar de base.
     Fichiers dans assets/embedded/. Pour en ajouter : déposer l'image (fond transparent, ratio 480x968) puis ajouter une ligne ici, dans AV_OBJ et dans AV_PUB. */
  {id:'costume_vampire',slot:'costume',name:'Déguisement Vampire',sex:'h',img:'assets/embedded/deguisement_vampire.webp'},
- {id:'costume_sorciere',slot:'costume',name:'Déguisement Sorcière',sex:'f',img:'assets/embedded/deguisement_sorciere.webp'}
+ {id:'costume_sorciere',slot:'costume',name:'Déguisement Sorcière',sex:'f',img:'assets/embedded/deguisement_sorciere.webp'},
+ /* Avatars à gagner (catégorie « Avatar ») : l'image remplace tout le personnage, fond transparent, ratio 480x968 (fichiers dans assets/embedded/).
+    Ils se gagnent avec l'XP : récompense de saison de type « Cosmétique avatar ». sex = sexe pour lequel l'avatar est proposé (le coach voit tout). */
+ {id:'skin_blondie',slot:'skin',name:'Avatar Blondie',sex:'f',img:'assets/embedded/avatar_blondie.webp'},
+ {id:'skin_mike',slot:'skin',name:'Avatar Mike',sex:'h',img:'assets/embedded/avatar_mike.webp'}
 ];
 const AV_BY=Object.fromEntries(AV_ITEMS.map(x=>[x.id,x]));
+/* Avatars de base (un par sexe, toujours disponibles) : Alpha = garçon, Beta = fille. Pour inverser, échanger les deux noms ci-dessous. */
+const AV_BASE_NAME={h:'Alpha',f:'Beta'};
+/* Chaque avatar a ses propres objets : it.skin = id de l'avatar auquel l'objet est lié (absent = avatars de base Alpha / Beta).
+   Les décors (thèmes) valent pour tous les avatars. Un nouvel objet pour Blondie ou Mike : ajouter skin:'skin_blondie' (ou 'skin_mike') à sa ligne. */
+const avFits=(it,sk)=>!it||it.slot==='theme'||it.slot==='skin'||(it.skin||'base')===sk;
+/* image « personnage entier » portée : l'avatar à gagner, sinon le déguisement */
+const avFull=e=>{const s=AV_BY[e.skin];if(s&&s.img)return s;const c=AV_BY[e.costume];return c&&c.img?c:null;};
+/* une récompense d'avatar réservée à l'autre sexe n'est ni annoncée ni affichée comme « prochaine récompense » (le coach voit tout) */
+const rwFits=(r,uid)=>{if(!r||r.type!=='avatar'||S.owner)return true;const it=AV_BY[r.asset];return !it||avSexOk(it,avSexOf(uid||S.uid));};
 /* objectifs SECRETS : d = description visible par le coach seul, test = évalué sur chaque saison (terminée = objet acquis, en cours = « en bonne voie ») */
 /* déguisements : acquis en réalisant au moins un WOD de la semaine du 26 octobre au 1er novembre 2026 */
 const COSTUME_WEEK=['2026-10-26','2026-11-01'],COSTUME_IDS=['costume_vampire','costume_sorciere'];
@@ -9451,8 +9464,10 @@ const AV_OBJ={
  kettlebell:{d:'Niveau moyen d’au moins 2,75 (RX-) sur les metcons (3 metcons minimum).',test:c=>c.r.lvlN>=3&&c.r.lvlAvg>=2.75},
  costume_vampire:{d:'Cadeau : réaliser au moins un WOD de la semaine du 26 octobre au 1er novembre 2026. Disponible tout de suite, sans attendre la fin de la saison.',test:()=>false},
  costume_sorciere:{d:'Cadeau : réaliser au moins un WOD de la semaine du 26 octobre au 1er novembre 2026. Disponible tout de suite, sans attendre la fin de la saison.',test:()=>false},
+ skin_blondie:{d:'Avatar à gagner avec de l’XP : crée une récompense de saison de type « Cosmétique avatar », choisis « Avatar Blondie » et fixe le seuil d’XP (Gérer les saisons > Récompenses). Proposé aux athlètes féminines. Ses objets propres se règlent dans la saison qui lui correspond ; les décors sont communs.',test:()=>false},
+ skin_mike:{d:'Avatar à gagner avec de l’XP : crée une récompense de saison de type « Cosmétique avatar », choisis « Avatar Mike » et fixe le seuil d’XP (Gérer les saisons > Récompenses). Proposé aux athlètes masculins. Ses objets propres se règlent dans la saison qui lui correspond ; les décors sont communs.',test:()=>false},
 };
-const AV_PUB={costume_vampire:'Réaliser au moins un WOD pendant la semaine du 26 octobre au 1er novembre.',costume_sorciere:'Réaliser au moins un WOD pendant la semaine du 26 octobre au 1er novembre.',shirt_octobre:'Définir ton nombre de séances par semaine (objectif de séances, dans ton profil) pour la saison d’octobre.',wrist_alpha:'Participer à au moins 3 séances pendant la saison Alpha.',shirt_beta:'Enregistrer un metcon avec un score pendant la saison bêta.',theme_halloween:'Valider au moins un WOD d’octobre pendant une saison qui propose ce thème.',theme_noel:'Enregistrer au moins une séance pendant le mois de décembre, sur une saison qui propose ce thème.'};
+const AV_PUB={skin_blondie:'Atteindre le seuil d’XP de la récompense « Avatar Blondie » sur la saison en cours.',skin_mike:'Atteindre le seuil d’XP de la récompense « Avatar Mike » sur la saison en cours.',costume_vampire:'Réaliser au moins un WOD pendant la semaine du 26 octobre au 1er novembre.',costume_sorciere:'Réaliser au moins un WOD pendant la semaine du 26 octobre au 1er novembre.',shirt_octobre:'Définir ton nombre de séances par semaine (objectif de séances, dans ton profil) pour la saison d’octobre.',wrist_alpha:'Participer à au moins 3 séances pendant la saison Alpha.',shirt_beta:'Enregistrer un metcon avec un score pendant la saison bêta.',theme_halloween:'Valider au moins un WOD d’octobre pendant une saison qui propose ce thème.',theme_noel:'Enregistrer au moins une séance pendant le mois de décembre, sur une saison qui propose ce thème.'};
 /* peut-on gagner cet objet sur la saison en cours ? */
 function avStatus(it,own){
   if(own.has(it.id))return ['✓ Déjà débloqué.',true];
@@ -9461,6 +9476,7 @@ function avStatus(it,own){
   const per=activePeriod();
   if(!per.virtual&&periodState(per)!=='live')return ['✗ Aucune saison en cours pour le moment.',false];
   const nm=per.virtual?'saison en cours':seasonLabel(per)+' · '+per.name;
+  if(it.slot==='skin'){const rw=(per.rewards||[]).find(r=>r.type==='avatar'&&r.asset===it.id);return rw?['✓ Obtenable sur la saison en cours ('+nm+') : '+fmtN(Number(rw.xp))+' XP.',true]:['✗ Pas obtenable sur la saison en cours ('+nm+').',false];}
   let ok;
   if(it.id==='shirt_beta')ok=/beta/.test(norm(per.name||''));
   else if(it.id==='wrist_alpha')ok=/alpha/.test(norm(per.name||''));
@@ -9530,7 +9546,7 @@ function avState(){
 /* le coach a tous les objets dans son propre inventaire, pour les tester ; les athlètes n'ont que ceux qu'ils ont gagnés */
 const avOwned=uid=>{const o=new Set(Object.keys(avState().earned[uid]||{}));const lg=S.logs[uid]||{};for(const key of (lg.rewardOwned||[])){const [pid,rid]=String(key).split(':');const p=S.periods[pid],r=(p&&p.rewards||[]).find(x=>x.id===rid);if(r&&r.type==='avatar'&&r.asset)o.add(r.asset);}
   /* déguisements : jamais possédés par le sexe opposé (vampire = garçons, sorcière = filles), même offerts par une récompense */
-  if(!(S.owner&&uid===S.uid)){const sx=avSexOf(uid);for(const id of Array.from(o)){const it=AV_BY[id];if(it&&it.slot==='costume'&&!avSexOk(it,sx))o.delete(id);}}
+  if(!(S.owner&&uid===S.uid)){const sx=avSexOf(uid);for(const id of Array.from(o)){const it=AV_BY[id];if(it&&(it.slot==='costume'||it.slot==='skin')&&!avSexOk(it,sx))o.delete(id);}}
   return o;};
 function avEq(uid){
   const own=avOwned(uid),a=(S.logs[uid]&&S.logs[uid].avatar)||{},o={},preview=a._preview||{},now=Date.now();
@@ -9538,6 +9554,9 @@ function avEq(uid){
     const it=AV_BY[a[sl]],temp=!!(S.owner&&uid===S.uid&&preview[sl]&&preview[sl].id===a[sl]&&Number(preview[sl].until)>now);
     if(it&&it.slot===sl&&((own.has(it.id)&&!temp)||temp)&&((S.owner&&uid===S.uid)||avSexOk(it,avSexOf(uid))))o[sl]=it.id;
   }
+  /* chaque avatar a ses propres objets : ceux des autres avatars restent enregistrés mais ne sont pas portés */
+  const sk=o.skin||'base';
+  for(const k of Object.keys(o))if(k!=='skin'&&!avFits(AV_BY[o[k]],sk))delete o[k];
   return o;
 }
 const avSex=()=>{const lg=S.logs[S.uid]||{};return (S.prof.sex||lg.sex)==='F'?'f':'h';};
@@ -9617,8 +9636,8 @@ function avPaint(cv,A,eq,key){
 }
 function avOverlay(sx,eq){
   let g='';
-  const co=AV_BY[eq.costume];
-  if(co&&co.img)return '<svg viewBox="0 0 '+AV_W+' '+AV_H+'" aria-hidden="true"><image href="'+co.img+'" x="0" y="0" width="'+AV_W+'" height="'+AV_H+'" preserveAspectRatio="xMidYMax meet"/></svg>';
+  const co=avFull(eq);
+  if(co)return '<svg viewBox="0 0 '+AV_W+' '+AV_H+'" aria-hidden="true"><image href="'+co.img+'" x="0" y="0" width="'+AV_W+'" height="'+AV_H+'" preserveAspectRatio="xMidYMax meet"/></svg>';
   const sh=AV_BY[eq.shirt];
   if(sh&&sh.emb)g+='<g transform="translate('+AV_CHEST[sx].x+' '+AV_CHEST[sx].y+')">'+sh.emb(sx)+'</g>';
   const hd=AV_BY[eq.hand];
@@ -9651,7 +9670,7 @@ function avatarEl(sx,eq,width,onclick,label,world){
     cur=e;const my=++seq;wrap.style.backgroundImage=!world?'url("'+sceneURL(e.theme)+'")':'';
     const old=wrap.querySelector('svg');if(old)old.remove();
     wrap.insertAdjacentHTML('beforeend',avOverlay(sx,e));
-    if(AV_BY[e.costume]&&AV_BY[e.costume].img){cv.getContext('2d').clearRect(0,0,AV_W,AV_H);return;} /* déguisement : l'avatar de base n'est pas dessiné */
+    if(avFull(e)){cv.getContext('2d').clearRect(0,0,AV_W,AV_H);return;} /* avatar à gagner ou déguisement : l'avatar de base n'est pas dessiné */
     avLoad(sx).then(A=>{if(A&&my===seq)avPaint(cv,A,e,true);});
   };
   wrap.set(eq);
@@ -9665,6 +9684,7 @@ function avIcon(it){
   else if(it.slot==='pants'){vb='-50 -45 100 95';g=it.long?'<path d="M-26-36H26L31 44H7L0-4L-7 44H-31Z" fill="'+it.c+'" '+svgS(3)+'/>':'<path d="M-30-30H30L35 18H6L0-4L-6 18H-35Z" fill="'+it.c+'" '+svgS(3)+'/>';}
   else if(it.slot==='hand'){vb='-48 -46 96 96';g='<g transform="scale(.62) translate(0 -8)">'+it.art()+'</g>';}
   else if(it.slot==='costume'){vb='90 10 300 300';g='<image href="'+it.img+'" x="0" y="0" width="'+AV_W+'" height="'+AV_H+'"/>';}
+  else if(it.slot==='skin'){vb='60 8 360 330';g='<image href="'+it.img+'" x="0" y="0" width="'+AV_W+'" height="'+AV_H+'"/>';}
   else if(it.slot==='theme'){vb='-60 -72 120 120';g=it.art();}
   else if(it.slot==='wrist'){vb='-90 -40 180 80';g=it.art();}
   else{vb='-62 -66 124 84';g=it.art();}
@@ -9734,7 +9754,9 @@ function openAvatar(uid){
   if(!sexKnown(uid)){if(mine)goInfos();return;}
   const sx=mine?avSex():(((S.logs[uid]||{}).sex==='F')?'f':'h'),own=avOwned(uid),eq=Object.assign({},avEq(uid)),pseudo=(S.logs[uid]||{}).pseudo||'Athlète';
   let slot=null,info=null;
-  const vis=x=>S.owner||avSexOk(x,sx);
+  const vis=x=>(S.owner||avSexOk(x,sx))&&avFits(x,eq.skin||'base');
+  /* après un changement d'avatar : on recalcule la tenue portée (les objets des autres avatars ne sont pas portés, mais restent enregistrés) */
+  const syncEq=()=>{const ne=avEq(S.uid);for(const k of Object.keys(eq))delete eq[k];Object.assign(eq,ne);};
   const esc=e=>{if(e.key==='Escape')close();};
   const close=()=>{ov.remove();document.removeEventListener('keydown',esc);render();};
   const big=avatarEl(sx,eq,0,null,mine?'Mon avatar':'Avatar de '+pseudo,true);
@@ -9755,7 +9777,7 @@ function openAvatar(uid){
       if(it.slot==='hat'){delete eq.crown;delete av.crown;delete preview.crown;}
       if(it.slot==='crown'){delete eq.hat;delete av.hat;delete preview.hat;}
       if(S.owner&&mine&&!earned.has(it.id)){
-        const dur=it.id==='theme_noel'?600000:60000,until=Date.now()+dur;
+        const dur=(it.id==='theme_noel'||it.slot==='skin')?600000:60000,until=Date.now()+dur;
         preview[it.slot]={id:it.id,until};
         window.setTimeout(()=>{
           const cur=(S.logs[uid]&&S.logs[uid].avatar)||{},pr=cur._preview||{},active=pr[it.slot];
@@ -9764,7 +9786,7 @@ function openAvatar(uid){
           if(Object.keys(np).length)next._preview=np;else delete next._preview;
           S.logs[uid]=Object.assign({},S.logs[uid]||{},{avatar:next});
           saveLog({avatar:next});
-          if(document.getElementById('av-ov')&&mine){delete eq[it.slot];big.set(eq);drawScene();applyTheme();drawInv();}
+          if(document.getElementById('av-ov')&&mine){delete eq[it.slot];if(it.slot==='skin')syncEq();big.set(eq);drawScene();applyTheme();drawInv();}
           else render();
           toast('Aperçu terminé : cet objet n’est pas encore débloqué.');
         },dur);
@@ -9773,6 +9795,7 @@ function openAvatar(uid){
     if(Object.keys(preview).length)av._preview=preview;else delete av._preview;
     S.logs[uid]=Object.assign({},S.logs[uid]||{},{avatar:av});
     saveLog({avatar:av});
+    if(it.slot==='skin')syncEq();
     /* Mettre à jour immédiatement le SVG de l’avatar : le changement d’équipement doit être visible sans fermer la fenêtre. */
     big.set(eq);drawScene();applyTheme();
     drawInv();
@@ -9780,16 +9803,17 @@ function openAvatar(uid){
   function drawInv(){
     if(!slot){inv.replaceChildren(
       h('div',{class:'row',style:'justify-content:space-between;flex-wrap:nowrap'},h('b',{},'Inventaire · '+own.size+' objet'+(own.size>1?'s':'')),
-        Object.keys(eq).length?h('button',{class:'btn sm',type:'button',onclick:()=>{for(const k of Object.keys(eq))delete eq[k];big.set(eq);S.logs[S.uid]=Object.assign({},S.logs[S.uid]||{},{avatar:{}});saveLog({avatar:{}});drawScene();applyTheme();drawInv();}},'Tout retirer'):null),
+        Object.keys(eq).some(k=>k!=='skin')?h('button',{class:'btn sm',type:'button',onclick:()=>{const cu=(S.logs[S.uid]&&S.logs[S.uid].avatar)||{},nv={};if(cu.skin){nv.skin=cu.skin;if(cu._preview&&cu._preview.skin)nv._preview={skin:cu._preview.skin};}for(const k of Object.keys(eq))if(k!=='skin')delete eq[k];big.set(eq);S.logs[S.uid]=Object.assign({},S.logs[S.uid]||{},{avatar:nv});saveLog({avatar:nv});drawScene();applyTheme();drawInv();}},'Tout retirer'):null),
       h('div',{class:'av-tabs'},AV_SLOTS.map(([k,l])=>h('button',{type:'button',class:'btn sm',id:'avtab-'+k,onclick:()=>{slot=k;drawInv();}},l+' ('+AV_ITEMS.filter(x=>x.slot===k&&own.has(x.id)&&vis(x)).length+'/'+AV_ITEMS.filter(x=>x.slot===k&&vis(x)).length+')'))),
-      h('p',{class:'hint'},(S.owner?'Mode coach : tu vois les objets comme les athlètes ; touche un objet grisé pour l’essayer 60 s (aperçu ; 10 min pour le thème Noël). ':'')+'Choisis une catégorie, puis touche un objet pour l’équiper. Touche-le encore pour l’enlever. Touche le ? d’un objet pour voir comment l’obtenir. Un déguisement remplace toute la tenue tant qu’il est porté. Pince l’avatar, double-touche-le ou utilise + / − pour zoomer.'));return;}
+      h('p',{class:'hint'},(S.owner?'Mode coach : tu vois les objets comme les athlètes ; touche un objet grisé pour l’essayer 60 s (aperçu ; 10 min pour le thème Noël et les avatars). ':'')+'Choisis une catégorie, puis touche un objet pour l’équiper. Touche-le encore pour l’enlever. Touche le ? d’un objet pour voir comment l’obtenir. Un déguisement remplace toute la tenue tant qu’il est porté. Chaque avatar a ses propres objets, seuls les décors sont communs à tous. Pince l’avatar, double-touche-le ou utilise + / − pour zoomer.'));return;}
     const items=AV_ITEMS.filter(x=>x.slot===slot&&vis(x));
+    const bn=AV_BASE_NAME[sx]||'Avatar',baseTile=slot==='skin'?h('div',{class:'avcell'},h('button',{type:'button',class:'avit',id:'avit-base','aria-pressed':eq.skin?'false':'true',onclick:()=>{if(eq.skin)equip(AV_BY[eq.skin]);}},avatarEl(sx,{},56,null,bn),h('span',{},bn))):null;
     const q=it=>h('button',{type:'button',class:'avq',id:'avq-'+it.id,'aria-label':'Comment obtenir '+it.name,'aria-expanded':info===it.id?'true':'false',onclick:()=>{info=info===it.id?null:it.id;drawInv();}},'?');
     const cur=info&&AV_BY[info]&&AV_BY[info].slot===slot?AV_BY[info]:null,st=cur?avStatus(cur,own):null;
     inv.replaceChildren(
       h('div',{class:'row',style:'justify-content:space-between;flex-wrap:nowrap'},h('button',{class:'btn sm',type:'button',onclick:()=>{slot=null;info=null;drawInv();}},'← Catégories'),h('b',{},AV_SLOTS.find(x=>x[0]===slot)[1])),
       items.length?null:h('p',{class:'muted',style:'margin:14px 0'},'Aucun objet dans cette catégorie pour l’instant.'),
-      h('div',{class:'avgrid'},items.map(it=>{
+      h('div',{class:'avgrid'},baseTile,items.map(it=>{
         const has=own.has(it.id),on=eq[slot]===it.id;
         const tile=has?h('button',{type:'button',class:'avit',id:'avit-'+it.id,'aria-pressed':on?'true':'false',onclick:()=>equip(it)},avIcon(it),h('span',{},it.name))
           :(S.owner?h('button',{type:'button',class:'avit lock prev',id:'avit-'+it.id,'aria-pressed':on?'true':'false','aria-label':it.name+', pas débloqué, aperçu',onclick:()=>equip(it)},avIcon(it),h('span',{},it.name))
@@ -9797,7 +9821,7 @@ function openAvatar(uid){
         return h('div',{class:'avcell'},tile,q(it));})),
       cur?h('div',{class:'tip',role:'note',id:'av-info'},h('b',{},cur.name),
         h('div',{},h('span',{class:'flabel',style:'color:var(--panel-muted)'},'Comment l’obtenir'),h('div',{},AV_PUB[cur.id]||AV_OBJ[cur.id].d)),
-        h('div',{style:'font-weight:700'},st[0]),S.owner&&!own.has(cur.id)?h('div',{class:'sub'},'Aperçu coach : touche l’objet pour l’essayer '+(cur.id==='theme_noel'?'10 min (avec des boutons de test pour la neige)':'60 s')+'.'):null):'',
+        h('div',{style:'font-weight:700'},st[0]),S.owner&&!own.has(cur.id)?h('div',{class:'sub'},'Aperçu coach : touche l’objet pour l’essayer '+(cur.id==='theme_noel'?'10 min (avec des boutons de test pour la neige)':cur.slot==='skin'?'10 min':'60 s')+'.'):null):'',
       h('p',{class:'hint'},'Touche le ? d’un objet pour voir comment l’obtenir.'));
   }
   function drawView(){
@@ -10401,7 +10425,7 @@ function pgRewards(xp,nr){
 }
 function pgOverview(me,board,rank,p){
   const el=h('div',{class:'stack'});
-  const xp=Number(me.weighted)||0,nr=(p.rewards||[]).filter(r=>Number(r.xp)>xp).sort((a,b)=>Number(a.xp)-Number(b.xp))[0];
+  const xp=Number(me.weighted)||0,nr=(p.rewards||[]).filter(r=>Number(r.xp)>xp&&rwFits(r)).sort((a,b)=>Number(a.xp)-Number(b.xp))[0];
   const pv=pgPrevItems(p),pe=pgPtsEvol(me,pv),we=pgWodEvol(me,p,pv),fe=pgForceEvol(),wk=pgWeek(p),ms=pgMonth(me),cats=pgCats(),pm=pgPerfEvol(me,p);
   const av=sexKnown(S.uid)?avatarEl(avSex(),avEq(S.uid),66,()=>openAvatar(),'Mon avatar'):noAvatarEl(S.uid,66,false);
   const cell=(ico,val,lab,sub,tr)=>h('div',{class:'pg-ev'},pfIco(ico),h('b',{},val),h('span',{class:'lab'},lab),h('span',{class:'sub'},tr,sub));
@@ -10602,7 +10626,7 @@ function viewProfile(){
   const pseudo=(S.logs[S.uid]&&S.logs[S.uid].pseudo)||'';
   const pf=pfGet(),tab=PF_TABS.some(t=>t[0]===S.pfTab)?S.pfTab:'profil';
   if(tab==='prog')return viewProgres(me,board,rank,p);
-  const xp=Number(me.weighted)||0, rewards=(p.rewards||[]), nextReward=rewards.filter(r=>Number(r.xp)>xp).sort((a,b)=>Number(a.xp)-Number(b.xp))[0];
+  const xp=Number(me.weighted)||0, rewards=(p.rewards||[]), nextReward=rewards.filter(r=>Number(r.xp)>xp&&rwFits(r)).sort((a,b)=>Number(a.xp)-Number(b.xp))[0];
   el.classList.add('pf2');
   el.append(pf2Head(pseudo,pf),pf2Stats(me,board,rank,xp,nextReward),pf2Tabs(tab));
   const tallyRow=me.sessions>0?h('div',{class:'tally-row'},h('span',{class:'flabel'},'Séances de la saison'),tally(me.sessions)):null;
@@ -12836,7 +12860,7 @@ function botsCard(){
 }
 function nextSeasonNum(){const l=plist();return String(l.reduce((m,p)=>Math.max(m,seasonNum(p)),0)+1);}
 function avPick(d){
-  const items=AV_ITEMS.filter(x=>!avOff(x)),on=new Set((d.av||[]).filter(id=>AV_BY[id])),boxes=[];
+  const items=AV_ITEMS.filter(x=>!avOff(x)&&x.slot!=='skin'),on=new Set((d.av||[]).filter(id=>AV_BY[id])),boxes=[];
   const cnt=h('p',{class:'hint'});
   const upd=()=>{d.av=[...on];cnt.textContent=on.size+' objet'+(on.size>1?'s':'')+' gagnable'+(on.size>1?'s':'')+' sur '+items.length+(on.size?'':' : aucun objet ne pourra être gagné cette saison');};
   const all=v=>()=>{boxes.forEach(([id,cb])=>{cb.checked=v;v?on.add(id):on.delete(id);});upd();};
@@ -12844,7 +12868,7 @@ function avPick(d){
   return h('div',{class:'stack'},h('div',{class:'flabel'},'Objets d’avatar gagnables cette saison'),
     h('p',{class:'hint'},'Seuls les objets cochés peuvent être débloqués sur cette saison. Rien de coché : aucun objet. Les athlètes voient les conditions via le ? de l’inventaire.'),
     h('div',{class:'row'},h('button',{class:'btn sm',type:'button',onclick:all(true)},'Tout cocher'),h('button',{class:'btn sm',type:'button',onclick:all(false)},'Tout décocher')),
-    AV_SLOTS.filter(([k])=>!AV_OFF.has(k)).map(([k,l])=>h('div',{},h('div',{class:'flabel'},l),
+    AV_SLOTS.filter(([k])=>!AV_OFF.has(k)&&k!=='skin').map(([k,l])=>h('div',{},h('div',{class:'flabel'},l),
       items.filter(x=>x.slot===k).map(x=>{const cb=h('input',{type:'checkbox',checked:on.has(x.id),'aria-label':x.name,onchange:e=>{e.target.checked?on.add(x.id):on.delete(x.id);upd();}});boxes.push([x.id,cb]);
         const all=plist(),n=all.filter(p=>(p.avItems||[]).includes(x.id)).length;
         const tip=h('div',{class:'tip',style:'display:none',role:'note'},
@@ -12919,7 +12943,7 @@ function maybeRewardPopup(){
   const per=periodFor(todayStr())||activePeriod();
   if(!per||per.virtual||periodState(per)==='soon'||!Array.isArray(per.rewards)||!per.rewards.length)return;
   const xp=seasonXp(S.uid,per),lg=S.logs[S.uid]||{},seen=new Set(lg.rewardSeen||[]);
-  const rw=per.rewards.find(r=>Number(r.xp)>=0&&xp>=Number(r.xp)&&!seen.has(per.id+':'+r.id));
+  const rw=per.rewards.find(r=>Number(r.xp)>=0&&xp>=Number(r.xp)&&!seen.has(per.id+':'+r.id)&&rwFits(r,S.uid));
   if(!rw)return;
   S._rewardPopupOpen=true;
   const pop=h('div',{class:'reward-pop',role:'dialog','aria-modal':'true','aria-label':'Récompense débloquée'});
