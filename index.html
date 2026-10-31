@@ -3516,7 +3516,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-31.3';
+const APP_VERSION='2026-10-31.6';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -3529,6 +3529,8 @@ const dfmt=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const todayStr=()=>dfmt(new Date());
 const addDays=(s,n)=>{const d=dparse(s);d.setDate(d.getDate()+n);return dfmt(d);};
 const mondayOf=s=>{const d=dparse(s);d.setDate(d.getDate()-((d.getDay()+6)%7));return dfmt(d);};
+/* séance faite en avance (semaine pas encore commencée) : le résultat est enregistré mais ses points ne comptent qu'à partir du lundi de la semaine de la séance */
+const wodPending=date=>todayStr()<mondayOf(date);
 const fmtDate=(s,o)=>dparse(s).toLocaleDateString('fr-FR',o||{weekday:'long',day:'numeric',month:'long'});
 const fmtShort=s=>fmtDate(s,{day:'numeric',month:'short'});
 const fmtN=n=>String(Math.round(n*10)/10).replace('.',',');
@@ -3974,7 +3976,7 @@ function scoreText(m,score,e){
 function flameAll(lg){
   const t=todayStr(),weeks={};
   for(const w of Object.values(S.wods)){const k=mondayOf(w.date);(weeks[k]=weeks[k]||[]).push(w.date);}
-  const onTime=(d,e)=>{if(!e.at)return true;const ds=dfmt(new Date(e.at)),mon=mondayOf(d);return ds>=mon&&ds<=addDays(mon,6);};
+  const onTime=(d,e)=>{if(!e.at)return true;const ds=dfmt(new Date(e.at)),mon=mondayOf(d);return ds<=addDays(mon,6);}; /* en avance = dans les temps ; seule la saisie après la semaine est en retard */
   const jk=new Set((lg.jokers&&lg.jokers.fire)||[]); /* jours de séance sauvés par un joker : la flamme ne s'éteint pas (la série des trophées, elle, n'en tient pas compte) */
   let cur=0,best=0,brk=null,extra=0;
   for(const mon of Object.keys(weeks).sort()){
@@ -4050,6 +4052,7 @@ function computeBoard(period,withBots,gid){
       cat:{cardio:{sum:0,n:0},gym:{sum:0,n:0},haltero:{sum:0,n:0}}};
     const best={};let run=0;r.tonnage=0;
     for(const w of wods){
+      if(wodPending(w.date))continue; /* faite en avance : points pas encore comptés */
       const e=lg.entries&&lg.entries[w.date];
       if(!e){run=0;continue;}
       run++;r.streak=Math.max(r.streak,run);r.sessions++;
@@ -4071,7 +4074,7 @@ function computeBoard(period,withBots,gid){
     const redoWk=k=>Object.values(lg.redos||{}).filter(x=>x.on>=k&&x.on<=addDays(k,6)).length;
     for(const [wd,x] of Object.entries(lg.redos||{})){
       const rw0=S.wods[wd],rw=rw0&&wodFor(rw0,lg.entries&&lg.entries[wd]),rm=rw&&metconOf(rw);
-      if(!rm||!(lg.entries&&lg.entries[wd])||!inP(x.on,period))continue;
+      if(!rm||!(lg.entries&&lg.entries[wd])||!inP(x.on,period)||wodPending(wd))continue;
       const rp=redoPts(rm,lg.entries[wd],x);
       r.redo+=rp;r.redoN++;
       r.items.push({w:rw,e:x,pts:{base:0,perf:rp,total:rp},redo:true,on:x.on});
@@ -4099,7 +4102,7 @@ function computeBoard(period,withBots,gid){
        une semaine terminée où il a fait son nombre prévu (REDO compris) garde sa flamme :
        les séances non faites de cette semaine ne remettent pas la série à zéro. */
     {
-      const onTime=(d,e)=>{if(!e.at)return true;const ds=dfmt(new Date(e.at)),mon=mondayOf(d);return ds>=mon&&ds<=addDays(mon,6);};
+      const onTime=(d,e)=>{if(!e.at)return true;const ds=dfmt(new Date(e.at)),mon=mondayOf(d);return ds<=addDays(mon,6);}; /* en avance = dans les temps ; seule la saisie après la semaine est en retard */
       const goalS=lg.goals?Number(lg.goals[period.id])||0:0;
       let cur=0,curBest=0;
       for(const mon of Object.keys(weeks).sort()){
@@ -5732,7 +5735,8 @@ function roundSizeFor(m){
 }
 const tmMuted=()=>{try{return localStorage.getItem('bs-mute')==='1';}catch(e){return false;}};
 const setTmMuted=v=>{try{localStorage.setItem('bs-mute',v?'1':'0');}catch(e){}};
-const timerOk=date=>!!S.uid&&!!S.db&&todayStr()>=mondayOf(date)&&!lockedDate(date);
+/* séances faisables en avance : seule la saison verrouillée par le coach bloque (plus de blocage avant le lundi de la semaine) */
+const timerOk=date=>!!S.uid&&!!S.db&&!lockedDate(date);
 /* ouvre le formulaire de résultat avec les valeurs du minuteur */
 function openEntryWith(w,date,patch){
   S.viewDate=date;S.tab='today';S.redo=null;S.confirm=null;
@@ -6710,7 +6714,7 @@ function computeRivalry(uid){
   /* prochain WOD de l'athlète : semaine en cours, sinon le dernier WOD manqué encore rattrapable, sinon le prochain publié (pas encore ouvert) */
   const W=cur[0]||past[past.length-1]||fut[0]||null,bd=W?B(W):null;
   const wt=W?'« '+trunc(W.title,26)+' »':'';
-  const opens=(W&&!access(W))?' (ouvert le lundi '+fmtShort(mondayOf(W.date))+')':'';
+  const opens=(W&&!access(W))?' (semaine du lundi '+fmtShort(mondayOf(W.date))+', déjà faisable en avance)':'';
   const tU=me.total,sU=me.sessions,mePs=me.pseudo;
   const rd=x=>Math.round(x*1e6)/1e6;
   const pts=n=>fmtN(n)+' pt'+(Math.abs(n)>1?'s':'');
@@ -6761,7 +6765,7 @@ function computeRivalry(uid){
     const lgU=S.logs[uid]||{},enU=lgU.entries||{},rdU=lgU.redos||{},redoable=[];
     if(!lockedDate(t))for(const w of wods){
       const e=enU[w.date],m=metconOf(wodFor(w,e));
-      if(!m||!e||lockedDate(w.date))continue;
+      if(!m||!e||lockedDate(w.date)||wodPending(w.date))continue;
       if((e.at?dfmt(new Date(e.at)):w.date)>=t)continue;
       if(m.redo===false)continue;
       const mp=B(w).mp;if(!(mp>0))continue;
@@ -6861,7 +6865,7 @@ function computeRivalry(uid){
   if(!out.length){
     if(!me.sessions)return null;
     if(idx===0&&ranked.length>1&&ranked[1].sessions>0)fallback.push({kind:'goal',ic:'trophy',h:'Tu mènes la saison',text:'Tu as '+pts(rd(tU-ranked[1].total))+' d’avance sur '+ranked[1].pseudo+'. Garde le rythme !'});
-    else if(!remU.length&&fut[0])fallback.push({kind:'goal',ic:'goal',h:'Tout est validé',text:'Tu as validé tous les WODs disponibles. Prochain rendez-vous : le lundi '+fmtShort(mondayOf(fut[0].date))+'.'});
+    else if(!remU.length&&fut[0])fallback.push({kind:'goal',ic:'goal',h:'Tout est validé',text:'Tu as validé tous les WODs de la semaine. La suite démarre le lundi '+fmtShort(mondayOf(fut[0].date))+' : tu peux déjà faire ces séances en avance.'});
     else fallback.push({kind:'goal',ic:'goal',h:'Tu es '+ord(rank)+' sur '+nRank,text:'Aucune rivalité à portée pour l’instant : continue de valider tes WODs.'});
     out.push(fallback[0]);
   }
@@ -6925,6 +6929,7 @@ function feedLvBadge(m,e){
   return h('span',{class:'lvsh l'+lvNear(v),title:'Niveau choisi : '+tag,'aria-label':'Niveau choisi : '+tag},tag);
 }
 function feedPts(w,e){
+  if(wodPending(w.date))return null;
   let t=0;try{t=wodPoints(w,e,periodFor(w.date)||ALL).total;}catch(x){return null;}
   if(!(t>0))return null;
   return h('span',{class:'feed-pts','aria-label':fmtN(t)+' points remportés sur cette séance'},'+'+fmtN(t));
@@ -7057,7 +7062,7 @@ function sessionCard(w,i,n,mine,prev,next){
   const shown=parts.length>4?parts.filter((p,k)=>k<3||p.kind==='metcon').slice(0,4):parts;
   const open=()=>{S.viewDate=date;S.entry=null;S.redo=null;S.tip=null;render();window.scrollTo(0,0);};
   const subs=subsOf(per);
-  const canSub=!!S.uid&&!!S.db&&!S.snapMode&&ready()&&!done&&!lockedDate(date)&&todayStr()>=mondayOf(date)&&subs.some(Boolean);
+  const canSub=!!S.uid&&!!S.db&&!S.snapMode&&ready()&&!done&&!lockedDate(date)&&subs.some(Boolean);
   let slot=null,card=null,back=null;
   const flip=on=>{
     if(!slot)return;
@@ -7264,13 +7269,14 @@ function entrySection(w,date){
   const t=todayStr();
   if(!S.uid||!S.db)return h('p',{class:'muted'},'Connecte-toi pour enregistrer tes résultats.');
   if(!ready())return h('p',{class:'muted'},'Synchronisation en cours… tu pourras entrer tes résultats dans un instant.');
-  if(t<mondayOf(date))return h('p',{class:'muted'},'Les résultats s’ouvrent le lundi '+fmtShort(mondayOf(date))+', début de la semaine de la séance.');
   const mine=S.logs[S.uid]&&S.logs[S.uid].entries&&S.logs[S.uid].entries[date];
   const per=periodFor(date);
   const sec=h('section',{class:'card'});
+  if(t<mondayOf(date)&&!lockedDate(date))sec.append(h('div',{class:'banner warn',style:'margin:0 0 10px'},h('p',{style:'margin:0'},h('b',{},'Séance en avance : '),'tu peux la faire dès maintenant, mais tes points ne seront ajoutés au classement que le lundi '+fmtShort(mondayOf(date))+', début de la semaine de la séance.')));
   if(mine){
     const pts=wodPoints(w,mine,per||ALL);const m=metconOf(w);
     sec.append(h('div',{class:'row'},h('span',{class:'chip ok'},'Séance validée'),per?null:h('span',{class:'chip miss'},'Hors saison')),
+      wodPending(date)?h('p',{class:'hint'},'Points en attente : ils seront ajoutés au classement le lundi '+fmtShort(mondayOf(date))+'.'):null,
       h('p',{},h('b',{},fmtN(pts.total)+' pts'),' · ',mine.metconOnly?'metcon seul':pts.base+' pour la séance',m?' + '+fmtN(pts.perf)+' pour le metcon':'',
         m&&hasScore(mine)?' · '+lvlLab(m,mine)+' · '+scoreText(m,mine.score,mine):''),
       lockedDate(date)?h('p',{class:'hint'},'🔒 '+LOCKMSG):h('div',{class:'row'},
@@ -7612,7 +7618,7 @@ function delBtn(it){
 function redoBlock(w,date){
   const m=metconOf(w);
   const mn=((S.logs[S.uid]||{}).entries||{})[date];
-  if(!m||!mn||(mn.at?dfmt(new Date(mn.at)):date)>=todayStr()||lockedDate(date)||lockedDate(todayStr()))return null;
+  if(!m||!mn||wodPending(date)||(mn.at?dfmt(new Date(mn.at)):date)>=todayStr()||lockedDate(date)||lockedDate(todayStr()))return null;
   const rd=((S.logs[S.uid]||{}).redos||{})[date];
   if(m.redo===false&&!rd)return h('div',{class:'lines'},h('span',{class:'flabel'},'REDO du metcon'),h('p',{class:'hint'},'Le coach a désactivé le REDO sur ce metcon : il ne rapporte pas de points.'));
   const el=h('div',{class:'lines'},h('span',{class:'flabel'},'REDO du metcon'));
@@ -7960,8 +7966,9 @@ function submitEntryNow(w){
     }
     if(up){S.prof.prs=next;saveProf();}
   }
-  const rk=(!coach&&uid===S.uid)?rankSnap(date):null; /* classement d'avant, pour l'animation qui suit la validation */
-  const sv=saveLog({entries:Object.assign({},cur.entries||{},{[date]:e})},coach?'Résultats enregistrés':'Séance enregistrée',uid);
+  const early=!coach&&wodPending(date);
+  const rk=(!coach&&uid===S.uid&&!early)?rankSnap(date):null; /* classement d'avant, pour l'animation qui suit la validation */
+  const sv=saveLog({entries:Object.assign({},cur.entries||{},{[date]:e})},coach?'Résultats enregistrés':(early?'Séance enregistrée en avance : tes points seront ajoutés le lundi '+fmtShort(mondayOf(date))+'.':'Séance enregistrée'),uid);
   render();
   if(rk){S._rankPend=true;sv.then(()=>rankAnimStart(rk)).catch(()=>{}).finally(()=>{S._rankPend=false;if(!S.rankAnim)rankFlush();});}
 }
@@ -9437,14 +9444,14 @@ const AV_ITEMS=[
     (même format que l'avatar, fond transparent, elle recouvre exactement la partie remplacée : le haut ici).
     Chaque calque est indépendant : un futur bas (slot pants) se combinera librement avec un haut.
     iconVb = zone montrée dans l'inventaire (repère 480x968). */
- {id:'shirt_cross_blondie',slot:'shirt',name:'T-shirt Cross Mitaines (Blondie)',sex:'f',skin:'skin_blondie',ovl:'assets/embedded/tshirt_cross_mitaines_blondie.webp',iconVb:'80 145 260 290'},
- {id:'shirt_cross_mike',slot:'shirt',name:'T-shirt Cross Mitaines (Mike)',sex:'h',skin:'skin_mike',ovl:'assets/embedded/tshirt_cross_mitaines_mike.webp',iconVb:'90 165 305 330'},
+ {id:'shirt_cross_blondie',slot:'shirt',name:'T-shirt Cross Mitaines (Blondie)',sex:'f',skin:'skin_blondie',ovl:'assets/embedded/tshirt_cross_mitaines_blondie.webp',iconVb:'98 151 244 278'},
+ {id:'shirt_cross_mike',slot:'shirt',name:'T-shirt Cross Mitaines (Mike)',sex:'h',skin:'skin_mike',ovl:'assets/embedded/tshirt_cross_mitaines_mike.webp',iconVb:'90 154 299 326'},
  {id:'pants_jogging_blondie',slot:'pants',name:'Jogging noir (Blondie)',sex:'f',skin:'skin_blondie',ovl:'assets/embedded/jogging_noir_blondie.webp',iconVb:'105 410 320 330'},
  {id:'pants_jogging_mike',slot:'pants',name:'Jogging noir (Mike)',sex:'h',skin:'skin_mike',ovl:'assets/embedded/jogging_noir_mike.webp',iconVb:'45 460 400 330'},
  {id:'shirt_pull_blondie',slot:'shirt',name:'Pull beige (Blondie)',sex:'f',skin:'skin_blondie',ovl:'assets/embedded/pull_beige_blondie.webp',iconVb:'65 75 330 400'},
  {id:'shirt_pull_mike',slot:'shirt',name:'Pull beige (Mike)',sex:'h',skin:'skin_mike',ovl:'assets/embedded/pull_beige_mike.webp',iconVb:'88 140 310 340'},
- {id:'hat_bonnet_blondie',slot:'hat',name:'Bonnet + casque (Blondie)',sex:'f',skin:'skin_blondie',ovl:'assets/embedded/bonnet_casque_blondie.webp',iconVb:'125 0 170 125'},
- {id:'hat_bonnet_mike',slot:'hat',name:'Bonnet + casque (Mike)',sex:'h',skin:'skin_mike',ovl:'assets/embedded/bonnet_casque_mike.webp',iconVb:'158 8 150 135'}
+ {id:'hat_bonnet_blondie',slot:'hat',name:'Bonnet + casque (Blondie)',sex:'f',skin:'skin_blondie',ovl:'assets/embedded/bonnet_casque_blondie.webp',iconVb:'143 0 158 135'},
+ {id:'hat_bonnet_mike',slot:'hat',name:'Bonnet + casque (Mike)',sex:'h',skin:'skin_mike',ovl:'assets/embedded/bonnet_casque_mike.webp',iconVb:'161 0 150 134'}
 ];
 const AV_BY=Object.fromEntries(AV_ITEMS.map(x=>[x.id,x]));
 /* Avatars de base (un par sexe, toujours disponibles) : Alpha = garçon, Beta = fille. Pour inverser, échanger les deux noms ci-dessous. */
