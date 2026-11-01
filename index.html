@@ -2119,6 +2119,7 @@ body[data-pv] #main{padding-top:8px}
 .dm-seg button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
 .dm-seg .ibdot{top:8px;right:12px}
 .dm-pane{display:grid;gap:12px;touch-action:pan-y}
+.dm-priv,.dm-priv *{text-shadow:none!important}
 .dm-pane.from-r{animation:dmR .22s ease-out}.dm-pane.from-l{animation:dmL .22s ease-out}
 @keyframes dmR{from{transform:translateX(28px);opacity:.2}to{transform:none;opacity:1}}
 @keyframes dmL{from{transform:translateX(-28px);opacity:.2}to{transform:none;opacity:1}}
@@ -3584,7 +3585,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-01.2';
+const APP_VERSION='2026-11-01.3';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -5138,13 +5139,21 @@ function dmThread(uid){
   DM.thUid=uid;DM.thUn=dmWatchMsgs(uid);
 }
 const dmHead=uid=>DM.heads[uid]||null;
-const dmIsUnread=hd=>!!hd&&(S.owner?(hd.lastFrom==='ath'&&String(hd.lastAt||'')>String(hd.coachSeen||'')):(hd.lastFrom==='coach'&&String(hd.lastAt||'')>String(hd.athSeen||'')));
+const dmIsUnread=hd=>!!hd&&(S.owner?(hd.lastFrom==='ath'&&String(hd.lastAt||'')!==String(hd.coachSeen||'')):(hd.lastFrom==='coach'&&String(hd.lastAt||'')!==String(hd.athSeen||'')));
 const dmUnread=()=>S.owner?Object.values(DM.heads).some(dmIsUnread):dmIsUnread(DM.heads[S.uid]);
+/* dernier message de l'autre personne que j'ai vu : on enregistre SON horodatage (jamais l'heure de mon appareil) */
+function dmLatestAt(uid,from){
+  let m='';(DM.msgs[uid]||[]).forEach(x=>{if(x.from===from&&String(x.at)>m)m=String(x.at);});
+  const hd=dmHead(uid);if(hd&&hd.lastFrom===from&&String(hd.lastAt||'')>m)m=String(hd.lastAt);
+  return m;
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.uid&&S.tab==='msgs'&&S.msgPane==='priv')scheduleRender();});
 function dmMarkSeen(uid){
+  if(document.hidden)return;
   const hd=dmHead(uid);if(!hd||!dmIsUnread(hd)||DM.seen[uid]===hd.lastAt)return;
   DM.seen[uid]=hd.lastAt;
-  const now=new Date().toISOString();
-  run(async()=>{await S.db.doc('dm/'+uid).set(S.owner?{coachSeen:now}:{athSeen:now},{merge:true});});
+  const at=hd.lastAt; /* « lu » = on recopie la date du dernier message : aucune dépendance à l'horloge de l'autre téléphone */
+  run(async()=>{await S.db.doc('dm/'+uid).set(S.owner?{coachSeen:at}:{athSeen:at},{merge:true});});
 }
 function dmSend(uid,text){
   text=String(text||'').trim().slice(0,1000);if(!text)return;
@@ -5152,7 +5161,8 @@ function dmSend(uid,text){
   if(!S.db||(!coach&&!(dmHead(S.uid)&&dmHead(S.uid).started)))return;
   const m={from:coach?'coach':'ath',text,at:now};
   const head={lastAt:now,lastFrom:m.from,lastText:text.replace(/\s+/g,' ').slice(0,80)};
-  if(coach){head.uid=uid;head.pseudo=((S.logs[uid]||{}).pseudo||'Athlète').slice(0,30);head.started=true;head.coachSeen=now;}else head.athSeen=now;
+  const seenAt=dmLatestAt(uid,coach?'ath':'coach');
+  if(coach){head.uid=uid;head.pseudo=((S.logs[uid]||{}).pseudo||'Athlète').slice(0,30);head.started=true;if(seenAt)head.coachSeen=seenAt;}else if(seenAt)head.athSeen=seenAt;
   (S.dmDraft||(S.dmDraft={}))[uid]='';
   return run(async()=>{await S.db.doc('dm/'+uid+'/m/'+id).set(m);await S.db.doc('dm/'+uid).set(head,{merge:true});});
 }
@@ -5170,10 +5180,12 @@ function dmThreadEl(uid){
   const th=h('div',{class:'dm-thread'});
   if(!list.length)th.append(h('p',{class:'muted'},coach?'Aucun message pour l’instant. Écris le premier ci-dessous.':'Aucun message pour l’instant.'));
   let lastDay='';
+  const lastMine=list.filter(m=>coach?m.from==='coach':m.from==='ath').pop();
+  const otherSeen=String((hd&&(coach?hd.athSeen:hd.coachSeen))||'');
   list.forEach(m=>{
     const dl=dmDayLab(m.at);if(dl&&dl!==lastDay){lastDay=dl;th.append(h('div',{class:'dm-day'},dl));}
     const mine=coach?m.from==='coach':m.from==='ath';
-    th.append(h('div',{class:'dm-b '+(mine?'me':'them'),'data-id':m.id},(!coach&&m.from==='coach')?h('b',{style:'display:block;font-size:12px'},'Coach'):null,linkText(m.text),h('small',{},dmTime(m.at))));
+    th.append(h('div',{class:'dm-b '+(mine?'me':'them'),'data-id':m.id},(!coach&&m.from==='coach')?h('b',{style:'display:block;font-size:12px'},'Coach'):null,linkText(m.text),h('small',{},dmTime(m.at)+(m===lastMine?(otherSeen&&otherSeen>=String(m.at)?' · Vu':' · Envoyé'):''))));
   });
   box.append(th);
   if(canWrite){
@@ -5205,12 +5217,12 @@ function dmPaneEl(){
 }
 function viewMsgs(){
   const a=annActive(),annNew=!!a&&!annIsSeen(a);
-  if(S.msgPane===undefined)S.msgPane=(dmUnread()&&!annNew)?'priv':'gen';
+  if(S.msgPane===undefined)S.msgPane='gen';
   const pane=S.msgPane,el=h('div',{class:'stack dm-wrap'});
   const seg=(k,l,dot)=>h('button',{type:'button',role:'tab','aria-selected':pane===k?'true':'false',onclick:()=>dmSetPane(k)},l,dot?h('span',{class:'ibdot','aria-hidden':'true'}):null);
   el.append(h('div',{},h('p',{class:'eyebrow'},S.owner?'Coach':'Du coach'),h('h1',{class:'day'},'Messages')),
     h('div',{class:'dm-seg',role:'tablist','aria-label':'Type de messages'},seg('gen','Généraux',pane!=='gen'&&annNew),seg('priv','Privés',pane!=='priv'&&dmUnread())));
-  const body=h('div',{class:'dm-pane'+(S._dmDir?' from-'+S._dmDir:'')},pane==='gen'?viewMsgsGen():dmPaneEl());
+  const body=h('div',{class:'dm-pane'+(pane==='priv'?' dm-priv':'')+(S._dmDir?' from-'+S._dmDir:'')},pane==='gen'?viewMsgsGen():dmPaneEl());
   S._dmDir=null;
   /* balayage horizontal : généraux <-> privés */
   let x0=0,y0=0,ok=false;
