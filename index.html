@@ -2111,6 +2111,34 @@ body[data-pv] #main{padding-top:8px}
   .pg .fstage{height:38px}
   .pg .flame{width:28px!important}
 }
+
+/* messages privés coach <-> athlète */
+.dm-seg{display:grid;grid-template-columns:1fr 1fr;border:2px solid var(--edge);border-radius:4px;overflow:hidden}
+.dm-seg button{position:relative;min-height:44px;border:0;background:var(--surface);color:var(--muted);font:inherit;font-weight:700;cursor:pointer}
+.dm-seg button+button{border-left:2px solid var(--edge)}
+.dm-seg button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+.dm-seg .ibdot{top:8px;right:12px}
+.dm-pane{display:grid;gap:12px;touch-action:pan-y}
+.dm-pane.from-r{animation:dmR .22s ease-out}.dm-pane.from-l{animation:dmL .22s ease-out}
+@keyframes dmR{from{transform:translateX(28px);opacity:.2}to{transform:none;opacity:1}}
+@keyframes dmL{from{transform:translateX(-28px);opacity:.2}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.dm-pane.from-r,.dm-pane.from-l{animation:none}}
+.dm-list{display:grid;gap:8px;list-style:none;margin:0;padding:0}
+.dm-row{position:relative;width:100%;display:flex;align-items:center;gap:10px;text-align:left;font:inherit;color:inherit;background:var(--surface);border:2px solid var(--edge);border-radius:4px;padding:10px 12px;min-height:56px;cursor:pointer}
+.dm-row .dm-who{flex:1;min-width:0;display:grid;gap:2px}
+.dm-row .dm-who b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dm-row .dm-who span{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dm-row .dm-when{font-size:12px;color:var(--muted);white-space:nowrap}
+.dm-row .dm-dot{width:11px;height:11px;border-radius:50%;background:var(--accent);flex:none}
+.dm-row.unread .dm-who b{color:var(--accent)}
+.dm-thread{display:grid;gap:8px}
+.dm-b{max-width:86%;padding:9px 12px;border-radius:12px;border:2px solid var(--line);background:var(--surface);overflow-wrap:anywhere;white-space:pre-wrap}
+.dm-b.me{justify-self:end;background:var(--accent);color:var(--accent-ink);border-color:var(--accent);border-bottom-right-radius:3px}
+.dm-b.them{justify-self:start;border-bottom-left-radius:3px}
+.dm-b small{display:block;margin-top:3px;font-size:11px;opacity:.7}
+.dm-day{justify-self:center;font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.dm-comp{display:grid;gap:8px;position:sticky;bottom:calc(var(--tabh,64px) + 6px);background:var(--bg);padding:8px 0 2px}
+.dm-comp textarea{min-height:64px;resize:vertical}
 </style>
 </head>
 <body>
@@ -3535,7 +3563,7 @@ function softWrite(p){
   return Promise.race([p,new Promise(res=>setTimeout(()=>{late=true;res();},2500))]);
 }
 function makeDb(fdb){
-  const wrapDoc=r=>({id:r.id,set:d=>softWrite(setDoc(r,d)),delete:()=>softWrite(deleteDoc(r)),
+  const wrapDoc=r=>({id:r.id,set:(d,o)=>softWrite(o&&o.merge?setDoc(r,d,{merge:true}):setDoc(r,d)),delete:()=>softWrite(deleteDoc(r)),
     onSnapshot:(n,e)=>onSnapshot(r,s=>n({exists:s.exists(),data:()=>s.data(),fromCache:!!(s.metadata&&s.metadata.fromCache)}),e)});
   return {
     doc:p=>wrapDoc(doc(fdb,p)),
@@ -3556,7 +3584,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-01.1';
+const APP_VERSION='2026-11-01.2';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -5055,10 +5083,9 @@ function reportsPanel(){
 /* messages du coach : historique de tous les messages envoyés (config/announcement.history) */
 const annHistory=()=>{const a=S.ann||{},l=Array.isArray(a.history)?a.history.slice():[];if(a.active!==false&&a.id&&a.text&&!l.some(x=>x&&x.id===a.id))l.push({id:a.id,title:a.title||'',text:a.text,at:a.at});return l.filter(x=>x&&x.text).sort((p,q)=>String(q.at||'').localeCompare(String(p.at||'')));};
 const annDelete=m=>{const tid=trashPush('message','Message · '+(m.title||String(m.text).slice(0,30)),{msg:m});return run(async()=>{const a=S.ann||{},doc=Object.assign({},a,{history:annHistory().filter(x=>x.id!==m.id).slice(0,60)});if(a.id===m.id)doc.active=false;await S.db.doc('config/announcement').set(doc);if(tid)toastUndo('Message supprimé',tid);else toast('Message supprimé');});};
-function viewMsgs(){
+function viewMsgsGen(){
   const a=annActive();if(a&&!annIsSeen(a))annMarkSeen(a);
   const list=annHistory(),el=h('div',{class:'stack'});
-  el.append(h('div',{},h('p',{class:'eyebrow'},'Du coach'),h('h1',{class:'day'},'Messages')));
   if(S.owner)el.append(h('div',{class:'row'},h('button',{class:'btn primary',type:'button',id:'msgs-new',onclick:()=>{S.coach.view='message';go('coach');}},'Écrire un message')));
   if(!list.length){el.append(h('div',{class:'empty'},h('p',{},'Aucun message pour l’instant.')));return el;}
   list.forEach(m=>{
@@ -5081,6 +5108,120 @@ function viewMsgs(){
   });
   return el;
 }
+
+/* ---------- messages privés coach <-> athlète ----------
+   dm/{uid}        : en-tête de la conversation de l'athlète {uid, pseudo, started, lastAt, lastFrom ('coach'|'ath'), lastText, coachSeen, athSeen}
+   dm/{uid}/m/{id} : un message {from:'coach'|'ath', text, at}
+   Seul le coach ouvre une conversation (started:true) ; l'athlète peut ensuite répondre. Chacun n'écrit que ses propres champs (règles Firestore dans le README).
+   Le coach écoute toute la collection dm ; un athlète seulement la sienne. Si les règles ne sont pas publiées, les erreurs sont ignorées. */
+const DM={heads:{},msgs:{},un:[],thUn:null,thUid:null,key:'',seen:{}};
+function dmStop(){DM.un.forEach(u=>{try{u();}catch(e){}});if(DM.thUn){try{DM.thUn();}catch(e){}}DM.un=[];DM.thUn=null;DM.thUid=null;DM.heads={};DM.msgs={};DM.key='';DM.seen={};S.dmOpen=null;S.msgPane=undefined;}
+const dmSortMsgs=l=>l.sort((a,b)=>String(a.at||'').localeCompare(String(b.at||''))||String(a.id).localeCompare(String(b.id)));
+function dmWatchMsgs(uid){
+  if(!S.db||!uid)return null;
+  return S.db.collection('dm/'+uid+'/m').onSnapshot(sn=>{DM.msgs[uid]=dmSortMsgs(sn.docs.map(d=>Object.assign({id:d.id},d.data())));scheduleRender();dmScrollSoon();},()=>{});
+}
+function dmSync(){
+  if(!S.uid||!S.db||!S.coachLoaded)return;
+  const key=S.uid+'|'+(S.owner?'c':'a');if(DM.key===key)return;
+  dmStop();DM.key=key;
+  if(S.owner){DM.un.push(S.db.collection('dm').onSnapshot(sn=>{DM.heads=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));scheduleRender();},()=>{}));}
+  else{
+    DM.un.push(S.db.doc('dm/'+S.uid).onSnapshot(sn=>{DM.heads=sn.exists?{[S.uid]:sn.data()}:{};scheduleRender();},()=>{}));
+    const u=dmWatchMsgs(S.uid);if(u)DM.un.push(u);
+  }
+}
+function dmThread(uid){
+  if(!S.owner)return;
+  if(DM.thUid===uid)return;
+  if(DM.thUn){try{DM.thUn();}catch(e){}}
+  DM.thUid=uid;DM.thUn=dmWatchMsgs(uid);
+}
+const dmHead=uid=>DM.heads[uid]||null;
+const dmIsUnread=hd=>!!hd&&(S.owner?(hd.lastFrom==='ath'&&String(hd.lastAt||'')>String(hd.coachSeen||'')):(hd.lastFrom==='coach'&&String(hd.lastAt||'')>String(hd.athSeen||'')));
+const dmUnread=()=>S.owner?Object.values(DM.heads).some(dmIsUnread):dmIsUnread(DM.heads[S.uid]);
+function dmMarkSeen(uid){
+  const hd=dmHead(uid);if(!hd||!dmIsUnread(hd)||DM.seen[uid]===hd.lastAt)return;
+  DM.seen[uid]=hd.lastAt;
+  const now=new Date().toISOString();
+  run(async()=>{await S.db.doc('dm/'+uid).set(S.owner?{coachSeen:now}:{athSeen:now},{merge:true});});
+}
+function dmSend(uid,text){
+  text=String(text||'').trim().slice(0,1000);if(!text)return;
+  const coach=!!S.owner,now=new Date().toISOString(),id=Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  if(!S.db||(!coach&&!(dmHead(S.uid)&&dmHead(S.uid).started)))return;
+  const m={from:coach?'coach':'ath',text,at:now};
+  const head={lastAt:now,lastFrom:m.from,lastText:text.replace(/\s+/g,' ').slice(0,80)};
+  if(coach){head.uid=uid;head.pseudo=((S.logs[uid]||{}).pseudo||'Athlète').slice(0,30);head.started=true;head.coachSeen=now;}else head.athSeen=now;
+  (S.dmDraft||(S.dmDraft={}))[uid]='';
+  return run(async()=>{await S.db.doc('dm/'+uid+'/m/'+id).set(m);await S.db.doc('dm/'+uid).set(head,{merge:true});});
+}
+function dmScrollSoon(){if(S.tab!=='msgs'||S.msgPane!=='priv')return;setTimeout(()=>{const l=document.querySelector('.dm-thread .dm-b:last-of-type');if(l&&S._dmScrollN!==l.dataset.id){S._dmScrollN=l.dataset.id;l.scrollIntoView({block:'end'});}},60);}
+const dmTime=at=>{try{return new Date(at).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});}catch(e){return '';}};
+const dmDayLab=at=>{const d=String(at||'').slice(0,10);if(!d)return '';try{const l=new Date(at),k=dfmt(l);return k===todayStr()?'Aujourd’hui':k===addDays(todayStr(),-1)?'Hier':fmtDate(k,{day:'numeric',month:'long'});}catch(e){return '';}};
+function dmThreadEl(uid){
+  const hd=dmHead(uid),list=DM.msgs[uid]||[],coach=!!S.owner;
+  const canWrite=coach||(hd&&hd.started);
+  const box=h('div',{class:'stack'});
+  const name=((S.logs[uid]||{}).pseudo)||(hd&&hd.pseudo)||'Athlète';
+  box.append(coach
+    ?h('div',{class:'row',style:'align-items:center'},h('button',{class:'btn sm',type:'button',onclick:()=>{S.dmOpen=null;render();window.scrollTo(0,0);}},'← Conversations'),h('b',{style:'overflow-wrap:anywhere'},name))
+    :h('div',{},h('p',{class:'eyebrow'},'Conversation privée'),h('p',{class:'muted'},'Ces messages sont visibles uniquement par toi et par le coach.')));
+  const th=h('div',{class:'dm-thread'});
+  if(!list.length)th.append(h('p',{class:'muted'},coach?'Aucun message pour l’instant. Écris le premier ci-dessous.':'Aucun message pour l’instant.'));
+  let lastDay='';
+  list.forEach(m=>{
+    const dl=dmDayLab(m.at);if(dl&&dl!==lastDay){lastDay=dl;th.append(h('div',{class:'dm-day'},dl));}
+    const mine=coach?m.from==='coach':m.from==='ath';
+    th.append(h('div',{class:'dm-b '+(mine?'me':'them'),'data-id':m.id},(!coach&&m.from==='coach')?h('b',{style:'display:block;font-size:12px'},'Coach'):null,linkText(m.text),h('small',{},dmTime(m.at))));
+  });
+  box.append(th);
+  if(canWrite){
+    const dr=S.dmDraft||(S.dmDraft={});
+    const ta=h('textarea',{id:'dm-text',rows:'2',maxlength:'1000',placeholder:coach?'Écrire à '+name+'…':'Répondre au coach…','aria-label':'Ton message',value:dr[uid]||'',
+      oninput:e=>{dr[uid]=e.target.value;send.disabled=!e.target.value.trim();},
+      onkeydown:e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)&&ta.value.trim()){e.preventDefault();dmSend(uid,ta.value);}}});
+    const send=h('button',{class:'btn primary',type:'button',id:'dm-send',disabled:!(dr[uid]||'').trim(),onclick:()=>{if(ta.value.trim())dmSend(uid,ta.value);}},'Envoyer');
+    box.append(h('div',{class:'dm-comp'},ta,h('div',{class:'row'},send)));
+  }else box.append(h('p',{class:'hint'},'Seul le coach peut ouvrir une conversation.'));
+  return box;
+}
+function dmPaneEl(){
+  if(S.owner){
+    if(S.dmOpen){dmThread(S.dmOpen);dmMarkSeen(S.dmOpen);return dmThreadEl(S.dmOpen);}
+    const heads=Object.entries(DM.heads).filter(([u,hd])=>hd&&hd.started).sort((a,b)=>String(b[1].lastAt||'').localeCompare(String(a[1].lastAt||'')));
+    if(!heads.length)return h('div',{class:'empty'},h('p',{},'Aucune conversation privée pour l’instant.'),h('p',{class:'hint'},'Ouvre le profil d’un athlète (dans le classement) puis touche « Envoyer un message » pour en démarrer une.'));
+    return h('ul',{class:'dm-list'},heads.map(([u,hd])=>{
+      const un=dmIsUnread(hd),nm=((S.logs[u]||{}).pseudo)||hd.pseudo||'Athlète';
+      return h('li',{},h('button',{type:'button',class:'dm-row'+(un?' unread':''),onclick:()=>{S.dmOpen=u;render();window.scrollTo(0,0);}},
+        h('span',{class:'dm-who'},h('b',{},nm),h('span',{},(hd.lastFrom==='coach'?'Toi : ':'')+(hd.lastText||''))),
+        h('span',{class:'dm-when'},hd.lastAt?dmDayLab(hd.lastAt)==='Aujourd’hui'?dmTime(hd.lastAt):dmDayLab(hd.lastAt):''),
+        un?h('span',{class:'dm-dot','aria-label':'Non lu'}):null));}));
+  }
+  const hd=dmHead(S.uid);
+  if(!hd||!hd.started)return h('div',{class:'empty'},h('p',{},'Aucune conversation privée.'),h('p',{class:'hint'},'Si le coach t’écrit en privé, la conversation apparaîtra ici et tu pourras lui répondre.'));
+  dmMarkSeen(S.uid);
+  return dmThreadEl(S.uid);
+}
+function viewMsgs(){
+  const a=annActive(),annNew=!!a&&!annIsSeen(a);
+  if(S.msgPane===undefined)S.msgPane=(dmUnread()&&!annNew)?'priv':'gen';
+  const pane=S.msgPane,el=h('div',{class:'stack dm-wrap'});
+  const seg=(k,l,dot)=>h('button',{type:'button',role:'tab','aria-selected':pane===k?'true':'false',onclick:()=>dmSetPane(k)},l,dot?h('span',{class:'ibdot','aria-hidden':'true'}):null);
+  el.append(h('div',{},h('p',{class:'eyebrow'},S.owner?'Coach':'Du coach'),h('h1',{class:'day'},'Messages')),
+    h('div',{class:'dm-seg',role:'tablist','aria-label':'Type de messages'},seg('gen','Généraux',pane!=='gen'&&annNew),seg('priv','Privés',pane!=='priv'&&dmUnread())));
+  const body=h('div',{class:'dm-pane'+(S._dmDir?' from-'+S._dmDir:'')},pane==='gen'?viewMsgsGen():dmPaneEl());
+  S._dmDir=null;
+  /* balayage horizontal : généraux <-> privés */
+  let x0=0,y0=0,ok=false;
+  body.addEventListener('touchstart',e=>{const t=e.touches[0];x0=t.clientX;y0=t.clientY;ok=e.touches.length===1&&!e.target.closest('textarea,input,select');},{passive:true});
+  body.addEventListener('touchend',e=>{if(!ok)return;ok=false;const t=e.changedTouches[0],dx=t.clientX-x0,dy=t.clientY-y0;if(Math.abs(dx)>70&&Math.abs(dx)>2*Math.abs(dy)){if(dx<0&&S.msgPane==='gen')dmSetPane('priv');else if(dx>0&&S.msgPane==='priv')dmSetPane('gen');}},{passive:true});
+  el.append(body);
+  if(pane==='priv')dmScrollSoon();
+  return el;
+}
+function dmSetPane(k){if(S.msgPane===k)return;S._dmDir=k==='priv'?'r':'l';S.msgPane=k;S._dmScrollN=null;render();window.scrollTo(0,0);}
+function dmOpenWith(uid){S.dmOpen=uid;S.msgPane='priv';S._dmScrollN=null;go('msgs');}
 /* ouverture depuis une notification : ?go=today|feed|board|profile|recap, ou message du service worker si l'appli est déjà ouverte */
 const GO_TABS=['feed','today','board','profile','recap'];
 let initialTab=(()=>{try{const g=new URLSearchParams(location.search).get('go');return GO_TABS.includes(g)?g:null;}catch(e){return null;}})();
@@ -8123,6 +8264,7 @@ function viewAthlete(uid){
   /* haut de page identique à « Mon profil » : avatar, pseudo, groupe, titre, badge, puis la ligne de chiffres et la barre d'XP */
   const xp=Number(me.weighted)||0,nextReward=(p.rewards||[]).filter(r=>Number(r.xp)>xp&&rwFits(r,uid)).sort((a,b)=>Number(a.xp)-Number(b.xp))[0];
   el.append(pf2HeadOther(uid,me.pseudo),pf2Stats(me,board,rank,xp,nextReward));
+  if(S.owner&&uid!==S.uid)el.append(h('div',{class:'row'},h('button',{class:'btn primary',type:'button',id:'dm-start',onclick:()=>dmOpenWith(uid)},'Envoyer un message')));
   /* objectifs choisis : priorités + nombre de séances par semaine */
   {const lgO=S.logs[uid]||{},fk=Array.isArray(lgO.focus)?lgO.focus:[],goal=lgO.goals?Number(lgO.goals[p.id])||0:0;
    const chips=PF_FOCUS.map(([k,l],i)=>({k,l,i})).filter(c=>fk.includes(c.k)).map(c=>h('span',{class:'pf2-chip c'+(c.i%5)+' ro'},c.l));
@@ -13472,13 +13614,13 @@ const profTodo=()=>infosMissing().concat(goalMissing()?['objectif de s\u00e9ance
 const BLINK_MS=3000;
 function blinkEl(el){const ms=Date.now()-(S._bt||0);if(ms<BLINK_MS){el.classList.add('need-blink');el.style.animationDelay='-'+ms+'ms';}return el;}
 const blinkIf=(c,el)=>c?blinkEl(el):el;
-function menuDot(){const a=annActive();return !!(pendCount()>0||(a&&!annIsSeen(a))||recapDot()||notifDotOn()||unusualAll().length>0||!rulesSeen()||!healthSeen()||profDot());}
+function menuDot(){const a=annActive();return !!(pendCount()>0||(a&&!annIsSeen(a))||dmUnread()||recapDot()||notifDotOn()||unusualAll().length>0||!rulesSeen()||!healthSeen()||profDot());}
 function drawerItems(){
   const a=annActive(),out=[];
   out.push({id:'profile',label:'Profil',ico:ICO_USER,dot:profDot(),cur:S.tab==='profile'&&!S.profView,fn:()=>{S.profView=null;go('profile');}});
   if(S.owner)out.push({id:'coach',label:'Coach',ico:ICO_COACH,dot:unusualAll().length>0||pendCount()>0,cur:['coach','prefs','stats'].includes(S.tab),fn:()=>go('coach')});
   out.push({id:'recap',label:'Résumé de la semaine',ico:ICO_RECAP,dot:recapDot(),cur:S.tab==='recap',fn:()=>{const m=rcLatest();if(m&&!S.owner)(S.rc||(S.rc={})).week=m;go('recap');}});
-  out.push({id:'mail',label:'Message du coach',ico:ICO_MAIL,dot:!!a&&!annIsSeen(a),cur:S.tab==='msgs',fn:()=>go('msgs')});
+  out.push({id:'mail',label:'Messages',ico:ICO_MAIL,dot:(!!a&&!annIsSeen(a))||dmUnread(),cur:S.tab==='msgs',fn:()=>go('msgs')});
   out.push({id:'rules',label:'Règlement',ico:ICO_RULES,dot:!rulesSeen(),cur:S.tab==='rules',fn:()=>{rulesMark();S.rulesI=0;go('rules');}});
   out.push({id:'health',label:'Santé et sécurité',ico:ICO_HEALTH,dot:!healthSeen(),cur:S.tab==='health',fn:()=>{healthMark();S.healthI=0;go('health');}});
   out.push({id:'bug',label:'Signaler un bug',ico:ICO_BUG,cur:S.tab==='bug',fn:()=>{S.bugFrom=S.tab;S.bugPv=S.profView;S.bugMsg='';S.bugTab=null;go('bug');if(S.owner)loadBugs();}});
@@ -14371,7 +14513,7 @@ function startFirebase(){
   render();
   let unsubs=[];
   onAuthStateChanged(auth,user=>{
-    unsubs.forEach(u=>u());unsubs=[];
+    unsubs.forEach(u=>u());unsubs=[];dmStop();
     S.loaded={periods:false,wods:false,logs:false};S.periods={};S.wods={};S.logs={};S.prof={prs:{},sex:'',weight:0};S.profLoaded=false;
     S.sexSync=null;S.coachUid=null;S.coachLoaded=false;S.owner=false;S.error=null;S.entry=null;S.redo=null;S.viewDate=null;S.confirm=null;S.cerAuto=false;S._annDone=false;S.ann=null;S.annLoaded=false;S._aw=null;S.groups={list:[],of:{},snap:{}};S._freezing=false;S.boardGroup=undefined;S.comments={};S.cacheMode=false;S.snapMode=false;S._srv={};S._netOff=false;clearTimeout(cacheT);S.reactions={};S.wu={cfg:null,loaded:false,list:false};
     S.coach={wod:null,editing:false,period:null,resDate:null};S.avisFor=null;S.profView=null;S.viewUser=null;S.tip=null;S.tab=user?takeInitialTab():'feed';S.authReady=true;
@@ -14390,7 +14532,7 @@ function startFirebase(){
     if(persist)cacheT=setTimeout(()=>{if(S.uid===user.uid&&!ready()&&snapRead()&&snapRead().uid===user.uid)goCache();},3000);
     /* état de l'abonnement (écrit par le script GitHub, lecture seule ici) ; en cas d'erreur de lecture on ne bloque personne */
     unsubs.push(S.db.doc('subs/'+S.uid).onSnapshot(sn=>{S.pay={loaded:true,doc:sn.exists?sn.data():null,err:false};scheduleRender();},()=>{S.pay={loaded:true,doc:null,err:true};scheduleRender();}));
-    unsubs.push(S.db.doc('config/coach').onSnapshot(sn=>{S.coachUid=sn.exists?(sn.data().uid||null):null;S.coachLoaded=true;S.owner=!!S.coachUid&&S.coachUid===S.uid;wuMaybeSeed();scheduleRender();launchRecapMaybe();},fail));
+    unsubs.push(S.db.doc('config/coach').onSnapshot(sn=>{S.coachUid=sn.exists?(sn.data().uid||null):null;S.coachLoaded=true;S.owner=!!S.coachUid&&S.coachUid===S.uid;dmSync();wuMaybeSeed();scheduleRender();launchRecapMaybe();},fail));
     /* les groupes ne bloquent jamais l'appli : si les règles ne sont pas encore publiées, on ignore l'erreur */
     unsubs.push(S.db.doc('config/groups').onSnapshot(sn=>{const d=sn.exists?sn.data():null;S.groups={list:(d&&Array.isArray(d.list))?d.list:[],of:(d&&d.of&&typeof d.of==='object')?d.of:{},snap:(d&&d.snap&&typeof d.snap==='object')?d.snap:{},bots:(d&&d.bots&&typeof d.bots==='object')?d.bots:{},loaded:true};S._freezing=false;scheduleRender();},()=>{}));
     /* message du coach : si les règles ne sont pas publiées, on ignore l'erreur */
