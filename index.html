@@ -3585,7 +3585,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-01.3';
+const APP_VERSION='2026-11-01.4';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -9481,6 +9481,13 @@ function sceneSVG(hal){
   }
   return g+'</svg>';
 }
+/* décor « Salle Néon » : image dans assets/embedded/decor-salle-neon.webp (carrée, 1024x1024), derrière l'avatar */
+const SALLE_BG='assets/embedded/decor-salle-neon.webp';
+const salleIco=()=>'<circle cy="-12" r="54" fill="#0A0F1C" stroke="#29C5FF" stroke-width="3"/>'+
+  '<rect x="-38" y="-46" width="5" height="54" rx="2.5" fill="#29C5FF"/><rect x="33" y="-46" width="5" height="54" rx="2.5" fill="#FF8A1F"/>'+
+  '<path d="M-17-34L-11-49L-4-39L0-54L4-39L11-49L17-34Z" fill="none" stroke="#29C5FF" stroke-width="3" stroke-linejoin="round"/>'+
+  '<text x="0" y="-6" text-anchor="middle" font-size="32" font-weight="900" font-style="italic" fill="#fff" font-family="Impact,Arial Black,sans-serif">CM</text>'+
+  '<rect x="-30" y="15" width="60" height="3" rx="1.5" fill="#FF8A1F" opacity=".75"/>';
 const HAL_BG='assets/embedded/image_07.jpg';
 const NOEL_BG='assets/embedded/decor-noel-salle.webp';
 const BASE_BG='assets/embedded/image_08.png';
@@ -9488,7 +9495,7 @@ const imgScene=src=>'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http:/
 const halScene=()=>'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice"><image href="'+HAL_BG+'" xlink:href="'+HAL_BG+'" width="1000" height="1000"/></svg>';
 const sceneURLc={};
 /* décor en fond CSS : on pointe directement l'image (un SVG en data-URI ne peut pas charger d'image externe, d'où un décor vide derrière un déguisement transparent) */
-const THEME_BG={theme_halloween:HAL_BG,theme_noel:NOEL_BG};
+const THEME_BG={theme_halloween:HAL_BG,theme_noel:NOEL_BG,theme_salle:SALLE_BG};
 const sceneURL=th=>THEME_BG[th]||BASE_BG;
 const HAL_DECO='<svg class="hd-web" viewBox="0 0 110 110" aria-hidden="true">'+webG(110,0,-1,1,105)+'</svg>'+
   '<svg class="hd-sp" viewBox="-20 -2 40 100" aria-hidden="true">'+spiderG(0,74,.9,74/.9)+'</svg>'+
@@ -9643,6 +9650,7 @@ const AV_ITEMS=[
  {id:'wrist_alpha',slot:'wrist',name:'Bracelet Alpha',art:alphaArt,layer:alphaWear},
  {id:'theme_halloween',slot:'theme',name:'Thème Halloween',art:pumpkinIco},
  {id:'theme_noel',slot:'theme',name:'Thème Noël',art:noelIco},
+ {id:'theme_salle',slot:'theme',name:'Décor Salle Néon',art:salleIco},
  {id:'kettlebell',slot:'hand',name:'Kettlebell',art:kettleArt},
  /* Déguisements complets : l'image remplace tout l'avatar (corps + tenue), elle est dessinée à l'échelle 480x968 comme l'avatar de base.
     Fichiers dans assets/embedded/. Pour en ajouter : déposer l'image (fond transparent, ratio 480x968) puis ajouter une ligne ici, dans AV_OBJ et dans AV_PUB. */
@@ -9687,6 +9695,7 @@ const AV_OBJ={
  wrist_alpha:{d:'Cadeau : participer à au moins 3 séances pendant la saison Alpha, la saison dont le nom contient « alpha ». Disponible tout de suite, sans attendre la fin de la saison.',test:()=>false},
  theme_halloween:{d:'Cadeau : à cocher dans les objets gagnables de la saison où tu veux l’offrir (par exemple la saison 2). Les athlètes l’obtiennent en validant au moins un WOD d’octobre pendant cette saison, sans attendre sa fin. Tant qu’aucune saison ne le propose, personne ne l’a. Une fois équipé, le décor Halloween s’applique à l’avatar et, discrètement, à toute l’appli.',test:()=>false},
  theme_noel:{d:'Cadeau : à cocher dans les objets gagnables de la saison où tu veux l’offrir (la saison de décembre). Les athlètes l’obtiennent en enregistrant au moins une séance pendant le mois de décembre sur cette saison, sans attendre sa fin. Tant qu’aucune saison ne le propose, personne ne l’a. Une fois équipé, le décor de Noël s’applique à l’avatar et à toute l’appli : fond de salle enneigée, flocons qui tombent, guirlandes étoilées en haut et tas de neige en bas qui grossit quand l’appli reste inactive (par exemple pendant un chrono de récup) et fond dès qu’on touche ou bouge, avec de la neige qui tombe hors de l’écran.',test:()=>false},
+ theme_salle:{d:'Décor de salle néon (fond derrière l’avatar, comme les autres décors ; il ne change pas le reste de l’appli). Condition à définir : en attendant, il se gagne avec de l’XP via une récompense de saison « Cosmétique avatar » (Gérer les saisons > Récompenses), en choisissant « Décor Salle Néon ». Le coach l’a d’office dans son inventaire.',test:()=>false},
  shirt_octobre:{d:'Cadeau : avoir défini son nombre de séances par semaine (objectif de séances du profil) pour la saison en cours, la saison d’octobre. À cocher dans les objets gagnables de cette saison. Disponible tout de suite, sans attendre la fin de la saison.',test:()=>false},
  shirt_beta:{d:'Cadeau : avoir enregistré un metcon (avec score) pendant la saison bêta, la saison dont le nom contient « bêta ». Disponible tout de suite, sans attendre la fin de la saison.',test:()=>false},
  shirt_gold:{d:'Remporter 2 trophées différents dans la même saison.',test:c=>c.wins.size>=2},
@@ -9708,7 +9717,7 @@ const AV_OBJ={
  hat_bonnet_blondie:{d:'Bonnet + casque (un seul objet) pour l’avatar Blondie. Condition à définir : en attendant, il se gagne avec de l’XP via une récompense de saison « Cosmétique avatar ». Visible seulement avec l’avatar Blondie.',test:()=>false},
  hat_bonnet_mike:{d:'Bonnet + casque (un seul objet) pour l’avatar Mike. Condition à définir : en attendant, il se gagne avec de l’XP via une récompense de saison « Cosmétique avatar ». Visible seulement avec l’avatar Mike.',test:()=>false},
 };
-const AV_PUB={hat_bonnet_blondie:'Objet de l’avatar Blondie : condition à venir.',hat_bonnet_mike:'Objet de l’avatar Mike : condition à venir.',pants_jogging_blondie:'Objet de l’avatar Blondie : condition à venir.',pants_jogging_mike:'Objet de l’avatar Mike : condition à venir.',shirt_pull_blondie:'Objet de l’avatar Blondie : condition à venir.',shirt_pull_mike:'Objet de l’avatar Mike : condition à venir.',shirt_cross_blondie:'Objet de l’avatar Blondie : condition à venir.',shirt_cross_mike:'Objet de l’avatar Mike : condition à venir.',skin_blondie:'Atteindre le seuil d’XP de la récompense « Avatar Blondie » sur la saison en cours.',skin_mike:'Atteindre le seuil d’XP de la récompense « Avatar Mike » sur la saison en cours.',costume_vampire:'Réaliser au moins un WOD pendant la semaine du 26 octobre au 1er novembre.',costume_sorciere:'Réaliser au moins un WOD pendant la semaine du 26 octobre au 1er novembre.',shirt_octobre:'Définir ton nombre de séances par semaine (objectif de séances, dans ton profil) pour la saison d’octobre.',wrist_alpha:'Participer à au moins 3 séances pendant la saison Alpha.',shirt_beta:'Enregistrer un metcon avec un score pendant la saison bêta.',theme_halloween:'Valider au moins un WOD d’octobre pendant une saison qui propose ce thème.',theme_noel:'Enregistrer au moins une séance pendant le mois de décembre, sur une saison qui propose ce thème.'};
+const AV_PUB={theme_salle:'Décor de salle néon : se gagne avec de l’XP (récompense de saison).',hat_bonnet_blondie:'Objet de l’avatar Blondie : condition à venir.',hat_bonnet_mike:'Objet de l’avatar Mike : condition à venir.',pants_jogging_blondie:'Objet de l’avatar Blondie : condition à venir.',pants_jogging_mike:'Objet de l’avatar Mike : condition à venir.',shirt_pull_blondie:'Objet de l’avatar Blondie : condition à venir.',shirt_pull_mike:'Objet de l’avatar Mike : condition à venir.',shirt_cross_blondie:'Objet de l’avatar Blondie : condition à venir.',shirt_cross_mike:'Objet de l’avatar Mike : condition à venir.',skin_blondie:'Atteindre le seuil d’XP de la récompense « Avatar Blondie » sur la saison en cours.',skin_mike:'Atteindre le seuil d’XP de la récompense « Avatar Mike » sur la saison en cours.',costume_vampire:'Réaliser au moins un WOD pendant la semaine du 26 octobre au 1er novembre.',costume_sorciere:'Réaliser au moins un WOD pendant la semaine du 26 octobre au 1er novembre.',shirt_octobre:'Définir ton nombre de séances par semaine (objectif de séances, dans ton profil) pour la saison d’octobre.',wrist_alpha:'Participer à au moins 3 séances pendant la saison Alpha.',shirt_beta:'Enregistrer un metcon avec un score pendant la saison bêta.',theme_halloween:'Valider au moins un WOD d’octobre pendant une saison qui propose ce thème.',theme_noel:'Enregistrer au moins une séance pendant le mois de décembre, sur une saison qui propose ce thème.'};
 /* peut-on gagner cet objet sur la saison en cours ? */
 function avStatus(it,own){
   if(own.has(it.id))return ['✓ Déjà débloqué.',true];
