@@ -3516,7 +3516,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-10-31.6';
+const APP_VERSION='2026-10-31.7';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -3563,7 +3563,10 @@ function toast(msg,bad){const t=h('div',{class:'toast'+(bad?' bad':'')},msg);$('
 function errMsg(e){
   const c=e&&e.code;
   if(c==='quota_exceeded'||c==='resource-exhausted')return 'Limite de stockage atteinte. Préviens le coach.';
-  if(c==='permission-denied'||c==='invalid_argument')return 'Écriture refusée. Vérifie que tu es connecté et que les règles de sécurité sont publiées.';
+  if(c==='permission-denied'||c==='invalid_argument'){
+    let dbg='';try{if(S.owner){const av=(S.logs[S.uid]&&S.logs[S.uid].avatar)||{};dbg=' [coach] avatar : '+JSON.stringify(av).slice(0,240);console.warn('Écriture refusée',e&&e.code,e&&e.message,av);}}catch(x){}
+    return 'Écriture refusée. Vérifie que tu es connecté et que les règles de sécurité sont publiées.'+dbg;
+  }
   if(c==='unavailable')return 'Pas de connexion. Réessaie dans un instant.';
   return 'Enregistrement impossible, réessaie.';
 }
@@ -9445,13 +9448,13 @@ const AV_ITEMS=[
     Chaque calque est indépendant : un futur bas (slot pants) se combinera librement avec un haut.
     iconVb = zone montrée dans l'inventaire (repère 480x968). */
  {id:'shirt_cross_blondie',slot:'shirt',name:'T-shirt Cross Mitaines (Blondie)',sex:'f',skin:'skin_blondie',ovl:'assets/embedded/tshirt_cross_mitaines_blondie.webp',iconVb:'98 151 244 278'},
- {id:'shirt_cross_mike',slot:'shirt',name:'T-shirt Cross Mitaines (Mike)',sex:'h',skin:'skin_mike',ovl:'assets/embedded/tshirt_cross_mitaines_mike.webp',iconVb:'90 154 299 326'},
+ {id:'shirt_cross_mike',slot:'shirt',name:'T-shirt Cross Mitaines (Mike)',sex:'h',skin:'skin_mike',ovl:'assets/embedded/tshirt_cross_mitaines_mike.webp',iconVb:'90 155 298 324'},
  {id:'pants_jogging_blondie',slot:'pants',name:'Jogging noir (Blondie)',sex:'f',skin:'skin_blondie',ovl:'assets/embedded/jogging_noir_blondie.webp',iconVb:'105 410 320 330'},
  {id:'pants_jogging_mike',slot:'pants',name:'Jogging noir (Mike)',sex:'h',skin:'skin_mike',ovl:'assets/embedded/jogging_noir_mike.webp',iconVb:'45 460 400 330'},
  {id:'shirt_pull_blondie',slot:'shirt',name:'Pull beige (Blondie)',sex:'f',skin:'skin_blondie',ovl:'assets/embedded/pull_beige_blondie.webp',iconVb:'65 75 330 400'},
  {id:'shirt_pull_mike',slot:'shirt',name:'Pull beige (Mike)',sex:'h',skin:'skin_mike',ovl:'assets/embedded/pull_beige_mike.webp',iconVb:'88 140 310 340'},
- {id:'hat_bonnet_blondie',slot:'hat',name:'Bonnet + casque (Blondie)',sex:'f',skin:'skin_blondie',ovl:'assets/embedded/bonnet_casque_blondie.webp',iconVb:'143 0 158 135'},
- {id:'hat_bonnet_mike',slot:'hat',name:'Bonnet + casque (Mike)',sex:'h',skin:'skin_mike',ovl:'assets/embedded/bonnet_casque_mike.webp',iconVb:'161 0 150 134'}
+ {id:'hat_bonnet_blondie',slot:'hat',name:'Bonnet + casque (Blondie)',sex:'f',skin:'skin_blondie',ovl:'assets/embedded/bonnet_casque_blondie.webp',iconVb:'143 0 158 141'},
+ {id:'hat_bonnet_mike',slot:'hat',name:'Bonnet + casque (Mike)',sex:'h',skin:'skin_mike',ovl:'assets/embedded/bonnet_casque_mike.webp',iconVb:'171 0 129 134'}
 ];
 const AV_BY=Object.fromEntries(AV_ITEMS.map(x=>[x.id,x]));
 /* Avatars de base (un par sexe, toujours disponibles) : Alpha = garçon, Beta = fille. Pour inverser, échanger les deux noms ci-dessous. */
@@ -9842,7 +9845,7 @@ function openAvatar(uid){
     const cur=info&&AV_BY[info]&&AV_BY[info].slot===slot?AV_BY[info]:null,st=cur?avStatus(cur,own):null;
     inv.replaceChildren(
       h('div',{class:'row',style:'justify-content:space-between;flex-wrap:nowrap'},h('button',{class:'btn sm',type:'button',onclick:()=>{slot=null;info=null;drawInv();}},'← Catégories'),h('b',{},AV_SLOTS.find(x=>x[0]===slot)[1])),
-      items.length?null:h('p',{class:'muted',style:'margin:14px 0'},'Aucun objet dans cette catégorie pour l’instant.'),
+      items.length?'':h('p',{class:'muted',style:'margin:14px 0'},'Aucun objet dans cette catégorie pour l’instant.'),
       h('div',{class:'avgrid'},baseTile,items.map(it=>{
         const has=own.has(it.id),on=eq[slot]===it.id;
         const tile=has?h('button',{type:'button',class:'avit',id:'avit-'+it.id,'aria-pressed':on?'true':'false',onclick:()=>equip(it)},avIcon(it),h('span',{},it.name))
