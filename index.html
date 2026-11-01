@@ -1018,7 +1018,8 @@ section.feed-card.th-angrypumpkin>.feed-badge::after{content:'';position:absolut
 .feed-card.th-alpha .rxb[aria-pressed="true"]{border-color:#f5a623;background:rgba(245,166,35,.18)}
 /* carte du fil habillée Crimson Crown : l'image (1331 x 1182) EST la carte. Tout est calé en cqw (1cqw = 1 % de la largeur de la carte = 13,31 px de l'image).
    Pastille avatar : centre (14,05 ; 12,4). Cadres de réaction dessinés dans l'image : y 67,8 à 77,7, x 10,6 à 82,4. Résultats sans cadre, dans la zone sombre à droite des disques. */
-section.feed-card.th-crimson{container-type:inline-size;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:2cqw;padding:0;aspect-ratio:1331/1182;background:#050505 url('assets/embedded/banniere-crimson-crown.webp') center top/100% auto no-repeat;border:0;border-radius:6px;box-shadow:none;color:#f4f4f4}
+section.feed-card.th-crimson{container-type:inline-size;position:relative;overflow:hidden;display:flex;flex-direction:column;gap:2cqw;padding:0;aspect-ratio:1331/1182;background:#050505 url('assets/embedded/banniere-crimson-crown.webp') center top/100% auto no-repeat;border:0;border-radius:8px;color:#f4f4f4;box-shadow:0 0 0 1px rgba(255,255,255,.16),0 0 0 2px rgba(200,16,24,.6),0 12px 26px -4px rgba(0,0,0,.85),0 4px 10px rgba(0,0,0,.6),0 0 30px rgba(225,20,30,.32)}
+section.feed-card.th-crimson::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:5;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),inset 0 2px 0 rgba(255,255,255,.28),inset 0 0 22px rgba(0,0,0,.45)}
 .feed-card.th-crimson>.bn{position:absolute;left:0;top:0;width:100%;height:23cqw;margin:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;overflow:visible;display:block;aspect-ratio:auto;min-height:0;z-index:3}
 .feed-card.th-crimson>.bn.has-badge{min-height:0}
 .feed-card.th-crimson>.bn.has-badge .feed-meta{padding-right:0}
@@ -1047,7 +1048,8 @@ section.feed-card.th-crimson>.feed-badge{position:absolute!important;left:2cqw;r
 .feed-card.th-crimson .rxb[aria-pressed="true"]{background:rgba(255,30,30,.2);box-shadow:0 0 3cqw rgba(255,40,40,.9),inset 0 0 0 .5cqw #ff3b30}
 .feed-card.th-crimson .feed-pts{right:4cqw;bottom:3cqw;font-size:clamp(20px,7.5cqw,34px);-webkit-text-stroke:0;color:#fff;text-shadow:0 2px 6px #000,0 0 14px rgba(230,0,0,.9);transform:rotate(-8deg);transform-origin:100% 100%;z-index:4}
 .feed-card.th-crimson>.rxwrap~*{position:absolute;left:3cqw;bottom:1.5cqw;width:62cqw;margin:0;z-index:4;text-align:left!important;justify-content:flex-start!important;text-shadow:0 1px 4px #000}
-.feed-card.th-crimson>.rxwrap~* .link,.feed-card.th-crimson>.rxwrap~*.hint{color:#cfc8c8}
+.feed-card.th-crimson>.rxwrap~*.hint{color:#e6e0e0}
+.feed-card.th-crimson>.rxwrap~* .link{display:inline-block;color:#fff;background:rgba(8,6,6,.78);border:1px solid #b3141b;border-radius:999px;padding:.9cqw 3cqw;font-size:clamp(11px,3.2cqw,14px);font-weight:700;line-height:1.2;text-decoration:none;box-shadow:0 2px 6px rgba(0,0,0,.7)}
 .bn .nm,.bn .link,.bn h1{color:var(--panel-ink)}
 .bn .sub,.bn .eyebrow{color:var(--panel-muted)}
 .bn h1.day{font-size:34px}
