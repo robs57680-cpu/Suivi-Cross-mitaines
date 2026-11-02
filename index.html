@@ -2219,7 +2219,12 @@ section.feed-card.th-neonviolet>.feed-badge{position:absolute!important;left:2cq
 .rk-who{display:grid;min-width:0}
 .rk-who b{overflow-wrap:anywhere}
 .rk-who span{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
-.rk-pts{font-family:var(--f-mono);font-weight:700;font-size:13px;white-space:nowrap}
+.rk-pts{font-family:var(--f-mono);font-weight:700;font-size:13px;text-align:right;max-width:46vw;overflow-wrap:anywhere}
+/* dernières connexions (coach) */
+.sn-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.sn-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:9px 12px;background:var(--surface2);border:2px solid var(--edge);border-radius:4px}
+.sn-row b{overflow-wrap:anywhere}
+.sn-row span{font-size:12px;color:var(--muted);text-align:right}
 </style>
 </head>
 <body>
@@ -4586,6 +4591,7 @@ function mvFirstTimeFor(w,date){
   return [...mvIdsOfWod(w)].filter(i=>GLOSS[i]&&!seen.has(GLOSS[i][0])&&!done.has(i));
 }
 function mvCheckOpen(w,date){
+  if(!featOn('mvCheck'))return; /* coach › Fonctionnalités : message « première fois » désactivé pour tous */
   if(S.owner||!S.uid||!S.db||!w||document.getElementById('mv-first'))return;
   S.mvDone=S.mvDone||{};
   if(S.mvDone[date]||S.tab!=='today'||S.viewDate!==date||!timerOk(date))return;
@@ -5415,6 +5421,7 @@ function render(force){
     return;
   }
   if(S.uid&&ready()&&S.logs[S.uid]&&S.prof.sex&&S.logs[S.uid].sex!==S.prof.sex&&S.sexSync!==S.prof.sex){S.sexSync=S.prof.sex;saveLog({sex:S.prof.sex});}
+  touchSeen();
   /* catégorie d'âge : recalculée à chaque ouverture (un athlète qui fête ses 35 ans passe chez les Vétérans) */
   pfPubSync();
   if(S.uid&&ready()&&S.profLoaded&&S.logs[S.uid]){const ac=ageCatOf(S.prof.birth);if((S.logs[S.uid].ageCat||'')!==ac&&S.ageSync!==ac){S.ageSync=ac;saveLog({ageCat:ac});}}
@@ -7391,8 +7398,10 @@ function sessionCard(w,i,n,mine,prev,next){
   return slot;
 }
 /* ---------- classement des résultats d'une séance (bouton podium des cartes) ----------
-   Scratch : tous les athlètes ensemble, classés aux points du metcon (à égalité, niveau le plus haut devant).
-   Par niveau : un classement séparé pour Rx, Intermédiaire et Débutant. Les séances de remplacement ne sont pas comptées (autre metcon). */
+   Classement au RÉSULTAT du metcon (temps pour un For Time, tours + reps pour un AMRAP), jamais aux points : même clé que scoreKey (REDO).
+   Un For Time terminé passe devant un résultat arrêté au time cap ; au time cap, plus de reps = devant.
+   Scratch : tous les athlètes ensemble (à résultat égal, même rang). Par niveau : un classement séparé pour Rx, Intermédiaire et Débutant.
+   Les séances de remplacement ne sont pas comptées (autre metcon). */
 const RK_LV=['Débutant','Intermédiaire','Rx'];
 function sessionRankRows(w){
   const m=metconOf(w),out=[];
@@ -7400,7 +7409,7 @@ function sessionRankRows(w){
   for(const [uid,lg] of Object.entries(S.logs)){
     const e=lg.entries&&lg.entries[w.date];
     if(!e||e.sw||!hasScore(e))continue;
-    out.push({uid,pseudo:lg.pseudo||'Athlète',lvl:lvRank(m,e.level||0),lv:lvVal(e,m),pts:perfOf(m,e),txt:scoreText(m,e.score,e)});
+    out.push({uid,pseudo:lg.pseudo||'Athlète',lvl:lvRank(m,e.level||0),lv:lvVal(e,m),k:scoreKey(m,e),txt:scoreText(m,e.score,e)});
   }
   return out;
 }
@@ -7411,8 +7420,8 @@ function openSessionRank(w){
   let mode='scratch';
   const esc=e=>{if(e.key==='Escape'){e.stopPropagation();close();}};
   const close=()=>{ov.remove();document.removeEventListener('keydown',esc,true);};
-  const cmp=(a,b)=>b.pts-a.pts||b.lv-a.lv||a.pseudo.localeCompare(b.pseudo);
-  const tie=(a,b)=>Math.round(a.pts*100)===Math.round(b.pts*100)&&Math.round(a.lv*100)===Math.round(b.lv*100);
+  const cmp=(a,b)=>b.k[0]-a.k[0]||b.k[1]-a.k[1]||b.lv-a.lv||a.pseudo.localeCompare(b.pseudo);
+  const tie=(a,b)=>a.k[0]===b.k[0]&&Math.abs(a.k[1]-b.k[1])<1e-9;
   const list=arr=>{
     const sorted=arr.slice().sort(cmp);let pos=0;
     return h('ol',{class:'rk-list'},sorted.map((r,i)=>{
@@ -7420,13 +7429,15 @@ function openSessionRank(w){
       const me=r.uid===S.uid;
       return h('li',{class:'rk-row'+(me?' me':'')},
         h('span',{class:'rk-pos'},pos<=3?['🥇','🥈','🥉'][pos-1]:String(pos)),
-        h('div',{class:'rk-who'},h('b',{},r.pseudo+(me?' (toi)':'')),h('span',{},r.txt+' · '+lvTag(r.lv))),
-        h('span',{class:'rk-pts'},fmtN(r.pts)+' pts'));
+        h('div',{class:'rk-who'},h('b',{},r.pseudo+(me?' (toi)':'')),h('span',{},'Niveau '+lvTag(r.lv))),
+        h('span',{class:'rk-pts'},r.txt));
     }));
   };
   const body=h('div',{class:'rk-body'});
   const tabs=h('div',{class:'rk-tabs',role:'group','aria-label':'Type de classement'});
+  const hint=h('p',{class:'hint'});
   const paint=()=>{
+    hint.textContent=mode==='scratch'?'Classé sur le résultat du metcon (temps ou tours), tous niveaux confondus.':'Classé sur le résultat du metcon (temps ou tours), séparément dans chaque niveau.';
     tabs.replaceChildren(...[['scratch','Scratch'],['level','Par niveau']].map(([k,l])=>
       h('button',{type:'button',class:'btn'+(mode===k?' primary':''),'aria-pressed':String(mode===k),onclick:()=>{mode=k;paint();}},l)));
     if(!rows.length){body.replaceChildren(h('p',{class:'muted'},'Personne n’a encore enregistré de résultat sur cette séance.'));return;}
@@ -7438,7 +7449,7 @@ function openSessionRank(w){
     h('div',{class:'sheet',role:'dialog','aria-modal':'true','aria-label':'Classement de la séance'},
       h('div',{class:'ov-h'},h('span',{class:'ov-t'},'Classement'),h('button',{type:'button',class:'ov-x','aria-label':'Fermer',onclick:close},'✕')),
       h('p',{class:'eyebrow'},cap(fmtShort(w.date))+' · '+w.title),
-      rows.length?tabs:null,body));
+      rows.length?tabs:null,rows.length?hint:null,body));
   document.body.append(ov);document.addEventListener('keydown',esc,true);
 }
 /* une séance d'une saison terminée n'apparaît plus dans l'onglet Séance */
@@ -11868,6 +11879,61 @@ function wordsCard(){
     list.length?h('ul',{class:'list'},list.map((wd,i)=>h('li',{},h('div',{class:'l',title:wd},trunc(wd,40)),h('button',{class:'btn sm danger',type:'button',onclick:()=>set(list.filter((_,j)=>j!==i))},'Retirer')))):h('p',{class:'muted'},'Aucun mot enregistré.'));
 }
 const pl_=(n,w)=>n+' '+w+(n>1?'s':'');
+/* ---------- fonctionnalités activables par le coach (config/features = {mvCheck:false, …}) ----------
+   Une fonctionnalité est active tant que le coach ne l'a pas décochée (document absent ou illisible = tout actif). */
+const featOn=k=>!(S.feat&&S.feat[k]===false);
+const featSet=(k,v)=>run(async()=>{await S.db.doc('config/features').set(Object.assign({},S.feat||{},{[k]:v}));toast(v?'Fonctionnalité activée':'Fonctionnalité désactivée');});
+function featuresCard(){
+  const on=featOn('mvCheck');
+  return h('div',{class:'stack'},h('section',{class:'card'},
+    ynSwitch('Vérification de la connaissance des mouvements',on,'feat-mvcheck',()=>featSet('mvCheck',!on)),
+    h('p',{class:'hint'},on
+      ?'Activée : quand un adhérent ouvre une séance qui contient un mouvement qu’il n’a jamais ouvert ni fait, un message lui demande de consulter les fiches des mouvements.'
+      :'Désactivée : les adhérents n’ont plus ce message et accèdent directement aux séances.')));
+}
+/* ---------- dernière connexion des adhérents (écrite dans seen/{uid}.at, lue seulement par le coach) ---------- */
+const SEEN_GAP=30*60000;
+function touchSeen(){
+  if(!S.uid||!S.db||S.snapMode||!S.coachLoaded||S.owner||!ready())return;
+  const lg=S.logs[S.uid];if(!lg||!lg.pseudo)return; /* pas de compte complet : rien à suivre */
+  const now=Date.now();
+  if(now-(S._seenAt||0)<SEEN_GAP)return;
+  S._seenAt=now;
+  S.db.doc('seen/'+S.uid).set({at:new Date(now).toISOString()}).catch(()=>{});
+}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){try{touchSeen();}catch(e){}}});
+async function seenLoad(){
+  if(S._seenLoading)return;
+  S._seenLoading=true;S.seenErr=false;
+  try{const sn=await S.db.collection('seen').get();const m={};sn.forEach(d=>{const x=d.data();if(x&&typeof x.at==='string')m[d.id]=x.at;});S.seenMap=m;}
+  catch(e){S.seenErr=true;S.seenMap=S.seenMap||{};}
+  finally{S._seenLoading=false;render();}
+}
+function seenLabel(iso){
+  const d=new Date(iso);if(isNaN(d))return '';
+  const t=d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  const n=Math.max(0,Math.round((dparse(todayStr())-dparse(dfmt(d)))/86400000));
+  return n===0?'Aujourd’hui · '+t:n===1?'Hier · '+t:'Il y a '+n+' jours · '+cap(fmtShort(dfmt(d)))+' · '+t;
+}
+function lastSeenCard(){
+  if(!S.seenMap&&!S._seenLoading)seenLoad();
+  const map=S.seenMap||{};
+  const rows=Object.entries(S.logs).filter(([,lg])=>lg&&lg.pseudo).map(([uid,lg])=>{
+    let at=map[uid]||'',fb=false;
+    if(!at){ /* pas encore reconnecté depuis la mise à jour : on prend son dernier résultat enregistré */
+      for(const e of Object.values(lg.entries||{}))if(e&&typeof e.at==='string'&&e.at>at)at=e.at;
+      fb=!!at;
+    }
+    return {uid,pseudo:lg.pseudo,at,fb};
+  }).sort((a,b)=>(b.at>a.at?1:b.at<a.at?-1:a.pseudo.localeCompare(b.pseudo)));
+  return h('div',{class:'stack'},
+    h('p',{class:'hint'},'Dernière ouverture de l’appli par chaque adhérent, la plus récente en haut. Mise à jour au plus toutes les 30 minutes. Un adhérent qui ne s’est pas encore reconnecté depuis cette mise à jour affiche la date de son dernier résultat.'),
+    h('div',{class:'row'},h('button',{class:'btn sm',type:'button',id:'seen-refresh',disabled:S._seenLoading,onclick:()=>{S.seenMap=null;seenLoad();}},S._seenLoading?'Chargement…':'Actualiser')),
+    S.seenErr?h('p',{class:'hint'},'Lecture impossible : vérifie que les règles Firestore autorisent le coach à lire la collection seen.'):null,
+    rows.length?h('ul',{class:'sn-list'},rows.map(r=>h('li',{class:'sn-row'},
+      h('b',{},r.pseudo),
+      h('span',{},r.at?seenLabel(r.at)+(r.fb?' (dernier résultat)':''):'Jamais connecté depuis la mise à jour')))):h('p',{class:'muted'},'Aucun adhérent.'));
+}
 const ICO_GEAR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
 const ICO_STATS='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 17v-4M12 17V8M16 17v-6"/><path d="M11 20h2"/></svg>';
 function coachIcons(){
@@ -11889,6 +11955,8 @@ function coachMenu(){
     ['avatar','Objets secrets',pl_(AV_ITEMS.length,'objet')+' d’avatar à débloquer'],
     ['mvcfg','Configurer les mouvements',pl_(mvCfgCount(),'mouvement')+' configuré'+(mvCfgCount()>1?'s':'')],
     ['warmup','Gérer l’échauffement',pl_(wuItems().length,'exercice')],
+    ['feat','Fonctionnalités','Vérification de la connaissance des mouvements : '+(featOn('mvCheck')?'activée':'désactivée')],
+    ['seen','Dernières connexions',pl_(nA,'adhérent')],
     ['trash','Corbeille',(S.prof.trash||[]).length?pl_((S.prof.trash||[]).length,'élément')+' récupérable'+((S.prof.trash||[]).length>1?'s':''):'Rétablir une suppression par erreur']];
   return h('div',{class:'stack'},items.map(([k,t,sub])=>h('button',{class:'mbtn',type:'button',id:'cm-'+k,onclick:()=>{if(k==='warmup'){openWarmupEdit();return;}if(k==='message'){go('msgs');return;}S.coach.view=k;render();window.scrollTo(0,0);}},h('div',{},h('b',{},t),h('span',{},sub)),((k==='results'&&unusualAll().length)||(k==='wod'&&nP))?h('span',{class:'ibdot','aria-hidden':'true'}):null,h('i',{},'›'))));
 }
@@ -12291,7 +12359,7 @@ function viewCoach(){
   const el=h('div',{class:'stack'});
   if(!S.owner){el.append(h('div',{class:'empty'},h('p',{},'Cet espace est réservé au coach.')));return el;}
   if(!S.coach.wod)S.coach.wod=blankWod();
-  const v=S.coach.view,titles={wod:'Entrer un WOD',groups:'Gérer les groupes',bots:'Gérer les bots',results:'Gérer les résultats',seasons:'Gérer les saisons',avatar:'Objets secrets',rivals:'Messages du fil',message:'Message aux athlètes',trash:'Corbeille',mvcfg:'Configurer les mouvements',plan:'Planificateur de saison',draft:'Récompenses brouillon'};
+  const v=S.coach.view,titles={wod:'Entrer un WOD',groups:'Gérer les groupes',bots:'Gérer les bots',results:'Gérer les résultats',seasons:'Gérer les saisons',avatar:'Objets secrets',rivals:'Messages du fil',message:'Message aux athlètes',trash:'Corbeille',feat:'Fonctionnalités',seen:'Dernières connexions',mvcfg:'Configurer les mouvements',plan:'Planificateur de saison',draft:'Récompenses brouillon'};
   if(v==='rwp'){el.append(rwpView());return el;} /* plein écran : voir rwpPlace */
   if(v==='plan'){el.append(planView());return el;} /* plein écran, sans la ligne de retour ni le titre : voir planPlace */
   if(titles[v])el.append(h('div',{class:'row'},h('button',{class:'btn sm',type:'button',onclick:()=>{S.coach.view=null;S.entry=null;S.confirm=null;render();window.scrollTo(0,0);}},'← Coach')));
@@ -12306,6 +12374,8 @@ function viewCoach(){
   else if(v==='message')el.append(annCoach());
   else if(v==='trash')el.append(trashCard());
   else if(v==='mvcfg')el.append(mvCfgSection());
+  else if(v==='feat')el.append(featuresCard());
+  else if(v==='seen')el.append(lastSeenCard());
   else if(v==='draft')el.append(rewardDraftCard());
   else el.append(periodEditor(),periodList());
   return el;
@@ -14806,6 +14876,7 @@ function startFirebase(){
     /* les groupes ne bloquent jamais l'appli : si les règles ne sont pas encore publiées, on ignore l'erreur */
     unsubs.push(S.db.doc('config/groups').onSnapshot(sn=>{const d=sn.exists?sn.data():null;S.groups={list:(d&&Array.isArray(d.list))?d.list:[],of:(d&&d.of&&typeof d.of==='object')?d.of:{},snap:(d&&d.snap&&typeof d.snap==='object')?d.snap:{},bots:(d&&d.bots&&typeof d.bots==='object')?d.bots:{},loaded:true};S._freezing=false;scheduleRender();},()=>{}));
     /* message du coach : si les règles ne sont pas publiées, on ignore l'erreur */
+    unsubs.push(S.db.doc('config/features').onSnapshot(sn=>{S.feat=sn.exists?sn.data():null;scheduleRender();},()=>{}));
     unsubs.push(S.db.doc('config/announcement').onSnapshot(sn=>{S.ann=sn.exists?sn.data():null;S.annLoaded=true;scheduleRender();},()=>{S.annLoaded=true;scheduleRender();}));
     /* échauffement guidé : si les règles ne sont pas publiées, l'appli utilise la version intégrée et ne tente aucune écriture */
     unsubs.push(S.db.doc('config/warmup').onSnapshot(sn=>{const d=sn.exists?sn.data():null;S.wu.cfg=(d&&Array.isArray(d.items))?d:null;S.wu.loaded=true;S.wu.err=false;S.wu.fromCache=!!sn.fromCache;wuMaybeSeed();scheduleRender();},()=>{S.wu.loaded=true;S.wu.err=true;scheduleRender();}));
