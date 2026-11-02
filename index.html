@@ -11906,7 +11906,7 @@ async function seenLoad(){
   if(S._seenLoading)return;
   S._seenLoading=true;S.seenErr=false;
   try{const sn=await S.db.collection('seen').get();const m={};sn.forEach(d=>{const x=d.data();if(x&&typeof x.at==='string')m[d.id]=x.at;});S.seenMap=m;}
-  catch(e){S.seenErr=true;S.seenMap=S.seenMap||{};}
+  catch(e){S.seenErr=String((e&&e.code)||(e&&e.message)||'erreur');S.seenMap=S.seenMap||{};}
   finally{S._seenLoading=false;render();}
 }
 function seenLabel(iso){
@@ -11929,7 +11929,7 @@ function lastSeenCard(){
   return h('div',{class:'stack'},
     h('p',{class:'hint'},'Dernière ouverture de l’appli par chaque adhérent, la plus récente en haut. Mise à jour au plus toutes les 30 minutes. Un adhérent qui ne s’est pas encore reconnecté depuis cette mise à jour affiche la date de son dernier résultat.'),
     h('div',{class:'row'},h('button',{class:'btn sm',type:'button',id:'seen-refresh',disabled:S._seenLoading,onclick:()=>{S.seenMap=null;seenLoad();}},S._seenLoading?'Chargement…':'Actualiser')),
-    S.seenErr?h('p',{class:'hint'},'Lecture impossible : vérifie que les règles Firestore autorisent le coach à lire la collection seen.'):null,
+    S.seenErr?h('p',{class:'hint'},S.seenErr.includes('permission')?'Lecture refusée par les règles Firestore : publie la dernière version des règles (bloc « seen ») dans la console Firebase, puis appuie sur Actualiser.':'Lecture impossible ('+S.seenErr+'). Vérifie ta connexion, puis appuie sur Actualiser.'):null,
     rows.length?h('ul',{class:'sn-list'},rows.map(r=>h('li',{class:'sn-row'},
       h('b',{},r.pseudo),
       h('span',{},r.at?seenLabel(r.at)+(r.fb?' (dernier résultat)':''):'Jamais connecté depuis la mise à jour')))):h('p',{class:'muted'},'Aucun adhérent.'));
