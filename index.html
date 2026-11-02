@@ -93,6 +93,11 @@ h1,h2,h3,p{margin:0}
 .flabel{font-family:var(--f-mono);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 .hint{font-size:12px;color:var(--muted)}
 input,select,textarea{width:100%;min-width:0;background:var(--surface2);border:2px solid var(--line);border-radius:4px;padding:10px 12px;font-size:16px}
+.pw-wrap{position:relative;display:block}
+.pw-wrap input{padding-right:48px}
+.pw-wrap .pw-eye{position:absolute;right:3px;top:50%;transform:translateY(-50%);width:42px;height:42px;min-width:0;min-height:0;display:grid;place-items:center;margin:0;padding:0;background:transparent;border:0;box-shadow:none;border-radius:6px;color:var(--muted);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.pw-wrap .pw-eye:hover,.pw-wrap .pw-eye[aria-pressed=true]{color:var(--ink)}
+.pw-wrap .pw-eye svg{width:22px;height:22px;display:block}
 input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none}
 textarea{resize:vertical}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
@@ -13424,20 +13429,26 @@ const logoEl=svg=>{const x=h('span',{class:'inst-logo','aria-hidden':'true'});x.
 /* écran de connexion : mettre l'appli sur l'écran d'accueil (un bouton Apple, un bouton Android), avec les consignes de chaque système */
 function installCard(){
   if(isStandalone())return null; /* déjà installée : rien à proposer */
+  /* consignes adaptées au navigateur réellement utilisé (sur ordinateur : Safari / Chrome par défaut) */
+  const iosBr=isIOS()?iosBrowser():'safari',andBr=isAndroid()?androidBrowser():'chrome';
   const goApple=async()=>{
     /* iOS ne permet pas d'ajouter l'icône par code : on ouvre la feuille de partage, où il reste à toucher « Sur l'écran d'accueil » */
-    if(navigator.share){try{await navigator.share({title:'Box Score',url:location.href.split('#')[0]});}catch(e){}}
-    else toast('Ouvre cette page dans Safari, touche Partager puis « Sur l’écran d’accueil ».',true);
+    if(navigator.share){try{await navigator.share({title:'Box Score',url:pageUrl()});}catch(e){}}
+    else toast(iosTxt(iosBr),true);
   };
   const goAndroid=async(btn)=>{
-    /* Chrome Android : l'invite d'installation s'ouvre directement ; sinon on renvoie au menu de Chrome */
+    /* navigateurs Chromium (Chrome, Edge, Samsung…) : l'invite d'installation s'ouvre directement ; sinon on explique le menu du navigateur utilisé */
     const ev=installEv;
     if(ev){
       installEv=null;
       try{ev.prompt();const c=await ev.userChoice;if(c&&c.outcome==='accepted'){btn.textContent='Installée ✓';btn.disabled=true;return;}}catch(e){}
     }
-    toast('Ouvre cette page dans Chrome, touche les trois points puis « Ajouter à l’écran d’accueil » (ou « Installer l’application »).',true);
+    toast(androidTxt(andBr),true);
   };
+  /* iOS : impossible de forcer Safari depuis une page web, on copie donc le lien pour le coller dans Safari */
+  const copyBtn=async()=>{const ok=await copyLink();toast(ok?'Lien copié : ouvre Safari et colle-le dans la barre d’adresse.':'Copie impossible : copie l’adresse de la barre du navigateur à la main, puis colle-la dans Safari.',!ok);};
+  /* Android : on peut forcer Chrome grâce à un lien « intent » */
+  const chromeBtn=()=>{toast('Ouverture dans Chrome…');openInChrome();};
   const steps=a=>h('ol',{style:'margin:8px 0 0 18px;padding:0;display:grid;gap:4px'},...a.map(t=>h('li',{},t)));
   return h('section',{class:'card',id:'install-card'},
     h('h2',{class:'h2'},'Mettre l’appli sur ton écran d’accueil'),
@@ -13445,14 +13456,29 @@ function installCard(){
     h('div',{style:'display:grid;gap:14px'},
       h('div',{},
         h('button',{class:'btn'+(isIOS()?' primary':''),type:'button',id:'install-apple',onclick:goApple},logoEl(LOGO_APPLE),'iPhone / iPad (Apple)'),
-        steps(['Ouvre cette page dans Safari (pas dans un autre navigateur).','Touche le bouton Partager (le carré avec une flèche vers le haut), ou le bouton ci-dessus.','Fais défiler, puis choisis « Sur l’écran d’accueil ».','Touche « Ajouter » : l’icône apparaît sur ton écran d’accueil.'])),
+        steps(iosSteps(iosBr)),
+        isIOS()&&iosBr!=='safari'?h('button',{class:'btn',type:'button',id:'install-copy',style:'margin-top:10px',onclick:copyBtn},'Copier le lien pour Safari'):null),
       h('div',{},
         h('button',{class:'btn'+(isAndroid()?' primary':''),type:'button',id:'install-android',onclick:e=>goAndroid(e.currentTarget)},logoEl(LOGO_ANDROID),'Android'),
-        steps(['Ouvre cette page dans Chrome.','Touche le bouton ci-dessus : une fenêtre propose d’installer l’appli, confirme.','Si rien ne s’ouvre : touche les trois points en haut à droite, puis « Ajouter à l’écran d’accueil » (ou « Installer l’application »).','Confirme : l’icône apparaît sur ton écran d’accueil.']))));
+        steps(androidSteps(andBr)),
+        isAndroid()&&andBr!=='chrome'?h('button',{class:'btn',type:'button',id:'install-chrome',style:'margin-top:10px',onclick:chromeBtn},'Ouvrir dans Chrome'):null)));
 }
 function loginView(){
   const email=h('input',{id:'auth-email',type:'email',autocomplete:'email',placeholder:'toi@exemple.fr'});
-  const pw=h('input',{id:'auth-pw',type:'password',autocomplete:'current-password',placeholder:'6 caractères minimum'});
+  const pw=h('input',{id:'auth-pw',type:'password',autocomplete:'current-password',autocapitalize:'off',autocorrect:'off',spellcheck:'false',placeholder:'6 caractères minimum'});
+  /* œil à droite de la barre : mot de passe caché par défaut, un clic l'affiche, un second le recache */
+  const EYE_ON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const EYE_OFF='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 19C5 19 1 12 1 12a18.5 18.5 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+  const eye=h('button',{type:'button',class:'pw-eye',title:'Afficher le mot de passe','aria-label':'Afficher le mot de passe','aria-pressed':'false'});
+  eye.innerHTML=EYE_ON;
+  eye.addEventListener('mousedown',e=>e.preventDefault()); /* garde le clavier ouvert et le curseur dans le champ */
+  eye.addEventListener('click',()=>{
+    const show=pw.type==='password';
+    pw.type=show?'text':'password';
+    eye.innerHTML=show?EYE_OFF:EYE_ON;
+    const t=show?'Masquer le mot de passe':'Afficher le mot de passe';
+    eye.title=t;eye.setAttribute('aria-label',t);eye.setAttribute('aria-pressed',show?'true':'false');
+  });
   const msg=h('p',{class:'hint',role:'alert'});
   const attempt=async(fn)=>{msg.textContent='';try{await fn();}catch(e){msg.textContent=authErr(e);}};
   /* « Créer mon compte » sans e-mail ou sans mot de passe : on explique, flèches à l'appui, ce qu'il reste à remplir */
@@ -13470,7 +13496,7 @@ function loginView(){
     avisTop(),
     h('div',{},h('p',{class:'eyebrow'},'Groupe de Crosstraining'),h('h1',{class:'day'},'Connexion'),h('p',{class:'muted'},'Box Score : le classement de ton groupe de Crosstraining. Fais les séances du coach, note ton résultat, gagne des points.')),
     h('form',{class:'card',onsubmit:e=>{e.preventDefault();attempt(()=>signInWithEmailAndPassword(auth,email.value.trim(),pw.value));}},
-      field('E-mail',email),field('Mot de passe',pw),msg,
+      field('E-mail',email),field('Mot de passe',h('div',{class:'pw-wrap'},pw,eye)),msg,
       h('div',{class:'row'},
         h('button',{class:'btn primary',id:'auth-login',type:'submit'},'Se connecter'),
         h('button',{class:'btn',id:'auth-create',type:'button',onclick:createAcc},'Créer mon compte')),
@@ -14246,18 +14272,82 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEv=e
 window.addEventListener('appinstalled',()=>{installEv=null;});
 const isIOS=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
 const isAndroid=()=>/android/i.test(navigator.userAgent);
-/* iOS ne permet pas d'ajouter l'icône par code : le bouton ouvre la feuille de partage, où il reste à toucher « Sur l'écran d'accueil » */
-const installActIOS=()=>(isIOS()&&!isStandalone()&&navigator.share)?{label:'Ouvrir le menu Partager',run:async()=>{try{await navigator.share({title:'Box Score',url:location.href.split('#')[0]});}catch(e){}}}:null;
-const installActAndroid=()=>(isAndroid()&&!isStandalone()&&installEv)?{label:'Installer l’appli',run:async(btn)=>{
-  const ev=installEv;if(!ev)return;installEv=null;
-  try{ev.prompt();const c=await ev.userChoice;if(c&&c.outcome==='accepted'){btn.textContent='Installée ✓';btn.disabled=true;return;}}catch(e){}
-  btn.textContent='Pas installée : réessaie via les trois points';btn.disabled=true;
-}}:null;
-/* étapes « écran d'accueil » : seulement celle de la plateforme, rien si l'appli est déjà installée */
+/* ----- navigateur utilisé : les consignes et les boutons changent selon lui ----- */
+const pageUrl=()=>location.href.split('#')[0];
+/* iPhone / iPad : 'safari', 'chrome', 'firefox', 'edge', 'opera', 'ddg', 'google', ou 'inapp' (navigateur intégré à Instagram, Facebook, WhatsApp, Mail…) */
+const iosBrowser=()=>{const u=navigator.userAgent||'';
+  if(/CriOS/.test(u))return 'chrome';
+  if(/FxiOS/.test(u))return 'firefox';
+  if(/EdgiOS/.test(u))return 'edge';
+  if(/OPiOS|OPT\//.test(u))return 'opera';
+  if(/DuckDuckGo/.test(u))return 'ddg';
+  if(/GSA\//.test(u))return 'google';
+  if(/FBAN|FBAV|Instagram|Line\/|Snapchat|TikTok|musical_ly|Twitter|LinkedInApp|MicroMessenger|Pinterest|WhatsApp/i.test(u))return 'inapp';
+  return /Safari\//.test(u)?'safari':'inapp';};
+/* Android : 'chrome', 'samsung', 'edge', 'firefox', 'opera', 'ddg' ou 'inapp' (navigateur intégré à une autre appli) */
+const androidBrowser=()=>{const u=navigator.userAgent||'';
+  if(/; wv\)|FBAN|FBAV|Instagram|Line\/|Snapchat|TikTok|musical_ly|Twitter|LinkedInApp|MicroMessenger|Pinterest/i.test(u))return 'inapp';
+  if(/SamsungBrowser/.test(u))return 'samsung';
+  if(/EdgA/.test(u))return 'edge';
+  if(/OPR\/|OPT\//.test(u))return 'opera';
+  if(/Firefox/.test(u))return 'firefox';
+  if(/DuckDuckGo/.test(u))return 'ddg';
+  return 'chrome';};
+/* copie l'adresse de la page (pour la coller dans Safari) */
+const copyLink=async()=>{const u=pageUrl();
+  try{await navigator.clipboard.writeText(u);return true;}catch(e){}
+  try{const t=document.createElement('textarea');t.value=u;t.setAttribute('readonly','');t.style.cssText='position:fixed;top:0;left:0;opacity:0';document.body.append(t);t.select();t.setSelectionRange(0,t.value.length);const ok=document.execCommand('copy');t.remove();return !!ok;}catch(e){return false;}};
+/* Android : force l'ouverture dans Chrome (lien « intent »). Si Chrome est absent, Android revient sur cette même page. */
+const openInChrome=()=>{const u=pageUrl(),sch=location.protocol==='http:'?'http':'https';
+  location.href='intent://'+u.replace(/^https?:\/\//,'')+'#Intent;scheme='+sch+';package=com.android.chrome;S.browser_fallback_url='+encodeURIComponent(u)+';end';};
+/* consignes détaillées (écran de connexion, avec les boutons ci-dessus / ci-dessous) */
+const iosSteps=br=>br==='chrome'?['Tu es dans Chrome : touche le bouton Partager (le carré avec une flèche), à droite de la barre d’adresse, ou le bouton ci-dessus.','Choisis « Sur l’écran d’accueil », puis touche « Ajouter ».','Si cette option n’apparaît pas, copie le lien (bouton ci-dessous) et colle-le dans Safari.']
+  :br==='inapp'?['Tu es dans le navigateur intégré d’une autre appli (Instagram, Facebook, WhatsApp, Mail…) : l’ajout n’y est pas possible.','Ouvre le menu de cette appli puis « Ouvrir dans Safari », ou copie le lien (bouton ci-dessous) et colle-le dans Safari.','Dans Safari : Partager, puis « Sur l’écran d’accueil », puis « Ajouter ».']
+  :br==='safari'?['Ouvre cette page dans Safari.','Touche le bouton Partager (le carré avec une flèche vers le haut), ou le bouton ci-dessus.','Fais défiler, puis choisis « Sur l’écran d’accueil ».','Touche « Ajouter » : l’icône apparaît sur ton écran d’accueil.']
+  :['Ouvre le menu de ton navigateur, touche « Partager », puis « Sur l’écran d’accueil » et « Ajouter ».','Si cette option n’apparaît pas, copie le lien (bouton ci-dessous) et colle-le dans Safari.'];
+const androidSteps=br=>br==='samsung'?['Touche le menu ≡ (en bas à droite).','Choisis « Ajouter la page à », puis « Écran d’accueil ».','Confirme : l’icône apparaît sur ton écran d’accueil. Sinon, utilise le bouton « Ouvrir dans Chrome » ci-dessous.']
+  :br==='edge'?['Touche le menu ⋯ (en bas de l’écran).','Choisis « Ajouter au téléphone » (ou « Ajouter à l’écran d’accueil »).','Confirme : l’icône apparaît sur ton écran d’accueil.']
+  :br==='firefox'?['Touche le menu ⋮ du navigateur.','Choisis « Installer » (ou « Ajouter à l’écran d’accueil »).','Confirme : l’icône apparaît sur ton écran d’accueil.']
+  :br==='opera'?['Touche le menu du navigateur.','Choisis « Ajouter à », puis « Écran d’accueil ».','Confirme : l’icône apparaît sur ton écran d’accueil.']
+  :br==='inapp'?['Tu es dans le navigateur intégré d’une autre appli : l’installation n’y est pas possible.','Touche « Ouvrir dans Chrome » ci-dessous, ou le menu ⋮ puis « Ouvrir dans le navigateur ».','Dans Chrome, touche ensuite le bouton « Android » ci-dessus ou le menu ⋮ puis « Ajouter à l’écran d’accueil ».']
+  :br==='ddg'?['Ouvre le menu du navigateur et cherche « Ajouter à l’écran d’accueil ».','Confirme : l’icône apparaît sur ton écran d’accueil.','Si tu ne le trouves pas, touche « Ouvrir dans Chrome » ci-dessous.']
+  :['Ouvre cette page dans Chrome.','Touche le bouton ci-dessus : une fenêtre propose d’installer l’appli, confirme.','Si rien ne s’ouvre : touche les trois points en haut à droite, puis « Ajouter à l’écran d’accueil » (ou « Installer l’application »).','Confirme : l’icône apparaît sur ton écran d’accueil.'];
+/* version courte, en une phrase (didacticiel, message d'aide) */
+const iosTxt=br=>br==='chrome'?'Dans Chrome, touche le bouton Partager (le carré avec une flèche, à droite de la barre d’adresse), choisis « Sur l’écran d’accueil » puis « Ajouter ». Si l’option n’apparaît pas, ouvre l’appli dans Safari à la place.'
+  :br==='inapp'?'Ce navigateur intégré (Instagram, Facebook, WhatsApp, Mail…) ne permet pas l’ajout : ouvre l’appli dans Safari (menu de l’appli puis « Ouvrir dans Safari », ou copie le lien), touche Partager, choisis « Sur l’écran d’accueil » puis « Ajouter ».'
+  :br==='safari'?'Ouvre l’appli dans Safari, touche le bouton Partager (le carré avec une flèche vers le haut), fais défiler et choisis « Sur l’écran d’accueil », puis « Ajouter ».'
+  :'Ouvre le menu de ton navigateur, touche « Partager », choisis « Sur l’écran d’accueil » puis « Ajouter ». Si l’option n’apparaît pas, ouvre l’appli dans Safari à la place.';
+const androidTxt=br=>br==='samsung'?'Touche le menu ≡, puis « Ajouter la page à » et « Écran d’accueil », et confirme.'
+  :br==='edge'?'Touche le menu ⋯, puis « Ajouter au téléphone » (ou « Ajouter à l’écran d’accueil ») et confirme.'
+  :br==='firefox'?'Touche le menu ⋮, puis « Installer » (ou « Ajouter à l’écran d’accueil ») et confirme.'
+  :br==='opera'?'Touche le menu du navigateur, puis « Ajouter à » et « Écran d’accueil », et confirme.'
+  :br==='inapp'?'Ce navigateur intégré à une autre appli ne permet pas l’installation : ouvre l’appli dans Chrome (bouton « Ouvrir dans Chrome » ou menu ⋮ puis « Ouvrir dans le navigateur »), puis « Ajouter à l’écran d’accueil ».'
+  :br==='ddg'?'Ouvre le menu du navigateur, cherche « Ajouter à l’écran d’accueil » et confirme. Sinon, ouvre l’appli dans Chrome.'
+  :'Ouvre l’appli dans Chrome, touche les trois points en haut à droite, puis « Ajouter à l’écran d’accueil » (ou « Installer l’application ») et confirme.';
+/* iOS : le bouton ouvre la feuille de partage (Safari, Chrome), sinon copie le lien à coller dans Safari */
+const installActIOS=()=>{
+  if(!isIOS()||isStandalone())return null;
+  const br=iosBrowser();
+  if((br==='safari'||br==='chrome')&&navigator.share)return {label:'Ouvrir le menu Partager',run:async()=>{try{await navigator.share({title:'Box Score',url:pageUrl()});}catch(e){}}};
+  if(br==='safari')return null;
+  return {label:'Copier le lien pour Safari',run:async(btn)=>{const ok=await copyLink();btn.textContent=ok?'Lien copié : colle-le dans Safari':'Copie impossible : ouvre Safari à la main';}};
+};
+/* Android : invite d'installation si le navigateur la propose, sinon bouton pour forcer Chrome */
+const installActAndroid=()=>{
+  if(!isAndroid()||isStandalone())return null;
+  if(installEv)return {label:'Installer l’appli',run:async(btn)=>{
+    const ev=installEv;if(!ev)return;installEv=null;
+    try{ev.prompt();const c=await ev.userChoice;if(c&&c.outcome==='accepted'){btn.textContent='Installée ✓';btn.disabled=true;return;}}catch(e){}
+    btn.textContent='Pas installée : réessaie via le menu du navigateur';btn.disabled=true;
+  }};
+  if(androidBrowser()!=='chrome')return {label:'Ouvrir dans Chrome',run:()=>{openInChrome();}};
+  return null;
+};
+/* étapes « écran d'accueil » : seulement celle de la plateforme et du navigateur, rien si l'appli est déjà installée */
 function installSteps(){
   if(isStandalone())return [];
-  if(isIOS())return [{act:installActIOS,title:'Mets l’appli sur ton écran d’accueil',text:'Ouvre l’appli dans Safari, touche le bouton Partager (le carré avec une flèche vers le haut), fais défiler et choisis « Sur l’écran d’accueil », puis « Ajouter ». Elle s’ouvre ensuite comme une vraie appli, et sur iPhone les notifications ne marchent que depuis cette icône.'}];
-  if(isAndroid())return [{act:installActAndroid,title:'Mets l’appli sur ton écran d’accueil',text:'Ouvre l’appli dans Chrome, touche les trois points en haut à droite, puis « Ajouter à l’écran d’accueil » (ou « Installer l’application ») et confirme. L’icône apparaît comme une appli classique.'}];
+  if(isIOS())return [{act:installActIOS,title:'Mets l’appli sur ton écran d’accueil',text:iosTxt(iosBrowser())+' Elle s’ouvre ensuite comme une vraie appli, et sur iPhone les notifications ne marchent que depuis cette icône.'}];
+  if(isAndroid())return [{act:installActAndroid,title:'Mets l’appli sur ton écran d’accueil',text:androidTxt(androidBrowser())+' L’icône apparaît comme une appli classique.'}];
   return [{title:'Mets l’appli sur l’écran d’accueil de ton téléphone',text:'Sur iPhone : ouvre l’appli dans Safari, touche Partager puis « Sur l’écran d’accueil ». Sur Android : ouvre-la dans Chrome, touche les trois points puis « Ajouter à l’écran d’accueil ». Elle s’ouvre ensuite comme une vraie appli.'}];
 }
 const TOUR_STEPS={
