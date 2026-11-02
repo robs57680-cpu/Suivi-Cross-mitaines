@@ -706,6 +706,12 @@ section.feed-card>.feed-badge{position:absolute!important;top:8px;right:12px;z-i
 @keyframes needBlink{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 0 3px var(--accent),0 0 18px 5px var(--accent)}}
 .need-blink{animation:needBlink 1s ease-in-out 3}
 @media (prefers-reduced-motion:reduce){.need-blink{animation:none}}
+/* Mes infos : modifications non enregistrées, le bouton « Enregistrer » est mis en avant */
+.inf-warn{margin:12px 0 6px;padding:10px 12px;border:2px solid var(--accent);border-radius:8px;background:rgba(255,255,255,.05);display:flex;flex-direction:column;gap:6px}
+.inf-warn p{margin:0;font-weight:600}
+.inf-warn .link{align-self:flex-start;background:none;border:0;padding:4px 0;color:var(--muted);text-decoration:underline;font:inherit;font-size:13px;cursor:pointer}
+.inf-pulse{animation:needBlink 1s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.inf-pulse{animation:none;outline:3px solid var(--accent);outline-offset:2px}}
 .mbtn{position:relative}
 .mbtn .ibdot{top:10px;right:10px}
 .mbtn i{font-style:normal;font-family:var(--f-display);font-size:28px;color:var(--accent)}
@@ -3633,7 +3639,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-02.1';
+const APP_VERSION='2026-11-02.2';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -5365,14 +5371,14 @@ const typing=()=>{const a=document.activeElement;return a&&main.contains(a)&&/^(
 function scheduleRender(){if(typing()){pending=true;return;}render();}
 document.addEventListener('focusout',()=>{if(!pending)return;setTimeout(()=>{if(!typing()){pending=false;render();}},0);});
 
-function go(tab){closeDrawer(true);S._bk=null;S.movBack=null;S.movFocus=null;if(S.coach){if(S.coach.subEdit)closeSubEditor(true);S.coach.wodOpen=false;}if(tab==='coach'&&S.tab==='coach')S.coach.view=null;S.profView=null;S.viewUser=null;S.tip=null;S.trophOpen='';S.trophSeason='';if(tab==='today'){if(S.tab==='today'&&S.viewDate)S.carDate=S.viewDate;S.viewDate=null;}S.tab=tab;S.boardDetail=false;S.confirm=null;if(S.entry&&S.entry.coach)S.entry=null;if(S.tab!=='today'){S.entry=null;S.redo=null;}render();window.scrollTo(0,0);}
+function go(tab){if(tab!=='profile'&&infosGuard(()=>go(tab)))return;closeDrawer(true);S._bk=null;S.movBack=null;S.movFocus=null;if(S.coach){if(S.coach.subEdit)closeSubEditor(true);S.coach.wodOpen=false;}if(tab==='coach'&&S.tab==='coach')S.coach.view=null;S.profView=null;S.viewUser=null;S.tip=null;S.trophOpen='';S.trophSeason='';if(tab==='today'){if(S.tab==='today'&&S.viewDate)S.carDate=S.viewDate;S.viewDate=null;}S.tab=tab;S.boardDetail=false;S.confirm=null;if(S.entry&&S.entry.coach)S.entry=null;if(S.tab!=='today'){S.entry=null;S.redo=null;}render();window.scrollTo(0,0);}
 const TAB_ICO={feed:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 5h16M4 10h10M4 15h16M4 20h8"/></svg>',
  today:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8.5 9V8a3.5 3.5 0 0 1 7 0v1"/><circle cx="12" cy="14.5" r="5.5"/></svg>',
  board:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 4h9v5a4.5 4.5 0 0 1-9 0z"/><path d="M7.5 6h-3c0 3 1.2 4.6 3.2 5M16.5 6h3c0 3-1.2 4.6-3.2 5M12 13.8V17M8.5 20h7M9.8 17h4.4"/></svg>'};
 function render(force){
   if(force!==true&&S.rankAnim&&S.rankAnim.busy){S.rankAnim.dirty=true;return;} /* animation du classement en cours : on ne reconstruit pas les éléments animés */
   planHide();updatePayChip();
-  pending=false;S._un=null;S._aw=null;S._ob=null;applyTheme();if(document.body.dataset.tab!==(S.tab||''))document.body.dataset.tab=S.tab||'';{const pv=(S.tab==='profile'&&S.uid&&!S.profView)?'1':'';if((document.body.dataset.pv||'')!==pv){if(pv)document.body.dataset.pv=pv;else delete document.body.dataset.pv;}}document.body.classList.remove('modal-open');document.body.classList.remove('board-lock');
+  pending=false;S._un=null;S._aw=null;S._ob=null;if(!(S.tab==='profile'&&S.profView==='infos')){S.infDraft=null;S.infWarn=false;S.infLeave=null;}applyTheme();if(document.body.dataset.tab!==(S.tab||''))document.body.dataset.tab=S.tab||'';{const pv=(S.tab==='profile'&&S.uid&&!S.profView)?'1':'';if((document.body.dataset.pv||'')!==pv){if(pv)document.body.dataset.pv=pv;else delete document.body.dataset.pv;}}document.body.classList.remove('modal-open');document.body.classList.remove('board-lock');
   {const tp=document.querySelector('.top');if(tp)document.documentElement.style.setProperty('--toph',tp.offsetHeight+'px');}
   if(!S.uid){
     $('#tabs').replaceChildren();$('#hdr-right').replaceChildren(S.authReady&&S.db?helpBtn():null);
@@ -7995,7 +8001,10 @@ function entryForm(w,date){
   if(S.entry.coach)form.append(h('p',{class:'hint'},'Tu modifies ce résultat en tant que coach. Les points et le classement se recalculent tout de suite.'));
   if(S.entry.coach&&w.isSub)form.append(h('div',{class:'sub-banner'},h('b',{},'🏠 Séance de substitution'),h('div',{},'Cet athlète a fait « '+w.title.replace(/ · remplacement$/,'')+' » à la place de « '+(w.subFrom||'la séance d’origine')+' ».')));
   const hasForce=(w.parts||[]).some(p=>p.kind==='force');
-  if(m&&hasForce){
+  /* « Corps de séance » ne se décoche que s'il y a une partie force et que le renfo n'est pas en P2 : sinon on remet la valeur par défaut */
+  const canBody=hasForce&&!(w.parts||[]).some(p=>p.kind==='renfo'&&p.label==='P2');
+  if(!canBody)S.entry.only=false;
+  if(m&&canBody){
     form.append(ynSwitch('Corps de séance',!S.entry.only,'entry-only',()=>{S.entry.only=!S.entry.only;if(S.entry.only)S.entry.skip=false;upd();render();}));
     if(S.entry.only)form.append(h('p',{class:'hint'},'Tu gagnes les points du metcon, mais pas ceux de la séance. La charge de la partie force n’est pas enregistrée.'));
   }
@@ -10917,6 +10926,29 @@ function viewProgres(me,board,rank,p){
   el.append(tab==='over'?pgOverview(me,board,rank,p):tab==='prs'?pgPrs():tab==='graph'?pgGraph():tab==='hist'?pgHist():pgGoals());
   return el;
 }
+/* ---------- Mes infos : modifications non enregistrées ----------
+   Les champs (pseudo, poids, date de naissance) gardent un brouillon dans S.infDraft. Si l'athlète tente de quitter la page sans avoir
+   touché « Enregistrer mes infos », on bloque la sortie, on remonte au bouton, on le fait clignoter et un message explique où appuyer.
+   Un lien « Quitter sans enregistrer » reste disponible. */
+function infosDirty(){
+  const d=S.infDraft;
+  if(!d||S.tab!=='profile'||S.profView!=='infos')return false;
+  const sp=String((S.logs[S.uid]&&S.logs[S.uid].pseudo)||'').trim();
+  if(String(d.pseudo||'').trim()!==sp)return true;
+  const raw=String(d.weight||'').trim(),wt=raw===''?0:parseNum(raw),sw=Number(S.prof.weight)>0?Number(S.prof.weight):0;
+  if(wt===null||wt!==sw)return true;
+  return String(d.birth||'')!==String(S.prof.birth||'');
+}
+function infosGuard(next){
+  if(S._infOk||!infosDirty())return false;
+  closeDrawer(true);
+  S.infWarn=true;S.infLeave=next;
+  render();
+  setTimeout(()=>{const b=document.getElementById('infos-save');if(b)b.scrollIntoView({block:'center',behavior:'smooth'});},60);
+  toast('Tes infos ne sont pas enregistrées : appuie sur « Enregistrer mes infos ».',true);
+  return true;
+}
+window.addEventListener('beforeunload',e=>{if(infosDirty()){e.preventDefault();e.returnValue='';}});
 function viewProfile(){
   const el=h('div',{class:'stack'});
   if(!S.uid){el.append(h('h1',{class:'day'},'Mon profil'),h('div',{class:'empty'},h('p',{},'Ton profil est privé. Connecte-toi pour le voir.')));return el;}
@@ -10944,9 +10976,11 @@ function viewProfile(){
   const trophCard=trophiesSection(S.uid,'Mes trophées','Aucun trophée pour l’instant. Ils sont décernés à la fin de chaque saison.');
   /* informations personnelles */
   const lgMe=S.logs[S.uid]||{};
-  const pin=h('input',{id:'pseudo-edit',type:'text',maxlength:'24',value:pseudo});
-  const win=h('input',{id:'weight-edit',type:'text',inputmode:'decimal',placeholder:'',value:Number(S.prof.weight)>0?String(S.prof.weight).replace('.',','):''});
-  const bin=h('input',{id:'birth-edit',type:'date',value:S.prof.birth||'',max:todayStr()});
+  const dr=S.infDraft||null;
+  const pin=h('input',{id:'pseudo-edit',type:'text',maxlength:'24',value:dr?dr.pseudo:pseudo});
+  const win=h('input',{id:'weight-edit',type:'text',inputmode:'decimal',placeholder:'',value:dr?dr.weight:(Number(S.prof.weight)>0?String(S.prof.weight).replace('.',','):'')});
+  const bin=h('input',{id:'birth-edit',type:'date',value:dr?dr.birth:(S.prof.birth||''),max:todayStr()});
+  {const setDr=()=>{S.infDraft={pseudo:pin.value,weight:win.value,birth:bin.value};};['input','change'].forEach(ev=>[pin,win,bin].forEach(x=>x.addEventListener(ev,setDr)));}
   const sx=sel([['','Non renseigné'],['F','Femme'],['H','Homme']],S.prof.sex||'',v=>{S.prof.sex=v;saveProf();if(S.logs[S.uid])saveLog({sex:v});render();},{id:'sex-select'});
   const cn=sel([['','Non renseigné']].concat(PF_COUNTRIES),pfGet().country||'',v=>{pfSet({country:v});render();},{id:'country-select'});
   if(!(Number(S.prof.weight)>0))blinkEl(win);
@@ -10957,18 +10991,19 @@ function viewProfile(){
       const wraw=win.value.trim(),wt=wraw===''?0:parseNum(wraw);
       if(wt===null||wt<0||wt>400){toast('Poids illisible. Écris-le en kg, par exemple 83.',true);return;}
       const bv=bin.value||'';if(bv&&ageCatOf(bv)===''){toast('Date de naissance illisible.',true);return;}
-      S.prof.weight=wt;S.prof.birth=bv;saveProf();S.ageSync=ageCatOf(bv);saveLog({pseudo:v,ageCat:ageCatOf(bv)},'Infos mises à jour');}},
+      S.infDraft=null;S.infWarn=false;S.infLeave=null;S.prof.weight=wt;S.prof.birth=bv;saveProf();S.ageSync=ageCatOf(bv);saveLog({pseudo:v,ageCat:ageCatOf(bv)},'Infos mises à jour');}},
     h('h2',{class:'h2'},'Mes infos'),field('Pseudo affiché dans le classement',pin),
     field('Poids de corps (kg)',win,'Sert au trophée poids / puissance. Seul ton rapport charge ÷ poids apparaît dans l’appli, jamais ton poids.'),
     field('Date de naissance',bin,'Sert aux trophées Seniors (18 à 34 ans) et Vétérans (35 ans et +). Seule ta catégorie apparaît dans l’appli, jamais ta date de naissance.'),
-    h('div',{class:'row'},h('button',{class:'btn',type:'submit'},'Enregistrer mes infos')),
+    S.infWarn?h('div',{class:'inf-warn',role:'alert'},h('p',{},'⚠️ Tes modifications ne sont pas encore enregistrées. Appuie sur le bouton « Enregistrer mes infos » juste en dessous, sinon elles seront perdues. 👇'),h('button',{class:'link',type:'button',onclick:()=>{const f=S.infLeave;S.infWarn=false;S.infDraft=null;S.infLeave=null;if(f){S._infOk=true;try{f();}finally{S._infOk=false;}}else render();}},'Quitter sans enregistrer')):null,
+    h('div',{class:'row'},h('button',{class:'btn'+(S.infWarn?' primary inf-pulse':''),type:'submit',id:'infos-save'},'Enregistrer mes infos')),
     field('Sexe',sx,'Sert à afficher la bonne charge dans les metcons et à attribuer le trophée LA GOAT.'),
     field('Pays',cn,'Son drapeau s’affiche sur ton profil, à côté de ton âge.'),
     (()=>{const gw=lgMe.groupWish||'';return field('Souhait de groupe',sel([['','Je n’ai pas choisi'],['any','Indifférent : un groupe à mon niveau']].concat(groupsList().filter(g=>!g.noWish||gw===g.id).map(g=>[g.id,g.name+(g.noWish?' (fermé aux souhaits)':'')])),(gw==='any'||groupName(gw))?gw:'',v=>saveLog({groupWish:v},'Souhait enregistré'),{id:'gwish-select'}),'Pour être avec tes potes, choisis leur groupe. Le coach voit ton souhait quand il compose les groupes, sans garantie.');})()));
   const pv=S.profView;
   if(pv){
     return h('div',{class:'stack'},
-      h('div',{class:'row'},h('button',{class:'btn sm',type:'button',onclick:()=>{S.profView=null;render();window.scrollTo(0,0);}},'← Profil')),
+      h('div',{class:'row'},h('button',{class:'btn sm',type:'button',onclick:()=>{const back=()=>{S.profView=null;render();window.scrollTo(0,0);};if(infosGuard(back))return;back();}},'← Profil')),
       h('div',{},h('p',{class:'eyebrow'},'Visible par toi seul'),h('h1',{class:'day'},{infos:'Mes infos',badges:'Mes badges',banner:'Ma bannière',prs:'Mes PR',prog:'Progression',notifs:'Notifications'}[pv])),
       pv==='infos'?infosForm:pv==='notifs'?notifSection():pv==='badges'?badgesSection():pv==='banner'?bannerSection():pv==='prog'?progSection():prSection());
   }
@@ -13708,7 +13743,7 @@ const blinkIf=(c,el)=>c?blinkEl(el):el;
 function menuDot(){const a=annActive();return !!(pendCount()>0||(a&&!annIsSeen(a))||dmUnread()||recapDot()||notifDotOn()||unusualAll().length>0||!rulesSeen()||!healthSeen()||profDot());}
 function drawerItems(){
   const a=annActive(),out=[];
-  out.push({id:'profile',label:'Profil',ico:ICO_USER,dot:profDot(),cur:S.tab==='profile'&&!S.profView,fn:()=>{S.profView=null;go('profile');}});
+  out.push({id:'profile',label:'Profil',ico:ICO_USER,dot:profDot(),cur:S.tab==='profile'&&!S.profView,fn:()=>{const f=()=>{S.profView=null;go('profile');};if(infosGuard(f))return;f();}});
   if(S.owner)out.push({id:'coach',label:'Coach',ico:ICO_COACH,dot:unusualAll().length>0||pendCount()>0,cur:['coach','prefs','stats'].includes(S.tab),fn:()=>go('coach')});
   out.push({id:'recap',label:'Résumé de la semaine',ico:ICO_RECAP,dot:recapDot(),cur:S.tab==='recap',fn:()=>{const m=rcLatest();if(m&&!S.owner)(S.rc||(S.rc={})).week=m;go('recap');}});
   out.push({id:'mail',label:'Messages',ico:ICO_MAIL,dot:(!!a&&!annIsSeen(a))||dmUnread(),cur:S.tab==='msgs',fn:()=>go('msgs')});
@@ -14301,7 +14336,7 @@ const copyLink=async()=>{const u=pageUrl();
 const openInChrome=()=>{const u=pageUrl(),sch=location.protocol==='http:'?'http':'https';
   location.href='intent://'+u.replace(/^https?:\/\//,'')+'#Intent;scheme='+sch+';package=com.android.chrome;S.browser_fallback_url='+encodeURIComponent(u)+';end';};
 /* consignes détaillées (écran de connexion, avec les boutons ci-dessus / ci-dessous) */
-const iosSteps=br=>br==='chrome'?['Tu es dans Chrome : touche le bouton Partager (le carré avec une flèche), à droite de la barre d’adresse, ou le bouton ci-dessus.','Choisis « Sur l’écran d’accueil », puis touche « Ajouter ».','Si cette option n’apparaît pas, copie le lien (bouton ci-dessous) et colle-le dans Safari.']
+const iosSteps=br=>br==='chrome'?['Tu es dans Chrome : touche le bouton Partager (le carré avec une flèche), à droite de la barre d’adresse, ou le bouton ci-dessus.','Choisis « Ajouter à l’écran d’accueil » (ou « Sur l’écran d’accueil »), puis touche « Ajouter ». Il faut iOS 16.4 ou plus et Chrome à jour.','Si cette option n’apparaît pas, copie le lien (bouton ci-dessous) et colle-le dans Safari.']
   :br==='inapp'?['Tu es dans le navigateur intégré d’une autre appli (Instagram, Facebook, WhatsApp, Mail…) : l’ajout n’y est pas possible.','Ouvre le menu de cette appli puis « Ouvrir dans Safari », ou copie le lien (bouton ci-dessous) et colle-le dans Safari.','Dans Safari : Partager, puis « Sur l’écran d’accueil », puis « Ajouter ».']
   :br==='safari'?['Ouvre cette page dans Safari.','Touche le bouton Partager (le carré avec une flèche vers le haut), ou le bouton ci-dessus.','Fais défiler, puis choisis « Sur l’écran d’accueil ».','Touche « Ajouter » : l’icône apparaît sur ton écran d’accueil.']
   :['Ouvre le menu de ton navigateur, touche « Partager », puis « Sur l’écran d’accueil » et « Ajouter ».','Si cette option n’apparaît pas, copie le lien (bouton ci-dessous) et colle-le dans Safari.'];
@@ -14313,7 +14348,7 @@ const androidSteps=br=>br==='samsung'?['Touche le menu ≡ (en bas à droite).',
   :br==='ddg'?['Ouvre le menu du navigateur et cherche « Ajouter à l’écran d’accueil ».','Confirme : l’icône apparaît sur ton écran d’accueil.','Si tu ne le trouves pas, touche « Ouvrir dans Chrome » ci-dessous.']
   :['Ouvre cette page dans Chrome.','Touche le bouton ci-dessus : une fenêtre propose d’installer l’appli, confirme.','Si rien ne s’ouvre : touche les trois points en haut à droite, puis « Ajouter à l’écran d’accueil » (ou « Installer l’application »).','Confirme : l’icône apparaît sur ton écran d’accueil.'];
 /* version courte, en une phrase (didacticiel, message d'aide) */
-const iosTxt=br=>br==='chrome'?'Dans Chrome, touche le bouton Partager (le carré avec une flèche, à droite de la barre d’adresse), choisis « Sur l’écran d’accueil » puis « Ajouter ». Si l’option n’apparaît pas, ouvre l’appli dans Safari à la place.'
+const iosTxt=br=>br==='chrome'?'Dans Chrome, touche le bouton Partager (le carré avec une flèche, à droite de la barre d’adresse), choisis « Ajouter à l’écran d’accueil » puis « Ajouter » (iOS 16.4 ou plus, Chrome à jour). Si l’option n’apparaît pas, ouvre l’appli dans Safari à la place.'
   :br==='inapp'?'Ce navigateur intégré (Instagram, Facebook, WhatsApp, Mail…) ne permet pas l’ajout : ouvre l’appli dans Safari (menu de l’appli puis « Ouvrir dans Safari », ou copie le lien), touche Partager, choisis « Sur l’écran d’accueil » puis « Ajouter ».'
   :br==='safari'?'Ouvre l’appli dans Safari, touche le bouton Partager (le carré avec une flèche vers le haut), fais défiler et choisis « Sur l’écran d’accueil », puis « Ajouter ».'
   :'Ouvre le menu de ton navigateur, touche « Partager », choisis « Sur l’écran d’accueil » puis « Ajouter ». Si l’option n’apparaît pas, ouvre l’appli dans Safari à la place.';
