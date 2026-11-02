@@ -8001,12 +8001,12 @@ function entryForm(w,date){
   if(S.entry.coach)form.append(h('p',{class:'hint'},'Tu modifies ce résultat en tant que coach. Les points et le classement se recalculent tout de suite.'));
   if(S.entry.coach&&w.isSub)form.append(h('div',{class:'sub-banner'},h('b',{},'🏠 Séance de substitution'),h('div',{},'Cet athlète a fait « '+w.title.replace(/ · remplacement$/,'')+' » à la place de « '+(w.subFrom||'la séance d’origine')+' ».')));
   const hasForce=(w.parts||[]).some(p=>p.kind==='force');
-  /* « Corps de séance » ne se décoche que s'il y a une partie force et que le renfo n'est pas en P2 : sinon on remet la valeur par défaut */
-  const canBody=hasForce&&!(w.parts||[]).some(p=>p.kind==='renfo'&&p.label==='P2');
+  /* « Corps de séance » se décoche dans tous les cas, sauf quand la séance ne contient que le metcon : alors on remet la valeur par défaut */
+  const canBody=(w.parts||[]).some(p=>p.kind!=='metcon');
   if(!canBody)S.entry.only=false;
   if(m&&canBody){
     form.append(ynSwitch('Corps de séance',!S.entry.only,'entry-only',()=>{S.entry.only=!S.entry.only;if(S.entry.only)S.entry.skip=false;upd();render();}));
-    if(S.entry.only)form.append(h('p',{class:'hint'},'Tu gagnes les points du metcon, mais pas ceux de la séance. La charge de la partie force n’est pas enregistrée.'));
+    if(S.entry.only)form.append(h('p',{class:'hint'},'Tu gagnes les points du metcon, mais pas ceux de la séance.'+(hasForce?' La charge de la partie force n’est pas enregistrée.':'')));
   }
   (w.parts||[]).forEach(p=>{
     if(p.kind==='force'){
