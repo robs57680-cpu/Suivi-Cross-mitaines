@@ -2194,6 +2194,32 @@ section.feed-card.th-neonviolet>.feed-badge{position:absolute!important;left:2cq
 .feed-card.th-neonviolet>.rxwrap~*{position:absolute;left:auto;right:3.6cqw;bottom:3.3cqw;width:auto;max-width:60cqw;margin:0;z-index:4;text-align:right!important;justify-content:flex-end!important;text-shadow:0 1px 4px #000}
 .feed-card.th-neonviolet>.rxwrap~*.hint{color:#e2dcf2}
 .feed-card.th-neonviolet>.rxwrap~* .link{display:inline-block;color:#fff;background:rgba(10,6,24,.8);border:1px solid #7c4dff;border-radius:999px;padding:.9cqw 3cqw;font-size:clamp(11px,3.2cqw,14px);font-weight:700;line-height:1.2;text-decoration:none;box-shadow:0 2px 6px rgba(0,0,0,.7)}
+/* bandeau du haut resserré sur toutes les pages */
+.top{padding-block:7px 6px;margin-bottom:10px;gap:8px}
+.brand{font-size:clamp(16px,5vw,21px);gap:7px}
+.bb{width:clamp(32px,10.5vw,48px)}
+/* onglet Séance : semaine plus discrète, cartes plus haut dans l'écran */
+.car-page{gap:12px}
+.car-page .day{font-size:30px}
+@media (max-width:420px){.car-page .day{font-size:28px}}
+.car-track{padding-top:22px;margin-top:-6px}
+/* bouton podium : à cheval sur le coin haut gauche de la carte, penché */
+.cc-pod{position:absolute;z-index:4;top:-17px;left:8px;width:36px;height:36px;padding:0;display:flex;align-items:center;justify-content:center;color:var(--accent-ink);background:var(--accent);border:3px solid #fff;border-radius:10px;box-shadow:0 3px 8px rgba(0,0,0,.4);cursor:pointer;transform:rotate(-16deg);-webkit-tap-highlight-color:transparent}
+.cc-pod svg{width:20px;height:20px}
+.car-slot.flipped>.cc-pod{display:none}
+.car-slot.has-pod .car-card.front>.cc-top:first-child,.car-slot.has-pod .car-card.front>.cc-flags:first-child{padding-left:30px}
+/* classement d'une séance */
+.rk-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.rk-body{display:grid;gap:14px}
+.rk-grp{display:grid;gap:6px}
+.rk-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.rk-row{display:grid;grid-template-columns:34px minmax(0,1fr) auto;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border:2px solid var(--edge);border-radius:4px}
+.rk-row.me{border-color:var(--accent)}
+.rk-pos{font-family:var(--f-display);font-size:20px;line-height:1;text-align:center}
+.rk-who{display:grid;min-width:0}
+.rk-who b{overflow-wrap:anywhere}
+.rk-who span{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.rk-pts{font-family:var(--f-mono);font-weight:700;font-size:13px;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -7359,8 +7385,61 @@ function sessionCard(w,i,n,mine,prev,next){
   }
   const swapBtn=canSub?h('button',{type:'button',class:'cc-swap','data-tour':'sub-btn','aria-label':sw?'Changer de remplacement : retourner la carte':'Pas ou peu de matériel : retourner la carte pour choisir un metcon de remplacement',title:sw?'Changer de remplacement':'Pas ou peu de matériel',
     onclick:e=>{e.stopPropagation();flip(true);}},'↻'):null;
-  slot=h('div',{class:'car-slot','data-date':date},h('div',{class:'flip'},card,back),swapBtn);
+  const podBtn=metconOf(w)?h('button',{type:'button',class:'cc-pod','data-tour':'pod-btn','aria-label':'Classement des résultats de cette séance',title:'Classement de la séance',
+    onclick:e=>{e.stopPropagation();openSessionRank(w);}},svgOf(ICO_PODIUM)):null;
+  slot=h('div',{class:'car-slot'+(podBtn?' has-pod':''),'data-date':date},h('div',{class:'flip'},card,back),swapBtn,podBtn);
   return slot;
+}
+/* ---------- classement des résultats d'une séance (bouton podium des cartes) ----------
+   Scratch : tous les athlètes ensemble, classés aux points du metcon (à égalité, niveau le plus haut devant).
+   Par niveau : un classement séparé pour Rx, Intermédiaire et Débutant. Les séances de remplacement ne sont pas comptées (autre metcon). */
+const RK_LV=['Débutant','Intermédiaire','Rx'];
+function sessionRankRows(w){
+  const m=metconOf(w),out=[];
+  if(!m)return out;
+  for(const [uid,lg] of Object.entries(S.logs)){
+    const e=lg.entries&&lg.entries[w.date];
+    if(!e||e.sw||!hasScore(e))continue;
+    out.push({uid,pseudo:lg.pseudo||'Athlète',lvl:lvRank(m,e.level||0),lv:lvVal(e,m),pts:perfOf(m,e),txt:scoreText(m,e.score,e)});
+  }
+  return out;
+}
+function openSessionRank(w){
+  const m=metconOf(w);if(!m)return;
+  const old=document.getElementById('rk-ov');if(old)old.remove();
+  const rows=sessionRankRows(w);
+  let mode='scratch';
+  const esc=e=>{if(e.key==='Escape'){e.stopPropagation();close();}};
+  const close=()=>{ov.remove();document.removeEventListener('keydown',esc,true);};
+  const cmp=(a,b)=>b.pts-a.pts||b.lv-a.lv||a.pseudo.localeCompare(b.pseudo);
+  const tie=(a,b)=>Math.round(a.pts*100)===Math.round(b.pts*100)&&Math.round(a.lv*100)===Math.round(b.lv*100);
+  const list=arr=>{
+    const sorted=arr.slice().sort(cmp);let pos=0;
+    return h('ol',{class:'rk-list'},sorted.map((r,i)=>{
+      if(!(i>0&&tie(sorted[i-1],r)))pos=i+1;
+      const me=r.uid===S.uid;
+      return h('li',{class:'rk-row'+(me?' me':'')},
+        h('span',{class:'rk-pos'},pos<=3?['🥇','🥈','🥉'][pos-1]:String(pos)),
+        h('div',{class:'rk-who'},h('b',{},r.pseudo+(me?' (toi)':'')),h('span',{},r.txt+' · '+lvTag(r.lv))),
+        h('span',{class:'rk-pts'},fmtN(r.pts)+' pts'));
+    }));
+  };
+  const body=h('div',{class:'rk-body'});
+  const tabs=h('div',{class:'rk-tabs',role:'group','aria-label':'Type de classement'});
+  const paint=()=>{
+    tabs.replaceChildren(...[['scratch','Scratch'],['level','Par niveau']].map(([k,l])=>
+      h('button',{type:'button',class:'btn'+(mode===k?' primary':''),'aria-pressed':String(mode===k),onclick:()=>{mode=k;paint();}},l)));
+    if(!rows.length){body.replaceChildren(h('p',{class:'muted'},'Personne n’a encore enregistré de résultat sur cette séance.'));return;}
+    if(mode==='scratch'){body.replaceChildren(list(rows));return;}
+    body.replaceChildren(...[2,1,0].map(lv=>{const g=rows.filter(r=>r.lvl===lv);return g.length?h('div',{class:'rk-grp'},h('p',{class:'eyebrow'},RK_LV[lv]+' · '+g.length+(g.length>1?' résultats':' résultat')),list(g)):null;}).filter(Boolean));
+  };
+  paint();
+  const ov=h('div',{class:'ov',id:'rk-ov',style:'z-index:60',onclick:e=>{if(e.target===ov)close();}},
+    h('div',{class:'sheet',role:'dialog','aria-modal':'true','aria-label':'Classement de la séance'},
+      h('div',{class:'ov-h'},h('span',{class:'ov-t'},'Classement'),h('button',{type:'button',class:'ov-x','aria-label':'Fermer',onclick:close},'✕')),
+      h('p',{class:'eyebrow'},cap(fmtShort(w.date))+' · '+w.title),
+      rows.length?tabs:null,body));
+  document.body.append(ov);document.addEventListener('keydown',esc,true);
 }
 /* une séance d'une saison terminée n'apparaît plus dans l'onglet Séance */
 const wodInDoneSeason=d=>{const per=periodFor(d);return !!per&&!per.virtual&&periodState(per)==='done';};
@@ -8387,6 +8466,7 @@ const ICO_GLOBE='<svg '+SVGB+'><circle cx="12" cy="12" r="9"/><path d="M3 12h18M
 const ICO_GROUP='<svg '+SVGB+'><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.5 2.6-5.5 6-5.5s6 2 6 5.5"/><circle cx="17" cy="9" r="2.6"/><path d="M17 14.5c2.6 0 4.5 1.6 4.5 4.5"/></svg>';
 const ICO_CROWN='<svg class="crown" viewBox="0 0 26 20" aria-hidden="true"><path d="M2 17L.5 5l6.5 5L13 1l6 9 6.5-5L24 17z" fill="currentColor"/><rect x="2" y="17.5" width="22" height="2.5" rx="1" fill="currentColor"/></svg>';
 const svgOf=s=>{const d=document.createElement('div');d.innerHTML=s;return d.firstChild;};
+const ICO_PODIUM='<svg '+SVGB+'><path d="M3.5 20.5V14h5v6.5M8.5 20.5V9.5h7v11M15.5 20.5V16h5v4.5M2.5 20.5h19"/><path d="M12 2.8l.9 1.9 2.1.3-1.5 1.5.35 2.1L12 7.6l-1.85 1 .35-2.1L9 5l2.1-.3z"/></svg>';
 const ICO_BOOK='<svg '+SVGB+'><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z"/><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3"/><path d="M12 6.6l1 2.1 2.3.3-1.7 1.6.4 2.3-2-1.1-2 1.1.4-2.3-1.7-1.6 2.3-.3z"/></svg>';
 /* points avec séparateur de milliers : 7 250 */
 const fmtPts=n=>{const s=fmtN(n).split(',');s[0]=s[0].replace(/\B(?=(\d{3})+(?!\d))/g,'\u202f');return s.join(',');};
