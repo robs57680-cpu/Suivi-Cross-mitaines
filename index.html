@@ -2162,11 +2162,11 @@ section.feed-card.th-neonviolet{container-type:inline-size;position:relative;ove
 .feed-card.th-neonviolet>.bn{position:absolute;left:0;top:0;width:100%;height:17.3cqw;margin:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;overflow:visible;display:block;aspect-ratio:auto;min-height:0;z-index:3}
 .feed-card.th-neonviolet>.bn.has-badge{min-height:0}
 .feed-card.th-neonviolet>.bn.has-badge .feed-meta{padding-right:0}
-.feed-card.th-neonviolet>.bn>.feed-head{position:absolute;left:6.97cqw;top:8.9cqw;transform:translateY(-50%);width:58cqw;gap:2.4cqw}
+.feed-card.th-neonviolet>.bn>.feed-head{position:absolute;left:6.97cqw;top:9.55cqw;transform:translateY(-50%);width:58cqw;gap:2.4cqw}
 .feed-card.th-neonviolet .feed-av{width:11.6cqw;height:11.6cqw;box-shadow:none}
 .feed-card.th-neonviolet .feed-av .av{width:11.6cqw!important;height:23.4cqw!important;min-width:0!important}
 .feed-card.th-neonviolet .avf{width:11.6cqw;height:11.6cqw}
-.feed-card.th-neonviolet .avf>.avf-img{width:19.5cqw;height:19.5cqw}
+.feed-card.th-neonviolet .avf>.avf-img{width:19cqw;height:19cqw}
 .feed-card.th-neonviolet>.bn .nm{font-size:clamp(14px,5.2cqw,22px);line-height:1.1;color:#fff;text-shadow:0 2px 6px #000,0 0 10px rgba(0,0,0,.8);letter-spacing:.02em}
 .feed-card.th-neonviolet>.bn .nm .link{color:#fff}
 .feed-card.th-neonviolet>.bn .bn-title{font-size:clamp(8px,2.6cqw,11px);line-height:1.2;color:#b98cff;letter-spacing:.14em;text-transform:uppercase}
@@ -2180,7 +2180,7 @@ section.feed-card.th-neonviolet{container-type:inline-size;position:relative;ove
 .feed-card.th-neonviolet .feed-metric span{font-size:max(9px,2.6cqw);color:#d4b6ff;text-shadow:0 1px 4px #000}
 .feed-card.th-neonviolet .feed-metric:nth-child(2) span{color:#9aeaff}
 .feed-card.th-neonviolet>p.muted{position:absolute;left:6.9cqw;top:35.3cqw;width:41.6cqw;height:18.2cqw;margin:0;display:grid;place-items:center;text-align:center;padding:0 3cqw;color:#d6cdea;text-shadow:0 1px 4px #000;z-index:3}
-.feed-card.th-neonviolet .feed-message{position:absolute;left:35cqw;top:72cqw;width:42cqw;margin:0!important;font-size:clamp(13px,4.3cqw,20px);line-height:1.2;color:#fff;text-shadow:0 2px 5px #000,0 0 10px rgba(0,0,0,.85);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;z-index:4}
+.feed-card.th-neonviolet .feed-message{position:absolute;left:19cqw;top:73cqw;width:58cqw;margin:0!important;font-size:clamp(13px,4.3cqw,20px);line-height:1.2;color:#fff;text-shadow:0 2px 5px #000,0 0 10px rgba(0,0,0,.85);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;z-index:4}
 section.feed-card.th-neonviolet>.feed-badge{position:absolute!important;left:auto;right:3cqw;top:2cqw;transform:scale(.55);transform-origin:top right;z-index:6!important;filter:drop-shadow(0 0 8px rgba(150,90,255,.6)) drop-shadow(2px 4px 4px rgba(0,0,0,.7))}
 /* réactions : les emojis sont dans l'image, les boutons sont posés dessus, transparents */
 .feed-card.th-neonviolet .rxwrap{position:static;padding:0;min-height:0;height:0}
@@ -2225,6 +2225,7 @@ section.feed-card.th-neonviolet>.feed-badge{position:absolute!important;left:aut
 .sn-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:9px 12px;background:var(--surface2);border:2px solid var(--edge);border-radius:4px}
 .sn-row b{overflow-wrap:anywhere}
 .sn-row span{font-size:12px;color:var(--muted);text-align:right}
+.sn-row span small{display:block;margin-top:3px;font-size:11px;color:var(--text,#f4f4f4)}
 </style>
 </head>
 <body>
@@ -5460,7 +5461,7 @@ function banners(){
   if(!S.uid)out.push(h('div',{class:'banner'},h('p',{},'Connecte-toi pour enregistrer tes séances.')));
   else if(needPseudo()){
     const inp=h('input',{id:'pseudo-new',type:'text',maxlength:'24',value:S.meName||'',placeholder:'Ton pseudo'});
-    out.push(h('form',{class:'banner warn',onsubmit:e=>{e.preventDefault();const v=inp.value.trim();if(v.length<2){toast('Choisis un pseudo de 2 caractères minimum',true);return;}saveLog({pseudo:v},'Pseudo enregistré');}},
+    out.push(h('form',{class:'banner warn',onsubmit:e=>{e.preventDefault();const v=inp.value.trim();if(v.length<2){toast('Choisis un pseudo de 2 caractères minimum',true);return;}go('today');saveLog({pseudo:v},'Pseudo enregistré');}},
       h('p',{},'Choisis le pseudo qui apparaîtra dans le classement.'),field('Pseudo',inp),
       h('div',{class:'row'},h('button',{class:'btn primary',type:'submit'},'Valider'))));
   }
@@ -11897,20 +11898,34 @@ function featuresCard(){
 }
 /* ---------- dernière connexion des adhérents (écrite dans seen/{uid}.at, lue seulement par le coach) ---------- */
 const SEEN_GAP=10*60000;
+/* étapes d'inscription, écrites dans seen/{uid}.ob (c : compte créé, g : guide terminé « ok » ou passé « skip », s : onglet Séance ouvert) ; si les règles refusent ce champ, rien ne casse */
+function obMark(patch){
+  if(!S.uid||!S.db||S.snapMode||S.owner||!ready())return;
+  try{S.db.doc('seen/'+S.uid).set({at:new Date().toISOString(),ob:patch},{merge:true}).catch(()=>{});}catch(e){}
+}
 function touchSeen(){
   if(!S.uid||!S.db||S.snapMode||!S.coachLoaded||!ready())return;
-  const lg=S.logs[S.uid];if(!lg||!lg.pseudo)return; /* pas de compte complet : rien à suivre */
+  const lg=S.logs[S.uid]||{};
+  try{
+    const k='bs-ob-'+S.uid;
+    if(!localStorage.getItem(k)){ /* première ouverture sur cet appareil : on note la création du compte (comptes de moins de 30 jours seulement) */
+      localStorage.setItem(k,'1');
+      const c=Date.parse(S.created);
+      if(!isNaN(c)&&Date.now()-c<30*864e5)obMark({c:new Date(c).toISOString()});
+    }
+    if(S.tab==='today'&&!S._obS&&lg.pseudo&&!Object.keys(lg.entries||{}).length){S._obS=1;obMark({s:new Date().toISOString()});}
+  }catch(e){}
   const now=Date.now();
   if(now-(S._seenAt||0)<SEEN_GAP)return;
   S._seenAt=now;
-  S.db.doc('seen/'+S.uid).set({at:new Date(now).toISOString()}).catch(()=>{S._seenAt=now-SEEN_GAP+60000;}); /* échec (réseau, règles) : nouvelle tentative dans 1 minute */
+  S.db.doc('seen/'+S.uid).set({at:new Date(now).toISOString()},{merge:true}).catch(()=>{S._seenAt=now-SEEN_GAP+60000;}); /* échec (réseau, règles) : nouvelle tentative dans 1 minute */
 }
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){try{touchSeen();}catch(e){}}});
 async function seenLoad(){
   if(S._seenLoading)return;
   S._seenLoading=true;S.seenErr=false;
-  try{const sn=await S.db.collection('seen').get();const m={};sn.docs.forEach(d=>{const x=d.data();if(x&&typeof x.at==='string')m[d.id]=x.at;});S.seenMap=m;}
-  catch(e){S.seenErr=String((e&&e.code)||(e&&e.message)||'erreur');S.seenMap=S.seenMap||{};}
+  try{const sn=await S.db.collection('seen').get();const m={},o={};sn.docs.forEach(d=>{const x=d.data();if(x&&typeof x.at==='string')m[d.id]=x.at;if(x&&x.ob&&typeof x.ob==='object')o[d.id]=x.ob;});S.seenMap=m;S.seenOb=o;}
+  catch(e){S.seenErr=String((e&&e.code)||(e&&e.message)||'erreur');S.seenMap=S.seenMap||{};S.seenOb=S.seenOb||{};}
   finally{S._seenLoading=false;render();}
 }
 function seenLabel(iso){
@@ -11921,22 +11936,35 @@ function seenLabel(iso){
 }
 function lastSeenCard(){
   if(!S.seenMap&&!S._seenLoading)seenLoad();
-  const map=S.seenMap||{};
+  const map=S.seenMap||{},obm=S.seenOb||{};
+  const nRes=lg=>Object.keys((lg&&lg.entries)||{}).length;
   const rows=Object.entries(S.logs).filter(([,lg])=>lg&&lg.pseudo).map(([uid,lg])=>{
     let at=map[uid]||'',fb=false;
     if(!at){ /* pas encore reconnecté depuis la mise à jour : on prend son dernier résultat enregistré */
       for(const e of Object.values(lg.entries||{}))if(e&&typeof e.at==='string'&&e.at>at)at=e.at;
       fb=!!at;
     }
-    return {uid,pseudo:lg.pseudo,at,fb};
-  }).sort((a,b)=>(b.at>a.at?1:b.at<a.at?-1:a.pseudo.localeCompare(b.pseudo)));
+    return {uid,pseudo:lg.pseudo,at,fb,lg,ob:obm[uid]||null};
+  });
+  /* inscrits récents qui n'ont pas choisi de pseudo : visibles seulement par leur document seen */
+  Object.keys(obm).forEach(uid=>{const lg=S.logs[uid];if((lg&&lg.pseudo)||!obm[uid].c||!map[uid])return;rows.push({uid,pseudo:'(sans pseudo)',at:map[uid],fb:false,lg:null,ob:obm[uid]});});
+  rows.sort((a,b)=>(b.at>a.at?1:b.at<a.at?-1:a.pseudo.localeCompare(b.pseudo)));
+  const stepOf=r=>{
+    const ob=r.ob||{},n=nRes(r.lg),c=ob.c?cap(fmtShort(dfmt(new Date(ob.c)))):'';
+    if(!r.lg||!r.lg.pseudo)return 'Inscrit'+(c?' le '+c:'')+' · pseudo non choisi';
+    if(n)return ob.c?n+' résultat'+(n>1?'s':'')+(c?' · inscrit le '+c:''):'';
+    return 'Aucun résultat · '+(ob.g==='ok'?'guide terminé':ob.g==='skip'?'guide passé':'guide non terminé')+' · '+(ob.s?'séance ouverte':'séance jamais ouverte')+(c?' · inscrit le '+c:'');
+  };
+  const rec=rows.filter(r=>r.ob&&r.ob.c);
+  const funnel=rec.length?'Inscrits récents (30 jours) : '+rec.length+' · pseudo choisi : '+rec.filter(r=>r.lg&&r.lg.pseudo).length+' · guide terminé : '+rec.filter(r=>r.ob.g==='ok').length+' · séance ouverte : '+rec.filter(r=>r.ob.s).length+' · premier résultat : '+rec.filter(r=>nRes(r.lg)>0).length:'';
   return h('div',{class:'stack'},
-    h('p',{class:'hint'},'Dernière ouverture de l’appli par chaque adhérent, la plus récente en haut. Mise à jour au plus toutes les 10 minutes. Un adhérent qui ne s’est pas encore reconnecté depuis cette mise à jour affiche la date de son dernier résultat.'),
+    h('p',{class:'hint'},'Dernière ouverture de l’appli par chaque adhérent, la plus récente en haut. Mise à jour au plus toutes les 10 minutes. Un adhérent qui ne s’est pas encore reconnecté depuis cette mise à jour affiche la date de son dernier résultat. Sous les nouveaux inscrits, la dernière étape atteinte.'),
+    funnel?h('p',{class:'hint'},funnel):null,
     h('div',{class:'row'},h('button',{class:'btn sm',type:'button',id:'seen-refresh',disabled:S._seenLoading,onclick:()=>{S.seenMap=null;seenLoad();}},S._seenLoading?'Chargement…':'Actualiser')),
     S.seenErr?h('p',{class:'hint'},S.seenErr.includes('permission')?'Lecture refusée par les règles Firestore : publie la dernière version des règles (bloc « seen ») dans la console Firebase, puis appuie sur Actualiser.':'Lecture impossible ('+S.seenErr+'). Vérifie ta connexion, puis appuie sur Actualiser.'):null,
-    rows.length?h('ul',{class:'sn-list'},rows.map(r=>h('li',{class:'sn-row'},
+    rows.length?h('ul',{class:'sn-list'},rows.map(r=>{const st=stepOf(r);return h('li',{class:'sn-row'},
       h('b',{},r.pseudo),
-      h('span',{},r.at?seenLabel(r.at)+(r.fb?' (dernier résultat)':''):'Jamais connecté depuis la mise à jour')))):h('p',{class:'muted'},'Aucun adhérent.'));
+      h('span',{},r.at?seenLabel(r.at)+(r.fb?' (dernier résultat)':''):'Jamais connecté depuis la mise à jour',st?h('small',{},st):null));})):h('p',{class:'muted'},'Aucun adhérent.'));
 }
 const ICO_GEAR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
 const ICO_STATS='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 17v-4M12 17V8M16 17v-6"/><path d="M11 20h2"/></svg>';
@@ -14553,11 +14581,9 @@ const TOURS={
     {title:'Deux semaines offertes',text:'Tes 2 premières semaines de participation sont gratuites. Ensuite, un abonnement est nécessaire pour accéder aux séances.'},
     {sel:'#tour-help',title:'Besoin d’un rappel ?',text:'Ce bouton « ? » te remet ce guide quand tu veux.'}],
   welcome:()=>[
-    {title:'Bienvenue sur Box Score',text:'Le classement de ton groupe de Crosstraining : le coach publie des séances, tu les fais quand tu veux dans la semaine, tu notes ton résultat et tu gagnes des points. Quelques secondes pour bien démarrer.'},
+    {title:'Bienvenue sur Box Score',text:'Le classement de ton groupe de Crosstraining : le coach publie des séances, tu les fais quand tu veux dans la semaine, tu notes ton résultat et tu gagnes des points.'},
     ...installSteps(),
-    {sel:'#tour-help',title:'Des explications quand tu veux',text:'Ce bouton « ? » en haut à droite ouvre le guide de l’écran où tu te trouves. Touche-le à tout moment, sur chaque écran.'},
-    {sel:'[data-tour=tab-menu]',title:'Le menu',text:'Touche ces trois traits pour ouvrir le menu : profil, notifications, règlement, abonnement…'},
-    {needs:'drawer',sel:'[data-tour=dm-sub]',title:'Deux semaines offertes',text:'Tes 2 premières semaines de participation sont gratuites. Ensuite, un abonnement sera nécessaire : tu le trouves ici, dans la rubrique « Abonnement » du menu.'}],
+    {sel:'.tabs',title:'Commence par la séance',text:'Touche « Séance » : tu y trouves les séances de la semaine et tu notes ton résultat. « Fil » montre l’actualité du groupe, « Classement » les points de tous. Le menu (les trois traits) contient ton profil et l’abonnement ; le bouton « ? » en haut à droite explique chaque écran.'}],
   feed:()=>[
     ...installSteps(),
     {sel:'#hdr-right .chip',title:'La saison',text:'La saison affichée. Tes points comptent pour la saison en cours.'},
@@ -14660,14 +14686,14 @@ function maybeTour(){
   if(tourEl||!S.uid||tourSeen('welcome'))return;
   if(!ready()||needPseudo()||tourBusy())return;
   tourMark('welcome');
-  startTour(TOURS.welcome());
+  startTour(TOURS.welcome(),{onEnd:done=>{try{obMark({g:done?'ok':'skip'});}catch(e){}}});
 }
 function stopTour(){
   if(!tourEl)return;
   const T=tourEl;tourEl=null;closeDrawer(true);
   document.removeEventListener('keydown',T._key,true);window.removeEventListener('resize',T._lay);window.removeEventListener('scroll',T._lay,true);
   T.remove();
-  if(T._onEnd){try{T._onEnd();}catch(e){}}
+  if(T._onEnd){try{T._onEnd(!!T._done);}catch(e){}}
 }
 const tourFind=st=>{if(!st.sel)return null;try{return document.querySelector(st.sel);}catch(e){return null;}};
 function startTour(steps,opts){
@@ -14695,7 +14721,7 @@ function tourNext(){
     if(c.needs==='drawer'){if(!drawerEl)openDrawer(true);}else if(drawerEl)closeDrawer(true);
     if(!c.sel||tourFind(c))break;
   }
-  if(j>=T._steps.length){stopTour();return;}
+  if(j>=T._steps.length){T._done=true;stopTour();return;}
   T._i=j;
   const st=T._steps[j],el=tourFind(st);
   if(el&&!el.closest('.tabs,.top,.drawer')){try{el.scrollIntoView({block:'center',behavior:'instant'});}catch(e){el.scrollIntoView();}}
