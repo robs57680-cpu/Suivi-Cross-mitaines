@@ -11905,7 +11905,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden){try{touch
 async function seenLoad(){
   if(S._seenLoading)return;
   S._seenLoading=true;S.seenErr=false;
-  try{const sn=await S.db.collection('seen').get();const m={};sn.forEach(d=>{const x=d.data();if(x&&typeof x.at==='string')m[d.id]=x.at;});S.seenMap=m;}
+  try{const sn=await S.db.collection('seen').get();const m={};sn.docs.forEach(d=>{const x=d.data();if(x&&typeof x.at==='string')m[d.id]=x.at;});S.seenMap=m;}
   catch(e){S.seenErr=String((e&&e.code)||(e&&e.message)||'erreur');S.seenMap=S.seenMap||{};}
   finally{S._seenLoading=false;render();}
 }
