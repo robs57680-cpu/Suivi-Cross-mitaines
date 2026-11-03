@@ -807,6 +807,18 @@ input[type=checkbox]{width:24px;height:24px;padding:0;accent-color:var(--accent)
 .avis-sl blockquote{margin:0;font-size:16px;line-height:1.4;overflow-wrap:anywhere}
 .avis-sl figcaption{font:700 12px var(--f-mono);color:var(--muted)}
 @media (prefers-reduced-motion:reduce){.avis-sl,.avis-sl.on{transition:none}}
+.coin{display:inline-flex;vertical-align:middle;flex:none}
+.paychip.coinchip:not([hidden]){display:inline-flex;align-items:center;gap:4px}
+.shop-bal .shop-big{display:flex;align-items:center;gap:10px}
+.shop-bal .shop-big b{font-family:var(--f-display);font-weight:400;font-size:44px;line-height:1}
+.shop-bal .shop-big span{color:var(--muted)}
+.shop-ic{width:64px;height:64px;flex:none;display:grid;place-items:center;background:var(--tint);border:2px solid var(--edge);border-radius:6px;overflow:hidden;padding:4px}
+.shop-ic svg{width:100%;height:100%}
+.shop-list li{flex-wrap:wrap}
+.shop-act{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.shop-price{display:inline-flex;align-items:center;gap:4px;font:700 14px var(--f-mono)}
+.shop-ctl{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.shop-ctl input[type=number]{width:90px}
 .plan-free{margin:0;font-size:14px;line-height:1.4;font-weight:700;color:var(--ink)}
 .plan-sub,.plan-old,.plan-save{margin:0;font-size:14px;line-height:1.4}
 .plan-old{color:var(--muted)}
@@ -4968,6 +4980,12 @@ function saveLog(patch,msg,uid){
     if(Array.isArray(tp)&&tp.length)data.troph=tp.filter(x=>typeof x==='string'&&x.length<=80).slice(0,4); /* badges épinglés sur le profil (ids « saison|trophée »), visibles sur le profil des autres */
     const fc=patch.focus!==undefined?patch.focus:cur.focus;
     if(Array.isArray(fc)&&fc.length)data.focus=fc.filter(x=>typeof x==='string').slice(0,7); /* priorités choisies (clés de PF_FOCUS), visibles sur le profil des autres */
+    const cgt=patch.coinGot!==undefined?patch.coinGot:cur.coinGot;
+    if(cgt&&typeof cgt==='object'&&Object.keys(cgt).length)data.coinGot=cgt; /* coins gagnés par séance : {date: coins} */
+    const cad=Number(patch.coinAdj!==undefined?patch.coinAdj:cur.coinAdj);
+    if(Number.isFinite(cad)&&cad)data.coinAdj=cad; /* ajustement du coach (± coins) */
+    const sbu=patch.shopBuy!==undefined?patch.shopBuy:cur.shopBuy;
+    if(sbu&&typeof sbu==='object'&&Object.keys(sbu).length)data.shopBuy=sbu; /* objets achetés au shop : {idObjet: prix payé} */
     const gw=patch.groupWish!==undefined?patch.groupWish:cur.groupWish;
     if(typeof gw==='string'&&gw)data.groupWish=gw; /* souhait de groupe : 'any' (indifférent) ou id du groupe */
     await S.db.doc('logs/'+uid).set(data);
@@ -5509,14 +5527,14 @@ function render(force){
   const tabs=[['feed','Fil'],['today','Séance'],['board','Classement']];
   const tabEls=tabs.map(([k,l])=>{const b=h('button',{class:'tab','data-tour':'tab-'+k,'aria-current':S.tab===k?'page':null,onclick:()=>go(k)});b.innerHTML=TAB_ICO[k]+'<span>'+l+'</span>';return b;});
   {
-    const activeExtra=['profile','coach','prefs','stats','share','rules','health','bug','moves','sub','avis','recap','msgs'].includes(S.tab);
+    const activeExtra=['profile','coach','prefs','stats','share','rules','health','bug','moves','sub','shop','avis','recap','msgs'].includes(S.tab);
     const bb=h('button',{class:'tab tab-burger','data-tour':'tab-menu','aria-current':activeExtra?'page':null,'aria-haspopup':'dialog','aria-expanded':drawerEl?'true':'false','aria-label':'Menu',title:'Menu',onclick:()=>{drawerEl?closeDrawer():openDrawer();}});
     bb.innerHTML=ICO_MENU;if(menuDot())bb.append(h('span',{class:'ibdot','aria-hidden':'true'}));
     tabEls.push(bb);
   }
   $('#tabs').classList.remove('coach-tabs');
   $('#tabs').replaceChildren(...tabEls);
-  const view={feed:viewFeed,today:viewToday,board:viewBoard,profile:viewProfile,coach:viewCoach,stats:viewStats,prefs:viewPrefs,share:viewShare,sub:viewSub,avis:viewAvis,rules:viewRules,health:viewHealth,bug:viewBug,moves:viewMoves,recap:viewRecap,msgs:viewMsgs}[S.tab]||viewFeed;
+  const view={feed:viewFeed,today:viewToday,board:viewBoard,profile:viewProfile,coach:viewCoach,stats:viewStats,prefs:viewPrefs,share:viewShare,sub:(PAY_PAUSED?viewShop:viewSub),shop:viewShop,avis:viewAvis,rules:viewRules,health:viewHealth,bug:viewBug,moves:viewMoves,recap:viewRecap,msgs:viewMsgs}[S.tab]||viewFeed;
   const _esc=document.querySelector('.entry-sheet'),_escTop=_esc?_esc.scrollTop:0;
   const _arl=document.querySelector('.ar-list'),_arlTop=_arl?_arl.scrollTop:0,_arlKey=_arl?_arl.dataset.key:'';
   main.replaceChildren(...banners(),view());
@@ -8407,7 +8425,8 @@ function submitEntryNow(w){
   }
   const early=!coach&&wodPending(date);
   const rk=(!coach&&uid===S.uid&&!early)?rankSnap(date):null; /* classement d'avant, pour l'animation qui suit la validation */
-  const sv=saveLog({entries:Object.assign({},cur.entries||{},{[date]:e})},coach?'Résultats enregistrés':(early?'Séance enregistrée en avance : tes points seront ajoutés le lundi '+fmtShort(mondayOf(date))+'.':'Séance enregistrée'),uid);
+  const coinCg=coinPatch(uid,date),coinTx=coinCg?' · +'+coinPerSession()+' coin'+(coinPerSession()>1?'s':''):'';
+  const sv=saveLog(Object.assign({entries:Object.assign({},cur.entries||{},{[date]:e})},coinCg||{}),(coach?'Résultats enregistrés':(early?'Séance enregistrée en avance : tes points seront ajoutés le lundi '+fmtShort(mondayOf(date))+'.':'Séance enregistrée'))+coinTx,uid);
   render();
   if(rk){S._rankPend=true;sv.then(()=>rankAnimStart(rk)).catch(()=>{}).finally(()=>{S._rankPend=false;if(!S.rankAnim)rankFlush();});}
 }
@@ -9950,6 +9969,7 @@ const AV_PUB={theme_salle:'Décor de salle néon : se gagne avec de l’XP (réc
 /* peut-on gagner cet objet sur la saison en cours ? */
 function avStatus(it,own){
   if(own.has(it.id))return ['✓ Déjà débloqué.',true];
+  if(shopEntry(it.id))return ['🛒 En vente dans le Shop : '+shopEntry(it.id).price+' coins.',true];
   if(avOff(it))return ['✗ Pas obtenable pour l’instant : cet objet est désactivé.',false];
   if(COSTUME_IDS.includes(it.id)){const ok=todayStr()<=COSTUME_WEEK[1];return [ok?'✓ Obtenable : réalise un WOD de la semaine du 26 octobre au 1er novembre.':'✗ Plus obtenable : la semaine du 26 octobre au 1er novembre est passée.',ok];}
   const per=activePeriod();
@@ -10024,6 +10044,7 @@ function avState(){
 }
 /* le coach a tous les objets dans son propre inventaire, pour les tester ; les athlètes n'ont que ceux qu'ils ont gagnés */
 const avOwned=uid=>{const o=new Set(Object.keys(avState().earned[uid]||{}));const lg=S.logs[uid]||{};for(const key of (lg.rewardOwned||[])){const [pid,rid]=String(key).split(':');const p=S.periods[pid],r=(p&&p.rewards||[]).find(x=>x.id===rid);if(r&&r.type==='avatar'&&r.asset)o.add(r.asset);}
+  for(const id of Object.keys(lg.shopBuy||{}))if(AV_BY[id])o.add(id); /* achetés au shop */
   /* déguisements : jamais possédés par le sexe opposé (vampire = garçons, sorcière = filles), même offerts par une récompense */
   if(!(S.owner&&uid===S.uid)){const sx=avSexOf(uid);for(const id of Array.from(o)){const it=AV_BY[id];if(it&&(it.slot==='costume'||it.slot==='skin')&&!avSexOk(it,sx))o.delete(id);}}
   return o;};
@@ -10250,6 +10271,7 @@ function openAvatar(uid){
   function equip(it){
     const uid=S.uid,lg=S.logs[uid]||{},av=Object.assign({},lg.avatar||{}),preview=Object.assign({},av._preview||{});
     const earned=new Set(Object.keys((avState().earned||{})[uid]||{}));
+    for(const bid of Object.keys((S.logs[uid]||{}).shopBuy||{}))earned.add(bid);
     if(eq[it.slot]===it.id){
       delete eq[it.slot];delete av[it.slot];delete preview[it.slot];
     }else{
@@ -12063,6 +12085,7 @@ function coachMenu(){
     ['results','Gérer les résultats',pl_(nA,'athlète')+(unusualAll().length?' · '+unusualAll().length+' à vérifier':'')],
     ['seasons','Gérer les saisons',pl_(plist().length,'saison')],
     ['avatar','Objets secrets',pl_(AV_ITEMS.length,'objet')+' d’avatar à débloquer'],
+    ['shop','Shop et coins',pl_(shopCount(),'article')+' en vente · '+coinPerSession()+' coin'+(coinPerSession()>1?'s':'')+' par séance'],
     ['mvcfg','Configurer les mouvements',pl_(mvCfgCount(),'mouvement')+' configuré'+(mvCfgCount()>1?'s':'')],
     ['warmup','Gérer l’échauffement',pl_(wuItems().length,'exercice')],
     ['feat','Fonctionnalités','Vérification de la connaissance des mouvements : '+(featOn('mvCheck')?'activée':'désactivée')],
@@ -12469,7 +12492,7 @@ function viewCoach(){
   const el=h('div',{class:'stack'});
   if(!S.owner){el.append(h('div',{class:'empty'},h('p',{},'Cet espace est réservé au coach.')));return el;}
   if(!S.coach.wod)S.coach.wod=blankWod();
-  const v=S.coach.view,titles={wod:'Entrer un WOD',groups:'Gérer les groupes',bots:'Gérer les bots',results:'Gérer les résultats',seasons:'Gérer les saisons',avatar:'Objets secrets',rivals:'Messages du fil',message:'Message aux athlètes',trash:'Corbeille',feat:'Fonctionnalités',seen:'Dernières connexions',mvcfg:'Configurer les mouvements',plan:'Planificateur de saison',draft:'Récompenses brouillon'};
+  const v=S.coach.view,titles={wod:'Entrer un WOD',groups:'Gérer les groupes',bots:'Gérer les bots',results:'Gérer les résultats',seasons:'Gérer les saisons',avatar:'Objets secrets',shop:'Shop et coins',rivals:'Messages du fil',message:'Message aux athlètes',trash:'Corbeille',feat:'Fonctionnalités',seen:'Dernières connexions',mvcfg:'Configurer les mouvements',plan:'Planificateur de saison',draft:'Récompenses brouillon'};
   if(v==='rwp'){el.append(rwpView());return el;} /* plein écran : voir rwpPlace */
   if(v==='plan'){el.append(planView());return el;} /* plein écran, sans la ligne de retour ni le titre : voir planPlace */
   if(titles[v])el.append(h('div',{class:'row'},h('button',{class:'btn sm',type:'button',onclick:()=>{S.coach.view=null;S.entry=null;S.confirm=null;render();window.scrollTo(0,0);}},'← Coach')));
@@ -12480,6 +12503,7 @@ function viewCoach(){
   else if(v==='bots')el.append(botsCard());
   else if(v==='results')el.append(resultsSection());
   else if(v==='avatar')el.append(avatarCoach());
+  else if(v==='shop')el.append(coachShop());
   else if(v==='rivals')el.append(rivalryCoach());
   else if(v==='message')el.append(annCoach());
   else if(v==='trash')el.append(trashCard());
@@ -13813,7 +13837,7 @@ function openAvisSheet(){
   document.body.append(ov);document.addEventListener('keydown',esc);
   auLoadAvis().then(a=>{
     if(!a.length){list.replaceChildren(h('p',{class:'hint'},'Pas encore d’avis publié. Reviens bientôt !'));return;}
-    list.replaceChildren(...a.map(x=>h('figure',{class:'avis-sl on',style:'margin:0;position:static;opacity:1'},kbRow(x.rating,20),h('blockquote',{},'« '+cleanTxt(x.text)+' »'),h('figcaption',{},cleanTxt(x.pseudo)||'Athlète'))));
+    list.replaceChildren(...a.map(x=>h('figure',{class:'avis-sl on',style:'margin:0;grid-area:auto;position:static;opacity:1;visibility:visible;transform:none;transition:none;padding-bottom:12px;border-bottom:1px solid var(--edge)'},kbRow(x.rating,20),h('blockquote',{},'« '+cleanTxt(x.text)+' »'),h('figcaption',{},cleanTxt(x.pseudo)||'Athlète'))));
   });
 }
 /* ---------- installer l'appli sur l'écran d'accueil (Android / iPhone) ---------- */
@@ -14199,7 +14223,7 @@ function drawerItems(){
   out.push({id:'moves',label:'Apprentissage des mouvements',ico:ICO_MOVES,cur:S.tab==='moves',fn:()=>go('moves')});
   out.push({id:'share',label:'Partager l’appli',ico:ICO_PHONE,cur:S.tab==='share',fn:()=>go('share')});
   out.push({id:'avis',label:'Avis',ico:ICO_KB,cur:S.tab==='avis',fn:()=>go('avis')});
-  out.push({id:'sub',label:'Abonnement',ico:ICO_CARD,cur:S.tab==='sub',fn:()=>go('sub')});
+  out.push(PAY_PAUSED?{id:'shop',label:'Shop',ico:ICO_SHOP,cur:S.tab==='shop',fn:()=>go('shop')}:{id:'sub',label:'Abonnement',ico:ICO_CARD,cur:S.tab==='sub',fn:()=>go('sub')});
   return out;
 }
 function closeDrawer(instant){
@@ -14488,6 +14512,207 @@ function avisTop(){
   }catch(e){S.pubAvis=[];S.pubAvisState=2;}
   return box;
 }
+/* ---------- COINS et SHOP ----------
+   Coins = monnaie du jeu. COIN_DEFAULT coins sont gagnés par séance, au moment où le résultat est enregistré (une seule fois par date de séance).
+   Données par athlète, dans logs/{uid} : coinGot = {date: coins gagnés}, coinAdj = ajustement du coach (± coins), shopBuy = {idObjet: prix payé}.
+   Solde = coinGot + coinAdj − shopBuy. Réglages du shop (coach) : config/features → champ shop = {coin, items:{idObjet:{on,price}}}.
+   Les articles du shop sont les objets de AV_ITEMS : pour ajouter un skin, déposer l'image dans assets/embedded et ajouter une ligne dans AV_ITEMS,
+   il apparaît ensuite dans Coach › Shop et coins, où on le met en vente et où on fixe son prix.
+   PAY_PAUSED = true : l'abonnement est en pause (accès gratuit pour tous, aucun blocage, aucune date de passage en restreint). Remettre false pour le réactiver. */
+const PAY_PAUSED=true;
+const COIN_DEFAULT=5;
+const ICO_SHOP='<svg '+SVGA+'><path d="M3.5 9.5L5 4h14l1.5 5.5"/><path d="M5 9.5V20h14V9.5"/><path d="M3.5 9.5a2.8 2.8 0 0 0 5.5 0 2.8 2.8 0 0 0 6 0 2.8 2.8 0 0 0 5.5 0"/><path d="M10 20v-5h4v5"/></svg>';
+function coinIco(sz){
+  const s=h('span',{class:'coin',role:'img','aria-label':'coins'});
+  s.innerHTML='<svg viewBox="0 0 24 24" width="'+sz+'" height="'+sz+'" aria-hidden="true"><circle cx="12" cy="12" r="10.2" fill="#F4C400" stroke="#14161A" stroke-width="1.8"/><circle cx="12" cy="12" r="7" fill="none" stroke="#14161A" stroke-width="1.2" opacity=".45"/><text x="12" y="16.4" text-anchor="middle" font-size="11.5" font-weight="800" font-family="sans-serif" fill="#14161A">C</text></svg>';
+  return s;
+}
+const shopCfg=()=>{const s=S.feat&&S.feat.shop;return (s&&typeof s==='object')?s:{};};
+const coinPerSession=()=>{const c=shopCfg();if(c.coin===undefined||c.coin===null||c.coin==='')return COIN_DEFAULT;const v=Math.floor(Number(c.coin));return (Number.isFinite(v)&&v>=0)?v:COIN_DEFAULT;};
+const shopEntry=id=>{const x=(shopCfg().items||{})[id],p=x?Math.floor(Number(x.price)):0;return (x&&x.on&&p>=1&&AV_BY[id])?{price:p}:null;};
+const coinSum=o=>Object.values(o||{}).reduce((a,v)=>a+(Number(v)||0),0);
+const coinEarned=lg=>coinSum(lg&&lg.coinGot)+(Number(lg&&lg.coinAdj)||0);
+const coinBal=uid=>{const lg=S.logs[uid]||{};return coinEarned(lg)-coinSum(lg.shopBuy);};
+/* coins d'une séance : une seule fois par date, au moment où le résultat est enregistré */
+const coinPatch=(uid,date)=>{const lg=S.logs[uid]||{},n=coinPerSession();if(!n||(lg.coinGot&&lg.coinGot[date]!==undefined))return null;return {coinGot:Object.assign({},lg.coinGot||{},{[date]:n})};};
+/* un objet du catalogue sans condition d'obtention (ajouté pour le shop) : jamais gagné par la progression */
+for(const it of AV_ITEMS)if(!AV_OBJ[it.id])AV_OBJ[it.id]={d:'À acheter dans le Shop, avec des coins.',test:()=>false};
+/* pastille de l'en-tête : solde de coins (remplace l'état de l'abonnement tant qu'il est en pause) */
+function coinChipPaint(el){
+  if(!S.uid){el.hidden=true;return;}
+  el.hidden=false;el.className='paychip coinchip';el.title='Mes coins : ouvrir le Shop';
+  el.replaceChildren(coinIco(13),document.createTextNode(String(coinBal(S.uid))));
+  el.onclick=()=>go('shop');
+  el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go('shop');}};
+}
+function shopBuy(it){
+  S.shopAsk=null;
+  if(!S.uid||!S.db||S.snapMode){toast('Connexion nécessaire pour acheter.',true);render();return;}
+  const e=shopEntry(it.id);
+  if(!e){toast('Cet objet n’est plus en vente.',true);render();return;}
+  if(avOwned(S.uid).has(it.id)){toast('Tu as déjà cet objet.',true);render();return;}
+  const bal=coinBal(S.uid);
+  if(bal<e.price){toast('Il te manque '+(e.price-bal)+' coins.',true);render();return;}
+  const lg=S.logs[S.uid]||{};
+  saveLog({shopBuy:Object.assign({},lg.shopBuy||{},{[it.id]:e.price})},'Acheté : '+it.name+' (−'+e.price+' coins). Retrouve-le dans ton avatar.');
+}
+function shopRow(it,own,bal){
+  const e=shopEntry(it.id),has=own.has(it.id),ic=h('span',{class:'shop-ic'});
+  try{ic.append(avIcon(it));}catch(x){}
+  const sk=(it.skin&&AV_BY[it.skin])?AV_BY[it.skin].name:'',miss=e.price-bal;
+  const price=has?h('span',{class:'chip ok'},'Possédé'):h('span',{class:'shop-price'},coinIco(15),h('b',{},String(e.price)));
+  let act;
+  if(has)act=h('button',{class:'btn sm',type:'button',onclick:()=>openAvatar()},'Équiper');
+  else if(S.shopAsk===it.id)act=h('span',{class:'shop-act'},
+    h('button',{class:'btn sm',type:'button',onclick:()=>{S.shopAsk=null;render();}},'Annuler'),
+    h('button',{class:'btn primary sm',type:'button',id:'shop-ok-'+it.id,onclick:()=>shopBuy(it)},'Confirmer'));
+  else{act=h('button',{class:'btn primary sm',type:'button',id:'shop-buy-'+it.id,onclick:()=>{S.shopAsk=it.id;render();}},'Acheter');if(miss>0)act.disabled=true;}
+  return h('li',{id:'shop-'+it.id},ic,
+    h('div',{class:'l',style:'flex:1;min-width:120px'},h('div',{class:'nm'},it.name),
+      sk?h('div',{class:'sub'},'Pour l’avatar '+sk):null,
+      (!has&&miss>0)?h('div',{class:'sub'},'Il te manque '+miss+' coin'+(miss>1?'s':'')+'.'):null),
+    h('div',{class:'shop-act'},price,act));
+}
+function viewShop(){
+  const el=h('div',{class:'stack'});
+  el.append(h('div',{},h('p',{class:'eyebrow'},'Box Score'),h('h1',{class:'day'},'Shop')));
+  const lg=S.logs[S.uid]||{},bal=coinBal(S.uid),per=coinPerSession();
+  el.append(h('section',{class:'card shop-bal'},
+    h('p',{class:'flabel'},'Mon solde'),
+    h('div',{class:'shop-big'},coinIco(34),h('b',{},String(bal)),h('span',{},bal>1?'coins':'coin')),
+    h('p',{class:'muted'},(per?'Tu gagnes '+per+' coin'+(per>1?'s':'')+' à chaque séance enregistrée. ':'')+'Dépense-les contre des skins pour ton avatar.'),
+    h('p',{class:'hint'},'Gagnés : '+coinEarned(lg)+' · Dépensés : '+coinSum(lg.shopBuy))));
+  const coach=!!S.owner;
+  if(!coach&&!sexKnown(S.uid)){
+    el.append(h('section',{class:'card'},h('p',{class:'muted'},'Renseigne ton sexe dans « Mes infos » pour voir les skins de ton avatar.'),
+      h('div',{class:'row'},h('button',{class:'btn primary sm',type:'button',onclick:goInfos},'Renseigner mes infos'))));
+    return el;
+  }
+  const sx=coach?null:avSex(),own=avOwned(S.uid);
+  const items=AV_ITEMS.filter(it=>shopEntry(it.id)&&(coach||avSexOk(it,sx)));
+  if(!items.length){el.append(h('section',{class:'card'},h('p',{class:'muted'},'Le shop est vide pour l’instant. Reviens bientôt : de nouveaux skins arrivent !')));return el;}
+  AV_SLOTS.forEach(([sl,label])=>{
+    const its=items.filter(x=>x.slot===sl);if(!its.length)return;
+    el.append(h('section',{class:'card'},h('h2',{class:'h2'},label),h('ul',{class:'list shop-list'},its.map(it=>shopRow(it,own,bal)))));
+  });
+  el.append(h('p',{class:'hint'},'Un objet acheté est à toi pour toujours. Équipe-le depuis ton avatar (Profil › Mon avatar).'));
+  return el;
+}
+/* ---- espace coach : Shop et coins ---- */
+function shopDraft(){
+  const c=S.coach;
+  if(!c.shopDraft){
+    const cfg=shopCfg(),it={};
+    for(const x of AV_ITEMS){const e=(cfg.items||{})[x.id];it[x.id]={on:!!(e&&e.on),price:(e&&Number(e.price)>0)?String(e.price):''};}
+    c.shopDraft={coin:String(coinPerSession()),items:it};
+  }
+  return c.shopDraft;
+}
+function saveShop(){
+  const d=shopDraft(),coin=Math.floor(Number(String(d.coin).replace(',','.')));
+  if(!Number.isFinite(coin)||coin<0){toast('Coins par séance : entre un nombre entier, 0 ou plus.',true);return;}
+  const items={};
+  for(const it of AV_ITEMS){
+    const x=d.items[it.id];if(!x)continue;
+    const p=Math.floor(Number(String(x.price).replace(',','.')));
+    if(x.on&&!(p>=1)){toast('« '+it.name+' » : entre un prix d’au moins 1 coin, ou retire-le de la vente.',true);return;}
+    if(x.on||p>=1)items[it.id]={on:!!x.on,price:p>=1?p:0};
+  }
+  if(!S.db||S.snapMode){toast('Connexion nécessaire pour enregistrer.',true);return;}
+  run(async()=>{
+    await S.db.doc('config/features').set(Object.assign({},S.feat||{},{shop:{coin,items,at:new Date().toISOString()}}));
+    S.coach.shopDraft=null;toast('Shop enregistré');render();
+  });
+}
+const shopCount=()=>AV_ITEMS.filter(x=>shopEntry(x.id)).length;
+/* coins des séances déjà enregistrées : une seule fois par date et par athlète (les dates qui ont déjà leurs coins sont ignorées) */
+function coinBackfillPlan(){
+  const n=coinPerSession(),plan=[];let tot=0,ses=0;
+  if(!n)return {plan,tot,ses,n};
+  for(const [uid,lg] of Object.entries(S.logs)){
+    if(!lg||!lg.pseudo)continue;
+    const miss=Object.keys(lg.entries||{}).filter(d=>(lg.coinGot||{})[d]===undefined);
+    if(!miss.length)continue;
+    plan.push({uid,lg,miss});ses+=miss.length;tot+=miss.length*n;
+  }
+  return {plan,tot,ses,n};
+}
+function coinBackfill(){
+  const p=coinBackfillPlan();
+  S.coach.bfAsk=false;
+  if(!p.plan.length){toast('Rien à créditer : toutes les séances ont déjà leurs coins.');render();return;}
+  if(!S.db||S.snapMode){toast('Connexion nécessaire.',true);render();return;}
+  S.coach.bfBusy=true;render();
+  (async()=>{
+    for(const a of p.plan){
+      const cur=S.logs[a.uid]||{},cg=Object.assign({},cur.coinGot||{});
+      for(const d of a.miss)if(cg[d]===undefined)cg[d]=p.n;
+      await saveLog({coinGot:cg},null,a.uid);
+    }
+    S.coach.bfBusy=false;
+    toast(p.tot+' coins crédités à '+p.plan.length+' athlète'+(p.plan.length>1?'s':'')+' ('+p.ses+' séance'+(p.ses>1?'s':'')+').');
+    render();
+  })();
+}
+function coinBackfillCard(){
+  const p=coinBackfillPlan(),c=S.coach;
+  const card=h('section',{class:'card'},h('h2',{class:'h2'},'Séances passées'));
+  if(!p.n){card.append(h('p',{class:'muted'},'Les coins par séance sont à 0 : rien à créditer.'));return card;}
+  if(!p.plan.length){card.append(h('p',{class:'muted'},'Toutes les séances enregistrées ont déjà leurs coins.'));return card;}
+  card.append(h('p',{class:'muted'},p.ses+' séance'+(p.ses>1?'s':'')+' enregistrée'+(p.ses>1?'s':'')+' sans coins, chez '+p.plan.length+' athlète'+(p.plan.length>1?'s':'')+' : '+p.tot+' coins à créditer ('+p.n+' par séance).'),
+    h('p',{class:'hint'},'Chaque séance n’est créditée qu’une seule fois : tu peux relancer sans risque de doublon.'));
+  let b;
+  if(c.bfBusy){b=h('button',{class:'btn primary',type:'button',id:'coin-bf',disabled:true},'Crédit en cours…');}
+  else if(c.bfAsk)b=h('span',{class:'shop-act'},h('button',{class:'btn',type:'button',onclick:()=>{c.bfAsk=false;render();}},'Annuler'),h('button',{class:'btn primary',type:'button',id:'coin-bf-ok',onclick:coinBackfill},'Confirmer : créditer '+p.tot+' coins'));
+  else b=h('button',{class:'btn primary',type:'button',id:'coin-bf',onclick:()=>{c.bfAsk=true;render();}},'Créditer les séances passées');
+  card.append(h('div',{class:'row'},b));
+  return card;
+}
+function coachShop(){
+  const el=h('div',{class:'stack'}),d=shopDraft();
+  S.coach.coinD=S.coach.coinD||{};
+  el.append(h('section',{class:'card'},h('h2',{class:'h2'},'Coins'),
+    field('Coins gagnés par séance enregistrée',
+      h('input',{type:'number',min:'0',step:'1',inputmode:'numeric',id:'shop-coin',value:d.coin,oninput:e=>{d.coin=e.target.value;}}),
+      'Attribués une seule fois par séance, au moment où le résultat est enregistré (par l’athlète ou par toi). 0 = plus de coins gagnés. Les séances déjà enregistrées se créditent avec « Séances passées » plus bas.')));
+  el.append(coinBackfillCard());
+  const sec=h('section',{class:'card'},h('h2',{class:'h2'},'Articles du shop'),
+    h('p',{class:'hint'},'Coche « En vente » et fixe un prix en coins, puis enregistre. Un objet déjà acheté reste à l’athlète même si tu le retires. Pour ajouter un skin : dépose son image dans assets/embedded et ajoute une ligne dans AV_ITEMS ; il apparaît ici.'));
+  AV_SLOTS.forEach(([sl,label])=>{
+    const its=AV_ITEMS.filter(x=>x.slot===sl);if(!its.length)return;
+    sec.append(h('div',{class:'flabel',style:'margin-top:14px'},label+' · '+its.filter(x=>d.items[x.id]&&d.items[x.id].on).length+' en vente'),
+      h('ul',{class:'list shop-list'},its.map(it=>{
+        const x=d.items[it.id]||(d.items[it.id]={on:false,price:''}),ic=h('span',{class:'shop-ic'});
+        try{ic.append(avIcon(it));}catch(e){}
+        const who=[(it.sex==='f'?'filles':it.sex==='h'?'garçons':''),(it.skin&&AV_BY[it.skin])?'avatar '+AV_BY[it.skin].name:''].filter(Boolean).join(' · ');
+        return h('li',{id:'shopc-'+it.id},ic,
+          h('div',{class:'l',style:'flex:1;min-width:120px'},h('div',{class:'nm'},it.name),who?h('div',{class:'sub'},who):null),
+          h('div',{class:'shop-ctl'},
+            h('label',{class:'chk'},h('input',{type:'checkbox',id:'shopc-on-'+it.id,checked:x.on,onchange:e=>{x.on=e.target.checked;}}),h('span',{},'En vente')),
+            h('input',{type:'number',min:'1',step:'1',inputmode:'numeric',placeholder:'Prix','aria-label':'Prix en coins : '+it.name,value:x.price,oninput:e=>{x.price=e.target.value;}}),
+            coinIco(16)));
+      })));
+  });
+  sec.append(h('div',{class:'row',style:'margin-top:14px'},h('button',{class:'btn primary',type:'button',id:'shop-save',onclick:saveShop},'Enregistrer le shop')));
+  el.append(sec);
+  const ath=Object.entries(S.logs).filter(([u,l])=>l&&l.pseudo).map(([u,l])=>({uid:u,lg:l,bal:coinBal(u)})).sort((a,b)=>b.bal-a.bal);
+  el.append(h('section',{class:'card'},h('h2',{class:'h2'},'Soldes des athlètes'),
+    h('p',{class:'hint'},'« Ajuster » ajoute (nombre positif : cadeau, rattrapage) ou retire (nombre négatif) des coins au solde.'),
+    ath.length?h('ul',{class:'list'},ath.map(a=>{
+      const nb=Object.keys(a.lg.shopBuy||{}).length;
+      const inp=h('input',{type:'number',step:'1',inputmode:'numeric',placeholder:'±',style:'width:84px','aria-label':'Ajuster les coins de '+a.lg.pseudo,value:S.coach.coinD[a.uid]||'',oninput:e=>{S.coach.coinD[a.uid]=e.target.value;}});
+      const btn=h('button',{class:'btn sm',type:'button',onclick:()=>{
+        const n=Math.trunc(Number(String(S.coach.coinD[a.uid]||'').replace(',','.')));
+        if(!Number.isFinite(n)||n===0){toast('Entre un nombre de coins (positif ou négatif).',true);return;}
+        saveLog({coinAdj:(Number((S.logs[a.uid]||{}).coinAdj)||0)+n},(n>0?'+':'')+n+' coins pour '+a.lg.pseudo,a.uid).then(()=>{S.coach.coinD[a.uid]='';render();});
+      }},'Ajuster');
+      return h('li',{},h('div',{class:'l',style:'flex:1;min-width:120px'},h('div',{class:'nm'},a.lg.pseudo+(a.uid===S.uid?' (toi)':'')),
+          h('div',{class:'sub'},'Gagnés '+coinEarned(a.lg)+' · dépensés '+coinSum(a.lg.shopBuy)+' · '+pl_(nb,'achat'))),
+        h('div',{class:'shop-act'},h('span',{class:'shop-price'},coinIco(15),h('b',{},String(a.bal))),inp,btn));
+    })):h('p',{class:'muted'},'Aucun athlète pour l’instant.')));
+  return el;
+}
+
 /* ---------- abonnement : tarifs (repris sur la page de connexion) ---------- */
 const PRICE_4W=7.99,PRICE_SEASON=19.99,SEASON_WEEKS=12;
 const eur=v=>(Math.round(v*100)/100).toFixed(2).replace('.',',')+' €';
@@ -14513,7 +14738,7 @@ function payState(){
   if(!S.pay||!S.pay.loaded||S.pay.err||!S.coachLoaded||!te)return {k:'unknown'};
   return {k:'blocked',status:d&&d.status};
 }
-const hasAccess=()=>payState().k!=='blocked';
+const hasAccess=()=>PAY_PAUSED||payState().k!=='blocked';
 /* cadre d'état de l'abonnement à côté du titre (Accès coach / Accès gratuit / Abonné jusqu'au / Accès à vie) */
 const PAYTRY_KEY='bs_pay_try';
 const payTryRecent=()=>{try{const t=Number(localStorage.getItem(PAYTRY_KEY)||0);return t>0&&Date.now()-t<2*3600e3;}catch(e){return false;}};
@@ -14535,6 +14760,7 @@ function payChipInfo(){
 }
 function updatePayChip(){
   const el=document.getElementById('pay-chip');if(!el)return;
+  if(PAY_PAUSED){coinChipPaint(el);return;}
   const i=S.uid?payChipInfo():null;
   if(!i){el.hidden=true;return;}
   el.hidden=false;el.textContent=i.t;el.className='paychip'+(i.off?' off':'');
@@ -14934,7 +15160,7 @@ const TOURS={
     {title:'Ton niveau, ta performance',text:'Sur chaque metcon, tu choisis le niveau qui te correspond (Débutant, Intermédiaire ou Rx). Les points récompensent ta performance à ton niveau : tout le monde peut viser le haut du classement.'},
     {title:'Plus qu’un classement',text:'Des trophées en fin de saison, des flammes pour la régularité, un avatar à habiller et un fil pour s’encourager avec des emojis.'},
     TOUR_STEPS.loginEmail,TOUR_STEPS.loginPw,TOUR_STEPS.loginCreate,
-    {title:'Deux semaines offertes',text:'Tes 2 premières semaines de participation sont gratuites. Ensuite, un abonnement est nécessaire pour accéder aux séances.'},
+    (PAY_PAUSED?{title:'Des coins à gagner',text:'L’accès à l’appli est gratuit. Chaque séance enregistrée te rapporte des coins, à dépenser dans le Shop (menu) contre des skins pour ton avatar.'}:{title:'Deux semaines offertes',text:'Tes 2 premières semaines de participation sont gratuites. Ensuite, un abonnement est nécessaire pour accéder aux séances.'}),
     {sel:'#tour-help',title:'Besoin d’un rappel ?',text:'Ce bouton « ? » te remet ce guide quand tu veux.'}],
   welcome:()=>[
     {title:'Bienvenue sur Box Score',text:'Le classement de ton groupe de Crosstraining : le coach publie des séances, tu les fais quand tu veux dans la semaine, tu notes ton résultat et tu gagnes des points.'},
@@ -15011,6 +15237,9 @@ TOURS.sub=()=>[
     {sel:'.plans',title:'Les deux forfaits',text:'4 semaines à '+eur(PRICE_4W)+' ou '+SEASON_WEEKS+' semaines à '+eur(PRICE_SEASON)+'. Fais glisser pour comparer. Les deux se renouvellent automatiquement et tu peux résilier à tout moment.'},
     {sel:'.plan .btn',title:'S’abonner',text:'Le paiement par carte se fait sur la page sécurisée de Stripe. Moins de 30 minutes plus tard, ton accès aux séances est ouvert.'},
     {sel:'#cgv-btn',title:'Conditions générales de vente',text:'Les conditions de l’abonnement, à lire avant de t’abonner.'}];
+TOURS.shop=()=>[
+    {sel:'.shop-bal',title:'Tes coins',text:'Ton solde de coins. Tu en gagnes à chaque séance enregistrée, et tu les dépenses ici contre des skins pour ton avatar.'},
+    {sel:'.shop-list',title:'Les skins en vente',text:'Chaque skin a son prix en coins. Touche « Acheter », puis « Confirmer ». Il rejoint ensuite ton inventaire d’avatar.'}];
 TOURS.moves=()=>[
     {sel:'main .day',title:'Apprentissage des mouvements',text:'La banque de tous les mouvements, classés en haltérophilie, gymnastique et cardio.'},
     {sel:'.mvcard',title:'Une fiche',text:'Touche un mouvement pour la déplier : description, critères de rep valide et de no rep, image, et vidéo quand elle existe.'},
