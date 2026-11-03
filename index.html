@@ -814,6 +814,8 @@ input[type=checkbox]{width:24px;height:24px;padding:0;accent-color:var(--accent)
 .shop-bal .shop-big span{color:var(--muted)}
 .shop-ic{width:64px;height:64px;flex:none;display:grid;place-items:center;background:var(--tint);border:2px solid var(--edge);border-radius:6px;overflow:hidden;padding:4px}
 .shop-ic svg{width:100%;height:100%}
+.shop-ic-bn{width:112px;padding:0}
+.shop-ic img{display:block}
 .shop-list li{flex-wrap:wrap}
 .shop-act{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .shop-price{display:inline-flex;align-items:center;gap:4px;font:700 14px var(--f-mono)}
@@ -10391,6 +10393,7 @@ function bannerOf(uid){
     if(r.type==='bg')BN.bg[r.id]={name:r.name||'Fond de bannière',cls:bgRewardClass(r)};
     if(r.type==='avframe')BN.avframe[r.id]={name:r.name||'Cadre d’avatar',src:avfSrc(r)};
   }
+  for(const b of shopBanners()){if(b.kind==='bg')BN.bg[b.id]={name:b.name,cls:b.cls};else BN.avframe[b.id]={name:b.name,src:b.src};} /* éléments vendus au shop */
   const saved=((S.logs[uid]||{}).banner)||{};
   // Aperçu temporaire réservé au coach : il remplace uniquement les emplacements testés et n'est pas sauvegardé.
   const preview=(S.owner&&uid===S.uid&&S._bannerPreview&&Number(S._bannerPreview.until)>Date.now())?S._bannerPreview.banner:null;
@@ -10428,6 +10431,7 @@ function bannerSection(){
     if(['title','frame','bg','avframe'].includes(r.type)&&!bgRemoved(r))unlocked.push({id:r.id,type:r.type,name:r.name||'Récompense',per:pid,asset:r.asset});
   }
   botTitlesFor(S.uid).forEach(t=>unlocked.push({id:t.id,type:'title',name:t.name+' · '+t.perName,per:t.per}));
+  shopBanners().forEach(b=>{if(Object.prototype.hasOwnProperty.call(lg.shopBuy||{},b.id))unlocked.push({id:b.id,type:b.kind,name:b.name,asset:b.asset});}); /* achetés au shop */
   const sec=h('section',{class:'card'},h('h2',{class:'h2'},'Ma bannière'),
     h('p',{class:'muted'},'Clique sur ta bannière dans le profil pour revenir à ce menu. Choisis ici les éléments que tu as débloqués.'),
     bannerEl(S.uid,[bannerRow(S.uid,true,()=>openAvatar())],false,'lg'));
@@ -14527,9 +14531,29 @@ function coinIco(sz){
   s.innerHTML='<svg viewBox="0 0 24 24" width="'+sz+'" height="'+sz+'" aria-hidden="true"><circle cx="12" cy="12" r="10.2" fill="#F4C400" stroke="#14161A" stroke-width="1.8"/><circle cx="12" cy="12" r="7" fill="none" stroke="#14161A" stroke-width="1.2" opacity=".45"/><text x="12" y="16.4" text-anchor="middle" font-size="11.5" font-weight="800" font-family="sans-serif" fill="#14161A">C</text></svg>';
   return s;
 }
+/* bannières vendues au shop : les fonds de BG_ASSETS et les cadres d'avatar de AVF (un nouvel élément ajouté à ces listes apparaît tout seul dans Coach › Shop et coins) */
+const shopBanners=()=>{
+  const out=[];
+  for(const [k,v] of Object.entries(BG_ASSETS))out.push({id:'shop-bg-'+k,kind:'bg',asset:k,name:'Bannière '+v.name,cls:v.cls,src:v.src});
+  for(const [k,v] of Object.entries(AVF))out.push({id:'shop-avf-'+k,kind:'avframe',asset:k,name:v.name,src:v.src});
+  return out;
+};
+const shopItem=id=>AV_BY[id]||shopBanners().find(b=>b.id===id)||null;
+/* déjà à l'athlète : acheté au shop, ou gagné en récompense de saison (même fond / même cadre) */
+function bnOwned(uid,it){
+  const lg=S.logs[uid]||{};
+  if(Object.prototype.hasOwnProperty.call(lg.shopBuy||{},it.id))return true;
+  const owned=new Set(lg.rewardOwned||[]);
+  for(const [pid,per] of Object.entries(S.periods||{}))for(const r of (per.rewards||[]))if(r.type===it.kind&&r.asset===it.asset&&owned.has(pid+':'+r.id))return true;
+  return false;
+}
+function shopIcon(it){
+  if(!it.kind){const d=h('span',{});try{d.append(avIcon(it));}catch(e){}return d.firstChild||d;}
+  return h('img',{src:it.src,alt:'',loading:'lazy',draggable:'false',style:'width:100%;height:100%;object-fit:'+(it.kind==='bg'?'cover':'contain')});
+}
 const shopCfg=()=>{const s=S.feat&&S.feat.shop;return (s&&typeof s==='object')?s:{};};
 const coinPerSession=()=>{const c=shopCfg();if(c.coin===undefined||c.coin===null||c.coin==='')return COIN_DEFAULT;const v=Math.floor(Number(c.coin));return (Number.isFinite(v)&&v>=0)?v:COIN_DEFAULT;};
-const shopEntry=id=>{const x=(shopCfg().items||{})[id],p=x?Math.floor(Number(x.price)):0;return (x&&x.on&&p>=1&&AV_BY[id])?{price:p}:null;};
+const shopEntry=id=>{const x=(shopCfg().items||{})[id],p=x?Math.floor(Number(x.price)):0;return (x&&x.on&&p>=1&&shopItem(id))?{price:p}:null;};
 const coinSum=o=>Object.values(o||{}).reduce((a,v)=>a+(Number(v)||0),0);
 const coinEarned=lg=>coinSum(lg&&lg.coinGot)+(Number(lg&&lg.coinAdj)||0);
 const coinBal=uid=>{const lg=S.logs[uid]||{};return coinEarned(lg)-coinSum(lg.shopBuy);};
@@ -14550,19 +14574,19 @@ function shopBuy(it){
   if(!S.uid||!S.db||S.snapMode){toast('Connexion nécessaire pour acheter.',true);render();return;}
   const e=shopEntry(it.id);
   if(!e){toast('Cet objet n’est plus en vente.',true);render();return;}
-  if(avOwned(S.uid).has(it.id)){toast('Tu as déjà cet objet.',true);render();return;}
+  if(it.kind?bnOwned(S.uid,it):avOwned(S.uid).has(it.id)){toast('Tu as déjà cet objet.',true);render();return;}
   const bal=coinBal(S.uid);
   if(bal<e.price){toast('Il te manque '+(e.price-bal)+' coins.',true);render();return;}
   const lg=S.logs[S.uid]||{};
-  saveLog({shopBuy:Object.assign({},lg.shopBuy||{},{[it.id]:e.price})},'Acheté : '+it.name+' (−'+e.price+' coins). Retrouve-le dans ton avatar.');
+  saveLog({shopBuy:Object.assign({},lg.shopBuy||{},{[it.id]:e.price})},'Acheté : '+it.name+' (−'+e.price+' coins). Retrouve-le dans '+(it.kind?'ta bannière (Profil).':'ton avatar.'));
 }
 function shopRow(it,own,bal){
-  const e=shopEntry(it.id),has=own.has(it.id),ic=h('span',{class:'shop-ic'});
-  try{ic.append(avIcon(it));}catch(x){}
+  const e=shopEntry(it.id),has=it.kind?bnOwned(S.uid,it):own.has(it.id),ic=h('span',{class:'shop-ic'+(it.kind==='bg'?' shop-ic-bn':'')});
+  ic.append(shopIcon(it));
   const sk=(it.skin&&AV_BY[it.skin])?AV_BY[it.skin].name:'',miss=e.price-bal;
   const price=has?h('span',{class:'chip ok'},'Possédé'):h('span',{class:'shop-price'},coinIco(15),h('b',{},String(e.price)));
   let act;
-  if(has)act=h('button',{class:'btn sm',type:'button',onclick:()=>openAvatar()},'Équiper');
+  if(has)act=h('button',{class:'btn sm',type:'button',onclick:()=>{if(it.kind){go('profile');S.profView='banner';render();window.scrollTo(0,0);}else openAvatar();}},'Équiper');
   else if(S.shopAsk===it.id)act=h('span',{class:'shop-act'},
     h('button',{class:'btn sm',type:'button',onclick:()=>{S.shopAsk=null;render();}},'Annuler'),
     h('button',{class:'btn primary sm',type:'button',id:'shop-ok-'+it.id,onclick:()=>shopBuy(it)},'Confirmer'));
@@ -14570,6 +14594,7 @@ function shopRow(it,own,bal){
   return h('li',{id:'shop-'+it.id},ic,
     h('div',{class:'l',style:'flex:1;min-width:120px'},h('div',{class:'nm'},it.name),
       sk?h('div',{class:'sub'},'Pour l’avatar '+sk):null,
+      it.kind?h('div',{class:'sub'},it.kind==='bg'?'Fond de bannière':'Cadre d’avatar (dans le fil)'):null,
       (!has&&miss>0)?h('div',{class:'sub'},'Il te manque '+miss+' coin'+(miss>1?'s':'')+'.'):null),
     h('div',{class:'shop-act'},price,act));
 }
@@ -14590,12 +14615,17 @@ function viewShop(){
   }
   const sx=coach?null:avSex(),own=avOwned(S.uid);
   const items=AV_ITEMS.filter(it=>shopEntry(it.id)&&(coach||avSexOk(it,sx)));
-  if(!items.length){el.append(h('section',{class:'card'},h('p',{class:'muted'},'Le shop est vide pour l’instant. Reviens bientôt : de nouveaux skins arrivent !')));return el;}
+  const bnItems=shopBanners().filter(b=>shopEntry(b.id));
+  if(!items.length&&!bnItems.length){el.append(h('section',{class:'card'},h('p',{class:'muted'},'Le shop est vide pour l’instant. Reviens bientôt : de nouveaux skins arrivent !')));return el;}
   AV_SLOTS.forEach(([sl,label])=>{
     const its=items.filter(x=>x.slot===sl);if(!its.length)return;
     el.append(h('section',{class:'card'},h('h2',{class:'h2'},label),h('ul',{class:'list shop-list'},its.map(it=>shopRow(it,own,bal)))));
   });
-  el.append(h('p',{class:'hint'},'Un objet acheté est à toi pour toujours. Équipe-le depuis ton avatar (Profil › Mon avatar).'));
+  [['bg','Fonds de bannière'],['avframe','Cadres d’avatar']].forEach(([k,label])=>{
+    const its=bnItems.filter(x=>x.kind===k);if(!its.length)return;
+    el.append(h('section',{class:'card'},h('h2',{class:'h2'},label),h('ul',{class:'list shop-list'},its.map(it=>shopRow(it,own,bal)))));
+  });
+  el.append(h('p',{class:'hint'},'Un objet acheté est à toi pour toujours. Équipe-le depuis ton avatar ou ta bannière (Profil).'));
   return el;
 }
 /* ---- espace coach : Shop et coins ---- */
@@ -14603,7 +14633,7 @@ function shopDraft(){
   const c=S.coach;
   if(!c.shopDraft){
     const cfg=shopCfg(),it={};
-    for(const x of AV_ITEMS){const e=(cfg.items||{})[x.id];it[x.id]={on:!!(e&&e.on),price:(e&&Number(e.price)>0)?String(e.price):''};}
+    for(const x of AV_ITEMS.concat(shopBanners())){const e=(cfg.items||{})[x.id];it[x.id]={on:!!(e&&e.on),price:(e&&Number(e.price)>0)?String(e.price):''};}
     c.shopDraft={coin:String(coinPerSession()),items:it};
   }
   return c.shopDraft;
@@ -14612,7 +14642,7 @@ function saveShop(){
   const d=shopDraft(),coin=Math.floor(Number(String(d.coin).replace(',','.')));
   if(!Number.isFinite(coin)||coin<0){toast('Coins par séance : entre un nombre entier, 0 ou plus.',true);return;}
   const items={};
-  for(const it of AV_ITEMS){
+  for(const it of AV_ITEMS.concat(shopBanners())){
     const x=d.items[it.id];if(!x)continue;
     const p=Math.floor(Number(String(x.price).replace(',','.')));
     if(x.on&&!(p>=1)){toast('« '+it.name+' » : entre un prix d’au moins 1 coin, ou retire-le de la vente.',true);return;}
@@ -14624,7 +14654,7 @@ function saveShop(){
     S.coach.shopDraft=null;toast('Shop enregistré');render();
   });
 }
-const shopCount=()=>AV_ITEMS.filter(x=>shopEntry(x.id)).length;
+const shopCount=()=>AV_ITEMS.concat(shopBanners()).filter(x=>shopEntry(x.id)).length;
 /* coins des séances déjà enregistrées : une seule fois par date et par athlète (les dates qui ont déjà leurs coins sont ignorées) */
 function coinBackfillPlan(){
   const n=coinPerSession(),plan=[];let tot=0,ses=0;
@@ -14678,12 +14708,12 @@ function coachShop(){
   el.append(coinBackfillCard());
   const sec=h('section',{class:'card'},h('h2',{class:'h2'},'Articles du shop'),
     h('p',{class:'hint'},'Coche « En vente » et fixe un prix en coins, puis enregistre. Un objet déjà acheté reste à l’athlète même si tu le retires. Pour ajouter un skin : dépose son image dans assets/embedded et ajoute une ligne dans AV_ITEMS ; il apparaît ici.'));
-  AV_SLOTS.forEach(([sl,label])=>{
-    const its=AV_ITEMS.filter(x=>x.slot===sl);if(!its.length)return;
+  AV_SLOTS.map(([sl,label])=>[label,AV_ITEMS.filter(x=>x.slot===sl)]).concat([['Fonds de bannière',shopBanners().filter(b=>b.kind==='bg')],['Cadres d’avatar (fil)',shopBanners().filter(b=>b.kind==='avframe')]]).forEach(([label,its])=>{
+    if(!its.length)return;
     sec.append(h('div',{class:'flabel',style:'margin-top:14px'},label+' · '+its.filter(x=>d.items[x.id]&&d.items[x.id].on).length+' en vente'),
       h('ul',{class:'list shop-list'},its.map(it=>{
-        const x=d.items[it.id]||(d.items[it.id]={on:false,price:''}),ic=h('span',{class:'shop-ic'});
-        try{ic.append(avIcon(it));}catch(e){}
+        const x=d.items[it.id]||(d.items[it.id]={on:false,price:''}),ic=h('span',{class:'shop-ic'+(it.kind==='bg'?' shop-ic-bn':'')});
+        ic.append(shopIcon(it));
         const who=[(it.sex==='f'?'filles':it.sex==='h'?'garçons':''),(it.skin&&AV_BY[it.skin])?'avatar '+AV_BY[it.skin].name:''].filter(Boolean).join(' · ');
         return h('li',{id:'shopc-'+it.id},ic,
           h('div',{class:'l',style:'flex:1;min-width:120px'},h('div',{class:'nm'},it.name),who?h('div',{class:'sub'},who):null),
