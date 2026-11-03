@@ -867,10 +867,16 @@ input[type=checkbox]{width:24px;height:24px;padding:0;accent-color:var(--accent)
 .sh-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .sh-h h2{margin:0;font-family:var(--f-display);font-weight:400;font-size:26px;text-transform:uppercase;letter-spacing:.02em}
 .sh-link{border:0;background:none;color:#fff;font:600 14px var(--f-body);cursor:pointer;padding:6px 0}
-.sh-cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(64px,1fr));gap:8px}
-.sh-cat{display:grid;justify-items:center;gap:6px;padding:12px 4px 10px;border:1.5px solid rgba(255,255,255,.22);border-radius:12px;background:rgba(14,14,18,.85);color:#ff3d7a;font:600 13px var(--f-body);cursor:pointer}
-.sh-cat span{color:#fff}
-.sh-cnt{font:500 11px var(--f-body);color:var(--muted)}
+.sh-cats{display:flex;gap:10px;overflow-x:auto;padding:4px 16px 10px;margin-inline:-16px;scroll-snap-type:x proximity;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.sh-cats::-webkit-scrollbar{display:none}
+.sh-cat{position:relative;flex:0 0 76px;height:92px;scroll-snap-align:start;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:8px 2px;border:1.5px solid rgba(255,255,255,.2);border-radius:14px;background:radial-gradient(90% 70% at 0 100%,rgba(255,31,122,.32),transparent 70%),linear-gradient(180deg,rgba(30,30,36,.9),rgba(10,10,13,.96));box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 6px 14px rgba(0,0,0,.45);color:#fff;cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s}
+.sh-cat svg{filter:drop-shadow(0 0 6px rgba(255,60,90,.55))}
+.sh-cat span{font:600 12px/1.1 var(--f-body);color:#fff;white-space:nowrap}
+.sh-cat:active{transform:scale(.95)}
+.sh-cat:hover,.sh-cat:focus-visible{border-color:#ff3d7a;box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 0 0 1px #ff3d7a,0 6px 18px rgba(255,31,122,.35)}
+.sh-cat.empty{opacity:.7}
+.sh-cat.empty svg{filter:none}
+.sh-cnt{position:absolute;top:-6px;right:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--g);color:#fff;font:700 11px/20px var(--f-body);font-style:normal;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.5)}
 .sh-grid,.sh-row{list-style:none;margin:0;padding:0}
 .sh-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .sh-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}
@@ -882,6 +888,12 @@ input[type=checkbox]{width:24px;height:24px;padding:0;accent-color:var(--accent)
 .sh-nm{font:600 14px var(--f-body);color:#fff}
 .sh-sub{font-size:12px;color:var(--muted)}
 .sh-pr{display:flex;align-items:center;gap:6px;font:700 15px var(--f-body)}
+.sh-img{position:relative}
+.sh-sale{position:absolute;top:4px;left:4px;padding:2px 9px;border-radius:999px;background:var(--g);color:#fff;font:700 12px/18px var(--f-body);letter-spacing:.02em;box-shadow:0 2px 8px rgba(255,31,122,.5)}
+.sh-old{margin-left:2px;font:500 13px var(--f-body);color:var(--muted);text-decoration:line-through;text-decoration-thickness:1.5px}
+.shop-sale{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.shop-sale input[type=number]{width:64px}
+.shop-fin{font:700 13px var(--f-mono);color:var(--ok)}
 .sh-own{font:700 13px var(--f-body);color:#5CCB92}
 .sh-btn{min-height:40px;padding:0 10px;border:0;border-radius:999px;background:var(--g);color:#fff;font:700 14px var(--f-body);cursor:pointer}
 .sh-btn.alt{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3)}
@@ -14706,7 +14718,9 @@ function shopIcon(it){
 }
 const shopCfg=()=>{const s=S.feat&&S.feat.shop;return (s&&typeof s==='object')?s:{};};
 const coinPerSession=()=>{const c=shopCfg();if(c.coin===undefined||c.coin===null||c.coin==='')return COIN_DEFAULT;const v=Math.floor(Number(c.coin));return (Number.isFinite(v)&&v>=0)?v:COIN_DEFAULT;};
-const shopEntry=id=>{const x=(shopCfg().items||{})[id],p=x?Math.floor(Number(x.price)):0;return (x&&x.on&&p>=1&&shopItem(id))?{price:p,fav:!!x.fav}:null;};
+/* réduction du coach : pourcentage (1 à 99) ; price = prix réellement payé, base = prix normal */
+const salePrice=(base,pct)=>{pct=Math.floor(Number(pct));return (pct>=1&&pct<=99)?Math.max(1,Math.round(base*(100-pct)/100)):base;};
+const shopEntry=id=>{const x=(shopCfg().items||{})[id],p=x?Math.floor(Number(x.price)):0;if(!(x&&x.on&&p>=1&&shopItem(id)))return null;const pct=Math.floor(Number(x.sale))||0,pr=salePrice(p,pct);return {price:pr,base:p,pct:pr<p?pct:0,fav:!!x.fav};};
 const coinSum=o=>Object.values(o||{}).reduce((a,v)=>a+(Number(v)||0),0);
 const coinEarned=lg=>coinSum(lg&&lg.coinGot)+(Number(lg&&lg.coinAdj)||0);
 const coinBal=uid=>{const lg=S.logs[uid]||{};return coinEarned(lg)-coinSum(lg.shopBuy);};
@@ -14734,7 +14748,7 @@ function shopBuy(it){
   saveLog({shopBuy:Object.assign({},lg.shopBuy||{},{[it.id]:e.price})},'Acheté : '+it.name+' (−'+e.price+' coins). Retrouve-le dans '+(it.kind?'ta bannière (Profil).':'ton avatar.'));
 }
 /* Shop façon « jeu vidéo » : onglets Objets / Avatars / Bannières, catégories, coups de cœur (cochés par le coach dans Coach › Shop et coins) */
-const SHP=(d)=>'<svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+d+'</svg>';
+const SHP=(d)=>'<svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="url(#shg)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><defs><linearGradient id="shg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff1f7a"/><stop offset="1" stop-color="#ff7a1a"/></linearGradient></defs>'+d+'</svg>';
 const SHOP_CATS=[
   ['avatars','Avatars',SHP('<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>')],
   ['bannieres','Bannières',SHP('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15l5-4 4 3 3-2 6 4"/>')],
@@ -14745,14 +14759,14 @@ const SHOP_CATS=[
   ['pantalons','Pantalons',SHP('<path d="M7 3h10l1 18h-4l-2-10-2 10H6z"/>')],
   ['main','En main',SHP('<path d="M7 11V6a1.5 1.5 0 0 1 3 0v4M10 10V4.5a1.5 1.5 0 0 1 3 0V10M13 10V5.5a1.5 1.5 0 0 1 3 0V12l2-1.5a1.5 1.5 0 0 1 2 2L16 19a4 4 0 0 1-3 1.5H11a4 4 0 0 1-4-4z"/>')],
   ['poignet','Poignet',SHP('<rect x="7" y="8" width="10" height="8" rx="2"/><path d="M9 8V3h6v5M9 16v5h6v-5"/>')],
-  ['deguisements','Déguisements',SHP('<path d="M4 8c0-3 3-5 8-5s8 2 8 5v3c0 4-3 8-8 8s-8-4-8-8z"/><circle cx="9" cy="10" r="1.2"/><circle cx="15" cy="10" r="1.2"/><path d="M9 15c1.5 1.2 4.5 1.2 6 0"/>')],
+  ['deguisements','Costumes',SHP('<path d="M4 8c0-3 3-5 8-5s8 2 8 5v3c0 4-3 8-8 8s-8-4-8-8z"/><circle cx="9" cy="10" r="1.2"/><circle cx="15" cy="10" r="1.2"/><path d="M9 15c1.5 1.2 4.5 1.2 6 0"/>')],
   ['themes','Décors',SHP('<path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 1.5-2-.6-1.2 0-2.5 1.5-2.5H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/>')],
   ['autres','Autres',SHP('<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>')]
 ];
 const shopCatOf=it=>it.kind==='bg'?'bannieres':it.kind==='avframe'?'cadres':({skin:'avatars',shirt:'tshirts',pants:'pantalons',costume:'deguisements',crown:'couronnes',hat:'chapeaux',hand:'main',wrist:'poignet',theme:'themes'})[it.slot]||'autres';
 function shopCard(it,own,bal){
   const e=shopEntry(it.id),has=it.kind?bnOwned(S.uid,it):own.has(it.id),miss=e.price-bal;
-  const img=h('div',{class:'sh-img'+(it.kind==='bg'?' sh-img-bn':'')});img.append(shopIcon(it));
+  const img=h('div',{class:'sh-img'+(it.kind==='bg'?' sh-img-bn':'')});img.append(shopIcon(it));if(e.pct&&!has)img.append(h('span',{class:'sh-sale'},'−'+e.pct+'%'));
   const sk=(it.skin&&AV_BY[it.skin])?AV_BY[it.skin].name:'';
   let act;
   if(has)act=h('button',{class:'sh-btn alt',type:'button',onclick:()=>{if(it.kind){go('profile');S.profView='banner';render();window.scrollTo(0,0);}else openAvatar();}},'Équiper');
@@ -14763,7 +14777,7 @@ function shopCard(it,own,bal){
   return h('li',{class:'sh-card',id:'shop-'+it.id},img,
     h('div',{class:'sh-nm'},it.name),
     sk?h('div',{class:'sh-sub'},'Avatar '+sk):null,
-    has?h('div',{class:'sh-own'},'Possédé'):h('div',{class:'sh-pr'},coinIco(20),h('b',{},String(e.price))),
+    has?h('div',{class:'sh-own'},'Possédé'):h('div',{class:'sh-pr'},coinIco(20),h('b',{},String(e.price)),e.pct?h('s',{class:'sh-old','aria-label':'Ancien prix '+e.base+' coins'},String(e.base)):null),
     (!has&&miss>0)?h('div',{class:'sh-sub'},'Il te manque '+miss+' coin'+(miss>1?'s':'')+'.'):null,
     act);
 }
@@ -14792,7 +14806,7 @@ function viewShop(){
       h('p',{},'Des items exclusifs pour te démarquer et vivre l’expérience à ta façon.'),
       h('button',{class:'sh-ghost',type:'button',onclick:()=>open('all')},'Découvrir ›')));
     el.append(h('div',{class:'sh-h',id:'sh-cats'},h('h2',{},'Catégories'),h('button',{class:'sh-link',type:'button',onclick:()=>open('all')},'Tout voir →')),
-      h('div',{class:'sh-cats'},SHOP_CATS.map(c=>{const n=all.filter(x=>shopCatOf(x)===c[0]).length;const b=h('button',{class:'sh-cat',type:'button',onclick:()=>open(c[0])});b.innerHTML=c[2];b.append(h('span',{},c[1]));b.append(h('small',{class:'sh-cnt'},n?String(n):'bientôt'));return b;})));
+      h('div',{class:'sh-cats'},SHOP_CATS.map(c=>{const n=all.filter(x=>shopCatOf(x)===c[0]).length;const b=h('button',{class:'sh-cat',type:'button','aria-label':c[1],onclick:()=>open(c[0])});b.innerHTML=c[2];b.append(h('span',{},c[1]));if(n)b.append(h('i',{class:'sh-cnt'},String(n)));else b.classList.add('empty');return b;})));
     const fav=all.filter(x=>shopEntry(x.id).fav);
     el.append(h('div',{class:'sh-h'},h('h2',{},'Coups de cœur')),fav.length?h('ul',{class:'sh-row'},fav.map(it=>shopCard(it,own,bal))):h('p',{class:'sh-note'},coach?'Aucun coup de cœur pour l’instant : coche « Coup de cœur » sur un article en vente dans Coach › Shop et coins, puis enregistre.':'Aucun coup de cœur pour l’instant.'));
   }
@@ -14804,7 +14818,7 @@ function shopDraft(){
   const c=S.coach;
   if(!c.shopDraft){
     const cfg=shopCfg(),it={};
-    for(const x of AV_ITEMS.concat(shopBanners())){const e=(cfg.items||{})[x.id];it[x.id]={on:!!(e&&e.on),fav:!!(e&&e.fav),price:(e&&Number(e.price)>0)?String(e.price):''};}
+    for(const x of AV_ITEMS.concat(shopBanners())){const e=(cfg.items||{})[x.id];it[x.id]={on:!!(e&&e.on),fav:!!(e&&e.fav),price:(e&&Number(e.price)>0)?String(e.price):'',sale:(e&&Number(e.sale)>0)?String(e.sale):''};}
     c.shopDraft={coin:String(coinPerSession()),items:it};
   }
   return c.shopDraft;
@@ -14817,7 +14831,9 @@ function saveShop(){
     const x=d.items[it.id];if(!x)continue;
     const p=Math.floor(Number(String(x.price).replace(',','.')));
     if(x.on&&!(p>=1)){toast('« '+it.name+' » : entre un prix d’au moins 1 coin, ou retire-le de la vente.',true);return;}
-    if(x.on||p>=1)items[it.id]={on:!!x.on,price:p>=1?p:0,fav:!!(x.on&&x.fav)};
+    const sl=x.sale===''||x.sale==null?0:Math.floor(Number(String(x.sale).replace(',','.')));
+    if(x.on&&!(Number.isFinite(sl)&&sl>=0&&sl<=99)){toast('« '+it.name+' » : la réduction doit être entre 1 et 99 %, ou vide.',true);return;}
+    if(x.on||p>=1)items[it.id]={on:!!x.on,price:p>=1?p:0,fav:!!(x.on&&x.fav),sale:(x.on&&sl>=1)?sl:0};
   }
   if(!S.db||S.snapMode){toast('Connexion nécessaire pour enregistrer.',true);return;}
   run(async()=>{
@@ -14878,21 +14894,27 @@ function coachShop(){
       'Attribués une seule fois par séance, au moment où le résultat est enregistré (par l’athlète ou par toi). 0 = plus de coins gagnés. Les séances déjà enregistrées se créditent avec « Séances passées » plus bas.')));
   el.append(coinBackfillCard());
   const sec=h('section',{class:'card'},h('h2',{class:'h2'},'Articles du shop'),
-    h('p',{class:'hint'},'Coche « En vente » et fixe un prix en coins ; « Coup de cœur » met l’objet en avant en haut du shop. Puis enregistre. Un objet déjà acheté reste à l’athlète même si tu le retires. Pour ajouter un skin : dépose son image dans assets/embedded et ajoute une ligne dans AV_ITEMS ; il apparaît ici.'));
+    h('p',{class:'hint'},'Coche « En vente » et fixe un prix en coins ; « Coup de cœur » met l’objet en avant en haut du shop ; « % de réduc. » (1 à 99) affiche une réduction sur l’objet dans le shop, avec l’ancien prix barré. Puis enregistre. Un objet déjà acheté reste à l’athlète même si tu le retires. Pour ajouter un skin : dépose son image dans assets/embedded et ajoute une ligne dans AV_ITEMS ; il apparaît ici.'));
   AV_SLOTS.map(([sl,label])=>[label,AV_ITEMS.filter(x=>x.slot===sl)]).concat([['Fonds de bannière',shopBanners().filter(b=>b.kind==='bg')],['Cadres d’avatar (fil)',shopBanners().filter(b=>b.kind==='avframe')]]).forEach(([label,its])=>{
     if(!its.length)return;
     sec.append(h('div',{class:'flabel',style:'margin-top:14px'},label+' · '+its.filter(x=>d.items[x.id]&&d.items[x.id].on).length+' en vente'),
       h('ul',{class:'list shop-list'},its.map(it=>{
-        const x=d.items[it.id]||(d.items[it.id]={on:false,fav:false,price:''}),ic=h('span',{class:'shop-ic'+(it.kind==='bg'?' shop-ic-bn':'')});
+        const x=d.items[it.id]||(d.items[it.id]={on:false,fav:false,price:'',sale:''}),ic=h('span',{class:'shop-ic'+(it.kind==='bg'?' shop-ic-bn':'')});
         ic.append(shopIcon(it));
+        const fin=h('span',{class:'shop-fin',id:'shopc-fin-'+it.id});
+        const upd=()=>{const b=Math.floor(Number(String(x.price).replace(',','.'))),pc=Math.floor(Number(String(x.sale).replace(',','.')));fin.textContent=(b>=1&&pc>=1&&pc<=99)?'→ '+salePrice(b,pc)+' coins':'';};upd();
         const who=[(it.sex==='f'?'filles':it.sex==='h'?'garçons':''),(it.skin&&AV_BY[it.skin])?'avatar '+AV_BY[it.skin].name:''].filter(Boolean).join(' · ');
         return h('li',{id:'shopc-'+it.id},ic,
           h('div',{class:'l',style:'flex:1;min-width:120px'},h('div',{class:'nm'},it.name),who?h('div',{class:'sub'},who):null),
           h('div',{class:'shop-ctl'},
             h('label',{class:'chk'},h('input',{type:'checkbox',id:'shopc-on-'+it.id,checked:x.on,onchange:e=>{x.on=e.target.checked;}}),h('span',{},'En vente')),
             h('label',{class:'chk'},h('input',{type:'checkbox',id:'shopc-fav-'+it.id,checked:!!x.fav,onchange:e=>{x.fav=e.target.checked;}}),h('span',{},'Coup de cœur')),
-            h('input',{type:'number',min:'1',step:'1',inputmode:'numeric',placeholder:'Prix','aria-label':'Prix en coins : '+it.name,value:x.price,oninput:e=>{x.price=e.target.value;}}),
-            coinIco(20)));
+            h('input',{type:'number',min:'1',step:'1',inputmode:'numeric',placeholder:'Prix','aria-label':'Prix en coins : '+it.name,value:x.price,oninput:e=>{x.price=e.target.value;upd();}}),
+            coinIco(20),
+            h('span',{class:'shop-sale'},
+              h('input',{type:'number',min:'0',max:'99',step:'1',inputmode:'numeric',placeholder:'0','aria-label':'Réduction en pourcentage : '+it.name,id:'shopc-sale-'+it.id,value:x.sale||'',oninput:e=>{x.sale=e.target.value;upd();}}),
+              h('span',{},'% de réduc.')),
+            fin));
       })));
   });
   sec.append(h('div',{class:'row',style:'margin-top:14px'},h('button',{class:'btn primary',type:'button',id:'shop-save',onclick:saveShop},'Enregistrer le shop')));
