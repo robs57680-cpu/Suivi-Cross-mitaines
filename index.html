@@ -870,6 +870,7 @@ input[type=checkbox]{width:24px;height:24px;padding:0;accent-color:var(--accent)
 .sh-cats{display:grid;grid-template-columns:repeat(auto-fit,minmax(64px,1fr));gap:8px}
 .sh-cat{display:grid;justify-items:center;gap:6px;padding:12px 4px 10px;border:1.5px solid rgba(255,255,255,.22);border-radius:12px;background:rgba(14,14,18,.85);color:#ff3d7a;font:600 13px var(--f-body);cursor:pointer}
 .sh-cat span{color:#fff}
+.sh-cnt{font:500 11px var(--f-body);color:var(--muted)}
 .sh-grid,.sh-row{list-style:none;margin:0;padding:0}
 .sh-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .sh-row{display:flex;gap:10px;overflow-x:auto;padding-bottom:6px}
@@ -2423,6 +2424,30 @@ section.feed-card.th-neonviolet>.feed-badge{position:absolute!important;left:aut
 .tabs .in>.tab[aria-current="page"]::before,.tabs .in>.tab[aria-current="page"]::after{left:12%;right:12%;height:5px;clip-path:none;border-radius:4px;background:linear-gradient(90deg,transparent,#ff2d6f,transparent);box-shadow:0 0 12px 2px rgba(255,45,111,.85)}
 .tabs .in>.tab[aria-current="page"]::before{top:-6px}
 .tabs .in>.tab[aria-current="page"]::after{bottom:-6px}
+
+/* ===== « Mon avatar » : tout tient dans l'écran, sans défilement de la page ===== */
+.avfs{overflow:hidden;grid-template-rows:auto minmax(0,1fr) auto auto;gap:10px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}
+.avfs .av-top{gap:8px}
+.avfs .av-ib,.avfs .av-x{min-height:40px;font-size:14px;padding:0 12px;border-radius:12px}
+.avfs .av-ib{width:44px;min-width:44px;padding:0}
+.avfs .av-ttl{font-size:22px;padding-bottom:2px}
+.avfs .av-stage{height:auto;min-height:0}
+.avfs .av-world{border-radius:18px}
+.avfs .zbar{right:8px;bottom:8px;gap:6px}
+.avfs .zbar .btn,.avfs .zlab{min-height:36px;min-width:36px;font-size:13px;border-radius:10px}
+.avfs .av-inv{max-height:46dvh;overflow-y:auto;padding:10px;gap:8px;border-radius:20px}
+.avfs .av-ihl{font-size:17px;gap:6px}
+.avfs .av-ihl .av-svg svg{width:24px;height:24px}
+.avfs .av-ih .av-x{min-height:36px;font-size:12px;padding:0 10px}
+.avfs .av-cats{gap:7px}
+.avfs .av-cat{grid-template-columns:26px 1fr 14px;min-height:42px;padding:4px 8px;border-radius:12px;gap:4px}
+.avfs .av-cat .av-svg svg{width:24px;height:24px}
+.avfs .av-cat .av-svg:last-child svg{width:14px;height:14px}
+.avfs .av-cat-t{font-size:12.5px}
+.avfs .av-hintbox{gap:10px;padding:8px 12px;border-radius:14px}
+.avfs .av-hintbox .av-svg svg{width:24px;height:24px}
+.avfs .av-hintbox b{font-size:14px}
+.avfs .av-hintbox p{font-size:12px;line-height:1.3}
 </style>
 </head>
 <body>
@@ -3870,7 +3895,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-03.5';
+const APP_VERSION='2026-11-03.8';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -10579,6 +10604,8 @@ function bannerSection(){
       if(testable.some(r=>r.type==='avframe'&&r.asset===k))continue;
       testable.push({id:'preview-avf-'+k,type:'avframe',name:v.name+' (visuel)',asset:k,special:true});
     }
+    /* pas de doublon : un fond ou un cadre d'avatar déjà débloqué (récompense ou achat au shop) n'apparaît plus dans les aperçus */
+    for(let i=testable.length-1;i>=0;i--){const r=testable[i];if((r.type==='bg'||r.type==='avframe')&&r.asset&&unlocked.some(u=>u.type===r.type&&u.asset===r.asset))testable.splice(i,1);}
     testable.forEach(r=>{
       if(r.type==='bg'&&!BN.bg[r.id])BN.bg[r.id]={name:r.name,cls:r.special?BG_ASSETS[r.asset].cls:bgRewardClass(r)};
       if(r.type==='frame'&&!BN.frame[r.id])BN.frame[r.id]={name:r.name,cls:'reward-frame'};
@@ -14709,13 +14736,20 @@ function shopBuy(it){
 /* Shop façon « jeu vidéo » : onglets Objets / Avatars / Bannières, catégories, coups de cœur (cochés par le coach dans Coach › Shop et coins) */
 const SHP=(d)=>'<svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+d+'</svg>';
 const SHOP_CATS=[
-  ['tenues','Tenues',SHP('<path d="M8 4L3 7l2 4 3-1v10h8V10l3 1 2-4-5-3a4 4 0 0 1-8 0z"/>')],
+  ['avatars','Avatars',SHP('<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>')],
+  ['bannieres','Bannières',SHP('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15l5-4 4 3 3-2 6 4"/>')],
   ['cadres','Cadres',SHP('<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/><rect x="8" y="8" width="8" height="8" rx="1.5"/>')],
+  ['chapeaux','Chapeaux',SHP('<path d="M3 17h18M6 17c0-5 2-9 6-9s6 4 6 9"/>')],
   ['couronnes','Couronnes',SHP('<path d="M3 18l-1-11 6 5 4-8 4 8 6-5-1 11z"/>')],
-  ['themes','Thèmes',SHP('<path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 1.5-2-.6-1.2 0-2.5 1.5-2.5H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/>')],
+  ['tshirts','T-shirts',SHP('<path d="M8 4L3 7l2 4 3-1v10h8V10l3 1 2-4-5-3a4 4 0 0 1-8 0z"/>')],
+  ['pantalons','Pantalons',SHP('<path d="M7 3h10l1 18h-4l-2-10-2 10H6z"/>')],
+  ['main','En main',SHP('<path d="M7 11V6a1.5 1.5 0 0 1 3 0v4M10 10V4.5a1.5 1.5 0 0 1 3 0V10M13 10V5.5a1.5 1.5 0 0 1 3 0V12l2-1.5a1.5 1.5 0 0 1 2 2L16 19a4 4 0 0 1-3 1.5H11a4 4 0 0 1-4-4z"/>')],
+  ['poignet','Poignet',SHP('<rect x="7" y="8" width="10" height="8" rx="2"/><path d="M9 8V3h6v5M9 16v5h6v-5"/>')],
+  ['deguisements','Déguisements',SHP('<path d="M4 8c0-3 3-5 8-5s8 2 8 5v3c0 4-3 8-8 8s-8-4-8-8z"/><circle cx="9" cy="10" r="1.2"/><circle cx="15" cy="10" r="1.2"/><path d="M9 15c1.5 1.2 4.5 1.2 6 0"/>')],
+  ['themes','Décors',SHP('<path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 1.5-2-.6-1.2 0-2.5 1.5-2.5H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/>')],
   ['autres','Autres',SHP('<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>')]
 ];
-const shopCatOf=it=>it.kind==='bg'?'bannieres':it.kind==='avframe'?'cadres':({skin:'avatars',shirt:'tenues',pants:'tenues',costume:'tenues',crown:'couronnes',hat:'couronnes',theme:'themes'})[it.slot]||'autres';
+const shopCatOf=it=>it.kind==='bg'?'bannieres':it.kind==='avframe'?'cadres':({skin:'avatars',shirt:'tshirts',pants:'pantalons',costume:'deguisements',crown:'couronnes',hat:'chapeaux',hand:'main',wrist:'poignet',theme:'themes'})[it.slot]||'autres';
 function shopCard(it,own,bal){
   const e=shopEntry(it.id),has=it.kind?bnOwned(S.uid,it):own.has(it.id),miss=e.price-bal;
   const img=h('div',{class:'sh-img'+(it.kind==='bg'?' sh-img-bn':'')});img.append(shopIcon(it));
@@ -14745,29 +14779,23 @@ function viewShop(){
   }
   const sx=coach?null:avSex(),own=avOwned(S.uid);
   const all=AV_ITEMS.filter(it=>shopEntry(it.id)&&(coach||avSexOk(it,sx))).concat(shopBanners().filter(b=>shopEntry(b.id)));
-  if(!all.length){el.append(h('section',{class:'sh-box'},h('p',{class:'muted'},'Le shop est vide pour l’instant. Reviens bientôt : de nouveaux objets arrivent !')));return el;}
-  const tabs=[['objets','Objets',x=>!['avatars','bannieres'].includes(shopCatOf(x))],['avatars','Avatars',x=>shopCatOf(x)==='avatars'],['bannieres','Bannières',x=>shopCatOf(x)==='bannieres']].filter(t=>all.some(t[2]));
-  if(!tabs.some(t=>t[0]===S.shopTab))S.shopTab=tabs[0][0];
-  el.append(h('div',{class:'sh-tabs',role:'tablist'},tabs.map(t=>h('button',{class:'sh-tab'+(S.shopTab===t[0]?' on':''),type:'button',role:'tab','aria-selected':S.shopTab===t[0]?'true':'false',onclick:()=>{S.shopTab=t[0];S.shopCat=null;render();}},t[1]))));
-  const cur=all.filter(tabs.find(t=>t[0]===S.shopTab)[2]);
+  const open=c=>{S.shopCat=c;render();window.scrollTo(0,0);};
   const grid=its=>h('ul',{class:'sh-grid'},its.map(it=>shopCard(it,own,bal)));
-  if(S.shopTab==='objets'){
-    const cat=S.shopCat;
-    if(cat){
-      const label=cat==='all'?'Tous les objets':(SHOP_CATS.find(c=>c[0]===cat)||[0,''])[1];
-      const its=cat==='all'?cur:cur.filter(x=>shopCatOf(x)===cat);
-      el.append(h('div',{class:'sh-h'},h('button',{class:'sh-link',type:'button',onclick:()=>{S.shopCat=null;render();}},'← Retour'),h('h2',{},label)),its.length?grid(its):h('p',{class:'muted'},'Rien dans cette catégorie pour l’instant.'));
-    }else{
-      el.append(h('section',{class:'sh-hero'},h('div',{class:'sh-hero-t'},'Personnalise',h('br'),h('span',{},'ton univers')),
-        h('p',{},'Des items exclusifs pour te démarquer et vivre l’expérience à ta façon.'),
-        h('button',{class:'sh-ghost',type:'button',onclick:()=>{const t=document.getElementById('sh-cats');if(t)t.scrollIntoView({behavior:'smooth'});}},'Découvrir ›')));
-      const cats=SHOP_CATS.filter(c=>cur.some(x=>shopCatOf(x)===c[0]));
-      el.append(h('div',{class:'sh-h',id:'sh-cats'},h('h2',{},'Catégories'),h('button',{class:'sh-link',type:'button',onclick:()=>{S.shopCat='all';render();window.scrollTo(0,0);}},'Tout voir →')),
-        h('div',{class:'sh-cats'},cats.map(c=>{const b=h('button',{class:'sh-cat',type:'button',onclick:()=>{S.shopCat=c[0];render();window.scrollTo(0,0);}});b.innerHTML=c[2];b.append(h('span',{},c[1]));return b;})));
-      const fav=cur.filter(x=>shopEntry(x.id).fav);
-      if(fav.length)el.append(h('div',{class:'sh-h'},h('h2',{},'Coups de cœur')),h('ul',{class:'sh-row'},fav.map(it=>shopCard(it,own,bal))));
-    }
-  }else el.append(grid(cur));
+  const cat=S.shopCat;
+  if(cat){
+    const label=cat==='all'?'Tout le shop':(SHOP_CATS.find(c=>c[0]===cat)||[0,''])[1];
+    const its=cat==='all'?all:all.filter(x=>shopCatOf(x)===cat);
+    el.append(h('div',{class:'sh-h'},h('button',{class:'sh-link',type:'button',onclick:()=>{S.shopCat=null;render();window.scrollTo(0,0);}},'← Retour'),h('h2',{},label)),
+      its.length?grid(its):h('section',{class:'sh-box'},h('p',{class:'muted'},'Rien dans cette catégorie pour l’instant. Reviens bientôt : de nouveaux objets arrivent !')));
+  }else{
+    el.append(h('section',{class:'sh-hero'},h('div',{class:'sh-hero-t'},'Personnalise',h('br'),h('span',{},'ton univers')),
+      h('p',{},'Des items exclusifs pour te démarquer et vivre l’expérience à ta façon.'),
+      h('button',{class:'sh-ghost',type:'button',onclick:()=>open('all')},'Découvrir ›')));
+    el.append(h('div',{class:'sh-h',id:'sh-cats'},h('h2',{},'Catégories'),h('button',{class:'sh-link',type:'button',onclick:()=>open('all')},'Tout voir →')),
+      h('div',{class:'sh-cats'},SHOP_CATS.map(c=>{const n=all.filter(x=>shopCatOf(x)===c[0]).length;const b=h('button',{class:'sh-cat',type:'button',onclick:()=>open(c[0])});b.innerHTML=c[2];b.append(h('span',{},c[1]));b.append(h('small',{class:'sh-cnt'},n?String(n):'bientôt'));return b;})));
+    const fav=all.filter(x=>shopEntry(x.id).fav);
+    el.append(h('div',{class:'sh-h'},h('h2',{},'Coups de cœur')),fav.length?h('ul',{class:'sh-row'},fav.map(it=>shopCard(it,own,bal))):h('p',{class:'sh-note'},coach?'Aucun coup de cœur pour l’instant : coche « Coup de cœur » sur un article en vente dans Coach › Shop et coins, puis enregistre.':'Aucun coup de cœur pour l’instant.'));
+  }
   el.append(h('p',{class:'sh-note'},(per?'Tu gagnes '+per+' coin'+(per>1?'s':'')+' à chaque séance enregistrée. ':'')+'Un objet acheté est à toi pour toujours : équipe-le depuis ton avatar ou ta bannière (Profil).'));
   return el;
 }
