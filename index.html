@@ -285,7 +285,7 @@ html[data-plan],html[data-plan] body{overflow:hidden}
 .ld-h{display:flex;align-items:center;gap:10px}.ld-h b{font-family:var(--f-display);font-size:20px;letter-spacing:.03em;color:var(--ldc)}
 .ld-adv{font-weight:600}.ld-d{font-size:13px;color:var(--muted)}
 .ld-line{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:13px;padding:6px 10px;border-left:4px solid var(--ldc);border-radius:4px;background:var(--surface2)}.ld-line b{color:var(--ldc)}
-.ld-mini{display:flex;align-items:center;gap:8px;margin-top:4px;font-size:12px}.ld-mini b{color:var(--ldc)}
+.ld-mini{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;margin-top:4px;font-size:12px}.ld-mini b{color:var(--ldc);white-space:nowrap}
 .empty{border:2px dashed var(--line);border-radius:4px;padding:20px;display:grid;gap:10px;color:var(--muted)}
 
 /* navigation */
@@ -1614,8 +1614,8 @@ body[data-tab=today] .themed .card{background:color-mix(in srgb,var(--c1) 18%,va
 
 /* planificateur de saison et séances en attente */
 .pdot{display:inline-block;flex:none;width:12px;height:12px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--tint)}
-.pendli{display:flex;align-items:center;gap:10px}
-.pendli>.l{flex:1;min-width:0}
+.pendli{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px}
+.pendli>.l{flex:1 1 200px;min-width:0}
 .wkacc{display:grid;gap:8px}
 .wk{border:1px solid var(--line);border-radius:6px;background:var(--surface)}
 .wk-h{display:flex;align-items:center;gap:10px;width:100%;padding:12px;border:0;background:transparent;color:var(--ink);text-align:left;cursor:pointer;font:inherit}
@@ -1944,6 +1944,9 @@ body[data-tab=profile] .bb{width:42px;height:14px}
 /* ---------- profil : sans bandeau, contour d'avatar néon, logo, devise sur plusieurs lignes ---------- */
 body[data-pv] .top{display:none}
 body[data-pv] #main{padding-top:8px}
+/* profil : sur un grand écran, le vide restant est réparti entre le haut de page et les espaces entre les blocs (petits écrans : valeurs d'avant) */
+body[data-pv] #main{padding-top:clamp(8px,calc((100dvh - 700px)/6),28px)}
+body[data-pv] .pf2{gap:clamp(7px,calc((100dvh - 700px)/12),16px)}
 .pf2-avw{position:relative;flex:none}
 .pf2-avin{width:66px;height:90px;overflow:hidden;display:flex;justify-content:center;align-items:flex-start;border-radius:4px;background:radial-gradient(circle at 50% 28%,rgba(255,120,60,.2),transparent 72%)}
 .pf2-avin>*{flex:none}
