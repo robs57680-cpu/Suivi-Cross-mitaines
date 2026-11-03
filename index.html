@@ -7523,7 +7523,7 @@ function viewCards(){
 function backToCards(){S.carDate=S.viewDate||S.carDate;S.viewDate=null;S.entry=null;S.redo=null;S.tip=null;S.confirm=null;render();window.scrollTo(0,0);}
 /* ---------- prévention des risques : déclaration sur l'honneur avant la première séance (tous ; autorisation parentale en plus pour les mineurs) ---------- */
 const HG_VER='1'; /* à changer pour redemander la déclaration après une modification du texte */
-const HG_SEC=10; /* secondes de lecture avant de pouvoir cocher */
+const HG_SEC=0; /* secondes de lecture avant de pouvoir cocher (0 : plus d'attente) */
 const HG_MIN=16; /* âge minimum : en dessous, l'appli est inaccessible */
 const hgAge=b=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(b||'');if(!m||b>todayStr())return -1;const n=new Date();let a=n.getFullYear()-(+m[1]);if(n.getMonth()+1<+m[2]||(n.getMonth()+1===+m[2]&&n.getDate()<+m[3]))a--;return a>=0&&a<120?a:-1;};
 const needHealthGate=()=>{if(!S.uid||!S.profLoaded)return false;const a=hgAge(S.prof.birth);return (a>=0&&a<HG_MIN)||!(S.prof.health&&S.prof.health.v===HG_VER);};
@@ -14681,7 +14681,7 @@ const TOURS={
   welcome:()=>[
     {title:'Bienvenue sur Box Score',text:'Le classement de ton groupe de Crosstraining : le coach publie des séances, tu les fais quand tu veux dans la semaine, tu notes ton résultat et tu gagnes des points.'},
     ...installSteps(),
-    {sel:'.tabs',title:'Commence par la séance',text:'Touche « Séance » : tu y trouves les séances de la semaine et tu notes ton résultat. « Fil » montre l’actualité du groupe, « Classement » les points de tous. Le menu (les trois traits) contient ton profil et l’abonnement ; le bouton « ? » en haut à droite explique chaque écran.'}],
+    {sel:'.tabs',title:'Commence par la séance',text:'Touche « Séance » : tu y trouves les séances de la semaine et tu notes ton résultat. « Fil » montre l’actualité du groupe, « Classement » les points de tous. Le menu (les trois traits) contient ton profil, tes notifications et plus encore ; le bouton « ? » en haut à droite explique chaque écran.'}],
   feed:()=>[
     ...installSteps(),
     {sel:'#hdr-right .chip',title:'La saison',text:'La saison affichée. Tes points comptent pour la saison en cours.'},
@@ -14690,7 +14690,7 @@ const TOURS={
     {sel:'.feed-card',title:'Une séance publiée',text:'Le pseudo, le titre de la séance et les résultats. Touche un pseudo pour ouvrir le profil de l’athlète.'},
     {sel:'.rxrow',title:'Encourage tes partenaires',text:'Un emoji pour féliciter : ça fait toujours plaisir.'},
     {sel:'.tabs',title:'Les onglets du bas',text:'Fil : l’actualité du groupe. Séance : les séances de la semaine. Classement : les points de tous les athlètes. Le dernier bouton, aux trois traits, ouvre le menu.'},
-    {sel:'[data-tour=tab-menu]',title:'Le menu',text:'Touche ces trois traits : un bandeau se déplie sur le côté. Il regroupe ton profil, ton résumé de la semaine, tes notifications, le règlement, l’abonnement et plus encore.'},
+    {sel:'[data-tour=tab-menu]',title:'Le menu',text:'Touche ces trois traits : un bandeau se déplie sur le côté. Il regroupe ton profil, ton résumé de la semaine, tes notifications, le règlement et plus encore.'},
     {needs:'drawer',sel:'#drawer',title:'Le bandeau déplié',text:'Chaque entrée a son petit dessin. On les passe en revue une par une.'},
     {needs:'drawer',sel:'[data-tour=dm-profile]',title:'Profil : le bonhomme',text:'Tes points, ton rang, ton avatar, tes informations et ton objectif de séances.'},
     {needs:'drawer',sel:'[data-tour=dm-coach]',title:'Coach',text:'Réservé au coach : publier les séances et les messages.'},
@@ -14703,7 +14703,6 @@ const TOURS={
     {needs:'drawer',sel:'[data-tour=dm-bug]',title:'Signaler un bug',text:'Un souci dans l’appli ? Décris-le ici, il arrive directement au développeur.'},
     {needs:'drawer',sel:'[data-tour=dm-share]',title:'Partager l’appli : le téléphone',text:'Ouvre une page avec le lien de l’appli : tu le copies et tu l’envoies à quelqu’un.'},
     {needs:'drawer',sel:'[data-tour=dm-avis]',title:'Avis',text:'Note l’appli et laisse un petit mot : seul le coach le lit.'},
-    {needs:'drawer',sel:'[data-tour=dm-sub]',title:'Abonnement',text:'Ton statut (essai gratuit ou abonné), les deux forfaits, le paiement et les conditions générales de vente.'},
     {sel:'#tour-help',title:'Besoin d’un rappel ?',text:'Ce bouton « ? » te remet le guide de l’onglet où tu te trouves, quand tu veux.'}],
   today:()=>[
     {sel:'.back-btn',title:'Retour aux séances',text:'Ce bouton te ramène à la liste des séances de la semaine.'},
