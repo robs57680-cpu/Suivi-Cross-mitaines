@@ -1930,6 +1930,10 @@ body[data-tab=profile] .bb{width:42px;height:14px}
 .pf2-tile .feed-av{flex:none}
 .pf2-out{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted)}
 .pf2-out button{border:0;background:transparent;color:var(--muted);text-decoration:underline;padding:2px 0;cursor:pointer;font-size:12px}
+.pf2-out .pf2-del{color:var(--danger)}
+.dr-off{margin-top:auto;align-self:flex-start;display:grid;place-items:center;width:46px;height:46px;border:2px solid var(--edge);border-radius:50%;background:none;color:var(--muted);cursor:pointer;flex:none}
+.dr-off svg{width:22px;height:22px}
+.dr-off:hover,.dr-off:focus-visible{color:var(--danger);border-color:var(--danger)}
 @media (max-height:760px){
   .pf2 .pf2-av{width:56px;height:76px}
   .pf2 section.card{padding:6px 10px}
@@ -2224,8 +2228,8 @@ section.feed-card.th-neonviolet>.feed-badge{position:absolute!important;left:aut
 .sn-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .sn-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:9px 12px;background:var(--surface2);border:2px solid var(--edge);border-radius:4px}
 .sn-row b{overflow-wrap:anywhere}
-.sn-row span{font-size:12px;color:var(--muted);text-align:right}
-.sn-row span small{display:block;margin-top:3px;font-size:11px;color:var(--text,#f4f4f4)}
+.sn-row span{font-size:12px;color:var(--muted);text-align:right;white-space:nowrap}
+.sn-row small{grid-column:1/-1;display:block;font-size:11px;line-height:1.35;color:var(--ink);overflow-wrap:anywhere}
 </style>
 </head>
 <body>
@@ -3621,7 +3625,7 @@ Cgo8L3NjcmlwdD4KCjwvYm9keT48L2h0bWw+Cg==
 <script type="module">
 /* Le SDK Firebase est chargé en dynamique : la page s'affiche tout de suite, même si le réseau est lent.
    Au bout de 3 s sans réponse, l'appli bascule en mode cache (dernières données enregistrées sur l'appareil). */
-let firebaseConfig=null,appCheckSiteKey=null,initializeAppCheck=null,ReCaptchaEnterpriseProvider=null,initializeApp,getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup,getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc,disableNetwork,enableNetwork,query,orderBy,limit,where,getDocs;
+let firebaseConfig=null,appCheckSiteKey=null,initializeAppCheck=null,ReCaptchaEnterpriseProvider=null,initializeApp,getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup,deleteUser,EmailAuthProvider,reauthenticateWithCredential,getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc,disableNetwork,enableNetwork,query,orderBy,limit,where,getDocs;
 const FB_URL='https://www.gstatic.com/firebasejs/10.14.1/';
 const sdkPromise=(async()=>{
   const [cfg,a,u,f,ac]=await Promise.all([import('./firebase-config.js').catch(()=>({})),import(FB_URL+'firebase-app.js'),import(FB_URL+'firebase-auth.js'),import(FB_URL+'firebase-firestore.js'),import(FB_URL+'firebase-app-check.js').catch(()=>({}))]);
@@ -3629,7 +3633,7 @@ const sdkPromise=(async()=>{
   /* App Check (anti-abus) : actif seulement si firebase-config.js exporte appCheckSiteKey ; sans clé, l'appli fonctionne comme avant */
   appCheckSiteKey=cfg.appCheckSiteKey||null;initializeAppCheck=ac.initializeAppCheck||null;ReCaptchaEnterpriseProvider=ac.ReCaptchaEnterpriseProvider||null;
   ({initializeApp}=a);
-  ({getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup}=u);
+  ({getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup,deleteUser,EmailAuthProvider,reauthenticateWithCredential}=u);
   ({getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc,disableNetwork,enableNetwork,query,orderBy,limit,where,getDocs}=f);
 })();
 sdkPromise.catch(()=>{});
@@ -6925,7 +6929,7 @@ function partCard(p,w,date){
       metcon?[p.detail,p.lineRounds?'Chaque ligne = 1 tour':(p.repsRound?'1 tour = '+fmtN(eqTotal({content:p.content,repsRound:Number(p.repsRound)||0}))+' reps':'')].filter(Boolean).map(x=>' · '+x).join(''):''):null,
     (fmtId&&S.tip===fmtId)?h('div',{class:'tip',role:'dialog'},fmtExplain(p).map((t,k)=>k===0?h('b',{},t):h('p',{},t))):null,
     lvOpen?h('div',{class:'varnote'},'Version '+levelName(p,lvOpen[1])+' : '+[(lvOpen[0].variants||[]).length?'les variantes remplacent les mouvements':'',rdOf(lvOpen[0])?'le nombre de tours est adapté':''].filter(Boolean).join(' · ')+' (en surbrillance).'):null,
-    h('div',{class:'lines'},lines.map(metcon?metL:(t=>renderLine(t,p.kind==='renfo'?p.variants:null)))),
+    h('div',{class:'lines'},lines.map(metcon?metL:(t=>renderLine(t,(p.kind==='renfo'||p.kind==='autre')?p.variants:null)))),
     (metcon&&p.word)?h('div',{class:'cword'},h('span',{class:'flabel'},'Mot du coach'),h('p',{},linkText(p.word))):null,
     metcon?levelsBlock(p):null,
     (metcon&&w&&timerOk(date))?h('div',{class:'row'},h('button',{class:'btn primary btn-block',type:'button','data-tour':'start-metcon',onclick:()=>{const lo=activeLevels(p).find(x=>S.tip==='lv-'+p.label+x[1]);openTimer(w,date,p,lo?lo[1]:null);}},'Démarrer le metcon')):null);
@@ -11111,7 +11115,7 @@ function viewProfile(){
   }else{
     el.append(badgesSection(),trophCard);
   }
-  if(tab==='profil')el.append(h('div',{class:'pf2-out'},h('button',{type:'button',onclick:async()=>{try{await pushForget();}catch(e){}signOut(auth);}},'Se déconnecter'),h('span',{},'Version '+APP_VERSION)));
+  if(tab==='profil')el.append(h('div',{class:'pf2-out'},S.owner?h('span',{}):h('button',{type:'button',class:'pf2-del',onclick:openDeleteAccount},'Supprimer mon compte'),h('span',{},'Version '+APP_VERSION)));
   return el;
 }
 /* ---------- carnet de progression : PR enregistrés automatiquement (force à 1, 3, 5 ou 10 reps) ----------
@@ -11900,11 +11904,11 @@ function featuresCard(){
 const SEEN_GAP=10*60000;
 /* étapes d'inscription, écrites dans seen/{uid}.ob (c : compte créé, g : guide terminé « ok » ou passé « skip », s : onglet Séance ouvert) ; si les règles refusent ce champ, rien ne casse */
 function obMark(patch){
-  if(!S.uid||!S.db||S.snapMode||S.owner||!ready())return;
+  if(!S.uid||!S.db||S.snapMode||S.owner||S.deleting||!ready())return;
   try{S.db.doc('seen/'+S.uid).set({at:new Date().toISOString(),ob:patch},{merge:true}).catch(()=>{});}catch(e){}
 }
 function touchSeen(){
-  if(!S.uid||!S.db||S.snapMode||!S.coachLoaded||!ready())return;
+  if(!S.uid||!S.db||S.snapMode||S.deleting||!S.coachLoaded||!ready())return;
   const lg=S.logs[S.uid]||{};
   try{
     const k='bs-ob-'+S.uid;
@@ -11924,7 +11928,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden){try{touch
 async function seenLoad(){
   if(S._seenLoading)return;
   S._seenLoading=true;S.seenErr=false;
-  try{const sn=await S.db.collection('seen').get();const m={},o={};sn.docs.forEach(d=>{const x=d.data();if(x&&typeof x.at==='string')m[d.id]=x.at;if(x&&x.ob&&typeof x.ob==='object')o[d.id]=x.ob;});S.seenMap=m;S.seenOb=o;}
+  try{const sn=await S.db.collection('seen').get();const m={},o={};sn.docs.forEach(d=>{const x=d.data();if(x&&typeof x.at==='string')m[d.id]=x.at;if(x&&x.ob&&typeof x.ob==='object')o[d.id]=x.ob;});S.seenMap=m;S.seenOb=o;try{const dn=await S.db.collection('departures').get();S.depList=dn.docs.map(d=>d.data()).filter(x=>x&&x.at).sort((a,b)=>String(b.at).localeCompare(String(a.at))).slice(0,30);}catch(e){S.depList=S.depList||[];}}
   catch(e){S.seenErr=String((e&&e.code)||(e&&e.message)||'erreur');S.seenMap=S.seenMap||{};S.seenOb=S.seenOb||{};}
   finally{S._seenLoading=false;render();}
 }
@@ -11962,9 +11966,11 @@ function lastSeenCard(){
     funnel?h('p',{class:'hint'},funnel):null,
     h('div',{class:'row'},h('button',{class:'btn sm',type:'button',id:'seen-refresh',disabled:S._seenLoading,onclick:()=>{S.seenMap=null;seenLoad();}},S._seenLoading?'Chargement…':'Actualiser')),
     S.seenErr?h('p',{class:'hint'},S.seenErr.includes('permission')?'Lecture refusée par les règles Firestore : publie la dernière version des règles (bloc « seen ») dans la console Firebase, puis appuie sur Actualiser.':'Lecture impossible ('+S.seenErr+'). Vérifie ta connexion, puis appuie sur Actualiser.'):null,
+    (S.depList&&S.depList.length)?h('div',{class:'stack'},h('span',{class:'flabel'},'Raisons de départ (comptes supprimés)'),h('ul',{class:'sn-list'},S.depList.map(x=>h('li',{class:'sn-row'},h('b',{},x.reason||'—'),h('span',{},cap(fmtShort(dfmt(new Date(x.at))))),(x.detail||x.days>=0)?h('small',{},[x.detail,x.days>=0?'compte de '+x.days+' jour'+(x.days>1?'s':''):''].filter(Boolean).join(' · ')):null)))):null,
     rows.length?h('ul',{class:'sn-list'},rows.map(r=>{const st=stepOf(r);return h('li',{class:'sn-row'},
       h('b',{},r.pseudo),
-      h('span',{},r.at?seenLabel(r.at)+(r.fb?' (dernier résultat)':''):'Jamais connecté depuis la mise à jour',st?h('small',{},st):null));})):h('p',{class:'muted'},'Aucun adhérent.'));
+      h('span',{},r.at?seenLabel(r.at):'Jamais connecté'),
+      (r.fb||!r.at||st)?h('small',{},[r.fb?'Dernier résultat enregistré (pas encore reconnecté depuis la mise à jour)':'',!r.at?'Pas encore reconnecté depuis la mise à jour':'',st].filter(Boolean).join(' · ')):null);})):h('p',{class:'muted'},'Aucun adhérent.'));
 }
 const ICO_GEAR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>';
 const ICO_STATS='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 17v-4M12 17V8M16 17v-6"/><path d="M11 20h2"/></svg>';
@@ -12038,7 +12044,7 @@ function draftToWod(d){
   const parts=d.parts.map((p,i)=>{
     const o={label:'P'+(i+1),name:p.name.trim(),kind:p.kind,content:p.content.trim()};
     if(p.kind==='force')o.movement=p.movement.trim();
-    if(p.kind==='renfo'){ /* variantes du réglage « Configurer les mouvements » (Rx, puis Intermédiaire, puis Débutant), proposées en « X OU Y » */
+    if(p.kind==='renfo'||p.kind==='autre'){ /* variantes du réglage « Configurer les mouvements » (Rx, puis Intermédiaire, puis Débutant), proposées en « X OU Y » */
       const rv=[];
       for(const from of mvDetect(p.content)){
         const to=[];
@@ -13945,6 +13951,96 @@ function closeDrawer(instant){
   if(instant===true){D.remove();return;}
   D.classList.remove('open');setTimeout(()=>D.remove(),260);
 }
+/* ---------- déconnexion et suppression du compte ---------- */
+const POWER_ICO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></svg>';
+async function logoutNow(){try{await pushForget();}catch(e){}signOut(auth);}
+const DEL_REASONS=['Je ne m’entraîne plus au club','Je n’utilise pas l’appli','L’appli ne me plaît pas','Problème technique','Je ne veux pas payer l’abonnement','Autre'];
+/* efface les données de la personne puis son compte. La raison est enregistrée sans identité (collection departures). */
+async function deleteMyAccount(reason,detail,pwd){
+  const user=auth&&auth.currentUser;if(!user)throw new Error('Tu n’es plus connecté.');
+  const uid=user.uid;
+  if(pwd!==null)await reauthenticateWithCredential(user,EmailAuthProvider.credential(user.email,pwd)); /* d'abord : si le mot de passe est faux, rien n'est effacé */
+  const c=Date.parse(S.created);
+  try{await S.db.doc('departures/'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)).set({reason:String(reason).slice(0,80),detail:String(detail||'').slice(0,200),at:new Date().toISOString(),days:isNaN(c)?0:Math.max(0,Math.round((Date.now()-c)/864e5))});}catch(e){}
+  try{await pushForget(true);}catch(e){}
+  const wipe=async(coll,field)=>{try{const sn=await S.db.collection(coll).where(field,'==',uid).get();for(const d of sn.docs){try{await S.db.doc(coll+'/'+d.id).delete();}catch(e){}}}catch(e){}};
+  await wipe('pushSubs','uid');await wipe('reactions','from');await wipe('comments','uid');
+  try{const ms=await S.db.collection('dm/'+uid+'/m').get();for(const d of ms.docs){try{await S.db.doc('dm/'+uid+'/m/'+d.id).delete();}catch(e){}}}catch(e){}
+  for(const pth of ['dm/'+uid,'avis/'+uid,'seen/'+uid,'users/'+uid+'/private/profile','logs/'+uid]){try{await S.db.doc(pth).delete();}catch(e){}}
+  await deleteUser(user);
+  try{localStorage.removeItem('bs-ob-'+uid);}catch(e){}
+}
+function openDeleteAccount(){
+  if(document.getElementById('del-ov'))return;
+  const user=auth&&auth.currentUser;if(!user||S.owner)return;
+  const hasPwd=(user.providerData||[]).some(x=>x.providerId==='password');
+  const pm=payState();
+  const paid=pm.k==='active'&&pm.plan!=='free'&&!pm.cancel;
+  const st={step:paid?0:1,reason:'',detail:'',word:'',pwd:'',err:'',busy:false};
+  const esc=e=>{if(e.key==='Escape'&&!st.busy)close();};
+  const close=()=>{ov.remove();document.removeEventListener('keydown',esc);};
+  const body=h('div',{class:'stack'});
+  const ov=h('div',{class:'ov',id:'del-ov',style:'z-index:70',onclick:e=>{if(e.target===ov&&!st.busy)close();}},
+    h('div',{class:'sheet',role:'dialog','aria-modal':'true','aria-label':'Supprimer mon compte'},body));
+  const head=t=>[h('p',{class:'eyebrow'},'Compte'),h('h2',{class:'wtitle'},t)];
+  const cancelBtn=()=>h('button',{class:'btn',type:'button',onclick:close},'Annuler');
+  const draw=()=>{
+    if(st.step===0){
+      body.replaceChildren(...head('Abonnement en cours'),
+        h('p',{},'Ton abonnement est encore actif : il continuerait d’être prélevé après la suppression de ton compte. Résilie-le d’abord, puis reviens ici.'),
+        PORTAL_LINK?h('a',{class:'btn',href:PORTAL_LINK,rel:'noopener'},'Gérer mon abonnement'):null,
+        h('button',{class:'btn',type:'button',onclick:close},'Fermer'));
+    }else if(st.step===1){
+      const selR=h('select',{id:'del-reason','aria-label':'Raison du départ',onchange:()=>{st.reason=selR.value;upd();}},
+        h('option',{value:''},'Choisis une raison…'),...DEL_REASONS.map(r=>h('option',{value:r},r)));
+      selR.value=st.reason;
+      const ta=h('textarea',{id:'del-detail',rows:'3',maxlength:'200',placeholder:'Précise si tu veux (obligatoire pour « Autre »)',oninput:()=>{st.detail=ta.value;upd();}});
+      ta.value=st.detail;
+      const next=h('button',{class:'btn primary',type:'button',onclick:()=>{st.step=2;draw();}},'Continuer');
+      const upd=()=>{next.disabled=!st.reason||(st.reason==='Autre'&&st.detail.trim().length<3);};
+      body.replaceChildren(...head('Supprimer mon compte'),
+        h('p',{},'Dommage de te voir partir. Dis-nous pourquoi : ta réponse est enregistrée sans ton nom.'),
+        h('div',{class:'field'},h('label',{class:'flabel',for:'del-reason'},'Raison'),selR),
+        h('div',{class:'field'},h('label',{class:'flabel',for:'del-detail'},'Un mot de plus (facultatif)'),ta),
+        h('div',{class:'row',style:'justify-content:flex-end;gap:8px'},cancelBtn(),next));
+      upd();
+    }else if(st.step===2){
+      const inW=h('input',{id:'del-word',type:'text',autocomplete:'off',autocapitalize:'off',autocorrect:'off',spellcheck:'false',placeholder:'Supprimer','aria-label':'Écris le mot Supprimer',oninput:()=>{st.word=inW.value;upd();}});
+      inW.value=st.word;
+      const inP=hasPwd?h('input',{id:'del-pw',type:'password',autocomplete:'current-password',autocapitalize:'off','aria-label':'Ton mot de passe',oninput:()=>{st.pwd=inP.value;upd();}}):null;
+      if(inP)inP.value=st.pwd;
+      const next=h('button',{class:'btn danger',type:'button',onclick:()=>{st.err='';st.step=3;draw();}},'Continuer');
+      const upd=()=>{next.disabled=!(st.word.trim().toLowerCase()==='supprimer')||(hasPwd&&!st.pwd);};
+      body.replaceChildren(...head('Confirme ton choix'),
+        h('p',{},'Pour confirmer, écris le mot « Supprimer » dans le cadre ci-dessous.'),
+        h('div',{class:'field'},h('label',{class:'flabel',for:'del-word'},'Écris : Supprimer'),inW),
+        inP?h('div',{class:'field'},h('label',{class:'flabel',for:'del-pw'},'Ton mot de passe (pour vérifier que c’est bien toi)'),inP):null,
+        st.err?h('p',{class:'hint',role:'alert',style:'color:var(--danger)'},st.err):null,
+        h('div',{class:'row',style:'justify-content:flex-end;gap:8px'},cancelBtn(),next));
+      upd();
+    }else{
+      const go=h('button',{class:'btn danger',type:'button',onclick:async()=>{
+        if(st.busy)return;st.busy=true;S.deleting=true;
+        body.replaceChildren(...head('Suppression en cours…'),h('p',{},'Ne ferme pas l’appli, ça ne prend que quelques secondes.'));
+        try{
+          await deleteMyAccount(st.reason,st.detail,hasPwd?st.pwd:null);
+          close();toast('Ton compte a été supprimé. À bientôt !');
+        }catch(e){
+          S.deleting=false;st.busy=false;
+          const code=String((e&&e.code)||'');
+          st.err=/wrong-password|invalid-credential|invalid-login/.test(code)?'Mot de passe incorrect.':code==='auth/too-many-requests'?'Trop d’essais : réessaie dans quelques minutes.':errMsg(e);
+          st.pwd='';st.step=2;draw();
+        }
+      }},'Supprimer définitivement');
+      body.replaceChildren(...head('Dernier rappel'),
+        h('p',{},'Tu vas perdre définitivement toutes tes données : résultats, records personnels, objectifs, avatar, badges et messages. Cette action ne peut pas être annulée.'),
+        h('div',{class:'row',style:'justify-content:flex-end;gap:8px'},cancelBtn(),go));
+    }
+  };
+  draw();
+  document.body.append(ov);document.addEventListener('keydown',esc);
+  const f=ov.querySelector('select,input,a,button');if(f)try{f.focus({preventScroll:true});}catch(e){}
+}
 function openDrawer(instant){
   if(drawerEl)return;
   const D=h('div',{class:'drawer-bg'+(instant===true?' inst':''),onclick:e=>{if(e.target===D)closeDrawer();}});
@@ -13953,13 +14049,15 @@ function openDrawer(instant){
     b.innerHTML=it.ico;b.append(h('span',{},it.label));
     if(it.dot)b.append(h('span',{class:'ibdot','aria-hidden':'true'}));
     return b;});
+  const offBtn=h('button',{class:'dr-off',type:'button','data-tour':'dm-off','aria-label':'Se déconnecter',title:'Se déconnecter',onclick:()=>{closeDrawer(true);logoutNow();}});
+  offBtn.innerHTML=POWER_ICO;
   const nb=h('div',{class:'nbar',id:'nbar',hidden:true});
   const bell=h('button',{class:'dbell',type:'button','data-tour':'dm-notif','aria-label':'Notifications','aria-expanded':'false',onclick:()=>{const o=nb.hidden;nb.hidden=!o;bell.setAttribute('aria-expanded',String(o));if(o)nb.replaceChildren(notifBar());}});
   nb.closeBar=()=>{nb.hidden=true;bell.setAttribute('aria-expanded','false');};
   bell.innerHTML=ICO_BELL;if(notifDotOn())bell.append(h('span',{class:'ibdot','aria-hidden':'true'}));
   if(S.nbOpen){S.nbOpen=false;nb.hidden=false;bell.setAttribute('aria-expanded','true');nb.replaceChildren(notifBar());}
   D.append(h('aside',{class:'drawer',id:'drawer',role:'dialog','aria-label':'Menu'},
-    h('div',{class:'dh'},h('b',{},'Menu'),h('div',{class:'dhr'},bell,h('button',{class:'dx',type:'button','aria-label':'Fermer le menu',onclick:()=>closeDrawer()},'✕'))),...items));
+    h('div',{class:'dh'},h('b',{},'Menu'),h('div',{class:'dhr'},bell,h('button',{class:'dx',type:'button','aria-label':'Fermer le menu',onclick:()=>closeDrawer()},'✕'))),...items,offBtn));
   D.append(nb);
   D._esc=e=>{if(e.key==='Escape'&&!tourEl){e.preventDefault();if(!nb.hidden)nb.closeBar();else closeDrawer();}};
   document.addEventListener('keydown',D._esc,true);
