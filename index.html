@@ -82,7 +82,13 @@ h1,h2,h3,p{margin:0}
 .btn{border:2px solid var(--edge);background:transparent;border-radius:4px;padding:10px 16px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;font-size:13px;cursor:pointer;min-height:44px}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .btn.sm{padding:6px 10px;min-height:36px;font-size:12px}
-.capbox{display:grid;gap:8px;margin:10px 0}.capbox .caprow{display:flex;flex-wrap:wrap;gap:8px}
+.capbox{display:grid;gap:8px;margin:10px 0}.capbox .caprow{display:flex;flex-wrap:wrap;gap:8px}.capbox .caprow .btn{flex:1 1 150px;min-height:44px;line-height:1.2;white-space:normal;text-align:center}
+/* écran de fin de timer : le contenu défile au lieu de passer sous les boutons du bas, et les deux boutons d'aide se rangent côte à côte */
+.tm.done .tm-mid{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+.tm.done .tm-mid>*{flex:none}.tm.done .tm-mid>:first-child{margin-top:auto}.tm.done .tm-mid>:last-child{margin-bottom:auto}
+.tm.done .tm-time{font-size:clamp(56px,18vw,96px)}
+.tm .capbox{width:100%;max-width:420px;margin:4px 0}.tm .capbox .caprow{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tm .capbox .caprow .btn{width:100%;padding:8px 10px;font-size:13px}
+.tm .capchk{background:rgba(255,255,255,.08);border-color:var(--panel-muted);color:var(--panel-ink)}.tm .capchk.err{border-color:#FF6A4D}
 .capchk{padding:10px 12px;border-radius:10px;background:rgba(127,127,127,.14);border:1px solid rgba(127,127,127,.35);font-size:13px;line-height:1.45;color:inherit;text-align:left}
 .capchk[hidden]{display:none}.capchk p{margin:0 0 6px}.capchk p:last-child{margin:0}.capchk ul{margin:4px 0 6px;padding-left:18px}.capchk b{font-weight:700}.capchk.err{border-color:var(--danger)}
 .btn.danger{border-color:var(--danger);color:var(--danger)}
@@ -1121,6 +1127,11 @@ html[data-noel] .tabs{border-top-color:#F5C451}
 .feed-card.th-angrypumpkin .feed-metric.fm-force>*,.feed-card.th-angrypumpkin .feed-metric.fm-mc>*{grid-column:2}
 .feed-card.th-angrypumpkin .feed-metric b{color:#fff;text-shadow:0 2px 3px #000}
 .feed-card.th-angrypumpkin .feed-metric span{color:#a8a3b8}
+/* textes réduits : le score (ex. « Time cap · 2 tours + 74 reps ») ne s'étale plus en hauteur */
+.feed-card.th-angrypumpkin .feed-metric.fm-force,.feed-card.th-angrypumpkin .feed-metric.fm-mc{grid-template-columns:clamp(24px,7.6cqw,32px) minmax(0,1fr);column-gap:2cqw}
+.feed-card.th-angrypumpkin .feed-metric.fm-force::before,.feed-card.th-angrypumpkin .feed-metric.fm-mc::before{width:clamp(24px,7.6cqw,32px);height:clamp(24px,7.6cqw,32px)}
+.feed-card.th-angrypumpkin .feed-metric b{font-size:clamp(12px,3.9cqw,16px);line-height:1.15;overflow-wrap:break-word;letter-spacing:.01em}
+.feed-card.th-angrypumpkin .feed-metric span{font-size:clamp(8px,2.3cqw,9px);line-height:1.25;letter-spacing:.04em}
 .feed-card.th-angrypumpkin .rxb{background:rgba(10,7,7,.88);border:0 solid transparent;border-width:5px 5px 10px 5px;border-image:url('assets/embedded/cadre-halloween-resultat.webp') 26 26 74 26/5px 5px 10px 5px stretch;border-radius:0}
 .feed-card.th-angrypumpkin .rxb[aria-pressed="true"]{background:rgba(255,90,30,.2);box-shadow:0 0 12px rgba(255,90,30,.75)}
 .feed-card.th-angrypumpkin .rxb small{color:#fff}
@@ -11209,8 +11220,8 @@ Object.assign(PF_IC,{
 const PG_TABS=[['over','Vue d’ensemble',PF_IC.bar],['prs','PRs',PF_IC.trophy],['graph','Graphiques',PF_IC.line],['hist','Historique',PF_IC.clock],['goals','Objectifs',PF_IC.target]];
 const PG_SUB='Plus fort qu’hier'; /* sous-titre de la page : à changer ici */
 const PG_MOTTO=['Le progrès n’est pas une destination','C’est un mode de vie'];
-const PG_TYPE={title:'Titre',frame:'Encadré',bg:'Fond',avatar:'Cosmétique',avframe:'Cadre',joker:'Joker'};
-const PG_ICON={title:'★',frame:'▣',bg:'🖼️',avatar:'👕',avframe:'◎',joker:'🪙'};
+const PG_TYPE={title:'Titre',frame:'Encadré',bg:'Fond',avatar:'Cosmétique',avframe:'Cadre',joker:'Joker',coins:'Coins'};
+const PG_ICON={title:'★',frame:'▣',bg:'🖼️',avatar:'👕',avframe:'◎',joker:'🪙',coins:'🪙'};
 const pgDate=it=>it.redo?it.on:it.w.date;
 const pgPct=v=>v===null||v===undefined?'–':(v>0?'+':v<0?'−':'')+Math.abs(v)+'%';
 const pgTrend=v=>v===null||v===undefined||v===0?null:h('i',{class:'pg-tr '+(v>0?'up':'dn')},v>0?'▲':'▼');
@@ -13927,19 +13938,20 @@ function rwdPeek(){
 function rewardEditor(d){
   if(!Array.isArray(d.rewards))d.rewards=[];
   const items=AV_ITEMS.filter(x=>!avOff(x));
-  const typeName={title:'Titre',frame:'Encadré de bannière',bg:'Fond de bannière',avatar:'Cosmétique avatar',avframe:'Cadre d’avatar (fil)',joker:'Joker (sauve une flamme)'};
+  const typeName={title:'Titre',frame:'Encadré de bannière',bg:'Fond de bannière',avatar:'Cosmétique avatar',avframe:'Cadre d’avatar (fil)',joker:'Joker (sauve une flamme)',coins:'Coins'};
   const editor=r=>h('div',{class:'reward-edit'},
-    field('Type',sel([['title','Titre'],['frame','Encadré de bannière'],['bg','Fond de bannière'],['avatar','Cosmétique avatar'],['avframe','Cadre d’avatar (fil)'],['joker','Joker (sauve une flamme)']],r.type,v=>{r.type=v;if(v==='avframe'&&!AVF[r.asset])r.asset='gold';if(v==='avatar'&&!r.asset)r.asset=items[0]?.id||'';if(v==='bg'&&r.asset!=='base'&&!BG_ASSETS[r.asset])r.asset='base';render();})),
+    field('Type',sel([['title','Titre'],['frame','Encadré de bannière'],['bg','Fond de bannière'],['avatar','Cosmétique avatar'],['avframe','Cadre d’avatar (fil)'],['joker','Joker (sauve une flamme)'],['coins','Coins (monnaie du Shop)']],r.type,v=>{r.type=v;if(v==='coins'&&!r.coins)r.coins='10';if(v==='avframe'&&!AVF[r.asset])r.asset='gold';if(v==='avatar'&&!r.asset)r.asset=items[0]?.id||'';if(v==='bg'&&r.asset!=='base'&&!BG_ASSETS[r.asset])r.asset='base';render();})),
     field('XP requis',h('input',{type:'number',min:'0',step:'1',value:r.xp,oninput:e=>r.xp=e.target.value,placeholder:'100'})),
-    field('Nom de la récompense',h('input',{class:'wide',value:r.name||'',oninput:e=>r.name=e.target.value,placeholder:'Ex. Athlète Alpha'}),null),
+    r.type==='coins'?field('Coins à gagner',h('input',{type:'number',min:'1',step:'1',inputmode:'numeric',value:r.coins||'',oninput:e=>r.coins=e.target.value,placeholder:'10'}),'Nombre de coins ajoutés au solde de l’athlète quand il atteint le seuil d’XP (une seule fois). Il les dépense dans le Shop.'):null,
+    field('Nom de la récompense',h('input',{class:'wide',value:r.name||'',oninput:e=>r.name=e.target.value,placeholder:r.type==='coins'?'Ex. Prime de 50 coins (facultatif)':'Ex. Athlète Alpha'}),null),
     r.type==='avatar'?field('Cosmétique',sel(items.map(x=>[x.id,x.name]),r.asset,v=>{r.asset=v;},{class:'wide'})):r.type==='avframe'?field('Visuel du cadre',sel(Object.entries(AVF).map(([k,v])=>[k,v.name]),AVF[r.asset]?r.asset:'gold',v=>{r.asset=v;},{class:'wide'}),'Affiché autour de l’avatar dans le fil. L’athlète le choisit dans « Ma bannière ».'):r.type==='bg'?field('Visuel du fond',sel([['base','Box Score classique']].concat(Object.entries(BG_ASSETS).map(([k,v])=>[k,v.name])),r.asset||'base',v=>{r.asset=v;},{class:'wide'}),'Les fonds spéciaux (Alpha, Angry Pumpkin, Crimson Crown, Néon Violet) sont disponibles uniquement après avoir remporté cette récompense.'):null,
     field('URL de l’image (facultatif)',h('input',{class:'wide',type:'url',value:r.image||'',oninput:e=>r.image=e.target.value,placeholder:'https://…'}),null));
   const rows=d.rewards.filter(r=>r.id!=='rat-laboratoire').map((r)=>h('div',{class:'reward-edit'},
-    h('div',{class:'wide'},h('b',{},r.name||'Récompense sans nom'),h('div',{class:'sub'},(typeName[r.type]||'Récompense')+' · '+(Number(r.xp)||0)+' XP requis')),
+    h('div',{class:'wide'},h('b',{},r.name||'Récompense sans nom'),h('div',{class:'sub'},(typeName[r.type]||'Récompense')+(r.type==='coins'?' · '+(Number(r.coins)||0)+' coin'+((Number(r.coins)||0)>1?'s':''):'')+' · '+(Number(r.xp)||0)+' XP requis')),
     h('button',{class:'btn sm',type:'button',onclick:()=>{d.rewardDraft=Object.assign({},r);d.rewards=d.rewards.filter(x=>x.id!==r.id);render();}},'Modifier'),
     h('button',{class:'btn sm danger',type:'button',onclick:()=>{d.rewards=d.rewards.filter(x=>x.id!==r.id);render();}},'Supprimer')));
   const draft=d.rewardDraft? h('div',{class:'stack',style:'border:1px solid var(--line);border-radius:12px;padding:12px'},h('div',{class:'flabel'},'Nouvelle récompense — à confirmer'),editor(d.rewardDraft),h('div',{class:'row'},
-    h('button',{class:'btn primary',type:'button',onclick:()=>{const r=d.rewardDraft;if(!String(r.name||'').trim()){toast('Donne un nom à la récompense avant de confirmer.',true);return;}if(r.xp===''||!Number.isFinite(Number(r.xp))||Number(r.xp)<0){toast('Indique un seuil d’XP valide.',true);return;}d.rewards.push(Object.assign({},r,{name:r.name.trim(),xp:String(Number(r.xp))}));d.rewardDraft=null;render();toast('Récompense ajoutée à la saison');}},'Confirmer l’ajout'),
+    h('button',{class:'btn primary',type:'button',onclick:()=>{const r=d.rewardDraft;if(r.type==='coins'){const c=Math.floor(Number(String(r.coins).replace(',','.')));if(!Number.isFinite(c)||c<1){toast('Indique un nombre de coins à gagner (1 ou plus).',true);return;}r.coins=String(c);if(!String(r.name||'').trim())r.name=c+' coin'+(c>1?'s':'');}if(!String(r.name||'').trim()){toast('Donne un nom à la récompense avant de confirmer.',true);return;}if(r.xp===''||!Number.isFinite(Number(r.xp))||Number(r.xp)<0){toast('Indique un seuil d’XP valide.',true);return;}d.rewards.push(Object.assign({},r,{name:r.name.trim(),xp:String(Number(r.xp))}));d.rewardDraft=null;render();toast('Récompense ajoutée à la saison');}},'Confirmer l’ajout'),
     h('button',{class:'btn',type:'button',onclick:()=>{d.rewardDraft=null;render();}},'Annuler'))):null;
   return h('div',{class:'stack'},h('div',{class:'flabel'},'Récompenses débloquées avec l’XP'),rwdPeek(),
     h('p',{class:'hint'},'Configure une récompense puis clique sur « Confirmer l’ajout ». Les récompenses confirmées sont listées ci-dessous. L’XP correspond au score pondéré de la saison.'),
@@ -13951,7 +13963,7 @@ function seasonXp(uid,per){
   const b=computeBoard(per);const r=b.rows.find(x=>x.uid===uid);return r?Math.max(0,Math.floor(r.weighted*10)/10):0;
 }
 function rewardImage(r){
-  const art=h('div',{class:'reward-art'},r.image?h('img',{src:r.image,alt:r.name||'Récompense'}):r.type==='avatar'?'🏋️':r.type==='title'?'★':r.type==='frame'?'▣':r.type==='joker'?'🪙':'◆');
+  const art=h('div',{class:'reward-art'},r.image?h('img',{src:r.image,alt:r.name||'Récompense'}):r.type==='avatar'?'🏋️':r.type==='title'?'★':r.type==='frame'?'▣':(r.type==='joker'||r.type==='coins')?'🪙':'◆');
   if(r.type==='avatar'&&!r.image&&AV_BY[r.asset]&&AV_BY[r.asset].img){const ic=avIcon(AV_BY[r.asset]);ic.style.cssText='width:100%;height:100%';art.replaceChildren(ic);}
   if(r.type==='avframe'&&!r.image){art.replaceChildren(h('img',{src:avfSrc(r),alt:r.name||'Cadre d’avatar'}));}
   if(r.type==='bg'&&!r.image&&BG_ASSETS[r.asset]){art.replaceChildren(h('img',{src:BG_ASSETS[r.asset].src,alt:r.name||'Fond de bannière',style:'width:100%;height:100%;object-fit:cover;border-radius:4px'}));}
@@ -13965,6 +13977,7 @@ function maybeRewardPopup(){
   const rw=per.rewards.find(r=>Number(r.xp)>=0&&xp>=Number(r.xp)&&!seen.has(per.id+':'+r.id)&&rwFits(r,S.uid));
   if(!rw)return;
   S._rewardPopupOpen=true;
+  const coinN=rw.type==='coins'?Math.max(0,Math.floor(Number(rw.coins))||0):0;
   const pop=h('div',{class:'reward-pop',role:'dialog','aria-modal':'true','aria-label':'Récompense débloquée'});
   const finish=async(equip=false)=>{
     // Fermer immédiatement la fenêtre, mais garder le verrou pendant la sauvegarde
@@ -13975,6 +13988,8 @@ function maybeRewardPopup(){
     const next=[...new Set([...(curLog.rewardSeen||[]),key])];
     const owned=[...new Set([...(curLog.rewardOwned||[]),key])];
     const patch={rewardSeen:next,rewardOwned:owned};
+    /* récompense « Coins » : crédit unique, stocké dans coinGot sous la clé rw:saison:récompense (le solde additionne toutes les valeurs) */
+    if(coinN>0){const ck='rw:'+key,cg=curLog.coinGot||{};if(cg[ck]===undefined)patch.coinGot=Object.assign({},cg,{[ck]:coinN});}
     // Enregistrer localement dès maintenant : la récompense ne doit pas réapparaître
     // pendant que Firestore sauvegarde. Elle n'est équipée que si le bouton le demande.
     S.logs[S.uid]=Object.assign({},curLog,{rewardSeen:next,rewardOwned:owned});
@@ -14001,11 +14016,11 @@ function maybeRewardPopup(){
   const close=()=>finish(false),equip=()=>finish(true);
   pop.append(h('div',{class:'rp-card'},h('p',{class:'eyebrow'},'Récompense débloquée'),
     rewardImage(rw),h('h2',{class:'wtitle'},rw.name||'Nouvelle récompense'),
-    h('p',{class:'muted'},(rw.type==='avatar'?'Cosmétique avatar':rw.type==='title'?'Titre':rw.type==='frame'?'Encadré de bannière':rw.type==='avframe'?'Cadre d’avatar (fil)':rw.type==='joker'?'Joker':'Fond de bannière')+' · '+rw.xp+' XP'),
-    h('p',{},rw.type==='joker'?'Tu gagnes un joker ! Il sauve une flamme (série ou temps au top) qui s’éteint à cause d’une seule séance ratée. Retrouve-le dans « Mes flammes », sur ton profil.':'Tu viens de débloquer cette récompense !'),
+    h('p',{class:'muted'},(rw.type==='avatar'?'Cosmétique avatar':rw.type==='title'?'Titre':rw.type==='frame'?'Encadré de bannière':rw.type==='avframe'?'Cadre d’avatar (fil)':rw.type==='joker'?'Joker':rw.type==='coins'?'Coins':'Fond de bannière')+' · '+rw.xp+' XP'),
+    h('p',{},rw.type==='coins'?'Tu gagnes '+coinN+' coin'+(coinN>1?'s':'')+' ! Ils sont ajoutés à ton solde : dépense-les dans le Shop.':rw.type==='joker'?'Tu gagnes un joker ! Il sauve une flamme (série ou temps au top) qui s’éteint à cause d’une seule séance ratée. Retrouve-le dans « Mes flammes », sur ton profil.':'Tu viens de débloquer cette récompense !'),
     h('div',{class:'row',style:'justify-content:center'},
-      rw.type==='joker'?h('button',{class:'btn primary',type:'button',onclick:close},'Super !'):h('button',{class:'btn',type:'button',onclick:close},'Fermer'),
-      rw.type==='joker'?null:h('button',{class:'btn primary',type:'button',onclick:equip},'Équiper'))));
+      (rw.type==='joker'||rw.type==='coins')?h('button',{class:'btn primary',type:'button',onclick:close},'Super !'):h('button',{class:'btn',type:'button',onclick:close},'Fermer'),
+      (rw.type==='joker'||rw.type==='coins')?null:h('button',{class:'btn primary',type:'button',onclick:equip},'Équiper'))));
   document.body.append(pop);
 }
 
@@ -14084,7 +14099,7 @@ function periodEditor(){
         if(!d.name.trim()||!d.start||!d.end||b===null||b<0||!(n>=1)){toast('Renseigne le numéro, le nom, la date de début, le nombre de semaines et les points.',true);return;}
         if(d.end<d.start){toast('La fin doit être après le début.',true);return;}
         const col=S.db.collection('periods');const ref=d.id?col.doc(d.id):col.doc();
-        await run(async()=>{await ref.set(Object.assign({num:n,name:d.name.trim(),start:d.start,end:d.end,base:b,avItems:d.av||[],botTitles:Array.isArray(d.botTitles)?d.botTitles:[],subs:(d.id&&S.periods[d.id]&&Array.isArray(S.periods[d.id].subs))?S.periods[d.id].subs:[],minElig:(parseInt(d.minElig,10)>0?parseInt(d.minElig,10):0),rewards:(d.rewards||[]).map(r=>({id:r.id||('rw'+Date.now().toString(36)),type:r.type||'title',name:String(r.name||'').trim(),xp:Math.max(0,Number(r.xp)||0),asset:r.asset||'',image:String(r.image||'').trim()}))},d.id&&S.periods[d.id]&&S.periods[d.id].locked?{locked:true}:{}));toast('Saison enregistrée');});
+        await run(async()=>{await ref.set(Object.assign({num:n,name:d.name.trim(),start:d.start,end:d.end,base:b,avItems:d.av||[],botTitles:Array.isArray(d.botTitles)?d.botTitles:[],subs:(d.id&&S.periods[d.id]&&Array.isArray(S.periods[d.id].subs))?S.periods[d.id].subs:[],minElig:(parseInt(d.minElig,10)>0?parseInt(d.minElig,10):0),rewards:(d.rewards||[]).map(r=>({id:r.id||('rw'+Date.now().toString(36)),type:r.type||'title',name:String(r.name||'').trim(),xp:Math.max(0,Number(r.xp)||0),asset:r.asset||'',image:String(r.image||'').trim(),...(r.type==='coins'?{coins:Math.max(0,Math.floor(Number(r.coins)||0))}:{})}))},d.id&&S.periods[d.id]&&S.periods[d.id].locked?{locked:true}:{}));toast('Saison enregistrée');});
         S.coach.period=null;render();}},d.id?'Enregistrer la saison':'Créer la saison'),
       d.id?h('button',{class:'btn',type:'button',onclick:()=>{S.coach.period=null;render();}},'Annuler'):null));
 }
