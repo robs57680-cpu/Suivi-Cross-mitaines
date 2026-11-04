@@ -7706,7 +7706,15 @@ function openSessionRank(w){
   document.body.append(ov);document.addEventListener('keydown',esc,true);
 }
 /* une séance d'une saison terminée n'apparaît plus dans l'onglet Séance */
-const wodInDoneSeason=d=>{const per=periodFor(d);return !!per&&!per.virtual&&periodState(per)==='done';};
+/* séance à masquer dans l'onglet Séances : elle appartient à une autre saison que celle en cours (terminée OU à venir).
+   Entre deux saisons (aucune en cours), on masque seulement les saisons terminées. Les dates hors saison ne sont pas touchées. */
+const wodInDoneSeason=d=>{
+  const per=periodFor(d);
+  if(!per||per.virtual)return false;
+  const cur=periodFor(todayStr());
+  if(cur&&!cur.virtual)return per.id!==cur.id;
+  return periodState(per)==='done';
+};
 function viewCards(){
   const t=todayStr(),el=h('div',{class:'stack car-page'});
   if(!ready()&&!S.pre){el.append(h('p',{class:'muted'},'Chargement…'));return el;}
