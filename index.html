@@ -3879,6 +3879,36 @@ KSkgYXBwbHlSZW1vdGUoZCk7CiAgICAgIH0sIGZ1bmN0aW9uICgpIHsgZGJEb2MgPSBudWxsOyBzZXRT
 c2V0U2F2ZSgnU3VyIGNldCBhcHBhcmVpbCBzZXVsZW1lbnQnKTsgfSk7CiAgfSBlbHNlIHNldFNhdmUoJ1N1ciBjZXQgYXBwYXJlaWwgc2V1bGVtZW50Jyk7Cn0pKCk7Cgo8L3NjcmlwdD4KCjwvYm9keT48L2h0
 bWw+Cg==
 </script>
+<script>
+/* DEBUG NATIF (temporaire) : affiche les erreurs et les étapes de démarrage à l'écran, uniquement dans l'appli Capacitor. À retirer avant publication. */
+(function(){
+  if(!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()))return;
+  var logs=[],box=null,btn=null,errs=0;
+  function fmt(a){try{return Array.prototype.map.call(a,function(x){return x&&x.stack?x.stack:(typeof x==='object'?JSON.stringify(x):String(x));}).join(' ');}catch(e){return String(a);}}
+  function ui(){
+    if(btn||!document.body)return;
+    btn=document.createElement('button');
+    btn.style.cssText='position:fixed;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:2147483647;padding:8px 12px;border-radius:20px;border:0;background:#c0392b;color:#fff;font:600 13px -apple-system,sans-serif;opacity:.92';
+    btn.onclick=function(){box.style.display=box.style.display==='none'?'block':'none';refresh();};
+    box=document.createElement('div');
+    box.style.cssText='display:none;position:fixed;left:0;right:0;bottom:0;max-height:55vh;overflow:auto;z-index:2147483646;background:#111;color:#0f0;font:11px/1.35 Menlo,monospace;padding:10px 10px 60px;white-space:pre-wrap;word-break:break-all;-webkit-user-select:text;user-select:text';
+    document.body.appendChild(box);document.body.appendChild(btn);refresh();
+  }
+  function refresh(){if(!btn)return;btn.textContent='🐞 '+errs+' err / '+logs.length;if(box&&box.style.display!=='none'){box.textContent=logs.join('\n');box.scrollTop=box.scrollHeight;}}
+  function add(kind,a){
+    var t=new Date().toISOString().slice(11,19);
+    logs.push(t+' ['+kind+'] '+fmt(a));if(logs.length>200)logs.shift();
+    if(kind==='ERR')errs++;
+    ui();refresh();
+  }
+  window.__dbg=function(){add('step',arguments);};
+  ['error','warn'].forEach(function(k){var o=console[k];console[k]=function(){add(k==='error'?'ERR':'warn',arguments);return o.apply(console,arguments);};});
+  window.addEventListener('error',function(e){add('ERR',[e.message,(e.filename||'')+':'+(e.lineno||'')]);});
+  window.addEventListener('unhandledrejection',function(e){add('ERR',['promesse rejetée:',e.reason]);});
+  document.addEventListener('DOMContentLoaded',function(){ui();add('step',['page chargée']);});
+  setTimeout(function(){add('step',['t+6s — état: '+(window.__fbState||'inconnu')]);},6000);
+})();
+</script>
 <script type="module">
 /* Le SDK Firebase est chargé en dynamique : la page s'affiche tout de suite, même si le réseau est lent.
    Au bout de 3 s sans réponse, l'appli bascule en mode cache (dernières données enregistrées sur l'appareil). */
@@ -3887,13 +3917,14 @@ const FB_URL='https://www.gstatic.com/firebasejs/10.14.1/';
 const sdkPromise=(async()=>{
   const [cfg,a,u,f,ac]=await Promise.all([import('./firebase-config.js').catch(()=>({})),import(FB_URL+'firebase-app.js'),import(FB_URL+'firebase-auth.js'),import(FB_URL+'firebase-firestore.js'),import(FB_URL+'firebase-app-check.js').catch(()=>({}))]);
   firebaseConfig=cfg.firebaseConfig||null;
+  window.__fbState='sdk chargé';window.__dbg&&window.__dbg('SDK Firebase chargé ; firebase-config.js '+(cfg.firebaseConfig?'trouvé':'ABSENT ou vide')+' ; clé App Check '+(cfg.appCheckSiteKey?'oui':'non'));
   /* App Check (anti-abus) : actif seulement si firebase-config.js exporte appCheckSiteKey ; sans clé, l'appli fonctionne comme avant */
   appCheckSiteKey=cfg.appCheckSiteKey||null;initializeAppCheck=ac.initializeAppCheck||null;ReCaptchaEnterpriseProvider=ac.ReCaptchaEnterpriseProvider||null;
   ({initializeApp}=a);
   ({getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup,deleteUser,EmailAuthProvider,reauthenticateWithCredential}=u);
   ({getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc,disableNetwork,enableNetwork,query,orderBy,limit,where,getDocs}=f);
 })();
-sdkPromise.catch(()=>{});
+sdkPromise.catch(e=>{window.__fbState='SDK ÉCHEC';window.__dbg&&window.__dbg('SDK Firebase ÉCHEC',e);});
 
 let auth=null;
 /* Petite couche qui expose Firestore sous la forme utilisée par l'appli */
@@ -14028,6 +14059,8 @@ function periodList(){
 }
 
 /* ---------- connexion ---------- */
+/* e-mail saisi à la main : on retire espaces, espaces insécables et caractères invisibles que le clavier iOS peut ajouter */
+const cleanEmail=v=>String(v||'').replace(/[\s\u00A0\u200B-\u200D\u2060\uFEFF]/g,'');
 function authErr(e){
   const c=(e&&e.code)||'';
   if(/invalid-credential|wrong-password|user-not-found/.test(c))return 'E-mail ou mot de passe incorrect.';
@@ -14242,7 +14275,7 @@ function authHome(){
       h('p',{class:'au-ver'},'Version '+APP_VERSION)));
 }
 function authLogin(){
-  const email=h('input',{id:'auth-email',type:'email',autocomplete:'email',autocapitalize:'off',placeholder:'Adresse e-mail','aria-label':'Adresse e-mail'});
+  const email=h('input',{id:'auth-email',type:'email',inputmode:'email',autocomplete:'email',autocapitalize:'off',autocorrect:'off',spellcheck:'false',placeholder:'Adresse e-mail','aria-label':'Adresse e-mail'});
   const {pw,field:pwField}=auPassword('auth-pw','current-password','Mot de passe');
   const msg=h('p',{class:'au-msg',role:'alert'});
   const attempt=async fn=>{msg.textContent='';try{await fn();}catch(e){msg.textContent=authErr(e);}};
@@ -14258,18 +14291,18 @@ function authLogin(){
       h('button',{class:'au-back au-back-hit',type:'button','aria-label':'Retour',onclick:()=>authGo('home')})),
     h('div',{class:'au-body'},
       ...(inst||[]),
-      h('form',{class:'au-form',onsubmit:e=>{e.preventDefault();attempt(()=>signInWithEmailAndPassword(auth,email.value.trim(),pw.value));}},
+      h('form',{class:'au-form',novalidate:'novalidate',onsubmit:e=>{e.preventDefault();const em=cleanEmail(email.value);if(!em){msg.textContent='Écris ton adresse e-mail.';return;}attempt(()=>signInWithEmailAndPassword(auth,em,pw.value));}},
         auField('mail',email),pwField,msg,submit,
         h('button',{class:'au-link au-center',type:'button',id:'auth-forgot',onclick:()=>attempt(async()=>{
-          if(!email.value.trim()){msg.textContent='Écris ton e-mail ci-dessus, puis clique à nouveau.';return;}
-          await sendPasswordResetEmail(auth,email.value.trim());msg.textContent='Si ce compte existe, un e-mail de réinitialisation vient d’être envoyé.';
+          if(!cleanEmail(email.value)){msg.textContent='Écris ton e-mail ci-dessus, puis clique à nouveau.';return;}
+          await sendPasswordResetEmail(auth,cleanEmail(email.value));msg.textContent='Si ce compte existe, un e-mail de réinitialisation vient d’être envoyé.';
         })},'Mot de passe oublié ?')),
       h('button',{class:'au-card',id:'auth-to-signup',type:'button',onclick:()=>authGo('signup')},
         auIc('userAdd','au-card-ic'),h('span',{class:'au-card-t'},'Pas encore de compte ?',h('b',{},'Créer un compte')),auChev()),
       h('div',{class:'au-feats'},feat('trophy','Participe aux compétitions'),feat('chart','Suis tes progrès'),feat('crowd','Rejoins une communauté motivante'))));
 }
 function authSignup(){
-  const email=h('input',{id:'auth-email',type:'email',autocomplete:'email',autocapitalize:'off',placeholder:'Adresse e-mail','aria-label':'Adresse e-mail'});
+  const email=h('input',{id:'auth-email',type:'email',inputmode:'email',autocomplete:'email',autocapitalize:'off',autocorrect:'off',spellcheck:'false',placeholder:'Adresse e-mail','aria-label':'Adresse e-mail'});
   const pseudo=h('input',{id:'auth-pseudo',type:'text',maxlength:'24',autocomplete:'nickname',autocapitalize:'off',autocorrect:'off',spellcheck:'false',placeholder:'Pseudo','aria-label':'Pseudo (affiché dans le classement)'});
   const {pw,field:pwField}=auPassword('auth-pw','new-password','Mot de passe');
   const birth=h('input',{id:'auth-birth',type:'date',max:todayStr(),min:'1900-01-01','aria-label':'Date de naissance'});
@@ -14282,7 +14315,7 @@ function authSignup(){
   const fail=t=>{msg.textContent=t;};
   const create=async()=>{
     msg.textContent='';
-    const e=email.value.trim(),ps=pseudo.value.trim(),p=pw.value,b=birth.value;
+    const e=cleanEmail(email.value),ps=pseudo.value.trim(),p=pw.value,b=birth.value;
     if(!e){fail('Écris ton adresse e-mail.');email.focus();return;}
     if(ps.length<2){fail('Choisis un pseudo de 2 caractères minimum (il apparaît dans le classement).');pseudo.focus();return;}
     if(p.length<6){fail('Mot de passe trop court : 6 caractères minimum.');pw.focus();return;}
@@ -14301,7 +14334,7 @@ function authSignup(){
       h('img',{class:'au-hero',src:AU_IMG.signup,alt:'Crée ton compte ! Rejoins la communauté et accède à tous les défis, les compétitions et les workouts.',width:852,height:875,style:'--fade:92%'}),
       h('button',{class:'au-back',type:'button','aria-label':'Retour',onclick:()=>authGo('home')},auIc('back'))),
     h('div',{class:'au-body'},
-      h('form',{class:'au-form',onsubmit:e=>{e.preventDefault();create();}},
+      h('form',{class:'au-form',novalidate:'novalidate',onsubmit:e=>{e.preventDefault();create();}},
         auField('mail',email),auField('user',pseudo),pwField,
         auField('cal',birth,ph),
         h('label',{class:'au-chk'},ck,h('span',{},'J’accepte les ',h('button',{class:'au-link',type:'button',id:'auth-cgu',onclick:openCGU},'CGU'),' et la ',h('button',{class:'au-link',type:'button',id:'auth-privacy',onclick:openPrivacy},'politique de confidentialité'),' de Cross’Mitaines.')),
@@ -15818,11 +15851,14 @@ function init(){
   render();
 }
 function startFirebase(){
+  window.__fbState='startFirebase';window.__dbg&&window.__dbg('startFirebase appelé');
   const bad=!firebaseConfig||!firebaseConfig.apiKey||String(firebaseConfig.apiKey).indexOf('COLLE')===0;
   if(bad){S.cacheMode=false;S.authReady=true;render();return;}
   const app=initializeApp(firebaseConfig);
+  /* Appli native Capacitor : jeton de débogage App Check (test uniquement, à retirer avant publication) */
+  if(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()){self.FIREBASE_APPCHECK_DEBUG_TOKEN=true;}
   if(appCheckSiteKey&&initializeAppCheck&&ReCaptchaEnterpriseProvider){try{initializeAppCheck(app,{provider:new ReCaptchaEnterpriseProvider(appCheckSiteKey),isTokenAutoRefreshEnabled:true});}catch(e){}}
-  auth=getAuth(app);
+  auth=getAuth(app);window.__fbState='getAuth ok, attend onAuthStateChanged';window.__dbg&&window.__dbg('getAuth OK');
   let fdb,persist=true;
   try{fdb=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});}
   catch(e){persist=false;fdb=getFirestore(app);} /* navigateur sans stockage local : l'appli marche, mais sans mode hors ligne */
@@ -15841,6 +15877,7 @@ function startFirebase(){
   render();
   let unsubs=[];
   onAuthStateChanged(auth,user=>{
+    window.__fbState='auth répondu';window.__dbg&&window.__dbg('onAuthStateChanged répondu, user='+(user?'connecté':'null'));
     unsubs.forEach(u=>u());unsubs=[];dmStop();
     S.loaded={periods:false,wods:false,logs:false};S.periods={};S.wods={};S.logs={};S.prof={prs:{},sex:'',weight:0};S.profLoaded=false;
     S.sexSync=null;S.coachUid=null;S.coachLoaded=false;S.owner=false;S.error=null;S.entry=null;S.redo=null;S.viewDate=null;S.confirm=null;S.cerAuto=false;S._annDone=false;S.ann=null;S.annLoaded=false;S._aw=null;S.groups={list:[],of:{},snap:{}};S._freezing=false;S.boardGroup=undefined;S.comments={};S.cacheMode=false;S.snapMode=false;S._srv={};S._netOff=false;clearTimeout(cacheT);S.reactions={};S.wu={cfg:null,loaded:false,list:false};
