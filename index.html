@@ -7956,7 +7956,7 @@ const wodInDoneSeason=d=>{
 /* ----- réglage du matériel disponible (onglet Séances) : on ne voit que les séances faisables avec le matériel coché ----- */
 const eqStoreKey=()=>'bs-eq-'+(S.uid||'');
 function eqHave(){ /* clés du matériel disponible ; null = tout est disponible (aucun filtre) */
-  if(S._eqUid!==S.uid){S._eqUid=S.uid;let v=null;try{const r=JSON.parse(localStorage.getItem(eqStoreKey())||'null');if(Array.isArray(r))v=r;}catch(e){}S._eq=v;}
+  if(S._eqUid!==S.uid){S._eqUid=S.uid;S._eqOn=false;let v=null;try{const r=JSON.parse(localStorage.getItem(eqStoreKey())||'null');if(Array.isArray(r))v=r;}catch(e){}S._eq=v;}
   return S._eq;
 }
 function eqSet(v){S._eqUid=S.uid;S._eq=v;try{if(v)localStorage.setItem(eqStoreKey(),JSON.stringify(v));else localStorage.removeItem(eqStoreKey());}catch(e){}}
@@ -7969,14 +7969,14 @@ function openEquipSettings(){
   const store=()=>eqSet(have.size>=EQUIP.length?null:[...have]);
   const boxes=EQUIP.map(([k,lab,svg])=>{
     const ic=h('span',{class:'cc-eqb','aria-hidden':'true'});ic.innerHTML=svg;
-    const inp=h('input',{type:'checkbox',id:'eq-'+k,checked:have.has(k),onchange:e=>{if(e.target.checked)have.add(k);else have.delete(k);store();}});
+    const inp=h('input',{type:'checkbox',id:'eq-'+k,checked:have.has(k),onchange:e=>{if(e.target.checked)have.add(k);else have.delete(k);store();S._eqOn=true;}});
     return h('label',{class:'chk'},inp,ic,h('span',{},lab));
   });
   const all=()=>{EQUIP.forEach(([k])=>have.add(k));boxes.forEach(l=>{l.querySelector('input').checked=true;});store();};
   const ov=h('div',{class:'ov',id:'eq-ov',style:'z-index:70',onclick:e=>{if(e.target===ov)close();}},
     h('div',{class:'sheet',role:'dialog','aria-modal':'true','aria-label':'Matériel disponible'},
       h('div',{class:'ov-h'},h('span',{class:'ov-t'},'Matériel disponible'),h('button',{type:'button',class:'ov-x','aria-label':'Fermer',onclick:close},'✕')),
-      h('p',{},'Coche le matériel que tu as. Les séances qui demandent un matériel décoché sont masquées : tu ne vois que celles que tu peux faire.'),
+      h('p',{},'Coche le matériel que tu as : il reste enregistré. Quand le filtre est sur ON (bouton à côté de la roue), les séances qui demandent un matériel décoché sont masquées. Sur OFF, toutes les séances sont visibles.'),
       h('div',{style:'display:grid;gap:10px'},boxes),
       h('div',{class:'tip',role:'note',id:'eq-reminder'},h('b',{},'↻ Pas le matériel ?'),
         h('p',{},'Tu peux retourner une séance (bouton ↻ sur sa carte) pour accéder à un wod sans matériel. Fais-le plutôt sur une séance que tu ne pourras pas faire : une fois ton résultat enregistré, la séance d’origine n’est plus réalisable.')),
@@ -7989,19 +7989,25 @@ function viewCards(){
   if(!ready()&&S.pre)el.append(h('p',{class:'hint'},'Séances enregistrées sur ton téléphone · mise à jour en cours…'));
   const mine=(S.logs[S.uid]&&S.logs[S.uid].entries)||{};
   const gear=h('button',{type:'button',class:'btn sm',id:'eq-open','aria-label':'Réglages : matériel disponible',title:'Matériel disponible',style:'flex:none;padding:8px 10px;line-height:0'},svgOf(ICO_GEAR));
-  gear.firstChild.style.cssText='width:22px;height:22px';gear.onclick=openEquipSettings;
-  const hv=eqHave();
-  if(hv)gear.classList.add('primary');
+  gear.firstChild.style.cssText='width:22px;height:22px';gear.onclick=()=>openEquipSettings();
+  const hv=eqHave(),eqOn=!!S._eqOn,fOn=eqOn&&!!hv; /* filtre actif seulement s'il est sur ON et qu'un matériel est enregistré */
+  const tg=h('button',{type:'button',class:'btn sm'+(eqOn?' primary':''),id:'eq-toggle','aria-pressed':eqOn?'true':'false','aria-label':'Filtre matériel : '+(eqOn?'activé':'désactivé'),title:eqOn?'Filtre activé : touche pour voir toutes les séances':'Filtre désactivé : touche pour ne garder que les séances faisables avec ton matériel',style:'flex:none;min-height:36px;padding:8px 12px;font-weight:700',onclick:()=>{
+    if(S._eqOn){S._eqOn=false;render();return;}
+    S._eqOn=true;
+    if(!eqHave())openEquipSettings(); /* aucun matériel enregistré : on ouvre le réglage pour le renseigner */
+    else render();
+  }},'Filtre '+(eqOn?'ON':'OFF'));
+  const ctrls=h('div',{style:'display:flex;gap:8px;align-items:center;flex:none'},tg,gear);
   /* séances des 4 dernières semaines et à venir, par semaine puis par date ; avec « saisons passées » : on ajoute celles des saisons terminées */
   const from=addDays(mondayOf(t),-28),past=!!S.showPast;
   const pastList=Object.values(S.wods).filter(w=>pastSeasonDate(w.date)).sort((a,b)=>a.date<b.date?-1:1);
   const ws0=Object.values(S.wods).filter(w=>(past&&pastSeasonDate(w.date))||(w.date>=from&&!wodInDoneSeason(w.date))).sort((a,b)=>a.date<b.date?-1:1);
   /* filtre matériel : une séance déjà validée reste visible ; sinon on regarde le matériel de la séance (ou de son remplacement choisi) */
-  const okEq=w=>{if(!hv||mine[w.date])return true;const ch=subChoice(S.uid,w.date),sw=ch&&ch.sw;return eqMissing(sw?wodFor(w,{sw}):w).length===0;};
+  const okEq=w=>{if(!fOn||mine[w.date])return true;const ch=subChoice(S.uid,w.date),sw=ch&&ch.sw;return eqMissing(sw?wodFor(w,{sw}):w).length===0;};
   const ws=ws0.filter(okEq),hidden=ws0.length-ws.length;
   const remind=()=>h('p',{class:'hint',id:'eq-hint'},'Pas le matériel ? Retourne une séance avec ↻ pour accéder à un wod sans matériel, de préférence sur une séance que tu ne pourras pas faire : la séance d’origine ne sera plus réalisable une fois ton résultat enregistré.');
   if(!ws.length){
-    el.append(h('div',{style:'display:flex;justify-content:space-between;align-items:flex-start;gap:12px'},h('div',{},h('p',{class:'eyebrow'},'Séances'),h('h1',{class:'day'},'Aucune séance')),gear));
+    el.append(h('div',{style:'display:flex;justify-content:space-between;align-items:flex-start;gap:12px'},h('div',{},h('p',{class:'eyebrow'},'Séances'),h('h1',{class:'day'},'Aucune séance')),ctrls));
     if(ws0.length){
       el.append(h('div',{class:'empty'},h('p',{},'Aucune séance faisable avec le matériel coché ('+hidden+' masquée'+(hidden>1?'s':'')+').'),h('div',{class:'row'},h('button',{class:'btn primary',type:'button',onclick:openEquipSettings},'Modifier mon matériel'))),remind());
     }else{
@@ -8022,8 +8028,8 @@ function viewCards(){
     sub.textContent=pastSeasonDate(d)?'Saison terminée : ces séances ne rapportent aucun point.':'À réaliser n’importe quel jour de la semaine, du lundi au dimanche.';
   };
   paint(cur);
-  el.append(h('div',{style:'display:flex;justify-content:space-between;align-items:flex-start;gap:12px'},h('div',{},eb,day,sub),gear));
-  if(hv&&hidden>0)el.append(h('p',{class:'hint',id:'eq-filter-note'},'Filtre matériel actif : '+hidden+' séance'+(hidden>1?'s':'')+' masquée'+(hidden>1?'s':'')+'.'),remind());
+  el.append(h('div',{style:'display:flex;justify-content:space-between;align-items:flex-start;gap:12px'},h('div',{},eb,day,sub),ctrls));
+  if(fOn&&hidden>0)el.append(h('p',{class:'hint',id:'eq-filter-note'},'Filtre matériel actif : '+hidden+' séance'+(hidden>1?'s':'')+' masquée'+(hidden>1?'s':'')+'.'),remind());
   /* bouton à l'extrémité gauche du carrousel : afficher / masquer les séances des saisons terminées */
   const pastBtn=(pastList.length||past)?h('div',{class:'car-slot car-past'},
     h('div',{class:'car-card',style:'--c1:#3a3f4a;--c2:#171a20;cursor:default;justify-content:center;align-items:center;text-align:center;gap:14px'},
