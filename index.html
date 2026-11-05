@@ -888,6 +888,11 @@ body:has(.bnx){overflow:hidden}
 .sh-cat:hover,.sh-cat:focus-visible{border-color:#ff3d7a;box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 0 0 1px #ff3d7a,0 6px 18px rgba(255,31,122,.35)}
 .sh-cat.empty{opacity:.7}
 .sh-cat.empty svg{filter:none}
+.sh-cwrap{position:relative;margin-inline:-16px}
+.sh-cwrap .sh-cats{margin-inline:0;padding:4px 16px 10px;scroll-padding-inline:16px;scroll-snap-type:x proximity}
+.sh-arr{position:absolute;top:calc(50% - 3px);transform:translateY(-50%);z-index:2;width:34px;height:34px;padding:0 0 3px;border-radius:50%;border:1.5px solid rgba(255,255,255,.35);background:rgba(10,10,13,.9);color:#fff;font:700 24px/1 var(--f-body);cursor:pointer;display:grid;place-items:center;box-shadow:0 2px 10px rgba(0,0,0,.55)}
+.sh-arr.l{left:6px}.sh-arr.r{right:6px}.sh-arr[hidden]{display:none}
+.sh-arr:active{transform:translateY(-50%) scale(.92)}
 .sh-cnt{position:absolute;top:-6px;right:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:var(--g);color:#fff;font:700 11px/20px var(--f-body);font-style:normal;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,.5)}
 .sh-grid,.sh-row{list-style:none;margin:0;padding:0}
 .sh-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -1240,6 +1245,12 @@ section.feed-card.th-crimson>.feed-badge{position:absolute!important;left:2cqw;r
 .reward-pop img{max-width:100%;max-height:38vh;object-fit:contain;border-radius:4px}
 /* fenêtre « coins gagnés » : vidéo des coins, « + X », bouton D'accord ; s'affiche après l'enregistrement d'une séance, avant l'animation du classement */
 .coin-win{background:#000d;animation:cw-in .25s ease-out}
+.paychip.coinchip.neg{color:#ff6b6b}
+.sh-pill.neg{color:#ff6b6b;border-color:#ff6b6b}
+.sh-warn{border:2px solid #ff4d4d;background:rgba(60,8,8,.85);color:#fff}
+.sh-warn p{margin:0}
+.coin-cheat .cc-card{border-color:#ff4d4d;box-shadow:0 15px 50px #000a,0 0 36px rgba(255,60,60,.3)}
+.coin-cheat .cc-card .eyebrow{color:#ff6b6b}
 .coin-win .cw-card{width:min(100%,440px);max-height:94vh;overflow:auto;background:#0a0a0b;color:#fff;border:3px solid var(--accent);border-radius:6px;padding:0 0 18px;display:grid;gap:10px;text-align:center;justify-items:center;box-shadow:0 15px 50px #000a,0 0 40px rgba(255,190,40,.25)}
 .coin-win .cw-vid{display:block;width:100%;aspect-ratio:918/720;max-height:56vh;object-fit:cover;background:#000;border-radius:3px 3px 0 0;cursor:pointer}
 .coin-win .cw-n{font-family:var(--f-display);font-size:clamp(46px,16vw,72px);line-height:1;letter-spacing:.03em;color:#FFC83A;text-shadow:0 2px 0 #7a4a00,0 0 22px rgba(255,190,40,.55);animation:cw-pop .55s .15s cubic-bezier(.2,1.6,.4,1) both}
@@ -8558,8 +8569,47 @@ function removeSession(date,uid){
   const lg=S.logs[uid]||{};
   const en=Object.assign({},lg.entries),rd=Object.assign({},lg.redos);
   const tid=(S.owner&&uid!==S.uid&&(en[date]||rd[date]))?trashPush('result','Résultat de '+(lg.pseudo||'athlète')+' · '+fmtShort(date),{uid,date,entry:en[date]||null,redo:rd[date]||null}):null;
+  const spent=coinSum(lg.shopBuy),before=coinEarned(lg)-spent;
   delete en[date];delete rd[date];S.confirm=null;
-  saveLog({entries:en,redos:rd},tid?null:'Séance retirée',uid).then(()=>{if(tid)toastUndo('Résultat retiré',tid);});
+  const after=coinEarned(lg,en)-spent; /* les coins de cette séance partent avec elle : le solde peut devenir négatif s'ils étaient déjà dépensés */
+  const warn=uid===S.uid&&after<0&&after<before,alertCoach=warn&&!S.owner;
+  saveLog({entries:en,redos:rd},tid?null:'Séance retirée',uid).then(()=>{
+    if(tid)toastUndo('Résultat retiré',tid);
+    if(warn)coinCheatPop(after,alertCoach);
+    if(alertCoach)coinCheatAlert(uid,date,after);
+  });
+}
+/* avertissement à l'athlète qui retire une séance dont les coins étaient déjà dépensés (solde négatif) */
+function coinCheatPop(bal,coachKnows){
+  if(document.querySelector('.coin-cheat'))return;
+  const pop=h('div',{class:'reward-pop coin-cheat',role:'alertdialog','aria-modal':'true','aria-label':'Avertissement : solde de coins négatif'});
+  pop.append(h('div',{class:'rp-card cc-card'},
+    h('p',{class:'eyebrow'},'Avertissement'),
+    h('h2',{class:'wtitle'},'Solde de coins négatif : '+bal),
+    h('p',{},'Tu viens de retirer une séance dont les coins avaient déjà été dépensés dans le Shop. Les coins se gagnent uniquement avec de vraies séances enregistrées : retirer une séance après avoir dépensé ses coins revient à tricher.'),
+    h('p',{},'Ton solde passe donc en négatif. Tu ne pourras plus acheter tant qu’il ne sera pas revenu à zéro, en validant de vraies séances.'+(coachKnows?' Le coach a été prévenu.':'')),
+    h('div',{class:'row',style:'justify-content:center'},h('button',{class:'btn primary',type:'button',onclick:()=>pop.remove()},'J’ai compris'))));
+  document.body.append(pop);
+}
+/* message au coach : un signalement avec le pseudo, visible dans Signaler un bug › Signalements reçus (vue coach) ; jamais d'erreur affichée à l'athlète */
+function coachAlert(uid,tab,text){
+  if(!S.db||S.snapMode)return;
+  const pseudo=(((S.logs[uid]||{}).pseudo)||S.meName||'Athlète').slice(0,24);
+  const d={uid,pseudo,tab,text:String(text).slice(0,1000),at:new Date().toISOString(),ua:String(navigator.userAgent||'').slice(0,200)};
+  (async()=>{try{await S.db.collection('bugs').add(d);}catch(e){console.warn('alerte coach',e);}})();
+}
+function coinCheatAlert(uid,date,bal){
+  const pseudo=(((S.logs[uid]||{}).pseudo)||S.meName||'Athlète').slice(0,24);
+  coachAlert(uid,'Triche aux coins',pseudo+' a retiré sa séance du '+fmtShort(date)+' alors que les coins de cette séance étaient déjà dépensés. Solde de coins : '+bal+'.');
+}
+/* séances validées le même jour (jour de la validation, pas de la séance) : dates des séances dont l'horodatage de validation tombe aujourd'hui */
+function sameDayValidated(entries){
+  const t=todayStr();
+  return Object.keys(entries||{}).filter(d=>{const a=entries[d]&&entries[d].at;if(!a)return false;const x=new Date(a);return !isNaN(x)&&dfmt(x)===t;}).sort();
+}
+function multiSessionAlert(uid,dates){
+  const pseudo=(((S.logs[uid]||{}).pseudo)||S.meName||'Athlète').slice(0,24),n=dates.length;
+  coachAlert(uid,'Plusieurs séances le même jour',pseudo+' a validé '+n+' séances aujourd’hui ('+fmtShort(todayStr())+') : séances du '+dates.map(fmtShort).join(', ')+'.');
 }
 function removeRedo(date){
   if(lockedDate(date)||lockedDate(todayStr())){toast(LOCKMSG,true);return;}
@@ -8938,6 +8988,9 @@ function submitEntryNow(w){
   const sv=saveLog(Object.assign({entries:Object.assign({},cur.entries||{},{[date]:e})},coinCg||{}),(coach?'Résultats enregistrés':(early?'Séance enregistrée en avance : tes points seront ajoutés le lundi '+fmtShort(mondayOf(date))+'.':'Séance enregistrée'))+coinTx,uid);
   render();
   /* après l'enregistrement : d'abord la fenêtre des coins (athlète qui valide sa propre séance, première fois pour cette date), puis l'animation du classement */
+  /* plusieurs séances validées le même jour par l'athlète lui-même : message au coach (pseudo + nombre), une fois par nouvelle séance au-delà de la 1re */
+  const multiD=(!coach&&uid===S.uid&&!S.owner&&!prevE)?sameDayValidated(Object.assign({},cur.entries||{},{[date]:e})):[];
+  if(multiD.length>=2)sv.then(()=>multiSessionAlert(uid,multiD)).catch(()=>{});
   const coinWon=(coinCg&&!coach&&uid===S.uid)?coinPerSession():0;
   if(rk||coinWon){S._rankPend=true;sv.then(()=>coinWon?coinWin(coinWon):null).then(()=>rk?rankAnimStart(rk):null).catch(()=>{}).finally(()=>{S._rankPend=false;if(!S.rankAnim)rankFlush();});}
 }
@@ -14742,6 +14795,21 @@ const RULES_VER='4'; /* à changer pour faire réapparaître le point rouge apr�
 const rulesKey=()=>'bs-rules-'+S.uid;
 const rulesSeen=()=>{try{return localStorage.getItem(rulesKey())===RULES_VER;}catch(e){return true;}}; /* stockage indisponible : pas de point rouge permanent */
 const rulesMark=()=>{try{localStorage.setItem(rulesKey(),RULES_VER);}catch(e){}};
+/* ---------- signalements non lus (coach) : pastille sur « Signaler un bug » ----------
+   Le coach suit la collection bugs en direct ; est « lu » tout signalement dont la date est <= la dernière date vue sur cet appareil.
+   Les signalements du coach lui-même ne comptent pas. Stockage indisponible : on garde la date en mémoire pour ne pas avoir de point permanent. */
+const bugSeenKey=()=>'bs-bugseen-'+S.uid;
+const bugSeenAt=()=>{let v='';try{v=localStorage.getItem(bugSeenKey())||'';}catch(e){}const m=S._bugSeenMem||'';return m>v?m:v;};
+const bugLatest=()=>(S.bugs||[]).reduce((m,b)=>{const a=String((b&&b.at)||'');return a>m?a:m;},'');
+function bugMarkSeen(){const m=bugLatest();if(!m||m<=bugSeenAt())return;S._bugSeenMem=m;try{localStorage.setItem(bugSeenKey(),m);}catch(e){}}
+const bugDot=()=>!!S.owner&&(S.bugs||[]).some(b=>b&&b.uid!==S.uid&&String(b.at||'')>bugSeenAt());
+function bugWatch(){
+  return S.db.collection('bugs').orderBy('at','desc').limit(100).onSnapshot(sn=>{
+    S.bugs=sn.docs.map(d=>Object.assign({id:d.id},d.data()));S.bugsLoaded=true;S.bugsErr='';
+    if(S.tab==='bug')bugMarkSeen();
+    scheduleRender();
+  },()=>{});
+}
 const RULES=[
  {t:'Esprit de la compétition',p:['Box Score est une compétition amicale entre participants. Elle sert à se motiver, à progresser et à s’amuser ensemble, pas à gagner à tout prix. Chacun s’engage à jouer le jeu avec honnêteté.']},
  {t:'Exécution des répétitions',p:[
@@ -14848,7 +14916,7 @@ function viewBug(){
     h('p',{class:'hint'},'Seul le coach voit les signalements. Indique ce que tu faisais juste avant, ça l’aide à retrouver le problème.')));
   if(S.owner){
     if(!S.bugsLoaded&&!S.bugsLoading&&!S.bugsErr)loadBugs();
-    const bugs=S.bugs||[];
+    const bugs=S.bugs||[];bugMarkSeen();
     const sec=h('section',{class:'card'},h('div',{class:'row',style:'justify-content:space-between'},h('h2',{class:'h2'},'Signalements reçus'+(S.bugsLoaded?' ('+bugs.length+')':'')),
       h('button',{class:'btn sm',type:'button',id:'bug-reload',onclick:()=>{S.bugsLoaded=false;loadBugs();}},'Actualiser')));
     if(S.bugsErr)sec.append(h('p',{class:'muted'},S.bugsErr));
@@ -14856,7 +14924,7 @@ function viewBug(){
     else if(!bugs.length)sec.append(h('p',{class:'muted'},'Aucun signalement pour l’instant.'));
     else sec.append(h('ul',{class:'list'},bugs.map(b=>h('li',{},
       h('div',{class:'l',style:'min-width:0'},
-        h('div',{class:'nm'},b.tab+' · '+(b.pseudo||'Athlète')),
+        h('div',{class:'nm',style:b.tab==='Triche aux coins'?'color:#ff5a5a':b.tab==='Plusieurs séances le même jour'?'color:#ffa43a':''},(b.tab==='Triche aux coins'||b.tab==='Plusieurs séances le même jour'?'⚠ ':'')+b.tab+' · '+(b.pseudo||'Athlète')),
         h('div',{class:'sub'},(()=>{try{return new Date(b.at).toLocaleString('fr-FR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});}catch(e){return b.at||'';}})()),
         h('p',{style:'margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere'},b.text),
         b.ua?h('div',{class:'sub',style:'overflow-wrap:anywhere;font-size:11px'},b.ua):null),
@@ -14922,7 +14990,7 @@ const profTodo=()=>infosMissing().concat(goalMissing()?['objectif de s\u00e9ance
 const BLINK_MS=3000;
 function blinkEl(el){const ms=Date.now()-(S._bt||0);if(ms<BLINK_MS){el.classList.add('need-blink');el.style.animationDelay='-'+ms+'ms';}return el;}
 const blinkIf=(c,el)=>c?blinkEl(el):el;
-function menuDot(){const a=annActive();return !!(pendCount()>0||(a&&!annIsSeen(a))||dmUnread()||recapDot()||notifDotOn()||unusualAll().length>0||!rulesSeen()||!healthSeen()||profDot());}
+function menuDot(){const a=annActive();return !!(pendCount()>0||(a&&!annIsSeen(a))||dmUnread()||recapDot()||notifDotOn()||unusualAll().length>0||!rulesSeen()||!healthSeen()||profDot()||bugDot());}
 function drawerItems(){
   const a=annActive(),out=[];
   out.push({id:'profile',label:'Profil',ico:ICO_USER,dot:profDot(),cur:S.tab==='profile'&&!S.profView,fn:()=>{const f=()=>{S.profView=null;go('profile');};if(infosGuard(f))return;f();}});
@@ -14931,7 +14999,7 @@ function drawerItems(){
   out.push({id:'mail',label:'Messages',ico:ICO_MAIL,dot:(!!a&&!annIsSeen(a))||dmUnread(),cur:S.tab==='msgs',fn:()=>go('msgs')});
   out.push({id:'rules',label:'Règlement',ico:ICO_RULES,dot:!rulesSeen(),cur:S.tab==='rules',fn:()=>{rulesMark();S.rulesI=0;go('rules');}});
   out.push({id:'health',label:'Santé et sécurité',ico:ICO_HEALTH,dot:!healthSeen(),cur:S.tab==='health',fn:()=>{healthMark();S.healthI=0;go('health');}});
-  out.push({id:'bug',label:'Signaler un bug',ico:ICO_BUG,cur:S.tab==='bug',fn:()=>{S.bugFrom=S.tab;S.bugPv=S.profView;S.bugMsg='';S.bugTab=null;go('bug');if(S.owner)loadBugs();}});
+  out.push({id:'bug',label:'Signaler un bug',ico:ICO_BUG,dot:bugDot(),cur:S.tab==='bug',fn:()=>{S.bugFrom=S.tab;S.bugPv=S.profView;S.bugMsg='';S.bugTab=null;bugMarkSeen();go('bug');if(S.owner)loadBugs();}});
   out.push({id:'moves',label:'Apprentissage des mouvements',ico:ICO_MOVES,cur:S.tab==='moves',fn:()=>go('moves')});
   out.push({id:'share',label:'Partager l’appli',ico:ICO_PHONE,cur:S.tab==='share',fn:()=>go('share')});
   out.push({id:'avis',label:'Avis',ico:ICO_KB,cur:S.tab==='avis',fn:()=>go('avis')});
@@ -15241,7 +15309,7 @@ function avisTop(){
 /* ---------- COINS et SHOP ----------
    Coins = monnaie du jeu. COIN_DEFAULT coins sont gagnés par séance, au moment où le résultat est enregistré (une seule fois par date de séance).
    Données par athlète, dans logs/{uid} : coinGot = {date: coins gagnés}, coinAdj = ajustement du coach (± coins), shopBuy = {idObjet: prix payé}.
-   Solde = coinGot + coinAdj − shopBuy. Réglages du shop (coach) : config/features → champ shop = {coin, items:{idObjet:{on,price}}}.
+   Solde = coinGot (séances encore enregistrées + récompenses) + coinAdj − shopBuy ; il peut être négatif si une séance est retirée après avoir dépensé ses coins. Réglages du shop (coach) : config/features → champ shop = {coin, items:{idObjet:{on,price}}}.
    Les articles du shop sont les objets de AV_ITEMS : pour ajouter un skin, déposer l'image dans assets/embedded et ajouter une ligne dans AV_ITEMS,
    il apparaît ensuite dans Coach › Shop et coins, où on le met en vente et où on fixe son prix.
    PAY_PAUSED = true : l'abonnement est en pause (accès gratuit pour tous, aucun blocage, aucune date de passage en restreint). Remettre false pour le réactiver. */
@@ -15285,7 +15353,10 @@ const coinPerSession=()=>{const c=shopCfg();if(c.coin===undefined||c.coin===null
 const salePrice=(base,pct)=>{pct=Math.floor(Number(pct));return (pct>=1&&pct<=99)?Math.max(1,Math.round(base*(100-pct)/100)):base;};
 const shopEntry=id=>{const x=(shopCfg().items||{})[id],p=x?Math.floor(Number(x.price)):0;if(!(x&&x.on&&p>=1&&shopItem(id)))return null;const pct=Math.floor(Number(x.sale))||0,pr=salePrice(p,pct);return {price:pr,base:p,pct:pr<p?pct:0,fav:!!x.fav};};
 const coinSum=o=>Object.values(o||{}).reduce((a,v)=>a+(Number(v)||0),0);
-const coinEarned=lg=>coinSum(lg&&lg.coinGot)+(Number(lg&&lg.coinAdj)||0);
+/* coins gagnés : les coins d'une séance (clé = date) ne comptent QUE tant que la séance est enregistrée ; retirer la séance retire ses coins.
+   Les autres clés (récompenses « rw:… ») et l'ajustement du coach comptent toujours. en = entrées à utiliser à la place de lg.entries (simulation d'un retrait). */
+const coinDateKey=k=>/^\d{4}-\d{2}-\d{2}$/.test(k);
+const coinEarned=(lg,en)=>{const cg=(lg&&lg.coinGot)||{},E=en||(lg&&lg.entries)||{};let t=0;for(const [k,v] of Object.entries(cg)){if(coinDateKey(k)&&!E[k])continue;t+=Number(v)||0;}return t+(Number(lg&&lg.coinAdj)||0);};
 const coinBal=uid=>{const lg=S.logs[uid]||{};return coinEarned(lg)-coinSum(lg.shopBuy);};
 /* coins d'une séance : une seule fois par date, au moment où le résultat est enregistré */
 const coinPatch=(uid,date)=>{const lg=S.logs[uid]||{},n=coinPerSession();if(!n||(lg.coinGot&&lg.coinGot[date]!==undefined))return null;return {coinGot:Object.assign({},lg.coinGot||{},{[date]:n})};};
@@ -15294,8 +15365,8 @@ for(const it of AV_ITEMS)if(!AV_OBJ[it.id])AV_OBJ[it.id]={d:'À acheter dans le 
 /* pastille de l'en-tête : solde de coins (remplace l'état de l'abonnement tant qu'il est en pause) */
 function coinChipPaint(el){
   if(!S.uid){el.hidden=true;return;}
-  el.hidden=false;el.className='paychip coinchip';el.title='Mes coins : ouvrir le Shop';
-  el.replaceChildren(coinIco(18),document.createTextNode(String(coinBal(S.uid))));
+  const cb=coinBal(S.uid);el.hidden=false;el.className='paychip coinchip'+(cb<0?' neg':'');el.title='Mes coins : ouvrir le Shop';
+  el.replaceChildren(coinIco(18),document.createTextNode(String(cb)));
   el.onclick=()=>go('shop');
   el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go('shop');}};
 }
@@ -15341,10 +15412,23 @@ function shopCard(it,own,bal){
     (!has&&miss>0)?h('div',{class:'sh-sub'},'Il te manque '+miss+' coin'+(miss>1?'s':'')+'.'):null,
     act);
 }
+/* bande des catégories : défile au doigt et avec deux flèches (gauche / droite) ; la 1re carte n'est plus collée ni coupée au bord gauche
+   (marge intérieure + scroll-padding), la position est gardée quand l'écran se redessine */
+function shopCatsStrip(all,open){
+  const strip=h('div',{class:'sh-cats','aria-label':'Catégories du shop'},SHOP_CATS.map(c=>{const n=all.filter(x=>shopCatOf(x)===c[0]).length;const b=h('button',{class:'sh-cat',type:'button','aria-label':c[1],onclick:()=>open(c[0])});b.innerHTML=c[2];b.append(h('span',{},c[1]));if(n)b.append(h('i',{class:'sh-cnt'},String(n)));else b.classList.add('empty');return b;}));
+  const go=d=>strip.scrollBy({left:d*Math.max(120,Math.round(strip.clientWidth*.75)),behavior:reducedMotion()?'auto':'smooth'});
+  const L=h('button',{class:'sh-arr l',type:'button','aria-label':'Catégories précédentes',onclick:()=>go(-1)},'‹'),R=h('button',{class:'sh-arr r',type:'button','aria-label':'Catégories suivantes',onclick:()=>go(1)},'›');
+  const upd=()=>{const max=strip.scrollWidth-strip.clientWidth;L.hidden=strip.scrollLeft<=4;R.hidden=max<=4||strip.scrollLeft>=max-4;};
+  strip.addEventListener('scroll',()=>{S.shCatX=strip.scrollLeft;upd();},{passive:true});
+  L.hidden=true;
+  requestAnimationFrame(()=>{strip.scrollLeft=S.shCatX||0;upd();});
+  return h('div',{class:'sh-cwrap'},strip,L,R);
+}
 function viewShop(){
   const el=h('div',{class:'sh'});
   const lg=S.logs[S.uid]||{},bal=coinBal(S.uid),per=coinPerSession();
-  el.append(h('div',{class:'sh-top'},h('h1',{},'Mon shop'),h('span',{class:'sh-pill',title:'Gagnés : '+coinEarned(lg)+' · Dépensés : '+coinSum(lg.shopBuy)},coinIco(30),String(bal))));
+  el.append(h('div',{class:'sh-top'},h('h1',{},'Mon shop'),h('span',{class:'sh-pill'+(bal<0?' neg':''),title:'Gagnés : '+coinEarned(lg)+' · Dépensés : '+coinSum(lg.shopBuy)},coinIco(30),String(bal))));
+  if(bal<0)el.append(h('section',{class:'sh-box sh-warn',role:'alert'},h('p',{},h('b',{},'Solde négatif ('+bal+' coins). '),'Des coins ont été dépensés pour des séances qui ont ensuite été retirées. Les coins se gagnent uniquement avec de vraies séances enregistrées : retirer une séance après avoir dépensé ses coins est considéré comme de la triche. Tu ne peux plus acheter tant que ton solde n’est pas revenu à zéro.')));
   const coach=!!S.owner;
   if(!coach&&!sexKnown(S.uid)){
     el.append(h('section',{class:'sh-box'},h('p',{class:'muted'},'Renseigne ton sexe dans « Mes infos » pour voir les skins de ton avatar.'),
@@ -15366,7 +15450,7 @@ function viewShop(){
       h('p',{},'Des items exclusifs pour te démarquer et vivre l’expérience à ta façon.'),
       h('button',{class:'sh-ghost',type:'button',onclick:()=>open('all')},'Découvrir ›')));
     el.append(h('div',{class:'sh-h',id:'sh-cats'},h('h2',{},'Catégories'),h('button',{class:'sh-link',type:'button',onclick:()=>open('all')},'Tout voir →')),
-      h('div',{class:'sh-cats'},SHOP_CATS.map(c=>{const n=all.filter(x=>shopCatOf(x)===c[0]).length;const b=h('button',{class:'sh-cat',type:'button','aria-label':c[1],onclick:()=>open(c[0])});b.innerHTML=c[2];b.append(h('span',{},c[1]));if(n)b.append(h('i',{class:'sh-cnt'},String(n)));else b.classList.add('empty');return b;})));
+      shopCatsStrip(all,open));
     const fav=all.filter(x=>shopEntry(x.id).fav);
     el.append(h('div',{class:'sh-h'},h('h2',{},'Coups de cœur')),fav.length?h('ul',{class:'sh-row'},fav.map(it=>shopCard(it,own,bal))):h('p',{class:'sh-note'},coach?'Aucun coup de cœur pour l’instant : coche « Coup de cœur » sur un article en vente dans Coach › Shop et coins, puis enregistre.':'Aucun coup de cœur pour l’instant.'));
   }
@@ -15491,7 +15575,7 @@ function coachShop(){
         saveLog({coinAdj:(Number((S.logs[a.uid]||{}).coinAdj)||0)+n},(n>0?'+':'')+n+' coins pour '+a.lg.pseudo,a.uid).then(()=>{S.coach.coinD[a.uid]='';render();});
       }},'Ajuster');
       return h('li',{},h('div',{class:'l',style:'flex:1;min-width:120px'},h('div',{class:'nm'},a.lg.pseudo+(a.uid===S.uid?' (toi)':'')),
-          h('div',{class:'sub'},'Gagnés '+coinEarned(a.lg)+' · dépensés '+coinSum(a.lg.shopBuy)+' · '+pl_(nb,'achat'))),
+          h('div',{class:'sub'},'Gagnés '+coinEarned(a.lg)+' · dépensés '+coinSum(a.lg.shopBuy)+' · '+pl_(nb,'achat')),a.bal<0?h('div',{class:'sub',style:'color:#ff5a5a;font-weight:700'},'Solde négatif : séance retirée après dépense'):null),
         h('div',{class:'shop-act'},h('span',{class:'shop-price'},coinIco(20),h('b',{},String(a.bal))),inp,btn));
     })):h('p',{class:'muted'},'Aucun athlète pour l’instant.')));
   return el;
@@ -16262,7 +16346,7 @@ function startFirebase(){
   let unsubs=[];
   onAuthStateChanged(auth,user=>{
     window.__fbState='auth répondu';window.__dbg&&window.__dbg('onAuthStateChanged répondu, user='+(user?'connecté':'null'));
-    unsubs.forEach(u=>u());unsubs=[];dmStop();
+    unsubs.forEach(u=>u());unsubs=[];dmStop();S._bugOn=false;S.bugs=[];S.bugsLoaded=false;S._bugSeenMem='';
     S.loaded={periods:false,wods:false,logs:false};S.periods={};S.wods={};S.logs={};S.prof={prs:{},sex:'',weight:0};S.profLoaded=false;
     S.sexSync=null;S.coachUid=null;S.coachLoaded=false;S.owner=false;S.error=null;S.entry=null;S.redo=null;S.viewDate=null;S.confirm=null;S.cerAuto=false;S._annDone=false;S.ann=null;S.annLoaded=false;S._aw=null;S.groups={list:[],of:{},snap:{}};S._freezing=false;S.boardGroup=undefined;S.comments={};S.cacheMode=false;S.snapMode=false;S._srv={};S._netOff=false;clearTimeout(cacheT);S.reactions={};S.wu={cfg:null,loaded:false,list:false};
     S.coach={wod:null,editing:false,period:null,resDate:null};S.avisFor=null;S.profView=null;S.viewUser=null;S.tip=null;S.tab=user?takeInitialTab():'feed';S.authReady=true;
@@ -16281,7 +16365,7 @@ function startFirebase(){
     if(persist)cacheT=setTimeout(()=>{if(S.uid===user.uid&&!ready()&&snapRead()&&snapRead().uid===user.uid)goCache();},3000);
     /* état de l'abonnement (écrit par le script GitHub, lecture seule ici) ; en cas d'erreur de lecture on ne bloque personne */
     unsubs.push(S.db.doc('subs/'+S.uid).onSnapshot(sn=>{S.pay={loaded:true,doc:sn.exists?sn.data():null,err:false};scheduleRender();},()=>{S.pay={loaded:true,doc:null,err:true};scheduleRender();}));
-    unsubs.push(S.db.doc('config/coach').onSnapshot(sn=>{S.coachUid=sn.exists?(sn.data().uid||null):null;S.coachLoaded=true;S.owner=!!S.coachUid&&S.coachUid===S.uid;dmSync();wuMaybeSeed();scheduleRender();launchRecapMaybe();},fail));
+    unsubs.push(S.db.doc('config/coach').onSnapshot(sn=>{S.coachUid=sn.exists?(sn.data().uid||null):null;S.coachLoaded=true;S.owner=!!S.coachUid&&S.coachUid===S.uid;if(S.owner&&!S._bugOn){S._bugOn=true;unsubs.push(bugWatch());}dmSync();wuMaybeSeed();scheduleRender();launchRecapMaybe();},fail));
     /* les groupes ne bloquent jamais l'appli : si les règles ne sont pas encore publiées, on ignore l'erreur */
     unsubs.push(S.db.doc('config/groups').onSnapshot(sn=>{const d=sn.exists?sn.data():null;S.groups={list:(d&&Array.isArray(d.list))?d.list:[],of:(d&&d.of&&typeof d.of==='object')?d.of:{},snap:(d&&d.snap&&typeof d.snap==='object')?d.snap:{},bots:(d&&d.bots&&typeof d.bots==='object')?d.bots:{},loaded:true};S._freezing=false;scheduleRender();},()=>{}));
     /* message du coach : si les règles ne sont pas publiées, on ignore l'erreur */
