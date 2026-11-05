@@ -2543,6 +2543,15 @@ section.feed-card.th-neonviolet>.feed-badge{position:absolute!important;left:aut
 .drawer .dr-off:hover,.drawer .dr-off:focus-visible{color:#fff;border-color:var(--mn2);box-shadow:0 0 20px rgba(255,32,96,.85),inset 0 0 14px rgba(255,32,96,.4)}
 .drawer .dr-off:active{transform:scale(.98)}
 .drawer-bg .nbar{width:min(350px,86vw);border-left-color:#ff2060;border-bottom-color:#ff2060}
+/* Séance : rien ne dépasse de l'écran (explication charge totale des tractions lestées, pastilles « Enregistre ton 1 RM… », etc.) */
+.pbody{grid-template-columns:minmax(0,1fr)}
+.pbody>*{min-width:0;max-width:100%}
+.pbody .chip.miss{white-space:normal;max-width:100%;overflow-wrap:anywhere}
+.pbody .chips{min-width:0;max-width:100%}
+.fwarn{box-sizing:border-box;max-width:100%;min-width:0}
+.fwarn>div{min-width:0}
+.fwarn p,.fwarn b{overflow-wrap:anywhere}
+.phead{min-width:0;max-width:100%}
 </style>
 </head>
 <body>
@@ -3937,40 +3946,10 @@ KSkgYXBwbHlSZW1vdGUoZCk7CiAgICAgIH0sIGZ1bmN0aW9uICgpIHsgZGJEb2MgPSBudWxsOyBzZXRT
 c2V0U2F2ZSgnU3VyIGNldCBhcHBhcmVpbCBzZXVsZW1lbnQnKTsgfSk7CiAgfSBlbHNlIHNldFNhdmUoJ1N1ciBjZXQgYXBwYXJlaWwgc2V1bGVtZW50Jyk7Cn0pKCk7Cgo8L3NjcmlwdD4KCjwvYm9keT48L2h0
 bWw+Cg==
 </script>
-<script>
-/* DEBUG NATIF (temporaire) : affiche les erreurs et les étapes de démarrage à l'écran, uniquement dans l'appli Capacitor. À retirer avant publication. */
-(function(){
-  if(!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()))return;
-  var logs=[],box=null,btn=null,errs=0;
-  function fmt(a){try{return Array.prototype.map.call(a,function(x){return x&&x.stack?x.stack:(typeof x==='object'?JSON.stringify(x):String(x));}).join(' ');}catch(e){return String(a);}}
-  function ui(){
-    if(btn||!document.body)return;
-    btn=document.createElement('button');
-    btn.style.cssText='position:fixed;right:8px;bottom:calc(8px + env(safe-area-inset-bottom));z-index:2147483647;padding:8px 12px;border-radius:20px;border:0;background:#c0392b;color:#fff;font:600 13px -apple-system,sans-serif;opacity:.92';
-    btn.onclick=function(){box.style.display=box.style.display==='none'?'block':'none';refresh();};
-    box=document.createElement('div');
-    box.style.cssText='display:none;position:fixed;left:0;right:0;bottom:0;max-height:55vh;overflow:auto;z-index:2147483646;background:#111;color:#0f0;font:11px/1.35 Menlo,monospace;padding:10px 10px 60px;white-space:pre-wrap;word-break:break-all;-webkit-user-select:text;user-select:text';
-    document.body.appendChild(box);document.body.appendChild(btn);refresh();
-  }
-  function refresh(){if(!btn)return;btn.textContent='🐞 '+errs+' err / '+logs.length;if(box&&box.style.display!=='none'){box.textContent=logs.join('\n');box.scrollTop=box.scrollHeight;}}
-  function add(kind,a){
-    var t=new Date().toISOString().slice(11,19);
-    logs.push(t+' ['+kind+'] '+fmt(a));if(logs.length>200)logs.shift();
-    if(kind==='ERR')errs++;
-    ui();refresh();
-  }
-  window.__dbg=function(){add('step',arguments);};
-  ['error','warn'].forEach(function(k){var o=console[k];console[k]=function(){add(k==='error'?'ERR':'warn',arguments);return o.apply(console,arguments);};});
-  window.addEventListener('error',function(e){add('ERR',[e.message,(e.filename||'')+':'+(e.lineno||'')]);});
-  window.addEventListener('unhandledrejection',function(e){add('ERR',['promesse rejetée:',e.reason]);});
-  document.addEventListener('DOMContentLoaded',function(){ui();add('step',['page chargée']);});
-  setTimeout(function(){add('step',['t+6s — état: '+(window.__fbState||'inconnu')]);},6000);
-})();
-</script>
 <script type="module">
 /* Le SDK Firebase est chargé en dynamique : la page s'affiche tout de suite, même si le réseau est lent.
    Au bout de 3 s sans réponse, l'appli bascule en mode cache (dernières données enregistrées sur l'appareil). */
-let firebaseConfig=null,appCheckSiteKey=null,initializeAppCheck=null,ReCaptchaEnterpriseProvider=null,initializeApp,getAuth,initializeAuth,indexedDBLocalPersistence,browserLocalPersistence,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup,signInWithCredential,deleteUser,EmailAuthProvider,reauthenticateWithCredential,getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc,disableNetwork,enableNetwork,query,orderBy,limit,where,getDocs;
+let firebaseConfig=null,appCheckSiteKey=null,initializeAppCheck=null,ReCaptchaEnterpriseProvider=null,initializeApp,getAuth,initializeAuth,indexedDBLocalPersistence,browserLocalPersistence,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup,signInWithCredential,deleteUser,EmailAuthProvider,reauthenticateWithCredential,OAuthProvider,reauthenticateWithPopup,revokeAccessToken,getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc,disableNetwork,enableNetwork,query,orderBy,limit,where,getDocs;
 const FB_URL='https://www.gstatic.com/firebasejs/10.14.1/';
 const sdkPromise=(async()=>{
   const [cfg,a,u,f,ac]=await Promise.all([import('./firebase-config.js').catch(()=>({})),import(FB_URL+'firebase-app.js'),import(FB_URL+'firebase-auth.js'),import(FB_URL+'firebase-firestore.js'),import(FB_URL+'firebase-app-check.js').catch(()=>({}))]);
@@ -3979,7 +3958,7 @@ const sdkPromise=(async()=>{
   /* App Check (anti-abus) : actif seulement si firebase-config.js exporte appCheckSiteKey ; sans clé, l'appli fonctionne comme avant */
   appCheckSiteKey=cfg.appCheckSiteKey||null;initializeAppCheck=ac.initializeAppCheck||null;ReCaptchaEnterpriseProvider=ac.ReCaptchaEnterpriseProvider||null;
   ({initializeApp}=a);
-  ({getAuth,initializeAuth,indexedDBLocalPersistence,browserLocalPersistence,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup,signInWithCredential,deleteUser,EmailAuthProvider,reauthenticateWithCredential}=u);
+  ({getAuth,initializeAuth,indexedDBLocalPersistence,browserLocalPersistence,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup,signInWithCredential,deleteUser,EmailAuthProvider,reauthenticateWithCredential,OAuthProvider,reauthenticateWithPopup,revokeAccessToken}=u);
   ({getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc,disableNetwork,enableNetwork,query,orderBy,limit,where,getDocs}=f);
 })();
 sdkPromise.catch(e=>{window.__fbState='SDK ÉCHEC';window.__dbg&&window.__dbg('SDK Firebase ÉCHEC',e);});
@@ -4023,7 +4002,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-04.1';
+const APP_VERSION='2026-11-05.1';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -4614,7 +4593,7 @@ function computeBoard(period,withBots,gid){
     r.weight=(uid===S.uid&&Number(S.prof.weight)>0)?Number(S.prof.weight):0; /* le poids reste privé : seul le rapport charge ÷ poids est publié (logs/{uid}.ratios) */
     const relL=Object.entries(best).filter(([k])=>!SIGNED.some(s=>norm(s)===k));
     r.strengthRel=relL.reduce((a,x)=>a+x[1],0);r.ratioN=relL.length;
-    r.ratio=(r.weight>0&&r.ratioN>0)?r.strengthRel/r.ratioN/r.weight:((lg.ratios&&Number(lg.ratios[period.id])>0)?Number(lg.ratios[period.id]):0);
+    r.ratio=(r.weight>0&&r.ratioN>0)?Math.round(r.strengthRel/r.ratioN/r.weight*100)/100:((r.ratioN>0&&lg.ratios&&Number(lg.ratios[period.id])>0)?Number(lg.ratios[period.id]):0);
     r.perfAvg=r.perfN?r.perf/r.perfN:0;
     r.lvlAvg=r.lvlN?r.lvlSum/r.lvlN:0;
     r.mult=r.lvlN?r.lvlAvg/LEVEL_DIV:1;
@@ -4710,7 +4689,7 @@ const TROPHIES=[
  {id:'fort',name:'Le plus fort',desc:'Somme des meilleures charges saisies sur chaque mouvement de force.',key:r=>[r.strength],show:r=>fmtN(r.strength)+' kg cumulés'},
  {id:'tonnage',name:'Roi du tonnage',desc:'Le plus de kilos soulevés sur la saison dans les parties de force : séries × répétitions × charge, additionnés sur toutes les séances. Séries, répétitions et charge sont préremplies d’après la séance et modifiables.',key:r=>[r.tonnage],show:r=>fmtN(r.tonnage)+' kg soulevés'},
  {id:'latonnage',name:'La reine du tonnage',cat:true,desc:'Même calcul que Roi du tonnage (séries × répétitions × charge, additionnés sur la saison), réservé aux athlètes femmes. Le sexe se renseigne dans le profil.',key:r=>[r.tonnage],show:r=>fmtN(r.tonnage)+' kg soulevés',elig:r=>r.sex==='F'},
- {id:'ratio',name:'Poids / puissance',desc:'Le poids moyen soulevé par rapport à son poids de corps : moyenne des meilleures charges de chaque mouvement de force (hors traction lestée) divisée par le poids de corps. Le poids se renseigne dans le profil.',key:r=>[r.ratio],show:r=>'soulève en moyenne '+fmt2(r.ratio)+' fois son poids'},
+ {id:'ratio',name:'Poids / puissance',desc:'Le poids moyen soulevé par rapport à son poids de corps : moyenne des meilleures charges de chaque mouvement de force (hors traction lestée) divisée par le poids de corps. Le poids se renseigne dans le profil.',key:r=>[r.ratio],show:r=>'soulève en moyenne '+fmt2(r.ratio)+' fois son poids',elig:r=>r.ratio>0},
  catTrophy('mcardio','Metcon cardio','cardio','cardio'),
  catTrophy('mgym','Metcon gym','gym','gym'),
  catTrophy('mhaltero','Metcon haltéro','haltero','haltéro'),
@@ -4735,7 +4714,7 @@ const minEligOf=per=>{
   return MIN_ELIGIBLE;
 };
 /* concourir = avoir marqué des points (être dans le groupe ne suffit pas) */
-function eligCount(t,board){return board.rows.filter(r=>r.sessions>0&&r.total>0&&(!t.elig||t.elig(r,board))).length;}
+function eligCount(t,board){return board.rows.filter(r=>r.sessions>0&&r.total>0&&(!t.elig||t.elig(r,board))&&(t.custom||t.key(r)[0]>0)).length;}
 /* nombre d'éligibles quand le seuil bloque le trophée, sinon 0 */
 function trophyShort(t,board,gid){
   const min=minEligOf(board.period);if(!min)return 0;
@@ -6036,7 +6015,7 @@ function maybeCeremony(){
 }
 /* ---------- livre d'or : remise des trophées animée et livre des saisons ---------- */
 /* résumé le plus court possible de chaque trophée (sinon : première phrase de sa description, raccourcie) */
-const TROPHY_BLURB={goat:'Meilleur score pondéré par le niveau',lagoat:'Meilleur score pondéré, chez les femmes',points:'Le plus de points bruts',regulier:'Le plus de séances',serie:'La plus longue flamme',top:'La plus longue série à 90 % et plus',perf:'Meilleure moyenne de points par metcon',fort:'Les charges cumulées les plus lourdes',lafort:'Charges cumulées les plus lourdes, chez les femmes',tonnage:'Le plus de kilos soulevés',latonnage:'Le plus de kilos soulevés, chez les femmes',ratio:'Le plus lourd par rapport à son poids',mcardio:'Meilleur sur les metcons cardio',mgym:'Meilleur sur les metcons gym',mhaltero:'Meilleur sur les metcons haltéro',gduo:'Meilleur à 2 séances par semaine',gsolo:'Meilleur à 1 séance par semaine',bdeb:'Meilleur chez les débutants',binter:'Meilleur chez les intermédiaires',senior:'Meilleur des 18 à 34 ans',veteran:'Meilleur des 35 ans et plus',objectif:'Objectif de séances tenu toute la saison'};
+const TROPHY_BLURB={goat:'Meilleur score pondéré par le niveau',lagoat:'Meilleur score pondéré, chez les femmes',points:'Le plus de points bruts',regulier:'Le plus de séances',serie:'La plus longue flamme',top:'La plus longue série à 80 % et plus',perf:'Meilleure moyenne de points par metcon',fort:'Les charges cumulées les plus lourdes',lafort:'Charges cumulées les plus lourdes, chez les femmes',tonnage:'Le plus de kilos soulevés',latonnage:'Le plus de kilos soulevés, chez les femmes',ratio:'Le plus lourd par rapport à son poids',mcardio:'Meilleur sur les metcons cardio',mgym:'Meilleur sur les metcons gym',mhaltero:'Meilleur sur les metcons haltéro',gduo:'Meilleur à 2 séances par semaine',gsolo:'Meilleur à 1 séance par semaine',bdeb:'Meilleur chez les débutants',binter:'Meilleur chez les intermédiaires',senior:'Meilleur des 18 à 34 ans',veteran:'Meilleur des 35 ans et plus',objectif:'Objectif de séances tenu toute la saison'};
 const trophyBlurb=t=>{if(TROPHY_BLURB[t.id])return TROPHY_BLURB[t.id];const x=String(t.desc||'').split(/[.(]/)[0].trim();return x.length>60?x.slice(0,57).trim()+'…':x;};
 const reducedMotion=()=>!!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
 /* trophées d'une saison pour un groupe, dans l'ordre de la remise : du dernier trophée de la liste au GOAT, qui clôt le livre */
@@ -6839,14 +6818,14 @@ function openTimer(w,date,m,lvIdx){
   const lvA=activeLevels(m),lvPick=(Number.isInteger(lvIdx)&&lvA.some(x=>x[1]===lvIdx))?lvIdx:(lvA.length?lvA[lvA.length-1][1]:0);
   const summary=()=>{
     const lv=levelsOf(m)[lvPick]||{},lines=String(m.content||'').split('\n').map(x=>x.trim()).filter(Boolean);
-    const adapted=((lv.variants||[]).length||rdOf(lv))?true:false;
-    const L=adapted?(t=>h('div',{class:'line'},roundsSegs(tagShow(t),rdOf(lv),lv.variants))):metLine;
+    const adapted=((lv.variants||[]).length||rdOf(lv)||rpOf(lv))?true:false;
+    const L=adapted?((t,ix)=>h('div',{class:'line'},lvLine(t,ix,lv))):metLine;
     const ld=loadsText(lv);
     return h('div',{class:'tm-sum'},
       h('span',{class:'flabel tm-eb'},'Rappel · version '+levelName(m,lvPick)),
       h('div',{class:'lines'},lines.map(L)),
       ld?h('div',{class:'lvl-load'},(S.prof.sex?'Ta charge : ':'')+ld):null,
-      adapted?h('div',{class:'varnote'},[(lv.variants||[]).length?'Les variantes remplacent les mouvements':'',rdOf(lv)?'le nombre de tours est adapté':''].filter(Boolean).join(' · ')+' (en surbrillance).'):null);
+      adapted?h('div',{class:'varnote'},[(lv.variants||[]).length?'Les variantes remplacent les mouvements':'',rdOf(lv)?'le nombre de tours est adapté':'',rpOf(lv)?'les reps sont adaptées':''].filter(Boolean).join(' · ')+' (en surbrillance).'):null);
   };
   const topBar=(allowQuit)=>{
     const mute=h('button',{type:'button',class:'btn sm'},st.muted?'Son coupé':'Son activé');
@@ -7336,8 +7315,8 @@ function partCard(p,w,date){
   const lines=(p.content||'').split('\n').map(s=>s.trim()).filter(Boolean);
   const hasSw=p.kind==='force'||p.kind==='renfo';
   /* niveau ouvert avec des variantes : elles remplacent les mouvements dans le descriptif, en surbrillance */
-  const lvOpen=metcon?activeLevels(p).find(x=>S.tip==='lv-'+p.label+x[1]&&((x[0].variants||[]).length||rdOf(x[0]))):null;
-  const metL=lvOpen?(t=>h('div',{class:'line'},roundsSegs(tagShow(t),rdOf(lvOpen[0]),lvOpen[0].variants))):metLine;
+  const lvOpen=metcon?activeLevels(p).find(x=>S.tip==='lv-'+p.label+x[1]&&((x[0].variants||[]).length||rdOf(x[0])||rpOf(x[0]))):null;
+  const metL=lvOpen?((t,ix)=>h('div',{class:'line'},lvLine(t,ix,lvOpen[0]))):metLine;
   /* format cliquable : metcon (For Time, AMRAP, EMOM) ou renforcement en EMOM */
   const fmtId=(metcon||(p.kind==='renfo'&&p.format==='EMOM'))?'fmt-'+(date||'')+'-'+p.label:null;
   const body=h('div',{class:'pbody'+(hasSw?' has-sw':'')},
@@ -7352,7 +7331,7 @@ function partCard(p,w,date){
     fmtId?h('div',{class:'fmt'},h('button',{type:'button',class:'fmtbtn tipbtn','aria-expanded':S.tip===fmtId?'true':'false',onclick:()=>toggleTip(fmtId)},fmtLabel(p)),
       metcon?[p.detail,p.lineRounds?'Chaque ligne = 1 tour':(p.repsRound?'1 tour = '+fmtN(eqTotal({content:p.content,repsRound:Number(p.repsRound)||0}))+' reps':'')].filter(Boolean).map(x=>' · '+x).join(''):''):null,
     (fmtId&&S.tip===fmtId)?h('div',{class:'tip',role:'dialog'},fmtExplain(p).map((t,k)=>k===0?h('b',{},t):h('p',{},t))):null,
-    lvOpen?h('div',{class:'varnote'},'Version '+levelName(p,lvOpen[1])+' : '+[(lvOpen[0].variants||[]).length?'les variantes remplacent les mouvements':'',rdOf(lvOpen[0])?'le nombre de tours est adapté':''].filter(Boolean).join(' · ')+' (en surbrillance).'):null,
+    lvOpen?h('div',{class:'varnote'},'Version '+levelName(p,lvOpen[1])+' : '+[(lvOpen[0].variants||[]).length?'les variantes remplacent les mouvements':'',rdOf(lvOpen[0])?'le nombre de tours est adapté':'',rpOf(lvOpen[0])?'les reps sont adaptées':''].filter(Boolean).join(' · ')+' (en surbrillance).'):null,
     p.kind==='force'?forceInfo(p):null,
     h('div',{class:'lines'},lines.map(metcon?metL:(t=>renderLine(t,(p.kind==='renfo'||p.kind==='autre')?p.variants:null)))),
     (metcon&&p.word)?h('div',{class:'cword'},h('span',{class:'flabel'},'Mot du coach'),h('p',{},linkText(p.word))):null,
@@ -12628,11 +12607,11 @@ function wodToDraft(w){
   return {date:w.date,title:w.title||'',base:(w.base!==undefined&&w.base!==null)?String(w.base):'',deload:!!w.deload,
     parts:(w.parts||[]).map(p=>{
       const fmt=p.format||'FT';const cm={format:fmt,content:p.content||'',repsRound:p.repsRound||0,lineRounds:!!p.lineRounds};
-      const lv=(p.kind==='metcon'?levelsOf(p):blankLevels()).slice(0,3).map((l,i)=>({mode:l.mode||(l.off?'off':'custom'),touched:l.touched!==undefined?l.touched:!l.off,name:l.name||LEVEL_NAMES[i],loadF:l.loadF||'',loadH:l.loadH||'',note:l.note||'',dRounds:Number(l.dRounds)||0,vars:mvVarsOf(l),
+      const lv=(p.kind==='metcon'?levelsOf(p):blankLevels()).slice(0,3).map((l,i)=>({mode:l.mode||(l.off?'off':'custom'),touched:l.touched!==undefined?l.touched:!l.off,name:l.name||LEVEL_NAMES[i],loadF:l.loadF||'',loadH:l.loadH||'',note:l.note||'',dRounds:Number(l.dRounds)||0,dReps:Object.assign({},l.dReps||{}),vars:mvVarsOf(l),
         tiers:(l.tiers&&l.tiers.length)?l.tiers.map(t=>({t:(fmt==='FT'||(fmt==='EMOM'&&p.deadBy))?fmtTime(t.t):String(t.t).replace('.',','),p:String(t.p)})):blankTiers(),
         capTiers:(l.capTiers&&l.capTiers.length)?l.capTiers.map(t=>({t:capInput(cm,tierCum(p,t.t)),p:String(t.p)})):blankCapTiers()}));
       while(lv.length<3)lv.push({mode:lv.length<2?'off':'custom',touched:false,name:LEVEL_NAMES[lv.length],loadF:'',loadH:'',note:'',vars:{},tiers:blankTiers(),capTiers:blankCapTiers()});
-      const sk=l=>JSON.stringify([l.loadF,l.loadH,l.note,l.vars,l.tiers,l.capTiers]);lv.forEach((l,k)=>{if(k<2&&l.mode==='custom'&&sk(l)===sk(lv[2]))l.mode='same';});
+      const sk=l=>JSON.stringify([l.loadF,l.loadH,l.note,l.vars,l.tiers,l.capTiers,Number(l.dRounds)||0,l.dReps||{}]);lv.forEach((l,k)=>{if(k<2&&l.mode==='custom'&&sk(l)===sk(lv[2]))l.mode='same';});
       return {kind:p.kind||'autre',name:p.name||'',content:p.content||'',movement:p.movement||'',method:p.method||'',meth:p.meth||null,format:fmt,detail:p.detail||'',repsRound:p.repsRound?String(p.repsRound):'',word:p.word||'',lineRounds:!!p.lineRounds,redo:p.redo!==false,test:!!p.test,customLvl:p.customLvl!==false,dur:p.dur?String(p.dur):'',interval:p.interval?String(p.interval).replace('.',','):'1',deadBy:!!p.deadBy,focus:FOCUS[p.focus]?p.focus:'',intensity:INTENS[p.intensity]?p.intensity:'',levels:lv,syncTiers:(()=>{const k=l=>JSON.stringify([l.tiers,l.capTiers]);return lv.every((l,j)=>j===2||l.mode==='off'||k(l)===k(lv[2]));})()};
     })};
 }
@@ -12705,6 +12684,7 @@ function draftToWod(d){
         const o2={name,loadF:lv.loadF.trim(),loadH:lv.loadH.trim(),note:lv.note.trim(),tiers,capTiers};
         const variants=mvVariantsOut(p,lv);if(variants.length)o2.variants=variants;
         if(Number(lv.dRounds))o2.dRounds=Number(lv.dRounds);
+        {const dr={};for(const [j,v] of Object.entries(lv.dReps||{})){const nv=Math.round(Number(v));if(nv)dr[j]=nv;}if(Object.keys(dr).length)o2.dReps=dr;}
         return o2;
       };
       const rx=build(p.levels[2],2);
@@ -13094,6 +13074,22 @@ function varSegs(text,vars){
   if(c<text.length)out.push(glossSegs(text.slice(c)));
   return out;
 }
+const rpOf=lv=>Object.values((lv&&lv.dReps)||{}).some(v=>Number(v)); /* le niveau change-t-il des reps par exercice ? */
+/* ligne d'exercice dont on peut changer les reps : « 15 Pull-ups », « 50 Single under {10=1} » (pas un schéma 21-15-9, ni « 5 tours », « 10 min ») */
+function repsN(text){
+  const c=String(text).replace(WTAG,'').trim();
+  if(NOT_REPS.test(c)||/^\d+(\s*[-–\/]\s*\d+)+(\s|$)/.test(c))return null;
+  const m=c.match(/^(\d+)(?:\s+\S|(?:m|km)\b)/i);
+  return m?+m[1]:null;
+}
+const repsStep=n=>n<=30?1:(n<=100?5:25);
+/* ligne d'un niveau adapté : reps changées (en surbrillance, comme une variante), puis tours, puis variantes d'exercice */
+function lvLine(text,idx,lv){
+  const d=Number(lv&&lv.dReps&&lv.dReps[idx])||0,n=d?repsN(text):null;
+  if(n===null)return roundsSegs(tagShow(text),rdOf(lv),lv&&lv.variants);
+  const k=Math.max(1,n+d),shown=tagShow(String(text).replace(/^\d+/,String(k)));
+  return [h('mark',{class:'varmk',title:'Variante : '+n+' → '+k+' reps'},String(k)),varSegs(shown.slice(String(k).length),lv.variants)];
+}
 const rdOf=lv=>Number(lv&&lv.dRounds)||0; /* écart de tours d'un niveau par rapport à Rx (ex. −1 pour les débutants) */
 /* ligne « 5 tours… » / « 5 rounds… » / « 5 RFT… » : le nombre de tours est corrigé et mis en surbrillance (orange, comme une variante d'exercice) */
 function roundsSegs(text,d,vars){
@@ -13106,6 +13102,7 @@ const lvNote=lv=>{
   if(!lv)return '';
   const a=(lv.variants||[]).filter(x=>x&&x.to&&x.to.length).map(x=>x.from+' → '+x.to.join(' ou '));
   if(rdOf(lv))a.push(Math.abs(rdOf(lv))+' tour'+(Math.abs(rdOf(lv))>1?'s':'')+(rdOf(lv)<0?' en moins':' en plus'));
+  if(rpOf(lv))a.push('reps adaptées');
   if(lv.note)a.push(lv.note);
   return a.join(' · ');
 };
@@ -13594,6 +13591,25 @@ function confirmPublish(w,onOk){
   document.addEventListener('keydown',esc,true);
   try{document.getElementById(warns?'pub-back':'pub-ok').focus();}catch(x){}
 }
+/* + / − des reps de chaque exercice du metcon pour un niveau (Intermédiaire, Débutant) */
+function repsEditor(p,lv){
+  const lines=String(p.content||'').split('\n').map(x=>x.trim()).filter(Boolean),rows=[];
+  lines.forEach((t,j)=>{
+    const n=repsN(t);if(n===null)return;
+    const d=Number((lv.dReps||{})[j])||0,cur=Math.max(1,n+d),st=repsStep(n);
+    const set=nv=>{nv=Math.max(1,nv);if(!lv.dReps)lv.dReps={};if(nv-n)lv.dReps[j]=nv-n;else delete lv.dReps[j];render();};
+    const label=t.replace(WTAG,'').replace(/^\d+/,'').trim();
+    rows.push(h('div',{class:'row',style:'align-items:center;gap:10px;flex-wrap:nowrap'},
+      h('button',{type:'button',class:'btn sm','aria-label':'Moins de reps : '+label,disabled:cur<=1,onclick:()=>set(cur-st)},'−'),
+      h('b',{style:'min-width:40px;text-align:center'},String(cur)),
+      h('button',{type:'button',class:'btn sm','aria-label':'Plus de reps : '+label,onclick:()=>set(cur+st)},'+'),
+      h('span',{style:'flex:1;min-width:0;overflow-wrap:anywhere'},label+(d?' (Rx : '+n+')':''))));
+  });
+  if(!rows.length)return null;
+  return h('div',{class:'field'},h('span',{class:'flabel'},'Reps par exercice'),
+    h('div',{class:'stack',style:'gap:8px'},rows),
+    h('p',{class:'hint'},'Change le nombre de reps de chaque exercice pour ce niveau (le pas est de 1 jusqu’à 30, 5 jusqu’à 100, puis 25). Le nombre modifié passe en orange chez l’athlète, comme une variante d’exercice. Les paliers de points restent à régler pour ce niveau.'));
+}
 function wodEditor(modal){
   const d=S.coach.wod;
   const SUBM=!!S.coach.subEdit; /* écriture d'une séance de remplacement : ni date, ni deload */
@@ -13688,6 +13704,7 @@ function wodEditor(modal){
               h('b',{style:'min-width:110px;text-align:center'},(Number(lv.dRounds)||0)?'− '+Math.abs(Number(lv.dRounds))+' tour'+(Math.abs(Number(lv.dRounds))>1?'s':''):'Aucun changement'),
               h('button',{type:'button',class:'btn sm','aria-label':'Un tour de moins en moins',disabled:(Number(lv.dRounds)||0)>=0,onclick:()=>{lv.dRounds=Math.min(0,(Number(lv.dRounds)||0)+1);render();}},'+')),
             h('p',{class:'hint'},'Choisis combien de tours retirer pour ce niveau : le nombre écrit sur la ligne « 5 tours », « 5 rounds » ou « 5 RFT » du metcon change et passe en orange, comme une variante d’exercice, quand l’athlète ouvre ce niveau.')):null,
+          k<2?repsEditor(p,lv):null,
           field('Autre variante (texte libre, optionnel)',tin(lv,'note',{id:'p'+i+'-l'+k+'-note',placeholder:'Ring rows à la place des pull-ups'})),
           (k<2&&p.syncTiers)?h('p',{class:'hint'},'Paliers identiques à ceux du niveau 3 (case cochée sur le niveau 3).'):tiersEditor(p,lv,i,k),
           (k<2&&p.syncTiers)?null:(p.format==='FT'?capTiersEditor(p,lv,i,k):null));
@@ -14268,7 +14285,10 @@ async function googleSignIn(){
   S._gTerms={v:LEGAL_VERSION,at:new Date().toISOString()};
   try{
     if(isNativeApp()){
-      const FA=window.Capacitor.registerPlugin('FirebaseAuthentication');
+      /* sans bundler, window.Capacitor n'a pas toujours registerPlugin : les plugins natifs sont alors dans Capacitor.Plugins */
+      const CAP=window.Capacitor;
+      const FA=(typeof CAP.registerPlugin==='function')?CAP.registerPlugin('FirebaseAuthentication'):(CAP.Plugins&&CAP.Plugins.FirebaseAuthentication);
+      if(!FA||typeof FA.signInWithGoogle!=='function')throw new Error('Plugin FirebaseAuthentication introuvable dans l’appli (faire npx cap sync puis relancer depuis Xcode)');
       const r=await FA.signInWithGoogle();
       const c=r&&r.credential;
       if(!c||(!c.idToken&&!c.accessToken))throw new Error('Connexion Google annulée');
@@ -14276,6 +14296,46 @@ async function googleSignIn(){
     }
     return await signInWithPopup(auth,new GoogleAuthProvider());
   }catch(e){S._gTerms=null;throw e;}
+}
+/* plugin natif de connexion (Google, Apple) */
+function nativeFA(){
+  const CAP=window.Capacitor;
+  const FA=(CAP&&typeof CAP.registerPlugin==='function')?CAP.registerPlugin('FirebaseAuthentication'):(CAP&&CAP.Plugins&&CAP.Plugins.FirebaseAuthentication);
+  if(!FA)throw new Error('Plugin FirebaseAuthentication introuvable dans l’appli (faire npx cap sync puis relancer depuis Xcode)');
+  return FA;
+}
+const isIOSNative=()=>isNativeApp()&&!!(window.Capacitor.getPlatform&&window.Capacitor.getPlatform()==='ios');
+/* identifiant Apple : nonce géré par le plugin, jeton d'autorisation gardé pour la révocation à la suppression du compte */
+function appleCred(r){
+  const c=r&&r.credential;
+  if(!c||!c.idToken)throw new Error('Connexion Apple annulée');
+  return {cred:new OAuthProvider('apple.com').credential({idToken:c.idToken,rawNonce:c.nonce||undefined}),code:c.authorizationCode||''};
+}
+async function appleSignIn(){
+  S._gTerms={v:LEGAL_VERSION,at:new Date().toISOString()};
+  try{
+    const r=await nativeFA().signInWithApple();
+    const {cred,code}=appleCred(r);
+    S._appleCode=code;
+    return await signInWithCredential(auth,cred);
+  }catch(e){S._gTerms=null;throw e;}
+}
+/* ré-authentification avant suppression du compte (comptes Google ou Apple : pas de mot de passe) */
+async function reauthProvider(user){
+  const ids=(user.providerData||[]).map(x=>x.providerId);
+  if(ids.includes('apple.com')&&isIOSNative()){
+    const {cred,code}=appleCred(await nativeFA().signInWithApple());
+    await reauthenticateWithCredential(user,cred);
+    return {apple:code};
+  }
+  if(ids.includes('google.com')){
+    if(isNativeApp()){
+      const c=((await nativeFA().signInWithGoogle())||{}).credential;
+      if(!c||(!c.idToken&&!c.accessToken))throw new Error('Vérification annulée');
+      await reauthenticateWithCredential(user,GoogleAuthProvider.credential(c.idToken||null,c.accessToken||null));
+    }else await reauthenticateWithPopup(user,new GoogleAuthProvider());
+  }
+  return {};
 }
 /* une fois le compte ouvert : on note l'acceptation des CGU si le profil n'en a pas encore */
 function googleTermsApply(){
@@ -14287,8 +14347,9 @@ function googleTermsApply(){
     S._gTerms=null;S._gtBusy=false;
   })();
 }
+const appleBtn=attempt=>isIOSNative()?h('button',{class:'au-btn',id:'auth-apple',type:'button',onclick:()=>attempt(appleSignIn)},logoEl(LOGO_APPLE),'Continuer avec Apple'):null;
 const googleBtn=attempt=>h('button',{class:'au-btn',id:'auth-google',type:'button',onclick:()=>attempt(googleSignIn)},logoEl(LOGO_GOOGLE),'Continuer avec Google');
-const googleNote=()=>h('p',{class:'au-center au-muted',style:'font-size:13px'},'En continuant avec Google, tu acceptes les ',h('button',{class:'au-link',type:'button',onclick:openCGU},'CGU'),' et la ',h('button',{class:'au-link',type:'button',onclick:openPrivacy},'politique de confidentialité'),'.');
+const googleNote=()=>h('p',{class:'au-center au-muted',style:'font-size:13px'},'En continuant avec Google'+(isIOSNative()?' ou Apple':'')+', tu acceptes les ',h('button',{class:'au-link',type:'button',onclick:openCGU},'CGU'),' et la ',h('button',{class:'au-link',type:'button',onclick:openPrivacy},'politique de confidentialité'),'.');
 /* écran de connexion : mettre l'appli sur l'écran d'accueil (un bouton Apple, un bouton Android), avec les consignes de chaque système */
 function installCard(){
   if(isStandalone())return null; /* déjà installée : rien à proposer */
@@ -14487,7 +14548,7 @@ function authLogin(){
       h('button',{class:'au-back au-back-hit',type:'button','aria-label':'Retour',onclick:()=>authGo('home')})),
     h('div',{class:'au-body'},
       ...(inst||[]),
-      googleBtn(attempt),googleNote(),
+      appleBtn(attempt),googleBtn(attempt),googleNote(),
       h('div',{class:'au-or'},h('span',{},'OU')),
       h('form',{class:'au-form',novalidate:'novalidate',onsubmit:e=>{e.preventDefault();const em=cleanEmail(email.value);if(!em){msg.textContent='Écris ton adresse e-mail.';return;}attempt(()=>signInWithEmailAndPassword(auth,em,pw.value));}},
         auField('mail',email),pwField,msg,submit,
@@ -14534,7 +14595,7 @@ function authSignup(){
       h('img',{class:'au-hero',src:AU_IMG.signup,alt:'Crée ton compte ! Rejoins la communauté et accède à tous les défis, les compétitions et les workouts.',width:852,height:875,style:'--fade:92%'}),
       h('button',{class:'au-back',type:'button','aria-label':'Retour',onclick:()=>authGo('home')},auIc('back'))),
     h('div',{class:'au-body'},
-      googleBtn(gAttempt),gmsg,googleNote(),
+      appleBtn(gAttempt),googleBtn(gAttempt),gmsg,googleNote(),
       h('div',{class:'au-or'},h('span',{},'OU')),
       h('form',{class:'au-form',novalidate:'novalidate',onsubmit:e=>{e.preventDefault();create();}},
         auField('mail',email),auField('user',pseudo),pwField,
@@ -14792,7 +14853,9 @@ const DEL_REASONS=['Je ne m’entraîne plus au club','Je n’utilise pas l’ap
 async function deleteMyAccount(reason,detail,pwd){
   const user=auth&&auth.currentUser;if(!user)throw new Error('Tu n’es plus connecté.');
   const uid=user.uid;
+  let rv={};
   if(pwd!==null)await reauthenticateWithCredential(user,EmailAuthProvider.credential(user.email,pwd)); /* d'abord : si le mot de passe est faux, rien n'est effacé */
+  else rv=await reauthProvider(user); /* comptes Google / Apple : on redemande la connexion avant d'effacer quoi que ce soit */
   const c=Date.parse(S.created);
   try{await S.db.doc('departures/'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)).set({reason:String(reason).slice(0,80),detail:String(detail||'').slice(0,200),at:new Date().toISOString(),days:isNaN(c)?0:Math.max(0,Math.round((Date.now()-c)/864e5))});}catch(e){}
   try{await pushForget(true);}catch(e){}
@@ -14800,6 +14863,8 @@ async function deleteMyAccount(reason,detail,pwd){
   await wipe('pushSubs','uid');await wipe('reactions','from');await wipe('comments','uid');
   try{const ms=await S.db.collection('dm/'+uid+'/m').get();for(const d of ms.docs){try{await S.db.doc('dm/'+uid+'/m/'+d.id).delete();}catch(e){}}}catch(e){}
   for(const pth of ['dm/'+uid,'avis/'+uid,'seen/'+uid,'users/'+uid+'/private/profile','logs/'+uid]){try{await S.db.doc(pth).delete();}catch(e){}}
+  /* Apple exige la révocation du jeton « Se connecter avec Apple » à la suppression du compte */
+  try{if(rv.apple&&typeof revokeAccessToken==='function')await revokeAccessToken(auth,rv.apple);}catch(e){}
   await deleteUser(user);S.authView='home';
   try{localStorage.removeItem('bs-ob-'+uid);}catch(e){}
 }
@@ -14845,7 +14910,7 @@ function openDeleteAccount(){
       const next=h('button',{class:'btn danger',type:'button',onclick:()=>{st.err='';st.step=3;draw();}},'Continuer');
       const upd=()=>{next.disabled=!(st.word.trim().toLowerCase()==='supprimer')||(hasPwd&&!st.pwd);};
       body.replaceChildren(...head('Confirme ton choix'),
-        h('p',{},'Pour confirmer, écris le mot « Supprimer » dans le cadre ci-dessous.'),
+        h('p',{},'Pour confirmer, écris le mot « Supprimer » dans le cadre ci-dessous.'+(hasPwd?'':' Tu devras ensuite te reconnecter avec ton compte Google ou Apple pour vérifier que c’est bien toi.')),
         h('div',{class:'field'},h('label',{class:'flabel',for:'del-word'},'Écris : Supprimer'),inW),
         inP?h('div',{class:'field'},h('label',{class:'flabel',for:'del-pw'},'Ton mot de passe (pour vérifier que c’est bien toi)'),inP):null,
         st.err?h('p',{class:'hint',role:'alert',style:'color:var(--danger)'},st.err):null,
@@ -14861,7 +14926,7 @@ function openDeleteAccount(){
         }catch(e){
           S.deleting=false;st.busy=false;
           const code=String((e&&e.code)||'');
-          st.err=/wrong-password|invalid-credential|invalid-login/.test(code)?'Mot de passe incorrect.':code==='auth/too-many-requests'?'Trop d’essais : réessaie dans quelques minutes.':errMsg(e);
+          st.err=/cancel|12501|1001|annulée/i.test(code+' '+String((e&&e.message)||''))?'Vérification annulée : réessaie pour supprimer ton compte.':/wrong-password|invalid-credential|invalid-login/.test(code)?'Mot de passe incorrect.':code==='auth/too-many-requests'?'Trop d’essais : réessaie dans quelques minutes.':errMsg(e);
           st.pwd='';st.step=2;draw();
         }
       }},'Supprimer définitivement');
@@ -16067,9 +16132,9 @@ function startFirebase(){
   const bad=!firebaseConfig||!firebaseConfig.apiKey||String(firebaseConfig.apiKey).indexOf('COLLE')===0;
   if(bad){S.cacheMode=false;S.authReady=true;render();return;}
   const app=initializeApp(firebaseConfig);
-  /* Appli native Capacitor : jeton de débogage App Check (test uniquement, à retirer avant publication) */
+  /* appli native Capacitor : App Check (reCAPTCHA) ne fonctionne pas dans capacitor://localhost */
   const __native=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
-  /* TEST : App Check est en « Surveillance » (non appliqué) côté Firebase, donc on l'ignore dans l'appli native pour vérifier que ce n'est pas lui qui bloque Auth */
+  /* App Check est en « Surveillance » côté Firebase : on l'ignore dans l'appli native (ne pas passer en « Appliquer » sans App Attest) */
   if(!__native&&appCheckSiteKey&&initializeAppCheck&&ReCaptchaEnterpriseProvider){try{initializeAppCheck(app,{provider:new ReCaptchaEnterpriseProvider(appCheckSiteKey),isTokenAutoRefreshEnabled:true});}catch(e){}}
   auth=null;
   if(__native&&initializeAuth&&indexedDBLocalPersistence){
