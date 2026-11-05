@@ -1238,6 +1238,16 @@ section.feed-card.th-crimson>.feed-badge{position:absolute!important;left:2cqw;r
 .reward-pop{position:fixed;inset:0;z-index:80;background:#000b;display:grid;place-items:center;padding:18px}
 .reward-pop .rp-card{width:min(100%,440px);max-height:90vh;overflow:auto;background:var(--surface);color:var(--ink);border:3px solid var(--accent);border-radius:6px;padding:20px;display:grid;gap:14px;text-align:center;justify-items:center;box-shadow:0 15px 50px #0008}
 .reward-pop img{max-width:100%;max-height:38vh;object-fit:contain;border-radius:4px}
+/* fenêtre « coins gagnés » : vidéo des coins, « + X », bouton D'accord ; s'affiche après l'enregistrement d'une séance, avant l'animation du classement */
+.coin-win{background:#000d;animation:cw-in .25s ease-out}
+.coin-win .cw-card{width:min(100%,440px);max-height:94vh;overflow:auto;background:#0a0a0b;color:#fff;border:3px solid var(--accent);border-radius:6px;padding:0 0 18px;display:grid;gap:10px;text-align:center;justify-items:center;box-shadow:0 15px 50px #000a,0 0 40px rgba(255,190,40,.25)}
+.coin-win .cw-vid{display:block;width:100%;aspect-ratio:918/720;max-height:56vh;object-fit:cover;background:#000;border-radius:3px 3px 0 0;cursor:pointer}
+.coin-win .cw-n{font-family:var(--f-display);font-size:clamp(46px,16vw,72px);line-height:1;letter-spacing:.03em;color:#FFC83A;text-shadow:0 2px 0 #7a4a00,0 0 22px rgba(255,190,40,.55);animation:cw-pop .55s .15s cubic-bezier(.2,1.6,.4,1) both}
+.coin-win .cw-l{margin:0;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#d9d9de;font-weight:700}
+.coin-win .btn{margin-top:4px;min-width:170px}
+@keyframes cw-in{from{opacity:0}to{opacity:1}}
+@keyframes cw-pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){.coin-win,.coin-win .cw-n{animation:none}}
 .reward-art{width:120px;height:120px;display:grid;place-items:center;background:var(--surface2);border:2px solid var(--accent);border-radius:50%;font:28px var(--f-display);overflow:hidden}
 .reward-art img{width:100%;height:100%;object-fit:contain}
 .avu-list{display:grid;gap:10px;width:100%;margin:0}
@@ -8927,7 +8937,9 @@ function submitEntryNow(w){
   const coinCg=coinPatch(uid,date),coinTx=coinCg?' · +'+coinPerSession()+' coin'+(coinPerSession()>1?'s':''):'';
   const sv=saveLog(Object.assign({entries:Object.assign({},cur.entries||{},{[date]:e})},coinCg||{}),(coach?'Résultats enregistrés':(early?'Séance enregistrée en avance : tes points seront ajoutés le lundi '+fmtShort(mondayOf(date))+'.':'Séance enregistrée'))+coinTx,uid);
   render();
-  if(rk){S._rankPend=true;sv.then(()=>rankAnimStart(rk)).catch(()=>{}).finally(()=>{S._rankPend=false;if(!S.rankAnim)rankFlush();});}
+  /* après l'enregistrement : d'abord la fenêtre des coins (athlète qui valide sa propre séance, première fois pour cette date), puis l'animation du classement */
+  const coinWon=(coinCg&&!coach&&uid===S.uid)?coinPerSession():0;
+  if(rk||coinWon){S._rankPend=true;sv.then(()=>coinWon?coinWin(coinWon):null).then(()=>rk?rankAnimStart(rk):null).catch(()=>{}).finally(()=>{S._rankPend=false;if(!S.rankAnim)rankFlush();});}
 }
 function recentList(t,current){
   const per=periodFor(t)||activePeriod(); /* les séances des saisons précédentes n'apparaissent pas */
@@ -14145,6 +14157,40 @@ function rewardImage(r){
   if(r.type==='avframe'&&!r.image){art.replaceChildren(h('img',{src:avfSrc(r),alt:r.name||'Cadre d’avatar'}));}
   if(r.type==='bg'&&!r.image&&BG_ASSETS[r.asset]){art.replaceChildren(h('img',{src:BG_ASSETS[r.asset].src,alt:r.name||'Fond de bannière',style:'width:100%;height:100%;object-fit:cover;border-radius:4px'}));}
   return art;
+}
+/* ---------- fenêtre « coins gagnés » ----------
+   Après l'enregistrement d'une séance (premier enregistrement de la date : c'est là que coinPatch crédite les coins), on montre la vidéo
+   des coins (assets/embedded/Coins_sonnants_et_trebuchants.mp4) avec « + X » (X = coins gagnés), et un bouton « D'accord ».
+   La promesse se résout à la fermeture : l'animation du classement démarre alors, comme avant. Ne rejette jamais. */
+const COIN_VIDEO='assets/embedded/Coins_sonnants_et_trebuchants.mp4';
+function coinWin(n){
+  n=Math.floor(Number(n))||0;
+  if(n<1)return Promise.resolve();
+  return new Promise(res=>{
+    let done=false;
+    const pop=h('div',{class:'reward-pop coin-win',role:'dialog','aria-modal':'true','aria-label':'Coins gagnés'});
+    const close=()=>{if(done)return;done=true;try{vid.pause();}catch(e){}pop.remove();res();};
+    const vid=document.createElement('video');
+    vid.className='cw-vid';vid.src=COIN_VIDEO;vid.setAttribute('playsinline','');vid.setAttribute('webkit-playsinline','');vid.playsInline=true;vid.preload='auto';vid.setAttribute('aria-hidden','true');
+    const card=h('div',{class:'cw-card'});
+    /* vidéo absente ou illisible : on garde la fenêtre, avec une pièce à la place */
+    vid.onerror=()=>{const f=h('div',{class:'cw-vid',style:'display:grid;place-items:center;font-size:84px;cursor:default'},'🪙');vid.replaceWith(f);};
+    /* 1re lecture avec le son ; si le navigateur refuse (pas de geste), on relance en muet ; ensuite la vidéo boucle sans le son */
+    let first=true;
+    vid.addEventListener('ended',()=>{if(done)return;if(first){first=false;vid.muted=true;}vid.currentTime=0;const p=vid.play();if(p&&p.catch)p.catch(()=>{});});
+    vid.addEventListener('click',()=>{vid.muted=false;vid.currentTime=0;const p=vid.play();if(p&&p.catch)p.catch(()=>{vid.muted=true;const q=vid.play();if(q&&q.catch)q.catch(()=>{});});}); /* un toucher sur la vidéo la rejoue avec le son */
+    card.append(vid,
+      h('div',{class:'cw-n','aria-label':'Tu gagnes '+n+' coin'+(n>1?'s':'')},'+ '+n),
+      h('p',{class:'cw-l'},'coin'+(n>1?'s':'')+' gagné'+(n>1?'s':'')),
+      h('button',{class:'btn primary',type:'button',onclick:close},'D’accord'));
+    pop.append(card);
+    document.body.append(pop);
+    if(!reducedMotion()){
+      const p=vid.play();
+      if(p&&p.catch)p.catch(()=>{vid.muted=true;const q=vid.play();if(q&&q.catch)q.catch(()=>{});});
+    }
+    setTimeout(()=>{try{card.querySelector('.btn').focus({preventScroll:true});}catch(e){}},50);
+  });
 }
 function maybeRewardPopup(){
   if(!S.uid||!ready()||S._rewardPopupOpen||rankHold())return;
