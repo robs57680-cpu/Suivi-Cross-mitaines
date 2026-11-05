@@ -1560,6 +1560,10 @@ body.board-lock .top{position:relative;top:0}
 .fmeth{margin:8px 0 4px;padding:10px 12px;border-left:4px solid var(--accent);border-radius:4px;background:var(--tint,rgba(127,127,127,.12));display:grid;gap:6px;font-size:14px;line-height:1.4}
 .fmeth p{margin:0}
 .fmeth-h{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.fmeth>summary{cursor:pointer;list-style:none}
+.fmeth>summary::-webkit-details-marker{display:none}
+.fmeth>summary::after{content:'▾';margin-left:auto;opacity:.7;transition:transform .2s}
+.fmeth[open]>summary::after{transform:rotate(180deg)}
 .fmeth-k{font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.75}
 .fmeth-tm{padding:8px 10px;border-radius:4px;background:rgba(127,127,127,.14);font-weight:600}
 .fwarn{margin:8px 0 4px;padding:10px 12px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;border:2px solid #E6A700;border-radius:6px;background:rgba(244,196,0,.14);font-size:14px;line-height:1.4}
@@ -3961,7 +3965,7 @@ bWw+Cg==
 <script type="module">
 /* Le SDK Firebase est chargé en dynamique : la page s'affiche tout de suite, même si le réseau est lent.
    Au bout de 3 s sans réponse, l'appli bascule en mode cache (dernières données enregistrées sur l'appareil). */
-let firebaseConfig=null,appCheckSiteKey=null,initializeAppCheck=null,ReCaptchaEnterpriseProvider=null,initializeApp,getAuth,initializeAuth,indexedDBLocalPersistence,browserLocalPersistence,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup,deleteUser,EmailAuthProvider,reauthenticateWithCredential,getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc,disableNetwork,enableNetwork,query,orderBy,limit,where,getDocs;
+let firebaseConfig=null,appCheckSiteKey=null,initializeAppCheck=null,ReCaptchaEnterpriseProvider=null,initializeApp,getAuth,initializeAuth,indexedDBLocalPersistence,browserLocalPersistence,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup,signInWithCredential,deleteUser,EmailAuthProvider,reauthenticateWithCredential,getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc,disableNetwork,enableNetwork,query,orderBy,limit,where,getDocs;
 const FB_URL='https://www.gstatic.com/firebasejs/10.14.1/';
 const sdkPromise=(async()=>{
   const [cfg,a,u,f,ac]=await Promise.all([import('./firebase-config.js').catch(()=>({})),import(FB_URL+'firebase-app.js'),import(FB_URL+'firebase-auth.js'),import(FB_URL+'firebase-firestore.js'),import(FB_URL+'firebase-app-check.js').catch(()=>({}))]);
@@ -3970,7 +3974,7 @@ const sdkPromise=(async()=>{
   /* App Check (anti-abus) : actif seulement si firebase-config.js exporte appCheckSiteKey ; sans clé, l'appli fonctionne comme avant */
   appCheckSiteKey=cfg.appCheckSiteKey||null;initializeAppCheck=ac.initializeAppCheck||null;ReCaptchaEnterpriseProvider=ac.ReCaptchaEnterpriseProvider||null;
   ({initializeApp}=a);
-  ({getAuth,initializeAuth,indexedDBLocalPersistence,browserLocalPersistence,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup,deleteUser,EmailAuthProvider,reauthenticateWithCredential}=u);
+  ({getAuth,initializeAuth,indexedDBLocalPersistence,browserLocalPersistence,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup,signInWithCredential,deleteUser,EmailAuthProvider,reauthenticateWithCredential}=u);
   ({getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc,disableNetwork,enableNetwork,query,orderBy,limit,where,getDocs}=f);
 })();
 sdkPromise.catch(e=>{window.__fbState='SDK ÉCHEC';window.__dbg&&window.__dbg('SDK Firebase ÉCHEC',e);});
@@ -4406,7 +4410,13 @@ function myWod(w,uid){
   return (c&&c.sw)?wodFor(w,{sw:c.sw}):w;
 }
 function basePts(w,period){return (w.base!==undefined&&w.base!==null)?Number(w.base):((period&&period.base!==undefined)?Number(period.base):10);}
+/* Une séance enregistrée APRÈS la fin de sa saison ne rapporte aucun point. On se fie à la date du premier enregistrement (e.at).
+   La règle ne vaut que pour les enregistrements faits à partir de LATE_FROM : les résultats déjà saisis avant ne changent pas. */
+const LATE_FROM='2026-11-05';
+const entryLate=(e,per)=>{if(!e||!e.at||!per||per.virtual||!per.end)return false;const d=dfmt(new Date(e.at));return d>per.end&&d>=LATE_FROM;};
+const pastSeasonDate=d=>{const p=periodFor(d);return !!p&&!p.virtual&&periodState(p)==='done';};
 function wodPoints(w,e,period){
+  if(entryLate(e,period))return {base:0,perf:0,total:0,late:true};
   w=wodFor(w,e);
   const base=(e&&e.metconOnly)?0:basePts(w,period); /* « que le metcon » : points du metcon seulement */
   const m=metconOf(w);const perf=m&&e?perfOf(m,e):0;
@@ -4719,18 +4729,18 @@ const minEligOf=per=>{
   if(per.locked||/alpha|beta/.test(norm(per.name||'')))return 0;
   return MIN_ELIGIBLE;
 };
-function eligCount(t,board){return board.rows.filter(r=>r.sessions>0&&(!t.elig||t.elig(r,board))).length;}
+/* concourir = avoir marqué des points (être dans le groupe ne suffit pas) */
+function eligCount(t,board){return board.rows.filter(r=>r.sessions>0&&r.total>0&&(!t.elig||t.elig(r,board))).length;}
 /* nombre d'éligibles quand le seuil bloque le trophée, sinon 0 */
 function trophyShort(t,board,gid){
-  if(!t.cat)return 0;
   const min=minEligOf(board.period);if(!min)return 0;
   if(gid!==undefined)board=Object.assign({},board,{rows:board.rows.filter(r=>inScope(r.uid,gid,board.period))});
   const n=eligCount(t,board);return n>0&&n<min?n:0;
 }
 function winners(t,board,gid){
   if(gid!==undefined)board=Object.assign({},board,{rows:board.rows.filter(r=>inScope(r.uid,gid,board.period))});
+  {const min=minEligOf(board.period);if(min&&eligCount(t,board)<min)return [];} /* tous les trophées : seuil de participants */
   if(t.custom)return t.custom(board).filter(r=>r.sessions>0);
-  {const min=t.cat?minEligOf(board.period):0;if(min&&eligCount(t,board)<min)return [];}
   const pool=board.rows.filter(r=>r.sessions>0&&(!t.elig||t.elig(r,board))&&t.key(r)[0]>0);
   if(!pool.length)return [];
   pool.sort((a,b)=>cmpKey(t.key(b),t.key(a)));
@@ -5776,6 +5786,7 @@ function render(force){
   /* catégorie d'âge : recalculée à chaque ouverture (un athlète qui fête ses 35 ans passe chez les Vétérans) */
   pfPubSync();
   try{signupApply();}catch(e){}
+  try{googleTermsApply();}catch(e){}
   if(S.uid&&ready()&&S.profLoaded&&S.logs[S.uid]){const ac=ageCatOf(S.prof.birth);if((S.logs[S.uid].ageCat||'')!==ac&&S.ageSync!==ac){S.ageSync=ac;saveLog({ageCat:ac});}}
   const p=selPeriod();
   $('#hdr-right').replaceChildren(h('span',{class:'chip '+(periodState(p)==='live'?'live':'done'),style:'max-width:40vw;overflow:hidden;text-overflow:ellipsis;display:block'},p.virtual?'Saison en cours':(p.name||seasonLabel(p))),helpBtn());
@@ -6382,6 +6393,11 @@ const setTmMuted=v=>{try{localStorage.setItem('bs-mute',v?'1':'0');}catch(e){}};
 /* séances faisables en avance : seule la saison verrouillée par le coach bloque (plus de blocage avant le lundi de la semaine) */
 const timerOk=date=>!!S.uid&&!!S.db&&!lockedDate(date);
 /* ouvre le formulaire de résultat avec les valeurs du minuteur */
+/* résultats du minuteur gardés pour plus tard (metcon suivi d'autres parties) : retenus sur l'appareil jusqu'à l'enregistrement de la séance */
+const keptKey=()=>'bs-kept-'+(S.uid||'');
+function keptLoad(){if(S._keptU!==S.uid){S._keptU=S.uid;let v={};try{v=JSON.parse(localStorage.getItem(keptKey())||'{}')||{};}catch(e){}S._kept=v;}return S._kept;}
+const keptGet=date=>{const k=keptLoad()[date];return (k&&k.patch)?k.patch:null;};
+function keptSet(date,patch){const k=keptLoad();if(patch)k[date]={patch,at:Date.now()};else delete k[date];try{localStorage.setItem(keptKey(),JSON.stringify(k));}catch(e){}}
 function openEntryWith(w,date,patch){
   S.viewDate=date;S.tab='today';S.redo=null;S.confirm=null;
   openEntry(w,date);
@@ -6803,7 +6819,12 @@ function openTimer(w,date,m,lvIdx){
   const release=()=>{try{if(st.wake)st.wake.release();}catch(e){}st.wake=null;if(st.vid){try{st.vid.pause();st.vid.remove();}catch(e){}st.vid=null;}};
   const onVis=()=>{if(!document.hidden&&st.phase!=='closed'){lock();if(st.phase==='run'||st.phase==='prep')tick();}};
   const close=()=>{st.phase='closed';clearInterval(st.iv);document.removeEventListener('visibilitychange',onVis);release();try{if(st.ac&&st.ac.close)st.ac.close();}catch(e){}ov.remove();};
-  const finish=patch=>{close();openEntryWith(w,date,patch);};
+  /* le metcon est-il suivi d'autres parties ? alors pas d'enregistrement tout de suite : on garde le résultat, et il sera repris dans « Entrer mes résultats » */
+  const parts=w.parts||[],mi0=parts.findIndex(x=>x===m),mi=mi0>=0?mi0:parts.findIndex(x=>x.label===m.label);
+  const keepLater=mi>=0&&mi<parts.length-1;
+  const saveLabel=keepLater?'Garder mes résultats pour plus tard':'Enregistrer dans mon résultat';
+  const keep=patch=>{close();keptSet(date,patch);S.viewDate=date;S.tab='today';S.entry=null;S.redo=null;S.confirm=null;render();window.scrollTo(0,0);toast('Résultats gardés. Fais les parties qui restent, puis appuie sur « Entrer mes résultats ».');};
+  const finish=patch=>{if(keepLater){keep(patch);return;}close();openEntryWith(w,date,patch);};
   const armed=(btn,txt,fn)=>{let t=null;const orig=btn.textContent;return ()=>{if(t){clearTimeout(t);t=null;btn.textContent=orig;fn();return;}btn.textContent=txt;t=setTimeout(()=>{t=null;btn.textContent=orig;},3000);};};
   const label=fmt==='AMRAP'?'AMRAP':fmt==='EMOM'?fmtLabel(m):'For Time';
   const info=label+(dur?(fmt==='FT'?' · time cap ':' · ')+mmss(dur):'');
@@ -6937,7 +6958,7 @@ function openTimer(w,date,m,lvIdx){
         h('p',{class:'tm-sub'},'Tu n’as pas appuyé tout de suite ? Corrige ton temps.'),
         h('div',{class:'row'},adj(-10,'−10 s'),adj(-5,'−5 s'),adj(-1,'−1 s'),adj(1,'+1 s'),adj(5,'+5 s')),
         h('div',{class:'tm-fld'},h('span',{class:'flabel tm-eb'},'Temps final (mm:ss)'),inp),lapsList());
-      bot.append(h('button',{type:'button',class:'btn primary tm-save',onclick:()=>finish({score:fmtTime(st.adj),capped:false,rounds:'',reps:'',creps:'',laps:lapsOut()})},'Enregistrer dans mon résultat'),
+      bot.append(h('button',{type:'button',class:'btn primary tm-save',onclick:()=>finish({score:fmtTime(st.adj),capped:false,rounds:'',reps:'',creps:'',laps:lapsOut()})},saveLabel),
         h('div',{class:'row'},resumeBtn(),discard()));
     }else if(fmt==='FT'){
       const pl=planOf(m);
@@ -6954,7 +6975,7 @@ function openTimer(w,date,m,lvIdx){
         const r=readScore(m,tmp);
         if(r.empty||r.bad||r.over||r.many){toast(r.empty?'Indique ton score.':scoreErr(m,r),true);return;}
         finish(pl?{capped:true,score:'',rounds:String(r.rounds),reps:String(r.reps),creps:'',laps:lapsOut()}:{capped:true,score:'',rounds:'',reps:'',creps:String(r.v),laps:lapsOut()});
-      }},'Enregistrer dans mon résultat'),h('div',{class:'row'},discard()));
+      }},saveLabel),h('div',{class:'row'},discard()));
     }else if(fmt==='AMRAP'){
       const rIn=bigIn(String(st.laps.length),{inputmode:'numeric','aria-label':'Tours complets'});
       const pIn=size>0?bigIn('0',{inputmode:'numeric','aria-label':'Reps en plus'}):null;
@@ -6973,7 +6994,7 @@ function openTimer(w,date,m,lvIdx){
         const laps=st.laps.map(x=>Math.round(x));
         if(m.repsRound>0)finish({score:'',capped:false,creps:'',rounds:String(r),reps:String(rp),laps});
         else finish({score:String(Math.round((r+(size>0?rp/size:0))*100)/100).replace('.',','),capped:false,creps:'',rounds:'',reps:'',laps});
-      }},'Enregistrer dans mon résultat'),h('div',{class:'row'},resumeBtn(),discard()));
+      }},saveLabel),h('div',{class:'row'},resumeBtn(),discard()));
     }else{
       if(dead){
         /* Dead by : le score est le temps tenu = intervalles réussis x durée de l'intervalle (plafonné au time cap) */
@@ -6989,7 +7010,7 @@ function openTimer(w,date,m,lvIdx){
         bot.append(h('button',{type:'button',class:'btn primary tm-save',onclick:()=>{
           const n=parseInt(sIn.value,10);if(isNaN(n)||n<0){toast('Écris un nombre d’intervalles.',true);return;}
           finish({score:fmtTime(held()),capped:false,rounds:'',reps:'',creps:''});
-        }},'Enregistrer dans mon résultat'),h('div',{class:'row'},resumeBtn(),discard()));
+        }},saveLabel),h('div',{class:'row'},resumeBtn(),discard()));
       }else{
         const sIn=bigIn(String(Math.floor((st.res.sec||0)/ivS)),{inputmode:'numeric','aria-label':'Tours réussis'});
         mid.append(h('p',{class:'eyebrow tm-eb'},st.res.auto?'Temps écoulé':'Arrêté à '+mmss(st.res.sec)),
@@ -6998,7 +7019,7 @@ function openTimer(w,date,m,lvIdx){
         bot.append(h('button',{type:'button',class:'btn primary tm-save',onclick:()=>{
           const n=parseInt(sIn.value,10);if(isNaN(n)||n<0){toast('Écris un nombre de tours.',true);return;}
           finish({score:String(n),capped:false,rounds:'',reps:'',creps:''});
-        }},'Enregistrer dans mon résultat'),h('div',{class:'row'},resumeBtn(),discard()));
+        }},saveLabel),h('div',{class:'row'},resumeBtn(),discard()));
       }
     }
     ov.replaceChildren(topBar(false),mid,bot);
@@ -7289,8 +7310,13 @@ const WP_TRI='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
 function forceInfo(p){
   const out=[],m=forceMethodOf(p);
   if(m){
-    out.push(h('div',{class:'fmeth'},h('div',{class:'fmeth-h'},h('span',{class:'fmeth-k'},'Méthode'),h('b',{},m.name)),
-      m.paras.map((t,k)=>h('p',{class:(m.tm&&t===TM_NOTE)?'fmeth-tm':''},t))));
+    /* explication repliée de base : on touche « Méthode » pour la lire (l'état ouvert/fermé est gardé quand la page se redessine) */
+    const key='fm-'+(p.label||'')+'-'+m.id,op=(S._fmOpen=S._fmOpen||{});
+    const det=h('details',{class:'fmeth',id:key},h('summary',{class:'fmeth-h','aria-label':'Méthode : '+m.name+'. Toucher pour lire l’explication.'},h('span',{class:'fmeth-k'},'Méthode'),h('b',{},m.name)),
+      m.paras.map((t,k)=>h('p',{class:(m.tm&&t===TM_NOTE)?'fmeth-tm':''},t)));
+    if(op[key])det.open=true;
+    det.addEventListener('toggle',()=>{op[key]=det.open;});
+    out.push(det);
   }
   if(isWeightedPull(p)){
     const ic=h('span',{class:'fwarn-i'});ic.innerHTML=WP_TRI;
@@ -7817,14 +7843,14 @@ function unchooseSub(date){
   render();
 }
 function sessionCard(w,i,n,mine,prev,next){
-  const date=w.date,col=cardColor(date,prev,next),done=!!mine[date],per=periodFor(date);
+  const date=w.date,col=cardColor(date,prev,next),done=!!mine[date],per=periodFor(date),pastS=pastSeasonDate(date);
   const ch=subChoice(S.uid,date),sw=(mine[date]&&mine[date].sw)||(ch&&ch.sw)||null;
   const wE=sw?wodFor(w,{sw}):w;
   const parts=(wE.parts||[]);
   const shown=parts.length>4?parts.filter((p,k)=>k<3||p.kind==='metcon').slice(0,4):parts;
   const open=()=>{S.viewDate=date;S.entry=null;S.redo=null;S.tip=null;render();window.scrollTo(0,0);};
   const subs=subsOf(per);
-  const canSub=!!S.uid&&!!S.db&&!S.snapMode&&ready()&&!done&&!lockedDate(date)&&subs.some(Boolean);
+  const canSub=!!S.uid&&!!S.db&&!S.snapMode&&ready()&&!done&&!lockedDate(date)&&!pastS&&subs.some(Boolean);
   let slot=null,card=null,back=null;
   const flip=on=>{
     if(!slot)return;
@@ -7839,8 +7865,8 @@ function sessionCard(w,i,n,mine,prev,next){
       h('span',{class:'cc-n'},'Séance '+(i+1)+' / '+n),
       done?h('span',{class:'cc-done'},'✓ Faite'):null),
     h('h2',{class:'cc-title'},wE.title),
-    (()=>{const m=metconOf(wE),tags=[];if(sw)tags.push(h('span',{class:'cc-tag'},'🏠 Remplacement'));if(m&&m.test)tags.push(h('span',{class:'cc-tag'},'TEST'));if(m&&m.redo!==false&&!lockedDate(date))tags.push(h('span',{class:'cc-tag'},'RE DO'));return tags.length?h('div',{class:'cc-flags'},tags):null;})(),
-    h('div',{class:'cc-meta'},h('span',{},cap(fmtShort(date))),h('span',{},basePts(wE,per)+' pts'+(metconOf(wE)?' + metcon':''))),
+    (()=>{const m=metconOf(wE),tags=[];if(pastS)tags.push(h('span',{class:'cc-tag'},'SAISON TERMINÉE'));if(sw)tags.push(h('span',{class:'cc-tag'},'🏠 Remplacement'));if(m&&m.test)tags.push(h('span',{class:'cc-tag'},'TEST'));if(m&&m.redo!==false&&!lockedDate(date))tags.push(h('span',{class:'cc-tag'},'RE DO'));return tags.length?h('div',{class:'cc-flags'},tags):null;})(),
+    h('div',{class:'cc-meta'},h('span',{},cap(fmtShort(date))),h('span',{},pastS?'0 pt · saison terminée':basePts(wE,per)+' pts'+(metconOf(wE)?' + metcon':''))),
     h('div',{class:'cc-parts'},shown.map(cardPart)),
     equipRow(wE),
     h('div',{class:'cc-go'},'Touche pour ouvrir ',h('b',{},'→')));
@@ -7927,37 +7953,92 @@ const wodInDoneSeason=d=>{
   if(cur&&!cur.virtual)return per.id!==cur.id;
   return periodState(per)==='done';
 };
+/* ----- réglage du matériel disponible (onglet Séances) : on ne voit que les séances faisables avec le matériel coché ----- */
+const eqStoreKey=()=>'bs-eq-'+(S.uid||'');
+function eqHave(){ /* clés du matériel disponible ; null = tout est disponible (aucun filtre) */
+  if(S._eqUid!==S.uid){S._eqUid=S.uid;let v=null;try{const r=JSON.parse(localStorage.getItem(eqStoreKey())||'null');if(Array.isArray(r))v=r;}catch(e){}S._eq=v;}
+  return S._eq;
+}
+function eqSet(v){S._eqUid=S.uid;S._eq=v;try{if(v)localStorage.setItem(eqStoreKey(),JSON.stringify(v));else localStorage.removeItem(eqStoreKey());}catch(e){}}
+const eqMissing=w=>{const hv=eqHave();return hv?equipOf(w).filter(e=>!hv.includes(e[0])):[];};
+function openEquipSettings(){
+  if(document.getElementById('eq-ov'))return;
+  const have=new Set(eqHave()||EQUIP.map(e=>e[0]));
+  const esc=e=>{if(e.key==='Escape'){e.stopPropagation();close();}};
+  const close=()=>{ov.remove();document.removeEventListener('keydown',esc,true);render();};
+  const store=()=>eqSet(have.size>=EQUIP.length?null:[...have]);
+  const boxes=EQUIP.map(([k,lab,svg])=>{
+    const ic=h('span',{class:'cc-eqb','aria-hidden':'true'});ic.innerHTML=svg;
+    const inp=h('input',{type:'checkbox',id:'eq-'+k,checked:have.has(k),onchange:e=>{if(e.target.checked)have.add(k);else have.delete(k);store();}});
+    return h('label',{class:'chk'},inp,ic,h('span',{},lab));
+  });
+  const all=()=>{EQUIP.forEach(([k])=>have.add(k));boxes.forEach(l=>{l.querySelector('input').checked=true;});store();};
+  const ov=h('div',{class:'ov',id:'eq-ov',style:'z-index:70',onclick:e=>{if(e.target===ov)close();}},
+    h('div',{class:'sheet',role:'dialog','aria-modal':'true','aria-label':'Matériel disponible'},
+      h('div',{class:'ov-h'},h('span',{class:'ov-t'},'Matériel disponible'),h('button',{type:'button',class:'ov-x','aria-label':'Fermer',onclick:close},'✕')),
+      h('p',{},'Coche le matériel que tu as. Les séances qui demandent un matériel décoché sont masquées : tu ne vois que celles que tu peux faire.'),
+      h('div',{style:'display:grid;gap:10px'},boxes),
+      h('div',{class:'tip',role:'note',id:'eq-reminder'},h('b',{},'↻ Pas le matériel ?'),
+        h('p',{},'Tu peux retourner une séance (bouton ↻ sur sa carte) pour accéder à un wod sans matériel. Fais-le plutôt sur une séance que tu ne pourras pas faire : une fois ton résultat enregistré, la séance d’origine n’est plus réalisable.')),
+      h('div',{class:'row'},h('button',{type:'button',class:'btn',id:'eq-all',onclick:all},'Tout cocher'),h('button',{type:'button',class:'btn primary',id:'eq-done',onclick:close},'Terminé'))));
+  document.body.append(ov);document.addEventListener('keydown',esc,true);
+}
 function viewCards(){
   const t=todayStr(),el=h('div',{class:'stack car-page'});
   if(!ready()&&!S.pre){el.append(h('p',{class:'muted'},'Chargement…'));return el;}
   if(!ready()&&S.pre)el.append(h('p',{class:'hint'},'Séances enregistrées sur ton téléphone · mise à jour en cours…'));
   const mine=(S.logs[S.uid]&&S.logs[S.uid].entries)||{};
-  /* séances des 4 dernières semaines et à venir, par semaine puis par date */
-  const from=addDays(mondayOf(t),-28);
-  const ws=Object.values(S.wods).filter(w=>w.date>=from&&!wodInDoneSeason(w.date)).sort((a,b)=>a.date<b.date?-1:1);
+  const gear=h('button',{type:'button',class:'btn sm',id:'eq-open','aria-label':'Réglages : matériel disponible',title:'Matériel disponible',style:'flex:none;padding:8px 10px;line-height:0'},svgOf(ICO_GEAR));
+  gear.firstChild.style.cssText='width:22px;height:22px';gear.onclick=openEquipSettings;
+  const hv=eqHave();
+  if(hv)gear.classList.add('primary');
+  /* séances des 4 dernières semaines et à venir, par semaine puis par date ; avec « saisons passées » : on ajoute celles des saisons terminées */
+  const from=addDays(mondayOf(t),-28),past=!!S.showPast;
+  const pastList=Object.values(S.wods).filter(w=>pastSeasonDate(w.date)).sort((a,b)=>a.date<b.date?-1:1);
+  const ws0=Object.values(S.wods).filter(w=>(past&&pastSeasonDate(w.date))||(w.date>=from&&!wodInDoneSeason(w.date))).sort((a,b)=>a.date<b.date?-1:1);
+  /* filtre matériel : une séance déjà validée reste visible ; sinon on regarde le matériel de la séance (ou de son remplacement choisi) */
+  const okEq=w=>{if(!hv||mine[w.date])return true;const ch=subChoice(S.uid,w.date),sw=ch&&ch.sw;return eqMissing(sw?wodFor(w,{sw}):w).length===0;};
+  const ws=ws0.filter(okEq),hidden=ws0.length-ws.length;
+  const remind=()=>h('p',{class:'hint',id:'eq-hint'},'Pas le matériel ? Retourne une séance avec ↻ pour accéder à un wod sans matériel, de préférence sur une séance que tu ne pourras pas faire : la séance d’origine ne sera plus réalisable une fois ton résultat enregistré.');
   if(!ws.length){
-    el.append(h('div',{},h('p',{class:'eyebrow'},'Séances'),h('h1',{class:'day'},'Aucune séance')),
-      h('div',{class:'empty'},h('p',{},'Aucune séance publiée pour le moment.'),
+    el.append(h('div',{style:'display:flex;justify-content:space-between;align-items:flex-start;gap:12px'},h('div',{},h('p',{class:'eyebrow'},'Séances'),h('h1',{class:'day'},'Aucune séance')),gear));
+    if(ws0.length){
+      el.append(h('div',{class:'empty'},h('p',{},'Aucune séance faisable avec le matériel coché ('+hidden+' masquée'+(hidden>1?'s':'')+').'),h('div',{class:'row'},h('button',{class:'btn primary',type:'button',onclick:openEquipSettings},'Modifier mon matériel'))),remind());
+    }else{
+      el.append(h('div',{class:'empty'},h('p',{},'Aucune séance publiée pour le moment.'),
         S.owner?h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{go('coach');S.coach.view='wod';openWodWindow(t);}},'Publier une séance')):null));
+      if(pastList.length&&!past)el.append(h('div',{class:'row'},h('button',{class:'btn',type:'button',id:'car-past',onclick:()=>{S.showPast=true;S.carDate=pastList[pastList.length-1].date;render();window.scrollTo(0,0);}},'Voir les saisons passées')));
+    }
     return el;
   }
   /* numéro de la séance dans sa semaine */
   const byWeek={};ws.forEach(w=>{(byWeek[mondayOf(w.date)]=byWeek[mondayOf(w.date)]||[]).push(w.date);});
-  let cur=S.carDate&&S.wods[S.carDate]&&S.carDate>=from?S.carDate:defaultDate();
-  if(!ws.some(w=>w.date===cur))cur=ws[0].date;
+  let cur=S.carDate&&ws.some(w=>w.date===S.carDate)?S.carDate:defaultDate();
+  if(!ws.some(w=>w.date===cur))cur=(ws.find(w=>w.date>=t)||ws[ws.length-1]).date;
   S.carDate=cur;
   const eb=h('p',{class:'eyebrow'}),day=h('h1',{class:'day'}),sub=h('p',{class:'hint'});
   const paint=d=>{
     eb.textContent=weekRel(d,t);day.textContent=weekRange(d);
-    sub.textContent='À réaliser n’importe quel jour de la semaine, du lundi au dimanche.';
+    sub.textContent=pastSeasonDate(d)?'Saison terminée : ces séances ne rapportent aucun point.':'À réaliser n’importe quel jour de la semaine, du lundi au dimanche.';
   };
   paint(cur);
-  el.append(h('div',{},eb,day,sub));
+  el.append(h('div',{style:'display:flex;justify-content:space-between;align-items:flex-start;gap:12px'},h('div',{},eb,day,sub),gear));
+  if(hv&&hidden>0)el.append(h('p',{class:'hint',id:'eq-filter-note'},'Filtre matériel actif : '+hidden+' séance'+(hidden>1?'s':'')+' masquée'+(hidden>1?'s':'')+'.'),remind());
+  /* bouton à l'extrémité gauche du carrousel : afficher / masquer les séances des saisons terminées */
+  const pastBtn=(pastList.length||past)?h('div',{class:'car-slot car-past'},
+    h('div',{class:'car-card',style:'--c1:#3a3f4a;--c2:#171a20;cursor:default;justify-content:center;align-items:center;text-align:center;gap:14px'},
+      h('h2',{class:'cc-title'},past?'Saisons passées affichées':'Saisons passées'),
+      h('p',{class:'sb-p'},'Retrouve les séances des saisons terminées. Elles ne rapportent aucun point.'),
+      h('button',{type:'button',class:'btn primary',id:'car-past',onclick:()=>{
+        if(past){S.showPast=false;S.carDate=null;}
+        else{S.showPast=true;S.carDate=pastList.length?pastList[pastList.length-1].date:null;}
+        render();window.scrollTo(0,0);}},past?'Masquer les saisons passées':'Voir les saisons passées'))):null;
   const track=h('div',{class:'car-track',role:'list','aria-label':'Séances, fais glisser pour changer'},
+    pastBtn,
     ws.map((w,k)=>{const wk=byWeek[mondayOf(w.date)];return sessionCard(w,wk.indexOf(w.date),wk.length,mine,ws[k-1]&&ws[k-1].date,ws[k+1]&&ws[k+1].date);}));
   const dots=h('div',{class:'car-dots','aria-hidden':'true'},ws.map(w=>h('i',{'data-d':w.date})));
   el.append(track,dots);
-  const slots=[...track.children];
+  const slots=[...track.children].filter(x=>x.hasAttribute('data-date'));
   const mark=d=>{
     slots.forEach(sl=>sl.classList.toggle('cur',sl.getAttribute('data-date')===d));
     [...dots.children].forEach(x=>x.classList.toggle('on',x.getAttribute('data-d')===d));
@@ -8068,6 +8149,7 @@ function viewToday(){
   }else{
     const per=periodFor(date);
     el.append(h('h2',{class:'wtitle'},w.title),h('p',{class:'eyebrow'},'Séance à '+basePts(w,per)+' pts'+(metconOf(w)?' + points du metcon selon ton niveau':'')),h('p',{class:'hint'},'À faire n’importe quel jour de la semaine, du '+fmtShort(mondayOf(date))+' au '+fmtShort(addDays(mondayOf(date),6))+'.'));
+    if(pastSeasonDate(date))el.append(h('div',{class:'banner warn',id:'past-season-note'},h('p',{},h('b',{},'Saison terminée : '),'tu peux faire cette séance pour t’entraîner, mais elle ne rapporte aucun point.')));
     if(w.isSub)el.append(h('div',{class:'sub-banner'},h('b',{},'🏠 Séance de remplacement (pas ou peu de matériel)'),h('div',{},'Elle remplace « '+w.subFrom+' » : la séance d’origine ne sera plus réalisable une fois ton résultat enregistré. Points normaux (séance et metcon), flamme maintenue.'),(!(S.logs[S.uid]&&S.logs[S.uid].entries&&S.logs[S.uid].entries[date]))?h('div',{class:'hint'},'Tant que ton résultat n’est pas enregistré, tu peux en choisir un autre depuis la carte (bouton ↻) ou revenir à la séance d’origine.'):null,
       (!(S.logs[S.uid]&&S.logs[S.uid].entries&&S.logs[S.uid].entries[date]))?h('div',{class:'row'},h('button',{type:'button',class:'btn sm',onclick:()=>unchooseSub(date)},'Revenir à la séance d’origine')):null));
     (w.parts||[]).forEach(p=>el.append(partCard(p,w,date)));
@@ -8107,6 +8189,7 @@ function entrySection(w,date){
       wodPending(date)?h('p',{class:'hint'},'Points en attente : ils seront ajoutés au classement le lundi '+fmtShort(mondayOf(date))+'.'):null,
       h('p',{},h('b',{},fmtN(pts.total)+' pts'),' · ',mine.metconOnly?'metcon seul':pts.base+' pour la séance',m?' + '+fmtN(pts.perf)+' pour le metcon':'',
         m&&hasScore(mine)?' · '+lvlLab(m,mine)+' · '+scoreText(m,mine.score,mine):''),
+      pts.late?h('p',{class:'hint',id:'late-note'},'Saison terminée : cette séance ne rapporte aucun point.'):null,
       lockedDate(date)?h('p',{class:'hint'},'🔒 '+LOCKMSG):h('div',{class:'row'},
         h('button',{class:'btn',onclick:()=>openEntry(w,date)},'Modifier mes résultats'),
         S.confirm==='del-'+date
@@ -8116,6 +8199,7 @@ function entrySection(w,date){
     const pb=prevBlock(w,date,mine);if(pb)sec.append(pb);
     const rb=redoBlock(w,date);if(rb)sec.append(rb);
   }else{
+    if(keptGet(date)&&!lockedDate(date))sec.append(h('p',{class:'hint',id:'kept-note'},'✓ Résultat du minuteur gardé. Fais les parties qui restent, puis entre tes résultats : il sera repris.'));
     sec.append(lockedDate(date)?h('p',{class:'hint'},'🔒 '+LOCKMSG):h('button',{class:'btn primary',disabled:needPseudo(),onclick:()=>openEntry(w,date)},'Entrer mes résultats'));
     const pb0=prevBlock(w,date,null);if(pb0)sec.append(pb0);
     if(!per)sec.append(h('p',{class:'hint'},'Cette date est hors saison : la séance ne comptera pas au classement.'));
@@ -8537,6 +8621,8 @@ function openEntry(w,date,uid,coach){
     for(const [k,v] of Object.entries(mine.loads||{}))S.entry.loads[k]=String(v).replace('.',',');
     for(const [k,x] of Object.entries(mine.sets||{}))S.entry.sets[k]={s:String(x.s),r:String(x.r)};
   }
+  /* résultats du minuteur gardés pour plus tard : on les reprend (seulement tant que la séance n'est pas validée) */
+  if(!coach&&uid===S.uid&&!mine){const kp=keptGet(date);if(kp){Object.assign(S.entry,kp);setTimeout(()=>toast('Ton résultat du minuteur est repris. Choisis ton niveau puis valide la séance.'),50);}}
   /* séries et reps prévues par la séance, modifiables */
   for(const p of (w.parts||[])){
     if(p.kind!=='force'||S.entry.sets[p.label])continue;
@@ -8557,7 +8643,8 @@ function entryForm(w,date){
     const base=S.entry.only?0:basePts(w,per);
     let perf=0;
     if(m&&!S.entry.skip&&Number.isInteger(S.entry.level)){const r=readScore(m,S.entry);if(r.v!==undefined)perf=Math.round(perfPoints(m,r.v,S.entry.level,r.cap)*adjF(S.entry)*100)/100;}
-    preview.textContent=(per?'':'Hors saison, ne compte pas au classement. ')+'Points : '+base+' pour la séance'+(m?' + '+fmtN(perf)+' pour le metcon':'')+' = '+fmtN(base+perf);
+    const noLvl=!!(m&&!S.entry.skip&&!Number.isInteger(S.entry.level)); /* niveau pas encore choisi : pas de « 0 point » trompeur */
+    preview.textContent=(per?'':'Hors saison, ne compte pas au classement. ')+'Points : '+base+' pour la séance'+(m?(noLvl?' + metcon : niveau non sélectionné':' + '+fmtN(perf)+' pour le metcon'):'')+(noLvl?'':' = '+fmtN(base+perf));
   };
   const title=S.entry.coach?'Résultats de '+((S.logs[S.entry.uid]||{}).pseudo||'l’athlète'):'Mes résultats';
   const form=h('form',{class:S.entry.coach?'card':'stack',id:'entry-form',onsubmit:e=>{e.preventDefault();submitEntry(w);}},S.entry.coach?h('h2',{class:'h2'},title):h('p',{class:'eyebrow'},cap(fmtShort(date))+' · '+w.title));
@@ -8784,6 +8871,7 @@ function submitEntryNow(w){
   const message=String(S.entry.message||'').trim().slice(0,180);if(message)e.message=message;
   const date=S.entry.date;const cur=S.logs[uid]||{};
   S.entry=null;
+  if(!coach&&uid===S.uid)keptSet(date,null); /* les résultats gardés du minuteur ont servi */
   if(!coach&&!S.viewDate)S.viewDate=date; /* on reste sur la séance qu'on vient d'enregistrer ; « Revenir à la séance du jour » mène à la suivante */
   if(!coach&&uid===S.uid&&Object.keys(prs).length){
     /* le PR du profil est un 1 RM (il sert aux pourcentages) : seuls les PR à 1 rep le font monter */
@@ -10029,6 +10117,9 @@ const avOff=it=>AV_OFF.has(it.slot);
 const avSexOk=(it,sx)=>!it.sex||it.sex===sx;
 const avSexOf=uid=>uid===S.uid?avSex():(((S.logs[uid]||{}).sex==='F')?'f':'h');
 const AV_SLOTS=[['skin','Avatar'],['hat','Chapeau'],['crown','Couronne'],['shirt','T-shirt'],['pants','Pantalon'],['hand','En main'],['wrist','Poignet'],['costume','Déguisements'],['theme','Décor']];
+/* personnalisation de l'avatar : « Chapeaux » regroupe chapeaux et couronnes ; « En main » et « Poignet » ne sont plus proposés */
+const AV_UI_SLOTS=[['skin','Avatar'],['hat','Chapeaux'],['shirt','T-shirt'],['pants','Pantalon'],['costume','Déguisements'],['theme','Décor']];
+const avInSlot=(x,k)=>!!x&&(k==='hat'?(x.slot==='hat'||x.slot==='crown'):x.slot===k);
 const svgS=(w,c)=>'stroke="'+(c||INK)+'" stroke-width="'+w+'" stroke-linejoin="round" stroke-linecap="round"';
 /* Kettlebell : découpée directement dans les illustrations de référence (avant-bras + main + anse + cloche : 24 kg pour l'athlète, 16 kg pour l'athlète féminine).
    Calée à l'absolu sur l'avant-bras de l'avatar (même dessin, même forme) : elle remplace la main détendue par la main qui tient l'anse. */
@@ -10706,21 +10797,21 @@ function openAvatar(uid){
       inv.replaceChildren(
         h('div',{class:'av-ih'},h('span',{class:'av-ihl'},AVSVG(AV_ICO_CUBE,30),h('b',{},'Inventaire'),h('i',{},'•'),h('b',{class:'o'},String(own.size)),h('b',{},own.size>1?'objets':'objet')),
           Object.keys(eq).some(k=>k!=='skin')?h('button',{class:'av-x',type:'button',onclick:()=>{const cu=(S.logs[S.uid]&&S.logs[S.uid].avatar)||{},nv={};if(cu.skin){nv.skin=cu.skin;if(cu._preview&&cu._preview.skin)nv._preview={skin:cu._preview.skin};}for(const k of Object.keys(eq))if(k!=='skin')delete eq[k];big.set(eq);S.logs[S.uid]=Object.assign({},S.logs[S.uid]||{},{avatar:nv});saveLog({avatar:nv});drawScene();applyTheme();drawInv();}},AVSVG(AV_ICO_REFRESH,20),'Tout retirer'):null),
-        h('div',{class:'av-cats'},AV_SLOTS.map(([k,l])=>h('button',{type:'button',class:'av-cat',id:'avtab-'+k,onclick:()=>{slot=k;drawInv();}},
+        h('div',{class:'av-cats'},AV_UI_SLOTS.map(([k,l])=>h('button',{type:'button',class:'av-cat',id:'avtab-'+k,onclick:()=>{slot=k;drawInv();}},
           AVSVG(AV_SLOT_ICO[k]||'<circle cx="12" cy="12" r="8"/>',30),
-          h('span',{class:'av-cat-t'},l+' ('+AV_ITEMS.filter(x=>x.slot===k&&own.has(x.id)&&vis(x)).length+'/'+AV_ITEMS.filter(x=>x.slot===k&&vis(x)).length+')'),
+          h('span',{class:'av-cat-t'},l+' ('+AV_ITEMS.filter(x=>avInSlot(x,k)&&own.has(x.id)&&vis(x)).length+'/'+AV_ITEMS.filter(x=>avInSlot(x,k)&&vis(x)).length+')'),
           AVSVG(AV_ICO_CHEV,18)))));
       return;}
     tipbox.hidden=true;
-    const items=AV_ITEMS.filter(x=>x.slot===slot&&vis(x));
+    const items=AV_ITEMS.filter(x=>avInSlot(x,slot)&&vis(x));
     const bn=AV_BASE_NAME[sx]||'Avatar',baseTile=slot==='skin'?h('div',{class:'avcell'},h('button',{type:'button',class:'avit',id:'avit-base','aria-pressed':eq.skin?'false':'true',onclick:()=>{if(eq.skin)equip(AV_BY[eq.skin]);}},avatarEl(sx,{},56,null,bn),h('span',{},bn))):null;
     const q=it=>h('button',{type:'button',class:'avq',id:'avq-'+it.id,'aria-label':'Comment obtenir '+it.name,'aria-expanded':info===it.id?'true':'false',onclick:()=>{info=info===it.id?null:it.id;drawInv();}},'?');
-    const cur=info&&AV_BY[info]&&AV_BY[info].slot===slot?AV_BY[info]:null,st=cur?avStatus(cur,own):null;
+    const cur=info&&AV_BY[info]&&avInSlot(AV_BY[info],slot)?AV_BY[info]:null,st=cur?avStatus(cur,own):null;
     inv.replaceChildren(
-      h('div',{class:'row',style:'justify-content:space-between;flex-wrap:nowrap'},h('button',{class:'btn sm',type:'button',onclick:()=>{slot=null;info=null;drawInv();}},'← Catégories'),h('b',{},AV_SLOTS.find(x=>x[0]===slot)[1])),
+      h('div',{class:'row',style:'justify-content:space-between;flex-wrap:nowrap'},h('button',{class:'btn sm',type:'button',onclick:()=>{slot=null;info=null;drawInv();}},'← Catégories'),h('b',{},(AV_UI_SLOTS.find(x=>x[0]===slot)||['',''])[1])),
       items.length?'':h('p',{class:'muted',style:'margin:14px 0'},'Aucun objet dans cette catégorie pour l’instant.'),
       h('div',{class:'avgrid'},baseTile,items.map(it=>{
-        const has=own.has(it.id),on=eq[slot]===it.id;
+        const has=own.has(it.id),on=eq[it.slot]===it.id;
         const tile=has?h('button',{type:'button',class:'avit',id:'avit-'+it.id,'aria-pressed':on?'true':'false',onclick:()=>equip(it)},avIcon(it),h('span',{},it.name))
           :(S.owner?h('button',{type:'button',class:'avit lock prev',id:'avit-'+it.id,'aria-pressed':on?'true':'false','aria-label':it.name+', pas débloqué, aperçu',onclick:()=>equip(it)},avIcon(it),h('span',{},it.name))
             :h('div',{class:'avit lock','aria-label':it.name+', pas encore débloqué'},avIcon(it),h('span',{},it.name)));
@@ -14090,7 +14181,7 @@ function periodEditor(){
       field('Nombre de semaines',h('input',{id:'per-weeks',type:'number',min:'1',max:'60',step:'1',inputmode:'numeric',value:d.weeks||'',oninput:e=>{d.weeks=e.target.value;perEnd();}}),'La saison se termine toute seule le dimanche de la dernière semaine, à 23 h 59.'),
       field('Fin (calculée)',endIn),
       field('Points par séance (par défaut)',tin(d,'base',{id:'per-base',inputmode:'numeric'}),'Chaque séance peut avoir ses propres points.'),
-      field('Participants minimum par trophée de catégorie',tin(d,'minElig',{id:'per-minelig',inputmode:'numeric',placeholder:'3'}),'Un trophée de catégorie (LA GOAT, Senior, Vétéran, ligues…) n’est décerné que s’il y a au moins ce nombre d’athlètes éligibles. Vide ou 0 = pas de seuil.')),
+      field('Participants minimum par trophée',tin(d,'minElig',{id:'per-minelig',inputmode:'numeric',placeholder:'3'}),'Un trophée n’est décerné que si au moins ce nombre d’athlètes ont marqué des points dans le groupe (être présent ne suffit pas). Vide ou 0 = pas de seuil.')),
     avPick(d),
     rewardEditor(d),
     h('div',{class:'row'},
@@ -14129,6 +14220,8 @@ function authErr(e){
   if(c==='auth/too-many-requests')return 'Trop d’essais. Attends quelques minutes.';
   if(c==='auth/network-request-failed')return 'Pas de connexion internet.';
   if(c==='auth/popup-closed-by-user'||c==='auth/cancelled-popup-request')return '';
+  if(c==='auth/account-exists-with-different-credential')return 'Un compte existe déjà avec cet e-mail. Connecte-toi avec ton mot de passe.';
+  if(/cancel|12501|1001/i.test(String((e&&e.message)||'')+' '+c))return ''; /* fenêtre Google native fermée par l'utilisateur */
   if(c==='auth/operation-not-allowed')return 'Cette méthode de connexion n’est pas activée dans Firebase.';
   return 'Connexion impossible, réessaie.'+(c?' ('+c.replace('auth/','')+')':'');
 }
@@ -14152,6 +14245,35 @@ function loginPitch(){
 const LOGO_APPLE='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>';
 const LOGO_ANDROID='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18a8 8 0 0 1 16 0z" fill="#3DDC84"/><path d="M7.5 6.5l1.6 2.4M16.5 6.5l-1.6 2.4" stroke="#3DDC84" stroke-width="1.6" stroke-linecap="round" fill="none"/><circle cx="9" cy="14.5" r="1.1" fill="#fff"/><circle cx="15" cy="14.5" r="1.1" fill="#fff"/></svg>';
 const logoEl=svg=>{const x=h('span',{class:'inst-logo','aria-hidden':'true'});x.innerHTML=svg;return x;};
+const LOGO_GOOGLE='<svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>';
+const isNativeApp=()=>!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
+/* connexion Google : plugin natif dans l'appli (le SDK JS reste celui qui ouvre la session), popup dans le navigateur */
+async function googleSignIn(){
+  /* acceptation des CGU par la connexion : inscrite dans le profil à l'ouverture du compte (googleTermsApply) */
+  S._gTerms={v:LEGAL_VERSION,at:new Date().toISOString()};
+  try{
+    if(isNativeApp()){
+      const FA=window.Capacitor.registerPlugin('FirebaseAuthentication');
+      const r=await FA.signInWithGoogle();
+      const c=r&&r.credential;
+      if(!c||(!c.idToken&&!c.accessToken))throw new Error('Connexion Google annulée');
+      return await signInWithCredential(auth,GoogleAuthProvider.credential(c.idToken||null,c.accessToken||null));
+    }
+    return await signInWithPopup(auth,new GoogleAuthProvider());
+  }catch(e){S._gTerms=null;throw e;}
+}
+/* une fois le compte ouvert : on note l'acceptation des CGU si le profil n'en a pas encore */
+function googleTermsApply(){
+  const g=S._gTerms;
+  if(!g||!S.uid||S._gtBusy||!ready()||!S.profLoaded)return;
+  S._gtBusy=true;
+  (async()=>{
+    try{if(!S.prof.terms){S.prof.terms={v:g.v,at:g.at};await saveProf();}}catch(e){}
+    S._gTerms=null;S._gtBusy=false;
+  })();
+}
+const googleBtn=attempt=>h('button',{class:'au-btn',id:'auth-google',type:'button',onclick:()=>attempt(googleSignIn)},logoEl(LOGO_GOOGLE),'Continuer avec Google');
+const googleNote=()=>h('p',{class:'au-center au-muted',style:'font-size:13px'},'En continuant avec Google, tu acceptes les ',h('button',{class:'au-link',type:'button',onclick:openCGU},'CGU'),' et la ',h('button',{class:'au-link',type:'button',onclick:openPrivacy},'politique de confidentialité'),'.');
 /* écran de connexion : mettre l'appli sur l'écran d'accueil (un bouton Apple, un bouton Android), avec les consignes de chaque système */
 function installCard(){
   if(isStandalone())return null; /* déjà installée : rien à proposer */
@@ -14350,6 +14472,8 @@ function authLogin(){
       h('button',{class:'au-back au-back-hit',type:'button','aria-label':'Retour',onclick:()=>authGo('home')})),
     h('div',{class:'au-body'},
       ...(inst||[]),
+      googleBtn(attempt),googleNote(),
+      h('div',{class:'au-or'},h('span',{},'OU')),
       h('form',{class:'au-form',novalidate:'novalidate',onsubmit:e=>{e.preventDefault();const em=cleanEmail(email.value);if(!em){msg.textContent='Écris ton adresse e-mail.';return;}attempt(()=>signInWithEmailAndPassword(auth,em,pw.value));}},
         auField('mail',email),pwField,msg,submit,
         h('button',{class:'au-link au-center',type:'button',id:'auth-forgot',onclick:()=>attempt(async()=>{
@@ -14372,6 +14496,8 @@ function authSignup(){
   const msg=h('p',{class:'au-msg',role:'alert'});
   const submit=h('button',{class:'au-btn pri',id:'auth-create',type:'submit'},auIc('userAdd'),'Créer mon compte',auChev());
   const fail=t=>{msg.textContent=t;};
+  const gmsg=h('p',{class:'au-msg',role:'alert'});
+  const gAttempt=async fn=>{gmsg.textContent='';try{await fn();}catch(e){gmsg.textContent=authErr(e);}};
   const create=async()=>{
     msg.textContent='';
     const e=cleanEmail(email.value),ps=pseudo.value.trim(),p=pw.value,b=birth.value;
@@ -14393,6 +14519,8 @@ function authSignup(){
       h('img',{class:'au-hero',src:AU_IMG.signup,alt:'Crée ton compte ! Rejoins la communauté et accède à tous les défis, les compétitions et les workouts.',width:852,height:875,style:'--fade:92%'}),
       h('button',{class:'au-back',type:'button','aria-label':'Retour',onclick:()=>authGo('home')},auIc('back'))),
     h('div',{class:'au-body'},
+      googleBtn(gAttempt),gmsg,googleNote(),
+      h('div',{class:'au-or'},h('span',{},'OU')),
       h('form',{class:'au-form',novalidate:'novalidate',onsubmit:e=>{e.preventDefault();create();}},
         auField('mail',email),auField('user',pseudo),pwField,
         auField('cal',birth,ph),
@@ -14964,7 +15092,10 @@ function bnOwned(uid,it){
   for(const [pid,per] of Object.entries(S.periods||{}))for(const r of (per.rewards||[]))if(r.type===it.kind&&r.asset===it.asset&&owned.has(pid+':'+r.id))return true;
   return false;
 }
+/* décor : on montre l'image du décor (comme dans l'avatar), pas seulement une petite icône */
+const shopThemePrev=it=>!it.kind&&it.slot==='theme'&&!!THEME_BG[it.id];
 function shopIcon(it){
+  if(shopThemePrev(it))return h('img',{src:THEME_BG[it.id],alt:'Aperçu : '+it.name,loading:'lazy',draggable:'false',style:'width:100%;height:100%;object-fit:cover;border-radius:8px'});
   if(!it.kind){const d=h('span',{});try{d.append(avIcon(it));}catch(e){}return d.firstChild||d;}
   return h('img',{src:it.src,alt:'',loading:'lazy',draggable:'false',style:'width:100%;height:100%;object-fit:'+(it.kind==='bg'?'cover':'contain')});
 }
@@ -15006,19 +15137,16 @@ const SHOP_CATS=[
   ['bannieres','Bannières',SHP('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15l5-4 4 3 3-2 6 4"/>')],
   ['cadres','Cadres',SHP('<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/><rect x="8" y="8" width="8" height="8" rx="1.5"/>')],
   ['chapeaux','Chapeaux',SHP('<path d="M3 17h18M6 17c0-5 2-9 6-9s6 4 6 9"/>')],
-  ['couronnes','Couronnes',SHP('<path d="M3 18l-1-11 6 5 4-8 4 8 6-5-1 11z"/>')],
   ['tshirts','T-shirts',SHP('<path d="M8 4L3 7l2 4 3-1v10h8V10l3 1 2-4-5-3a4 4 0 0 1-8 0z"/>')],
   ['pantalons','Pantalons',SHP('<path d="M7 3h10l1 18h-4l-2-10-2 10H6z"/>')],
-  ['main','En main',SHP('<path d="M7 11V6a1.5 1.5 0 0 1 3 0v4M10 10V4.5a1.5 1.5 0 0 1 3 0V10M13 10V5.5a1.5 1.5 0 0 1 3 0V12l2-1.5a1.5 1.5 0 0 1 2 2L16 19a4 4 0 0 1-3 1.5H11a4 4 0 0 1-4-4z"/>')],
-  ['poignet','Poignet',SHP('<rect x="7" y="8" width="10" height="8" rx="2"/><path d="M9 8V3h6v5M9 16v5h6v-5"/>')],
   ['deguisements','Costumes',SHP('<path d="M4 8c0-3 3-5 8-5s8 2 8 5v3c0 4-3 8-8 8s-8-4-8-8z"/><circle cx="9" cy="10" r="1.2"/><circle cx="15" cy="10" r="1.2"/><path d="M9 15c1.5 1.2 4.5 1.2 6 0"/>')],
   ['themes','Décors',SHP('<path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 1.5-2-.6-1.2 0-2.5 1.5-2.5H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/>')],
   ['autres','Autres',SHP('<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>')]
 ];
-const shopCatOf=it=>it.kind==='bg'?'bannieres':it.kind==='avframe'?'cadres':({skin:'avatars',shirt:'tshirts',pants:'pantalons',costume:'deguisements',crown:'couronnes',hat:'chapeaux',hand:'main',wrist:'poignet',theme:'themes'})[it.slot]||'autres';
+const shopCatOf=it=>it.kind==='bg'?'bannieres':it.kind==='avframe'?'cadres':({skin:'avatars',shirt:'tshirts',pants:'pantalons',costume:'deguisements',crown:'chapeaux',hat:'chapeaux',theme:'themes'})[it.slot]||'autres';
 function shopCard(it,own,bal){
   const e=shopEntry(it.id),has=it.kind?bnOwned(S.uid,it):own.has(it.id),miss=e.price-bal;
-  const img=h('div',{class:'sh-img'+(it.kind==='bg'?' sh-img-bn':'')});img.append(shopIcon(it));if(e.pct&&!has)img.append(h('span',{class:'sh-sale'},'−'+e.pct+'%'));
+  const img=h('div',{class:'sh-img'+((it.kind==='bg'||shopThemePrev(it))?' sh-img-bn':'')});img.append(shopIcon(it));if(e.pct&&!has)img.append(h('span',{class:'sh-sale'},'−'+e.pct+'%'));
   const sk=(it.skin&&AV_BY[it.skin])?AV_BY[it.skin].name:'';
   let act;
   if(has)act=h('button',{class:'sh-btn alt',type:'button',onclick:()=>{if(it.kind){go('profile');S.profView='banner';render();window.scrollTo(0,0);}else openAvatar();}},'Équiper');
@@ -15044,7 +15172,7 @@ function viewShop(){
     return el;
   }
   const sx=coach?null:avSex(),own=avOwned(S.uid);
-  const all=AV_ITEMS.filter(it=>shopEntry(it.id)&&(coach||avSexOk(it,sx))).concat(shopBanners().filter(b=>shopEntry(b.id)));
+  const all=AV_ITEMS.filter(it=>shopEntry(it.id)&&it.slot!=='hand'&&it.slot!=='wrist'&&(coach||avSexOk(it,sx))).concat(shopBanners().filter(b=>shopEntry(b.id)));
   const open=c=>{S.shopCat=c;render();window.scrollTo(0,0);};
   const grid=its=>h('ul',{class:'sh-grid'},its.map(it=>shopCard(it,own,bal)));
   const cat=S.shopCat;
