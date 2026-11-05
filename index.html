@@ -1533,6 +1533,11 @@ body.board-lock .top{position:relative;top:0}
 .cc-flags{display:flex;flex-wrap:wrap;gap:6px}
 .cc-tag{font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:#fff;color:#14161A;border-radius:2px;padding:2px 8px;box-shadow:0 1px 2px rgba(0,0,0,.35)}
 .cc-tag.deload{background:#14161A;color:#F4C400;letter-spacing:.16em;padding:3px 10px}
+.cc-redo{display:grid;gap:1px;margin:2px -18px 0 -18px;padding:8px 40px 8px 18px;color:#14161A;background:linear-gradient(90deg,#FFC857,#FF9A3C);clip-path:polygon(0 0,100% 0,calc(100% - 16px) 50%,100% 100%,0 100%);border-left:6px solid #14161A}
+.cc-redo b{font-family:var(--f-mono);font-size:13px;letter-spacing:.08em;text-transform:uppercase;line-height:1.2}
+.cc-redo span{font-size:12px;font-weight:600;line-height:1.25}
+.car-card.done .cc-redo{filter:saturate(1.45)}
+@media (prefers-reduced-motion:no-preference){.cc-redo{animation:redoPulse 2.2s ease-in-out infinite}@keyframes redoPulse{0%,100%{opacity:1}50%{opacity:.82}}}
 .cc-top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-right:34px}
 .cc-n{font-family:var(--f-mono);font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;opacity:.92}
 .cc-done{font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:#fff;color:#14161A;border-radius:2px;padding:1px 7px;transform:rotate(-4deg)}
@@ -7747,9 +7752,9 @@ const EQUIP=[
   ['sled','Traîneau',EQ_SVG('<path d="M3 18h15a3 3 0 0 0 0-6h-3"/><path d="M6 18V7h5M6 12h7"/>'),
     /\b(sled|traineau|prowler)\b/],
   ['sandbag','Sandbag',EQ_SVG('<rect x="3" y="8" width="18" height="9" rx="4.500"/><path d="M8 8v9M16 8v9"/>'),
-    /\b(sand ?bags?)\b/]
+    /\b(sand ?bags?|sacs? de sable)\b/]
 ];
-const eqNorm=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\{[^}]*\}/g,' ');
+const eqNorm=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\{[^}]*\}/g,' ').replace(/[-_\u2010-\u2015\u2019'\/]+/g,' ').replace(/\s+/g,' ');
 function equipOf(w){
   const found=new Set(),lines=[];
   for(const p of (w&&w.parts)||[]){
@@ -7759,7 +7764,7 @@ function equipOf(w){
   for(const raw of lines){
     let t=eqNorm(raw);
     /* ce qui n'est PAS du matériel */
-    t=t.replace(/sans corde/g,' ').replace(/(bent[ -]?over|barbell|pendlay|upright|inverted|renegade|ring|db|dumbbell|kb|kettlebell|seal|t[ -]?bar|yates|gorilla)\s*(over\s*)?rows?/g,' ');
+    t=t.replace(/barre fixe|barre de traction|a la barre/g,' pull up ').replace(/pendlay\s*rows?/g,' pendlay ').replace(/\b(rowing trx|trx rowing|trx rows?|trx)\b/g,' ').replace(/sans corde/g,' ').replace(/(bent[ -]?over|barbell|pendlay|upright|inverted|renegade|ring|db|dumbbell|kb|kettlebell|seal|t[ -]?bar|yates|gorilla)\s*(over\s*)?rows?/g,' ');
     const db=/\b(dbs?|dumbbells?|halteres?)\b/.test(t),kb=/\b(kettlebells?|kbs?)\b/.test(t),bb=/\b(barbell|barre)\b/.test(t);
     for(const [k,,,re] of EQUIP){
       if(k==='barbell'&&(db||kb)&&!bb)continue;   /* « DB thruster », « KB clean » : pas de barre */
@@ -7847,6 +7852,9 @@ function sessionCard(w,i,n,mine,prev,next){
   const ch=subChoice(S.uid,date),sw=(mine[date]&&mine[date].sw)||(ch&&ch.sw)||null;
   const wE=sw?wodFor(w,{sw}):w;
   const parts=(wE.parts||[]);
+  /* REDO possible : séance validée, metcon avec REDO actif, pas verrouillée, pas le jour du 1er résultat (mêmes règles que redoBlock) */
+  const mE=metconOf(wE),redoDone=!!(((S.logs[S.uid]||{}).redos||{})[date]);
+  const ribbon=!!(done&&mE&&mE.redo!==false&&!redoDone&&!pastS&&!lockedDate(date)&&!lockedDate(todayStr())&&!wodPending(date)&&(mine[date].at?dfmt(new Date(mine[date].at)):date)<todayStr());
   const shown=parts.length>4?parts.filter((p,k)=>k<3||p.kind==='metcon').slice(0,4):parts;
   const open=()=>{S.viewDate=date;S.entry=null;S.redo=null;S.tip=null;render();window.scrollTo(0,0);};
   const subs=subsOf(per);
@@ -7865,11 +7873,12 @@ function sessionCard(w,i,n,mine,prev,next){
       h('span',{class:'cc-n'},'Séance '+(i+1)+' / '+n),
       done?h('span',{class:'cc-done'},'✓ Faite'):null),
     h('h2',{class:'cc-title'},wE.title),
-    (()=>{const m=metconOf(wE),tags=[];if(pastS)tags.push(h('span',{class:'cc-tag'},'SAISON TERMINÉE'));if(sw)tags.push(h('span',{class:'cc-tag'},'🏠 Remplacement'));if(m&&m.test)tags.push(h('span',{class:'cc-tag'},'TEST'));if(m&&m.redo!==false&&!lockedDate(date))tags.push(h('span',{class:'cc-tag'},'RE DO'));return tags.length?h('div',{class:'cc-flags'},tags):null;})(),
+    (()=>{const m=metconOf(wE),tags=[];if(pastS)tags.push(h('span',{class:'cc-tag'},'SAISON TERMINÉE'));if(sw)tags.push(h('span',{class:'cc-tag'},'🏠 Remplacement'));if(m&&m.test)tags.push(h('span',{class:'cc-tag'},'TEST'));if(m&&m.redo!==false&&!lockedDate(date)&&!ribbon&&!redoDone)tags.push(h('span',{class:'cc-tag'},'RE DO'));if(redoDone)tags.push(h('span',{class:'cc-tag'},'✓ REDO fait'));return tags.length?h('div',{class:'cc-flags'},tags):null;})(),
     h('div',{class:'cc-meta'},h('span',{},cap(fmtShort(date))),h('span',{},pastS?'0 pt · saison terminée':basePts(wE,per)+' pts'+(metconOf(wE)?' + metcon':''))),
+    ribbon?h('div',{class:'cc-redo',role:'note'},h('b',{},'RE DO · jusqu’à +3 pts'),h('span',{},'Refais ton metcon pour marquer des points')):null,
     h('div',{class:'cc-parts'},shown.map(cardPart)),
     equipRow(wE),
-    h('div',{class:'cc-go'},'Touche pour ouvrir ',h('b',{},'→')));
+    h('div',{class:'cc-go'},ribbon?'Touche pour refaire et marquer des points ':'Touche pour ouvrir ',h('b',{},'→')));
   if(canSub){
     back=h('div',{class:'car-card car-back face back','aria-hidden':'true',style:'--c1:'+col[0]+';--c2:'+col[1]},
       h('div',{class:'cc-top'},h('span',{class:'cc-n'},'Séance de remplacement')),
@@ -8029,7 +8038,7 @@ function viewCards(){
   };
   paint(cur);
   el.append(h('div',{style:'display:flex;justify-content:space-between;align-items:flex-start;gap:12px'},h('div',{},eb,day,sub),ctrls));
-  if(fOn&&hidden>0)el.append(h('p',{class:'hint',id:'eq-filter-note'},'Filtre matériel actif : '+hidden+' séance'+(hidden>1?'s':'')+' masquée'+(hidden>1?'s':'')+'.'),remind());
+  if(fOn)el.append(h('p',{class:'hint',id:'eq-filter-note'},'Filtre matériel actif : '+(hidden?hidden+' séance'+(hidden>1?'s':'')+' masquée'+(hidden>1?'s':''):'aucune séance masquée')+'. Les séances déjà faites restent visibles pour pouvoir faire le REDO.'),hidden?remind():null);
   /* bouton à l'extrémité gauche du carrousel : afficher / masquer les séances des saisons terminées */
   const pastBtn=(pastList.length||past)?h('div',{class:'car-slot car-past'},
     h('div',{class:'car-card',style:'--c1:#3a3f4a;--c2:#171a20;cursor:default;justify-content:center;align-items:center;text-align:center;gap:14px'},
