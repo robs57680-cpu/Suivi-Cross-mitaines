@@ -790,14 +790,6 @@ input[type=checkbox]{width:24px;height:24px;padding:0;accent-color:var(--accent)
 .rxb{min-width:48px;min-height:44px;border:2px solid var(--line);border-radius:4px;background:var(--surface2);font-size:22px;cursor:pointer;padding:0 8px}
 .rxb small{font:600 11px var(--f-mono);margin-left:4px;color:var(--muted)}
 .rxb[aria-pressed="true"]{border-color:var(--accent);background:var(--tint)}
-.plans-wrap{display:grid;gap:10px;min-width:0}
-.plans{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:14px 2px 6px;margin:-14px -2px -6px}
-.plans::-webkit-scrollbar{display:none}
-.plan{position:relative;flex:0 0 86%;scroll-snap-align:center;box-sizing:border-box;display:grid;align-content:start;gap:8px;padding:18px 16px;background:var(--surface);border:2px solid var(--edge);border-radius:6px}
-.plan.best{border-color:var(--accent);background:var(--tint)}
-.plan-tag{position:absolute;top:-12px;right:14px;background:var(--accent);color:var(--accent-ink);font:700 13px var(--f-mono);letter-spacing:.04em;padding:4px 10px;border-radius:4px}
-.plan-price{margin:0;font-family:var(--f-display);font-size:44px;line-height:1;color:var(--ink)}
-.plan-price small{font-family:var(--f-body,inherit);font-size:14px;color:var(--muted)}
 .kbs{display:inline-flex;gap:2px;color:var(--accent);vertical-align:middle}
 .kbs svg{display:block}
 .kbpick{display:flex;gap:6px;flex-wrap:wrap}
@@ -918,13 +910,6 @@ body:has(.bnx){overflow:hidden}
 .sh-ask{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .sh-box{padding:16px;border:1.5px solid rgba(255,255,255,.2);border-radius:12px;background:rgba(14,14,18,.88);display:grid;gap:10px}
 .sh-note{margin:0;font-size:12px;color:var(--muted)}
-.plan-free{margin:0;font-size:14px;line-height:1.4;font-weight:700;color:var(--ink)}
-.plan-sub,.plan-old,.plan-save{margin:0;font-size:14px;line-height:1.4}
-.plan-old{color:var(--muted)}
-.plan-save{font-weight:700;color:var(--accent)}
-.plan-dots{display:flex;justify-content:center;gap:10px}
-.plan-dot{width:10px;height:10px;padding:0;border-radius:50%;border:2px solid var(--edge);background:none;cursor:pointer}
-.plan-dot[aria-current=true]{background:var(--accent);border-color:var(--accent)}
 .rxhost{position:relative;height:240px;border:2px solid var(--edge);border-radius:4px;background:var(--panel);overflow:hidden}
 .bub.rx .bub-t span{font-size:30px;line-height:1.1;-webkit-line-clamp:1}
 .bub.rx .bub-t b{font-size:10px}
@@ -1820,7 +1805,6 @@ body[data-tab=today] .themed .card{background:color-mix(in srgb,var(--c1) 18%,va
 .wk-b .list{margin:0}
 a.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;color:inherit}
 a.btn.primary{color:var(--accent-ink)}
-.paystat{display:grid;gap:4px}.paystat b{font-size:18px}
 
 /* séances de remplacement (pas ou peu de matériel) */
 .car-slot{perspective:1400px}
@@ -5801,7 +5785,7 @@ const TAB_ICO={feed:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" 
  board:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 4h9v5a4.5 4.5 0 0 1-9 0z"/><path d="M7.5 6h-3c0 3 1.2 4.6 3.2 5M16.5 6h3c0 3-1.2 4.6-3.2 5M12 13.8V17M8.5 20h7M9.8 17h4.4"/></svg>'};
 function render(force){
   if(force!==true&&S.rankAnim&&S.rankAnim.busy){S.rankAnim.dirty=true;return;} /* animation du classement en cours : on ne reconstruit pas les éléments animés */
-  planHide();updatePayChip();
+  planHide();updateCoinChip();
   pending=false;S._un=null;S._aw=null;S._ob=null;if(!(S.tab==='profile'&&S.profView==='infos')){S.infDraft=null;S.infWarn=false;S.infLeave=null;}applyTheme();if(document.body.dataset.tab!==(S.tab||''))document.body.dataset.tab=S.tab||'';{const pv=(S.tab==='profile'&&S.uid&&!S.profView)?'1':'';if((document.body.dataset.pv||'')!==pv){if(pv)document.body.dataset.pv=pv;else delete document.body.dataset.pv;}}document.body.classList.remove('modal-open');document.body.classList.remove('board-lock');
   {const av=(!S.uid&&S.authReady&&S.db)?((S.authView==='login'||S.authView==='signup')?S.authView:'home'):'';if((document.body.dataset.auth||'')!==av){if(av)document.body.dataset.auth=av;else delete document.body.dataset.auth;}}
   {const tp=document.querySelector('.top');if(tp)document.documentElement.style.setProperty('--toph',tp.offsetHeight+'px');}
@@ -5823,16 +5807,16 @@ function render(force){
   const p=selPeriod();
   $('#hdr-right').replaceChildren(h('span',{class:'chip '+(periodState(p)==='live'?'live':'done'),style:'max-width:40vw;overflow:hidden;text-overflow:ellipsis;display:block'},p.virtual?'Saison en cours':(p.name||seasonLabel(p))),helpBtn());
   const tabs=[['feed','Fil'],['today','Séance'],['board','Classement'],['shop','Shop']];
-  const tabEls=tabs.map(([k,l])=>{const b=h('button',{class:'tab','data-tour':'tab-'+k,'aria-current':(S.tab===k||(k==='shop'&&PAY_PAUSED&&S.tab==='sub'))?'page':null,onclick:()=>go(k)});b.innerHTML=TAB_ICO[k]+'<span>'+l+'</span>';return b;});
+  const tabEls=tabs.map(([k,l])=>{const b=h('button',{class:'tab','data-tour':'tab-'+k,'aria-current':S.tab===k?'page':null,onclick:()=>go(k)});b.innerHTML=TAB_ICO[k]+'<span>'+l+'</span>';return b;});
   {
-    const activeExtra=['profile','coach','prefs','stats','share','rules','health','bug','moves',...(PAY_PAUSED?[]:['sub']),'avis','recap','msgs'].includes(S.tab);
+    const activeExtra=['profile','coach','prefs','stats','share','rules','health','bug','moves','avis','recap','msgs'].includes(S.tab);
     const bb=h('button',{class:'tab tab-burger','data-tour':'tab-menu','aria-current':activeExtra?'page':null,'aria-haspopup':'dialog','aria-expanded':drawerEl?'true':'false','aria-label':'Menu',title:'Menu',onclick:()=>{drawerEl?closeDrawer():openDrawer();}});
     bb.innerHTML=ICO_MENU;if(menuDot())bb.append(h('span',{class:'ibdot','aria-hidden':'true'}));
     tabEls.push(bb);
   }
   $('#tabs').classList.remove('coach-tabs');
   $('#tabs').replaceChildren(...tabEls);
-  const view={feed:viewFeed,today:viewToday,board:viewBoard,profile:viewProfile,coach:viewCoach,stats:viewStats,prefs:viewPrefs,share:viewShare,sub:(PAY_PAUSED?viewShop:viewSub),shop:viewShop,avis:viewAvis,rules:viewRules,health:viewHealth,bug:viewBug,moves:viewMoves,recap:viewRecap,msgs:viewMsgs}[S.tab]||viewFeed;
+  const view={feed:viewFeed,today:viewToday,board:viewBoard,profile:viewProfile,coach:viewCoach,stats:viewStats,prefs:viewPrefs,share:viewShare,shop:viewShop,avis:viewAvis,rules:viewRules,health:viewHealth,bug:viewBug,moves:viewMoves,recap:viewRecap,msgs:viewMsgs}[S.tab]||viewFeed;
   const _esc=document.querySelector('.entry-sheet'),_escTop=_esc?_esc.scrollTop:0;
   const _arl=document.querySelector('.ar-list'),_arlTop=_arl?_arl.scrollTop:0,_arlKey=_arl?_arl.dataset.key:'';
   main.replaceChildren(...banners(),view());
@@ -8189,7 +8173,6 @@ function viewHealthGate(){
   return root;
 }
 function viewToday(){
-  if(!hasAccess())return viewPaywall();
   if(needHealthGate())return viewHealthGate();
   if(!S.viewDate)return viewCards();
   const t=todayStr(),date=S.viewDate||defaultDate(),w0=S.wods[date],w=w0&&myWod(w0,S.uid);
@@ -14410,7 +14393,7 @@ function authErr(e){
   if(c==='auth/operation-not-allowed')return 'Cette méthode de connexion n’est pas activée dans Firebase.';
   return 'Connexion impossible, réessaie.'+(c?' ('+c.replace('auth/','')+')':'');
 }
-/* présentation du coach et de la méthode, affichée sous le formulaire de connexion (pas de prix ici : ils sont dans la page Abonnement) */
+/* présentation du coach et de la méthode, affichée sous le formulaire de connexion */
 function loginPitch(){
   const ul=(...items)=>h('ul',{style:'margin:0;padding-left:20px;display:grid;gap:4px'},items.map(t=>h('li',{},t)));
   return h('div',{class:'card',id:'login-pitch'},
@@ -14629,12 +14612,20 @@ function openInstallSheet(kind){
       h('button',{class:'btn',type:'button',id:'install-close',onclick:close},'Fermer')));
   document.body.append(ov);document.addEventListener('keydown',esc);
 }
+/* informations de l’éditeur, affichées dans les CGU et la politique de confidentialité */
+const LEGAL_INFO={
+  nom:'Robin Piraino, exerçant sous le nom commercial BOX Score Cross’mitaines',
+  statut:'entrepreneur individuel, micro-entrepreneur',
+  siret:'131 993 776 00015',
+  adresse:'7 rue de la tuilerie, 55100 Belrupt-en-Verdunois',
+  email:'crossmitaines@outlook.fr'
+};
 /* ---------- CGU et politique de confidentialité (textes à relire et valider par l'éditeur) ---------- */
-const LEGAL_VERSION='3 novembre 2026';
+const LEGAL_VERSION='6 novembre 2026';
 function cguSections(){
-  const I=CGV_INFO;
+  const I=LEGAL_INFO;
   return [
-    {t:'1. Objet',p:['Cross’Mitaines (l’application Box Score) est un outil de suivi d’entraînement de Crosstraining édité par '+I.nom+' ('+I.statut+'), SIRET '+I.siret+', '+I.adresse+'. Contact : '+I.email+'.','Ces conditions d’utilisation (CGU) encadrent l’usage de l’application. La vente des abonnements est régie par les conditions générales de vente (CGV), consultables dans la page Abonnement.']},
+    {t:'1. Objet',p:['Cross’Mitaines (l’application Box Score) est un outil de suivi d’entraînement de Crosstraining édité par '+I.nom+' ('+I.statut+'), SIRET '+I.siret+', '+I.adresse+'. Contact : '+I.email+'.','Ces conditions d’utilisation (CGU) encadrent l’usage de l’application.']},
     {t:'2. Compte',p:['Il faut avoir **16 ans ou plus** pour créer un compte. Entre 16 et 17 ans, l’accord d’un responsable légal est obligatoire.','Les informations données à l’inscription (e-mail, pseudo, date de naissance) doivent être exactes. Un compte = une personne. Tu gardes ton mot de passe confidentiel : tout ce qui est fait depuis ton compte est considéré comme fait par toi.']},
     {t:'3. Règlement et fair-play',p:['Les résultats sont saisis par les participants eux-mêmes : la compétition repose sur la confiance. En saisissant un résultat, tu certifies sur l’honneur l’avoir réalisé tel que publié, en respectant les standards des mouvements. Le règlement complet est consultable dans le menu de l’application.','Le coach peut retirer un résultat manifestement irréaliste. L’éditeur peut suspendre ou supprimer un compte en cas de triche, de comptes multiples ou de propos injurieux, après t’avoir informé.']},
     {t:'4. Santé et responsabilité',p:['Les séances sont intenses. **Consulte un médecin avant de commencer ou de reprendre** une activité intense. L’application ne remplace pas un avis médical et n’engage pas la responsabilité de l’éditeur ni du coach en cas de blessure ou de dommage : tu t’entraînes sous ta propre responsabilité et tu choisis le niveau adapté à ton état du jour.']},
@@ -14644,18 +14635,17 @@ function cguSections(){
   ];
 }
 function privacySections(){
-  const I=CGV_INFO;
+  const I=LEGAL_INFO;
   return [
     {t:'1. Qui est responsable de tes données ?',p:[I.nom+' ('+I.statut+'), '+I.adresse+'. Contact pour toute question ou demande : '+I.email+'.']},
     {t:'2. Quelles données sont enregistrées ?',p:[
       '**Compte** : adresse e-mail, mot de passe (jamais lisible par l’éditeur), pseudo, date de naissance.',
       '**Profil** : sexe, poids, avatar, bannière, devise, objectifs si tu les renseignes. Ta date de naissance et ton poids restent privés : seuls la catégorie d’âge (Seniors ou Vétérans) et un rapport charge / poids sont visibles des autres.',
       '**Entraînement** : tes résultats, tes records, ton classement, tes réactions et commentaires, tes messages avec le coach.',
-      '**Usage** : la date de ta dernière ouverture de l’application et les étapes de ton inscription (visibles du coach seul), et l’adresse d’envoi des notifications de ton appareil si tu les actives.',
-      '**Abonnement** : l’état de ton abonnement. Le paiement est traité par Stripe : l’éditeur ne voit ni ne conserve ta carte bancaire.']},
-    {t:'3. Pourquoi ?',p:['Pour faire fonctionner l’application (compte, séances, classement, trophées), t’envoyer les notifications que tu as activées, gérer ton abonnement et assurer la sécurité du service. Le traitement repose sur l’exécution du service que tu demandes et, pour les notifications, sur ton accord.']},
-    {t:'4. Qui y a accès ?',p:['Le coach et l’éditeur. Les prestataires techniques qui font fonctionner le service : Google (Firebase : connexion et base de données), Stripe (paiement), GitHub et Cloudflare (envoi des notifications, paiement). Tes données ne sont pas vendues.']},
-    {t:'5. Combien de temps ?',p:['Tant que ton compte existe. Quand tu le supprimes depuis ton profil, tes données personnelles sont effacées ; seules subsistent les informations de facturation que la loi oblige à conserver.']},
+      '**Usage** : la date de ta dernière ouverture de l’application et les étapes de ton inscription (visibles du coach seul), et l’adresse d’envoi des notifications de ton appareil si tu les actives.']},
+    {t:'3. Pourquoi ?',p:['Pour faire fonctionner l’application (compte, séances, classement, trophées), t’envoyer les notifications que tu as activées et assurer la sécurité du service. Le traitement repose sur l’exécution du service que tu demandes et, pour les notifications, sur ton accord.']},
+    {t:'4. Qui y a accès ?',p:['Le coach et l’éditeur. Les prestataires techniques qui font fonctionner le service : Google (Firebase : connexion et base de données), GitHub et Cloudflare (envoi des notifications). Tes données ne sont pas vendues.']},
+    {t:'5. Combien de temps ?',p:['Tant que ton compte existe. Quand tu le supprimes depuis ton profil, tes données personnelles sont effacées.']},
     {t:'6. Tes droits',p:['Tu peux accéder à tes données, les corriger (depuis ton profil), les effacer, t’opposer à leur traitement ou demander leur portabilité en écrivant à '+I.email+'. Tu peux aussi introduire une réclamation auprès de la CNIL (cnil.fr).']},
     {t:'7. Mineurs',p:['L’application est réservée aux personnes de 16 ans ou plus ; entre 16 et 17 ans, avec l’accord d’un responsable légal.']}
   ];
@@ -15003,7 +14993,6 @@ function drawerItems(){
   out.push({id:'moves',label:'Apprentissage des mouvements',ico:ICO_MOVES,cur:S.tab==='moves',fn:()=>go('moves')});
   out.push({id:'share',label:'Partager l’appli',ico:ICO_PHONE,cur:S.tab==='share',fn:()=>go('share')});
   out.push({id:'avis',label:'Avis',ico:ICO_KB,cur:S.tab==='avis',fn:()=>go('avis')});
-  if(!PAY_PAUSED)out.push({id:'sub',label:'Abonnement',ico:ICO_CARD,cur:S.tab==='sub',fn:()=>go('sub')}); /* le Shop est dans la barre du bas */
   return out;
 }
 function closeDrawer(instant){
@@ -15016,7 +15005,7 @@ function closeDrawer(instant){
 /* ---------- déconnexion et suppression du compte ---------- */
 const POWER_ICO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></svg>';
 async function logoutNow(){try{await pushForget();}catch(e){}S.authView='home';signOut(auth);}
-const DEL_REASONS=['Je ne m’entraîne plus au club','Je n’utilise pas l’appli','L’appli ne me plaît pas','Problème technique','Je ne veux pas payer l’abonnement','Autre'];
+const DEL_REASONS=['Je ne m’entraîne plus au club','Je n’utilise pas l’appli','L’appli ne me plaît pas','Problème technique','Autre'];
 /* efface les données de la personne puis son compte. La raison est enregistrée sans identité (collection departures). */
 async function deleteMyAccount(reason,detail,pwd){
   const user=auth&&auth.currentUser;if(!user)throw new Error('Tu n’es plus connecté.');
@@ -15040,9 +15029,7 @@ function openDeleteAccount(){
   if(document.getElementById('del-ov'))return;
   const user=auth&&auth.currentUser;if(!user||S.owner)return;
   const hasPwd=(user.providerData||[]).some(x=>x.providerId==='password');
-  const pm=payState();
-  const paid=pm.k==='active'&&pm.plan!=='free'&&!pm.cancel;
-  const st={step:paid?0:1,reason:'',detail:'',word:'',pwd:'',err:'',busy:false};
+  const st={step:1,reason:'',detail:'',word:'',pwd:'',err:'',busy:false};
   const esc=e=>{if(e.key==='Escape'&&!st.busy)close();};
   const close=()=>{ov.remove();document.removeEventListener('keydown',esc);};
   const body=h('div',{class:'stack'});
@@ -15051,12 +15038,7 @@ function openDeleteAccount(){
   const head=t=>[h('p',{class:'eyebrow'},'Compte'),h('h2',{class:'wtitle'},t)];
   const cancelBtn=()=>h('button',{class:'btn',type:'button',onclick:close},'Annuler');
   const draw=()=>{
-    if(st.step===0){
-      body.replaceChildren(...head('Abonnement en cours'),
-        h('p',{},'Ton abonnement est encore actif : il continuerait d’être prélevé après la suppression de ton compte. Résilie-le d’abord, puis reviens ici.'),
-        PORTAL_LINK?h('a',{class:'btn',href:PORTAL_LINK,rel:'noopener'},'Gérer mon abonnement'):null,
-        h('button',{class:'btn',type:'button',onclick:close},'Fermer'));
-    }else if(st.step===1){
+    if(st.step===1){
       const selR=h('select',{id:'del-reason','aria-label':'Raison du départ',onchange:()=>{st.reason=selR.value;upd();}},
         h('option',{value:''},'Choisis une raison…'),...DEL_REASONS.map(r=>h('option',{value:r},r)));
       selR.value=st.reason;
@@ -15312,8 +15294,7 @@ function avisTop(){
    Solde = coinGot (séances encore enregistrées + récompenses) + coinAdj − shopBuy ; il peut être négatif si une séance est retirée après avoir dépensé ses coins. Réglages du shop (coach) : config/features → champ shop = {coin, items:{idObjet:{on,price}}}.
    Les articles du shop sont les objets de AV_ITEMS : pour ajouter un skin, déposer l'image dans assets/embedded et ajouter une ligne dans AV_ITEMS,
    il apparaît ensuite dans Coach › Shop et coins, où on le met en vente et où on fixe son prix.
-   PAY_PAUSED = true : l'abonnement est en pause (accès gratuit pour tous, aucun blocage, aucune date de passage en restreint). Remettre false pour le réactiver. */
-const PAY_PAUSED=true;
+   */
 const COIN_DEFAULT=5;
 const ICO_SHOP='<svg '+SVGA+'><path d="M3.5 9.5L5 4h14l1.5 5.5"/><path d="M5 9.5V20h14V9.5"/><path d="M3.5 9.5a2.8 2.8 0 0 0 5.5 0 2.8 2.8 0 0 0 6 0 2.8 2.8 0 0 0 5.5 0"/><path d="M10 20v-5h4v5"/></svg>';
 function coinIco(sz){
@@ -15362,7 +15343,8 @@ const coinBal=uid=>{const lg=S.logs[uid]||{};return coinEarned(lg)-coinSum(lg.sh
 const coinPatch=(uid,date)=>{const lg=S.logs[uid]||{},n=coinPerSession();if(!n||(lg.coinGot&&lg.coinGot[date]!==undefined))return null;return {coinGot:Object.assign({},lg.coinGot||{},{[date]:n})};};
 /* un objet du catalogue sans condition d'obtention (ajouté pour le shop) : jamais gagné par la progression */
 for(const it of AV_ITEMS)if(!AV_OBJ[it.id])AV_OBJ[it.id]={d:'À acheter dans le Shop, avec des coins.',test:()=>false};
-/* pastille de l'en-tête : solde de coins (remplace l'état de l'abonnement tant qu'il est en pause) */
+/* pastille de l'en-tête : solde de coins */
+function updateCoinChip(){const el=document.getElementById('pay-chip');if(el)coinChipPaint(el);}
 function coinChipPaint(el){
   if(!S.uid){el.hidden=true;return;}
   const cb=coinBal(S.uid);el.hidden=false;el.className='paychip coinchip'+(cb<0?' neg':'');el.title='Mes coins : ouvrir le Shop';
@@ -15581,235 +15563,6 @@ function coachShop(){
   return el;
 }
 
-/* ---------- abonnement : tarifs (repris sur la page de connexion) ---------- */
-const PRICE_4W=7.99,PRICE_SEASON=19.99,SEASON_WEEKS=12;
-const eur=v=>(Math.round(v*100)/100).toFixed(2).replace('.',',')+' €';
-const ICO_CARD='<svg '+SVGA+'><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h4"/></svg>';
-/* ---------- paiements Stripe ----------
-   Les liens de paiement (Payment Links) et le lien du portail client se créent dans Stripe (voir README paiements).
-   Le paiement est relié au compte par client_reference_id = identifiant du compte. Un script GitHub (sync-stripe.mjs)
-   recopie l'état des abonnements dans Firestore : subs/{uid} = { active, status, plan, periodEnd, cancelAtPeriodEnd }.
-   L'appli lit ce document ; elle ne l'écrit jamais. Essai gratuit : TRIAL_DAYS jours depuis la création du compte. */
-const CHECKOUT_URL='/api/checkout'; /* fonction Cloudflare (functions/api/checkout.js) : crée la session de paiement Stripe avec l'essai restant */
-const PORTAL_LINK='https://billing.stripe.com/p/login/dRm3cvcE4fTj1jWh095wI00';                  /* À COMPLÉTER : lien de connexion au portail client Stripe (https://billing.stripe.com/p/login/…) */
-const TRIAL_DAYS=14;
-const PAY_OPEN='2026-11-02'; /* À COMPLÉTER au lancement des paiements (AAAA-MM-JJ) : l'essai des comptes déjà créés démarre à cette date ; sans cela, ils seraient bloqués dès l'ouverture */
-const PLAN_NAMES={'4w':'4 semaines','season':'12 semaines'};
-function payState(){
-  if(S.owner)return {k:'coach'};
-  const d=S.pay&&S.pay.doc;
-  if(d&&d.active===true)return {k:'active',plan:d.plan,end:d.periodEnd,cancel:!!d.cancelAtPeriodEnd,trial:d.status==='trialing'};
-  let c=S.created?Date.parse(S.created):NaN;const po=PAY_OPEN?Date.parse(PAY_OPEN+'T00:00:00'):NaN;if(!isNaN(c)&&!isNaN(po)&&po>c)c=po;
-  const te=isNaN(c)?null:new Date(c+TRIAL_DAYS*864e5);
-  if(te&&te>new Date())return {k:'trial',end:te};
-  /* statut encore inconnu (chargement, hors ligne, règles non publiées) : on ne bloque pas */
-  if(!S.pay||!S.pay.loaded||S.pay.err||!S.coachLoaded||!te)return {k:'unknown'};
-  return {k:'blocked',status:d&&d.status};
-}
-const hasAccess=()=>PAY_PAUSED||payState().k!=='blocked';
-/* cadre d'état de l'abonnement à côté du titre (Accès coach / Accès gratuit / Abonné jusqu'au / Accès à vie) */
-const PAYTRY_KEY='bs_pay_try';
-const payTryRecent=()=>{try{const t=Number(localStorage.getItem(PAYTRY_KEY)||0);return t>0&&Date.now()-t<2*3600e3;}catch(e){return false;}};
-const payShort=x=>new Date(x).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
-function payChipInfo(){
-  const st=payState();
-  if(st.k==='coach')return {t:'Accès coach'};
-  if(st.k==='active'){
-    try{localStorage.removeItem(PAYTRY_KEY);}catch(e){}
-    if(st.plan==='free')return {t:'Accès à vie'};
-    if(st.end&&st.trial&&!st.cancel)return {t:'Abonné · 1er paiement le '+payShort(st.end)};
-    if(st.end)return {t:(st.cancel?'Fin le ':'Abonné jusqu’au ')+payShort(st.end)};
-    return {t:'Abonné'};
-  }
-  if(payTryRecent())return {t:'Paiement en cours…',off:true};
-  if(st.k==='trial')return {t:'Accès gratuit · jusqu’au '+payShort(st.end),off:true};
-  if(st.k==='blocked')return {t:'Non abonné',off:true};
-  return null;
-}
-function updatePayChip(){
-  const el=document.getElementById('pay-chip');if(!el)return;
-  if(PAY_PAUSED){coinChipPaint(el);return;}
-  const i=S.uid?payChipInfo():null;
-  if(!i){el.hidden=true;return;}
-  el.hidden=false;el.textContent=i.t;el.className='paychip'+(i.off?' off':'');
-  el.onclick=()=>go('sub');
-  el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go('sub');}};
-  if(i.t==='Paiement en cours…'&&!S._payToast){S._payToast=1;toast('Si tu viens de payer, ton accès s’ouvre en moins de 30 minutes.');}
-}
-function buyBtn(key){
-  if(!S.uid||!PLAN_NAMES[key])return h('button',{class:'btn btn-block',type:'button',disabled:true},'Bientôt disponible');
-  const b=h('button',{class:'btn primary btn-block',type:'button'},'S’abonner');
-  b.onclick=async()=>{
-    if(b.disabled)return;
-    if(!S.payAgree){ /* CGV + demande d'exécution immédiate : obligatoires avant de payer */
-      toast('Coche d’abord la case des conditions de vente, sous les forfaits.',true);
-      const c=document.getElementById('pay-agree');if(c){c.scrollIntoView({block:'center',behavior:'smooth'});c.focus();}
-      return;
-    }
-    try{if(S.prof&&S.profLoaded){S.prof.consent={cgv:CGV_VERSION,at:new Date().toISOString(),plan:key,immediate:true};saveProf();}}catch(e){}
-    const t0=b.textContent;b.disabled=true;b.textContent='Ouverture du paiement…';
-    try{
-      const tok=await auth.currentUser.getIdToken();
-      const r=await fetch(CHECKOUT_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},body:JSON.stringify({plan:key})});
-      const j=await r.json().catch(()=>({}));
-      if(!r.ok||!j.url){const er=new Error('PAY-'+(r.ok?'URL':r.status));er.payCode=er.message;throw er;}
-      try{localStorage.setItem(PAYTRY_KEY,String(Date.now()));}catch(e){}
-      location.href=j.url;
-    }catch(e){
-      b.disabled=false;b.textContent=t0;
-      toast('Impossible d’ouvrir le paiement. Réessaie dans un instant.',true);
-      const old=b.parentNode&&b.parentNode.querySelector('.paydiag');if(old)old.remove();
-      const code=(e&&e.payCode)||'PAY-RESEAU'; /* uniquement un code : aucun détail technique (clés, serveur…) n'est affiché */
-      if(b.parentNode)b.after(h('p',{class:'hint paydiag'},'Code d’erreur : '+code+'. Partage ce code d’erreur dans l’onglet bug.'));
-    }
-  };
-  return b;
-}
-function payStatusCard(){
-  const st=payState(),fd=x=>cap(fmtDate(dfmt(new Date(x))));
-  const card=h('section',{class:'card paystat'},h('p',{class:'flabel'},'Ton accès'));
-  if(st.k==='coach')card.append(h('b',{},'Accès coach'));
-  else if(st.k==='trial')card.append(h('b',{},'Essai gratuit'),h('p',{class:'muted'},'Jusqu’au '+fd(st.end)+'. Abonne-toi avant la fin pour garder l’accès aux séances.'+(st.end-Date.now()>52*36e5?' Si tu t’abonnes maintenant, tu ne perds pas ton essai : le premier paiement n’a lieu qu’à la fin de l’essai.':'')));
-  else if(st.k==='active'&&st.plan==='free')card.append(h('b',{},'Accès offert à vie'),h('p',{class:'muted'},'Ton accès aux séances est offert, sans durée limitée.'));
-  else if(st.k==='active'){
-    card.append(h('b',{},'Abonné'+(PLAN_NAMES[st.plan]?' · '+PLAN_NAMES[st.plan]:'')),
-      st.end?h('p',{class:'muted'},st.cancel?'Fin de l’abonnement le '+fd(st.end)+'.':(st.trial?'Ton essai gratuit continue jusqu’au '+fd(st.end)+' : le premier paiement aura lieu ce jour-là.':'Prochain renouvellement le '+fd(st.end)+'.')):null);
-    if(PORTAL_LINK)card.append(h('a',{class:'btn',href:PORTAL_LINK,rel:'noopener'},'Gérer mon abonnement'));
-  }
-  else if(st.k==='blocked')card.append(h('b',{},'Aucun abonnement actif'),h('p',{class:'muted'},'Ton essai est terminé : abonne-toi pour retrouver les séances.'),
-    PORTAL_LINK?h('a',{class:'btn',href:PORTAL_LINK,rel:'noopener'},'J’ai déjà un abonnement'):null);
-  else card.append(h('p',{class:'muted'},'Chargement de ton abonnement…'));
-  if(st.k!=='active'&&st.k!=='coach'&&payTryRecent())card.append(h('p',{class:'hint'},'Si tu viens de payer : ton accès s’ouvre tout seul en moins de 30 minutes. Tu peux continuer à utiliser l’appli en attendant.'));
-  if(S.pay&&S.pay.doc&&!S.pay.doc.active&&st.k!=='active'&&S.pay.doc.status&&st.k!=='coach')card.append(h('p',{class:'hint'},'Dernier état du paiement : '+S.pay.doc.status+'.'));
-  return card;
-}
-function viewPaywall(){
-  return h('div',{class:'stack'},
-    h('div',{},h('p',{class:'eyebrow'},'Box Score'),h('h1',{class:'day'},'Abonne-toi pour accéder aux séances')),
-    payStatusCard(),
-    plansCarousel(true),
-    h('p',{class:'hint'},'Après le paiement, l’accès s’ouvre tout seul en moins de 30 minutes (rouvre l’appli si besoin). Résiliation possible à tout moment. TVA non applicable, art. 293 B du CGI.'),
-    cgvButton());
-}
-/* deux cartes de forfaits qui se font glisser (page Abonnement et page de connexion) */
-function plansCarousel(buy){
-  const plan=(cls,name,price,lines,key)=>h('article',{class:'plan '+cls},
-    h('p',{class:'flabel'},name),
-    h('p',{class:'plan-price',style:'font-size:28px'},price),
-    ...lines,buy?buyBtn(key):null);
-  const track=h('div',{class:'plans',role:'region','aria-label':'Forfaits : fais glisser pour voir les deux','tabindex':'0'},
-    plan('','4 semaines',eur(PRICE_4W)+' / 4 semaines',[
-      h('p',{class:'plan-free'},'Les 2 premières semaines sont offertes à l’inscription.'),
-      h('p',{class:'plan-sub'},'Renouvelé toutes les 4 semaines.'),
-      h('p',{class:'plan-sub'},'Sans engagement : tu arrêtes quand tu veux.')],'4w'),
-    plan('best',SEASON_WEEKS+' semaines',eur(PRICE_SEASON)+' / '+SEASON_WEEKS+' semaines',[
-      h('p',{class:'plan-old'},'au lieu de ',h('s',{},eur(PRICE_4W*SEASON_WEEKS/4)),' en 3 forfaits de 4 semaines'),
-      h('p',{class:'plan-save'},'−'+Math.round((1-PRICE_SEASON/(PRICE_4W*SEASON_WEEKS/4))*100)+' % de réduction'),
-      h('p',{class:'plan-free'},'Les 2 premières semaines sont offertes à l’inscription.'),
-      h('p',{class:'plan-sub'},'Renouvelé toutes les '+SEASON_WEEKS+' semaines.'),
-      h('p',{class:'plan-sub'},'Sans engagement : tu arrêtes quand tu veux.')],'season'));
-  const dots=[0,1].map(i=>h('button',{type:'button',class:'plan-dot','aria-label':i?'Forfait '+SEASON_WEEKS+' semaines':'Forfait 4 semaines','aria-current':i?null:'true',onclick:()=>track.scrollTo({left:i*(track.scrollWidth-track.clientWidth),behavior:'smooth'})}));
-  track.addEventListener('scroll',()=>{const mx=track.scrollWidth-track.clientWidth,i=mx>0&&track.scrollLeft>mx/2?1:0;dots.forEach((d,k)=>{if(k===i)d.setAttribute('aria-current','true');else d.removeAttribute('aria-current');});},{passive:true});
-  return h('div',{class:'plans-wrap'},track,h('div',{class:'plan-dots'},...dots),h('p',{class:'hint',style:'text-align:center'},'Fais glisser pour comparer les deux forfaits.'),buy?payConsent():null);
-}
-/* case obligatoire avant « S’abonner » : acceptation des CGV, demande de début immédiat du service, information sur la part due en cas de rétractation (art. L221-25 du Code de la consommation) */
-function payConsent(){
-  return h('div',{id:'pay-consent',style:'display:grid;gap:4px;margin-top:10px'},
-    h('label',{class:'chk'},h('input',{type:'checkbox',id:'pay-agree',checked:!!S.payAgree,onchange:e=>{S.payAgree=e.target.checked;}}),
-      h('span',{},'J’ai lu et j’accepte les conditions générales de vente. Je demande que le service commence immédiatement et je reconnais que, si je me rétracte dans les 14 jours, je devrai payer la part du service déjà fourni.')),
-    h('button',{class:'link',type:'button',onclick:openCGV},'Lire les conditions générales de vente'));
-}
-/* ---------- CGV : conditions générales de vente (bouton sous les forfaits, ouvre une fenêtre) ---------- */
-const CGV_VERSION='29 octobre 2026';
-/* À COMPLÉTER avant d’ouvrir les paiements : ces informations s’affichent dans les articles 1 et 13 des CGV */
-const CGV_INFO={
-  nom:'Robin Piraino, exerçant sous le nom commercial BOX Score Cross’mitaines',
-  statut:'entrepreneur individuel, micro-entrepreneur',
-  siret:'131 993 776 00015',
-  adresse:'7 rue de la tuilerie, 55100 Belrupt-en-Verdunois',
-  email:'crossmitaines@outlook.fr',
-  mediateur:'à venir'
-};
-function cgvSections(){
-  const n4=SEASON_WEEKS/4,per4=PRICE_SEASON/n4,I=CGV_INFO;
-  return [
-    {t:'1. Éditeur et contact',p:[
-      'Box Score est éditée par '+I.nom+' ('+I.statut+'), SIRET '+I.siret+', '+I.adresse+'. Contact : '+I.email+'.',
-      'Dans ces conditions, « l’éditeur » désigne l’éditeur de Box Score, qui est aussi le coach, et « tu » ou « l’athlète » désigne toute personne qui crée un compte.']},
-    {t:'2. Objet',p:[
-      'Ces conditions générales de vente (CGV) encadrent la vente des abonnements qui donnent accès à Box Score : le programme de Crosstraining du coach, le classement de saison, les trophées, les badges et la communauté.',
-      'Créer un compte et choisir un forfait vaut acceptation des CGV. Elles sont consultables à tout moment, sur l’écran de connexion et dans la page Abonnement.',
-      'L’abonnement est réservé aux personnes majeures. Pour des raisons de sécurité, Box Score est inaccessible aux moins de 16 ans. Un mineur de 16 ou 17 ans ne peut l’utiliser qu’avec l’autorisation de son représentant légal, qui accepte les présentes CGV et réalise le paiement. Cette autorisation est déclarée dans l’appli avant la première séance (voir l’article 9).']},
-    {t:'3. Forfaits et prix',p:[
-      'Forfait 4 semaines : '+eur(PRICE_4W)+' toutes les 4 semaines.',
-      'Forfait '+SEASON_WEEKS+' semaines : '+eur(PRICE_SEASON)+' toutes les '+SEASON_WEEKS+' semaines, soit '+eur(per4)+' par 4 semaines.',
-      'Les prix sont en euros. TVA non applicable, art. 293 B du CGI.',
-      'L’éditeur peut modifier ses prix. Le nouveau prix ne s’applique qu’au renouvellement suivant, après une information envoyée au moins 30 jours avant. Tu peux résilier avant son entrée en vigueur.']},
-    {t:'4. Essai gratuit',p:[
-      'Les 2 premières semaines sont offertes à l’inscription. L’essai est limité à une fois par personne : créer plusieurs comptes pour renouveler l’essai est interdit et peut entraîner la suspension des comptes concernés.',
-      'À la fin de l’essai, l’accès aux séances est réservé aux athlètes abonnés. Aucun moyen de paiement n’est demandé tant que tu n’as pas choisi un forfait, et rien n’est prélevé sans que tu l’aies choisi. Si tu t’abonnes pendant l’essai, tu ne perds pas ton essai : le premier paiement n’a lieu qu’à sa fin (la date t’est indiquée avant de payer) et le forfait commence ce jour-là.']},
-    {t:'5. Paiement et renouvellement',p:[
-      'Le paiement se fait en ligne par carte bancaire, via Stripe, prestataire de paiement sécurisé. L’éditeur ne voit pas et ne conserve pas tes coordonnées bancaires.',
-      'Le montant est dû au début de chaque période. L’abonnement est renouvelé automatiquement à chaque échéance (toutes les 4 semaines pour le forfait 4 semaines, toutes les '+SEASON_WEEKS+' semaines pour le forfait '+SEASON_WEEKS+' semaines) jusqu’à ta résiliation.',
-      'En cas d’échec de paiement, l’accès peut être suspendu jusqu’à la régularisation. Un reçu est envoyé par e-mail à chaque paiement.']},
-    {t:'6. Accès au service',p:[
-      'L’accès est personnel : ne communique pas tes identifiants. Il commence à la création du compte (essai) puis se poursuit avec le forfait choisi.',
-      'Le coach publie les séances, tu les réalises quand tu veux dans la semaine et tu notes ton résultat.',
-      'L’éditeur peut offrir un accès gratuit à certaines personnes, à titre gracieux. Cet accès peut être retiré et n’ouvre aucun droit pour l’avenir.']},
-    {t:'7. Droit de rétractation',p:[
-      'Si tu es consommateur, tu disposes de 14 jours à compter de la souscription pour te rétracter, sans motif.',
-      'Avant de t’abonner, tu coches une case par laquelle tu demandes que le service commence immédiatement et tu reconnais que, si tu te rétractes, tu paies la part du service déjà fourni jusqu’à ta demande, proportionnelle au prix du forfait. Sans cette case, l’abonnement ne peut pas être souscrit. L’essai gratuit n’entraîne aucun paiement.',
-      'Pour te rétracter, envoie une demande claire par e-mail à '+I.email+'. Le remboursement éventuel est effectué dans les 14 jours, par le même moyen de paiement.']},
-    {t:'8. Résiliation',p:[
-      'Tu peux résilier à tout moment, sans motif ni pénalité, depuis la gestion de ton abonnement dans l’appli ou par e-mail à '+I.email+'.',
-      'La résiliation prend effet à la fin de la période déjà payée (4 semaines ou '+SEASON_WEEKS+' semaines en cours) : tu gardes l’accès jusque-là. La période commencée n’est pas remboursée, sauf cas prévu par la loi.',
-      'L’éditeur peut suspendre ou résilier un compte en cas de non-respect des CGV ou du règlement (triche, propos injurieux, comptes multiples), après t’avoir informé.']},
-    {t:'9. Santé, pratique sportive et responsabilité',p:[
-      'Box Score est un **outil de suivi** de l’entraînement : l’éditeur et le coach ne dispensent aucun conseil médical et ne surveillent pas tes séances. L’appli ne remplace pas un avis médical.',
-      'Le programme est intense, notamment sur le plan cardiovasculaire. Consulte un médecin avant de commencer ou de reprendre une activité physique intense ; au-delà de 35 ans, une visite chez le cardiologue est fortement recommandée.',
-      'Avant la première séance, tu déclares sur l’honneur avoir pris connaissance du message de prévention. Si tu as 16 ou 17 ans, ton responsable légal doit avoir lu ces informations et t’autoriser à suivre le programme : tu le déclares aussi. La version du texte et la date de ta déclaration sont enregistrées dans ton profil privé.',
-      'Tu t’entraînes sous ta seule responsabilité : tu choisis ton niveau, ta charge et ton intensité, et tu restes attentif à tes sensations (voir la page « Santé et sécurité » et le règlement). Dans les limites autorisées par la loi, l’éditeur n’est pas responsable des blessures, malaises, accidents ou autres dommages survenus pendant ou après une séance, ni d’une mauvaise utilisation du programme. L’éditeur ne garantit aucun résultat sportif. Cet article ne limite pas les droits que la loi te reconnaît, ni la responsabilité de l’éditeur en cas de faute de sa part.']},
-    {t:'10. Disponibilité de l’appli',p:[
-      'L’éditeur met tout en œuvre pour que l’appli soit accessible, mais il ne peut pas garantir un accès sans interruption : maintenance, panne d’un prestataire, problème de connexion internet de ton côté.']},
-    {t:'11. Propriété intellectuelle',p:[
-      'Les programmes, textes, images, vidéos, badges, trophées et le nom Box Score sont protégés. Ton abonnement te donne un droit d’usage personnel : tu ne peux pas les copier, les diffuser ou les revendre sans l’accord de l’éditeur.']},
-    {t:'12. Données personnelles',p:[
-      'Pour fournir le service, l’éditeur traite ton e-mail, ton pseudo, les informations de ton profil (dont ta date de naissance, qui reste privée), ta déclaration de prévention santé (version et date), tes résultats et l’état de ton abonnement. Ces données ne sont pas vendues. Elles sont hébergées par des prestataires techniques (dont Firebase et Stripe pour le paiement).',
-      'Tu disposes d’un droit d’accès, de rectification, d’effacement, d’opposition et de portabilité de tes données : écris à '+I.email+'. Tu peux aussi saisir la CNIL.']},
-    {t:'13. Réclamations, médiation et loi applicable',p:[
-      'Pour toute réclamation, écris d’abord à '+I.email+'. À défaut de solution amiable, tu peux saisir gratuitement le médiateur de la consommation : '+I.mediateur+'.',
-      'Les CGV sont soumises au droit français. En cas de litige, les tribunaux compétents sont ceux déterminés par la loi, et un consommateur peut saisir le tribunal de son domicile.']},
-    {t:'14. Modification des CGV',p:[
-      'L’éditeur peut modifier les CGV. La version applicable est celle en vigueur à ta souscription ou à ton renouvellement. Tu es informé de toute modification importante avant qu’elle s’applique.']}
-  ];
-}
-function openCGV(){
-  const esc=e=>{if(e.key==='Escape')close();};
-  const close=()=>{ov.remove();document.removeEventListener('keydown',esc);};
-  const ov=h('div',{class:'ov',id:'cgv-ov',style:'z-index:70',onclick:e=>{if(e.target===ov)close();}},
-    h('div',{class:'sheet',role:'dialog','aria-modal':'true','aria-label':'Conditions générales de vente'},
-      h('p',{class:'eyebrow'},'Box Score'),
-      h('h2',{class:'wtitle'},'Conditions générales de vente'),
-      h('p',{class:'hint'},'Version du '+CGV_VERSION),
-      ...cgvSections().map(s=>h('section',{style:'display:grid;gap:6px'},h('b',{},s.t),...s.p.map(x=>h('p',{style:'margin:0'},...rlText(x))))),
-      h('button',{class:'btn primary',type:'button',id:'cgv-close',onclick:close},'Fermer')));
-  document.body.append(ov);document.addEventListener('keydown',esc);
-}
-const cgvButton=()=>h('button',{class:'btn',type:'button',id:'cgv-btn',style:'width:100%',onclick:openCGV},'Conditions générales de vente');
-function viewSub(){
-  const gains=['Un programme avec des niveaux de pratique adaptés à chacun',
-    'Un système motivant qui booste ta régularité et ton dépassement de soi : classement de saison, trophées, badges, flamme',
-    'Une communauté pour te comparer et t’encourager',
-    'Une appli personnalisable : avatar, bannière, variantes adaptées'];
-  return h('div',{class:'stack'},
-    h('div',{},h('p',{class:'eyebrow'},'Box Score'),h('h1',{class:'day'},'Abonnement')),
-    h('section',{class:'card'},h('h2',{class:'h2'},'Ce que tu y gagnes'),
-      h('ul',{style:'margin:0;padding-left:20px;display:grid;gap:6px'},gains.map(t=>h('li',{},t)))),
-    payStatusCard(),
-    (payState().k==='active'&&payState().plan==='free')?null:plansCarousel(true),
-    h('p',{class:'hint'},'Résiliation possible à tout moment. TVA non applicable, art. 293 B du CGI.'),
-    cgvButton());
-}
 /* ---------- QR code (mode octets, correction M, versions 1 à 10) : généré dans l'appli, rien à charger ---------- */
 function qrMatrix(text){
   const data=Array.from(new TextEncoder().encode(String(text)));
@@ -16028,7 +15781,7 @@ const TOURS={
     {title:'Ton niveau, ta performance',text:'Sur chaque metcon, tu choisis le niveau qui te correspond (Débutant, Intermédiaire ou Rx). Les points récompensent ta performance à ton niveau : tout le monde peut viser le haut du classement.'},
     {title:'Plus qu’un classement',text:'Des trophées en fin de saison, des flammes pour la régularité, un avatar à habiller et un fil pour s’encourager avec des emojis.'},
     TOUR_STEPS.loginEmail,TOUR_STEPS.loginPw,TOUR_STEPS.loginCreate,
-    (PAY_PAUSED?{title:'Des coins à gagner',text:'L’accès à l’appli est gratuit. Chaque séance enregistrée te rapporte des coins, à dépenser dans le Shop (menu) contre des skins pour ton avatar.'}:{title:'Deux semaines offertes',text:'Tes 2 premières semaines de participation sont gratuites. Ensuite, un abonnement est nécessaire pour accéder aux séances.'}),
+    {title:'Des coins à gagner',text:'L’accès à l’appli est gratuit. Chaque séance enregistrée te rapporte des coins, à dépenser dans le Shop (menu) contre des skins pour ton avatar.'},
     {sel:'#tour-help',title:'Besoin d’un rappel ?',text:'Ce bouton « ? » te remet ce guide quand tu veux.'}],
   welcome:()=>[
     {title:'Bienvenue sur Box Score',text:'Le classement de ton groupe de Crosstraining : le coach publie des séances, tu les fais quand tu veux dans la semaine, tu notes ton résultat et tu gagnes des points.'},
@@ -16100,11 +15853,6 @@ TOURS.avis=()=>[
     {sel:'.kbpick',title:'Ta note',text:'Note l’appli de 1 à 5 kettlebells.'},
     {sel:'#avis-text',title:'Ton petit mot',text:'Quelques mots, 200 caractères au maximum : ce qui te plaît, ce qui t’aide.'},
     {sel:'#avis-send',title:'Envoyer',text:'Tu as un seul avis, que tu peux modifier quand tu veux. Seul le coach peut le lire ; s’il est affiché sur l’écran de connexion, ton pseudo, ta note et ton mot apparaissent.'}];
-TOURS.sub=()=>[
-    {sel:'.paystat',title:'Ton accès',text:'Ton statut : essai gratuit avec sa date de fin, ou abonnement en cours. Une fois abonné, « Gérer mon abonnement » te permet de changer de carte ou de résilier.'},
-    {sel:'.plans',title:'Les deux forfaits',text:'4 semaines à '+eur(PRICE_4W)+' ou '+SEASON_WEEKS+' semaines à '+eur(PRICE_SEASON)+'. Fais glisser pour comparer. Les deux se renouvellent automatiquement et tu peux résilier à tout moment.'},
-    {sel:'.plan .btn',title:'S’abonner',text:'Le paiement par carte se fait sur la page sécurisée de Stripe. Moins de 30 minutes plus tard, ton accès aux séances est ouvert.'},
-    {sel:'#cgv-btn',title:'Conditions générales de vente',text:'Les conditions de l’abonnement, à lire avant de t’abonner.'}];
 TOURS.shop=()=>[
     {sel:'.shop-bal',title:'Tes coins',text:'Ton solde de coins. Tu en gagnes à chaque séance enregistrée, et tu les dépenses ici contre des skins pour ton avatar.'},
     {sel:'.shop-list',title:'Les skins en vente',text:'Chaque skin a son prix en coins. Touche « Acheter », puis « Confirmer ». Il rejoint ensuite ton inventaire d’avatar.'}];
@@ -16132,7 +15880,7 @@ const tourKey=t=>'bs-tour-'+(t==='login'?'login':(S.uid||'anon')+'-'+t)+(TOUR_VE
 const tourSeen=t=>{try{return localStorage.getItem(tourKey(t))==='1';}catch(e){return true;}}; /* stockage indisponible : on n'insiste pas */
 const tourMark=t=>{try{localStorage.setItem(tourKey(t),'1');}catch(e){}};
 const tourBusy=()=>!!document.querySelector('.ov,.cer,.tm,.avfs,.ann,.reward-pop,#tm-ov');
-const curTourId=()=>!S.uid?((S.authReady&&S.db)?'login':null):((S.viewUser||S.boardDetail)?null:((S.tab==='today'&&!hasAccess())?'sub':(S.tab==='today'&&!S.viewDate)?'cards':(TOURS[S.tab]?S.tab:null)));
+const curTourId=()=>!S.uid?((S.authReady&&S.db)?'login':null):((S.viewUser||S.boardDetail)?null:((S.tab==='today'&&!S.viewDate)?'cards':(TOURS[S.tab]?S.tab:null)));
 function helpBtn(){return h('button',{class:'help-btn',id:'tour-help',type:'button','aria-label':'Afficher le guide de cet écran',title:'Guide de cet écran',onclick:()=>{const t=curTourId();if(t)startTour(TOURS[t]());}},'?');}
 function maybeTour(){
   if(tourEl||!S.uid||tourSeen('welcome'))return;
@@ -16352,7 +16100,7 @@ function startFirebase(){
     S.coach={wod:null,editing:false,period:null,resDate:null};S.avisFor=null;S.profView=null;S.viewUser=null;S.tip=null;S.tab=user?takeInitialTab():'feed';S.authReady=true;
     if(!user){S.uid=null;S.pre=null;try{localStorage.removeItem(SNAP_KEY);localStorage.removeItem(WC_KEY);}catch(e){}render();return;}
     S.pre=null;{const wc=wcRead();if(wc&&wc.uid===user.uid&&Object.keys(wc.wods||{}).length){S.pre=true;S.wods=wc.wods;S.periods=wc.periods||{};S._wcSeen=wc.seen||{};if(wc.mylog)S.logs={[user.uid]:wc.mylog};}}
-    S.uid=user.uid;S.pay={loaded:false,doc:null,err:false};S.created=(user.metadata&&user.metadata.creationTime)||'';S.email=user.email||'';setTimeout(pushSync,2500);S.meName=user.displayName||(user.email||'').split('@')[0]||'';
+    S.uid=user.uid;S.created=(user.metadata&&user.metadata.creationTime)||'';S.email=user.email||'';setTimeout(pushSync,2500);S.meName=user.displayName||(user.email||'').split('@')[0]||'';
     const fail=e=>{S.error=(e&&e.code==='permission-denied')?'Accès refusé par la base de données. Publie les règles de sécurité (voir README).':'Lecture des données impossible pour le moment.';scheduleRender();};
     const watch=(path,key)=>unsubs.push(S.db.collection(path).onSnapshot(sn=>{S[key]=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));S.loaded[key]=true;S._srv[key]=!sn.fromCache;
       if(S._netOff&&ready())backOnline();
@@ -16363,8 +16111,6 @@ function startFirebase(){
       scheduleRender();if(key==='logs')selfSync();launchRecapMaybe();},fail,true));
     watch('periods','periods');watch('wods','wods');watch('logs','logs');
     if(persist)cacheT=setTimeout(()=>{if(S.uid===user.uid&&!ready()&&snapRead()&&snapRead().uid===user.uid)goCache();},3000);
-    /* état de l'abonnement (écrit par le script GitHub, lecture seule ici) ; en cas d'erreur de lecture on ne bloque personne */
-    unsubs.push(S.db.doc('subs/'+S.uid).onSnapshot(sn=>{S.pay={loaded:true,doc:sn.exists?sn.data():null,err:false};scheduleRender();},()=>{S.pay={loaded:true,doc:null,err:true};scheduleRender();}));
     unsubs.push(S.db.doc('config/coach').onSnapshot(sn=>{S.coachUid=sn.exists?(sn.data().uid||null):null;S.coachLoaded=true;S.owner=!!S.coachUid&&S.coachUid===S.uid;if(S.owner&&!S._bugOn){S._bugOn=true;unsubs.push(bugWatch());}dmSync();wuMaybeSeed();scheduleRender();launchRecapMaybe();},fail));
     /* les groupes ne bloquent jamais l'appli : si les règles ne sont pas encore publiées, on ignore l'erreur */
     unsubs.push(S.db.doc('config/groups').onSnapshot(sn=>{const d=sn.exists?sn.data():null;S.groups={list:(d&&Array.isArray(d.list))?d.list:[],of:(d&&d.of&&typeof d.of==='object')?d.of:{},snap:(d&&d.snap&&typeof d.snap==='object')?d.snap:{},bots:(d&&d.bots&&typeof d.bots==='object')?d.bots:{},loaded:true};S._freezing=false;scheduleRender();},()=>{}));
