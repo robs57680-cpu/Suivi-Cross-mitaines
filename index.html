@@ -917,7 +917,7 @@ body:has(.bnx){overflow:hidden}
 .bn.bnm .bnm-logo{top:3.5cqw;right:3cqw}
 .bn.bnm.has-logo .bnm-plate{max-width:43cqw}
 .bn.bnm .bnm-av{top:4cqw}
-.bn.bnm .bnm-badge{top:26.5cqw}
+.bn.bnm .bnm-badge{left:6cqw;top:20.5cqw;width:21cqw;height:21cqw}
 .bn.bnm .bnm-name{top:5cqw}
 .bn.bnm .bnm-plate{top:14.8cqw}
 .bn.bnm .bnm-res{top:25.5cqw}
@@ -4181,7 +4181,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-06.5';
+const APP_VERSION='2026-11-06.6';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -11257,7 +11257,7 @@ function avMeasure(sx,full){
 function avApplyFrame(div,box){
   if(!box)return;
   /* la tête (≈ 55 % du cercle) est centrée dans le rond ; si elle touche le haut de l'image, le haut du cercle est complété par le décor */
-  const Wn=Math.max(230,Math.min(400,box.hw*1.95)),k=24/Wn,yc=box.top+box.hw*.48,y0=yc-Wn*.40;
+  const Wn=Math.max(330,Math.min(440,box.hw*2.7)),k=24/Wn,yc=box.top+box.hw*.48,y0=yc-Wn*.34;
   div.style.setProperty('--av-w',(AV_W*k).toFixed(2)+'cqw');div.style.setProperty('--av-h',(AV_H*k).toFixed(2)+'cqw');
   div.style.setProperty('--av-l',(12-box.cx*k).toFixed(2)+'cqw');div.style.setProperty('--av-t',(-y0*k).toFixed(2)+'cqw');
 }
