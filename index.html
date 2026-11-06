@@ -878,7 +878,7 @@ body:has(.bnx){overflow:hidden}
 /* grand avatar à gauche (anneau à la couleur du cadre choisi) ; le badge se pose dessous */
 .bnm-av{position:absolute;z-index:5;left:4.5cqw;top:2.5cqw;width:24cqw;height:24cqw}
 .bnm-av>.feed-av{width:24cqw;height:24cqw}
-.bn.bnm .bnm-av .feed-av .av{width:24cqw!important;height:48.4cqw!important;min-width:0!important}
+.bn.bnm .bnm-av .feed-av .av{width:36cqw!important;height:72.6cqw!important;min-width:0!important;left:-5.7cqw!important;top:0!important}
 .bn.bnm .bnm-av .avf{width:24cqw;height:24cqw}
 .bn.bnm .bnm-av .avf>.avf-img{width:37.1cqw;height:37.1cqw}
 .bn.bnm .bnm-av .feed-av{box-shadow:none}
@@ -11155,9 +11155,13 @@ const CM_BY=Object.fromEntries(CM_LIST.map(x=>[x.id,x]));
 const cmLayer=id=>CM_LAYERS.find(l=>l.id===id)||CM_LAYERS[0];
 const cmPrice=it=>{const p=Math.floor(Number(it.price));return p>=1?p:(CM_RARITY[it.rarity]||CM_RARITY.standard).price;};
 /* possédé : gratuit, acheté au shop (shopBuy), ou condition de déblocage remplie */
+/* mode test coach : tout est équipable gratuitement pendant 2 minutes (rien n'est enregistré) */
+function coachTestOn(uid){return !!(S.owner&&(uid===undefined||uid===S.uid)&&S._coachTest&&Number(S._coachTest.until)>Date.now());}
+function cmAllAwards(){const all={};for(const list of Object.values(awards()))list.forEach(a=>{all[a.id]=a;});return Object.values(all);}
 function cmOwned(uid,it){
   if(!it)return false;
   if(it.free)return true;
+  if(coachTestOn(uid))return true;
   const lg=S.logs[uid]||{};
   if(Object.prototype.hasOwnProperty.call(lg.shopBuy||{},it.id))return true;
   try{return !!(it.unlock&&typeof it.unlock.test==='function'&&it.unlock.test(uid));}catch(e){return false;}
@@ -11176,6 +11180,7 @@ function bnMerged(uid){
 }
 /* composition modulaire active : banner.cm présent ET aucun fond « classique » (thème de carte) équipé */
 function cmActive(uid){
+  if(uid===S.uid&&S.tab==='profile'&&S.profView==='banner'&&S._cmPrev)return true; /* aperçu d'un objet verrouillé : on montre la composition même si un thème classique est équipé */
   const b=bnMerged(uid);
   if(!(b.cm&&typeof b.cm==='object'))return false;
   return bannerOf(uid).bg==='base'; /* bannerOf valide le fond : un thème classique reconnu garde le rendu actuel */
@@ -11193,7 +11198,7 @@ function cmOf(uid){
     out[L.id]=(it&&it.layer===L.id&&(isPrev||cmOwned(uid,it)))?it:null;
   }
   const bid=raw.badge===undefined?(((S.logs[uid]||{}).badge)||''):raw.badge;
-  out.badge=bid?((awards()[uid]||[]).find(a=>a.id===bid)||null):null;
+  out.badge=bid?((awards()[uid]||[]).find(a=>a.id===bid)||(coachTestOn(uid)?cmAllAwards().find(a=>a.id===bid):null)||null):null;
   return out;
 }
 /* vignette d'un objet (éditeur, shop) : la couche seule sur un fond neutre, à l'échelle */
@@ -11322,6 +11327,7 @@ function bannerSection(){
       if(r.type==='avframe'&&!BN.avframe[r.id])BN.avframe[r.id]={name:r.name,src:avfSrc(r)};
     });
   }
+  if(coachTestOn()){unlocked.push(...testable);testable.length=0;}
   bannerOf(S.uid); /* enregistre les éléments débloqués dans BN */
   if(!S._bnDraft)S._bnDraft={};
   if(!S.bnTab||S.bnTab==='bg')S.bnTab='mbg';
@@ -11356,7 +11362,7 @@ function bannerSection(){
     S._bnDraft=d;render();
   };
   const cmTools=()=>{
-    const mine=awards()[S.uid]||[],pk=a=>a[Math.floor(Math.random()*a.length)];
+    const mine=coachTestOn()?cmAllAwards():(awards()[S.uid]||[]),pk=a=>a[Math.floor(Math.random()*a.length)];
     const rnd=()=>{
       const cm={};
       for(const L of CM_LAYERS){
@@ -11409,7 +11415,7 @@ function bannerSection(){
       h('p',{class:'bnx-hint'},'Touche un objet possédé pour l’équiper, touche-le encore pour le retirer. Un objet verrouillé se prévisualise avant achat.')];
   };
   const cmBadgeView=()=>{
-    const mine=(awards()[S.uid]||[]).slice().sort((a,b)=>a.per.start<b.per.start?1:a.per.start>b.per.start?-1:0);
+    const mine=(coachTestOn()?cmAllAwards():(awards()[S.uid]||[])).slice().sort((a,b)=>a.per.start<b.per.start?1:a.per.start>b.per.start?-1:0);
     const c=cmCur(),curId=c.badge===undefined?(lg.badge||''):c.badge,has=mine.some(a=>a.id===curId);
     const out=[head('Badge de saison'),h('p',{class:'bnx-hint'},'Seuls les badges que tu as remportés en fin de saison peuvent être affichés : il s’affiche sous ton avatar. C’est le même badge que dans « Mes badges », sa rareté dépend de tes résultats.')];
     const tiles=[tile(txt('Aucun badge'),!has,()=>cmPick('badge',''),'Aucun badge')];
@@ -11426,12 +11432,30 @@ function bannerSection(){
     }
     return out;
   };
-  const cmLayerView=tabId=>{const L=CM_LAYERS.find(x=>x.tab===tabId);return L.id==='badge'?cmBadgeView():cmItemsView(L);};
+  const cmLayerView=tabId=>{const L=CM_LAYERS.find(x=>x.tab===tabId);return (L.id==='badge'?cmBadgeView():cmItemsView(L)).filter(Boolean);};
+
+  /* mode test coach : 2 minutes de personnalisation complète, « Valider » affiche le résultat dans le fil sans rien enregistrer */
+  const ctArm=until=>{window.setTimeout(()=>{if(S._coachTest&&S._coachTest.until===until){S._coachTest=null;S._bannerPreview=null;S._bnDraft=null;S._cmPrev=null;render();toast('Test terminé : ta bannière habituelle est de retour.');}},Math.max(0,until-Date.now())+50);};
+  const ctStart=()=>{const until=Date.now()+120000;S._coachTest={until};S._bnDraft=null;S._cmPrev=null;S._cmAsk=null;ctArm(until);render();toast('Mode test : tout est débloqué pendant 2 minutes.');};
+  const ctStop=()=>{S._coachTest=null;S._bannerPreview=null;S._bnDraft=null;S._cmPrev=null;S._cmAsk=null;render();toast('Mode test arrêté.');};
+  const ctApply=()=>{const until=Date.now()+120000,banner=Object.assign({},S._bnDraft);S._coachTest={until};S._bannerPreview={banner,until};ctArm(until);S._bnDraft=null;S._cmPrev=null;S._cmAsk=null;S.profView=null;go('feed');window.scrollTo(0,0);toast('Ta bannière de test est dans le fil pendant 2 minutes (visible par toi seul).');};
+  const ctBox=()=>{
+    if(!S.owner)return null;
+    if(!coachTestOn())return h('div',{class:'cm-tools',style:'margin-top:10px;flex-direction:column;align-items:stretch'},
+      h('button',{class:'bnx-rnd alt',type:'button',id:'ct-start',onclick:ctStart},'Mode test coach : tout débloquer (2 min)'),
+      h('p',{class:'bnx-hint'},'Fonds, effets, logos, cadres, plaques, badges et titres sont équipables gratuitement pendant 2 minutes. « Voir dans le fil » affiche ensuite le résultat dans le fil pendant 2 minutes, sans rien enregistrer.'));
+    const lab=h('b',{id:'ct-left'},'2:00');
+    const tick=()=>{const l=S._coachTest?Math.max(0,Math.ceil((S._coachTest.until-Date.now())/1000)):0;lab.textContent=Math.floor(l/60)+':'+String(l%60).padStart(2,'0');};
+    tick();const iv=window.setInterval(()=>{if(!lab.isConnected){window.clearInterval(iv);return;}tick();},1000);
+    return h('div',{class:'cm-tools',style:'margin-top:10px;flex-direction:column;align-items:stretch'},
+      h('p',{class:'bnx-hint'},'Mode test coach actif, tout est débloqué. Temps restant : ',lab,'. Rien n’est enregistré.'),
+      h('button',{class:'bnx-rnd alt',type:'button',id:'ct-stop',onclick:ctStop},'Arrêter le test'));
+  };
 
   /* aperçu de la bannière */
   const prev=h('section',{class:'bnx-prev'},h('h2',{class:'bnx-h2'},'Ma bannière'),
     h('p',{},'Choisis un élément ci-dessous : l’aperçu se met à jour. Valide pour l’enregistrer.'),
-    h('div',{class:'bnx-pv'},(cmActive(S.uid)?cmEl(S.uid,{avclick:()=>openAvatar()}):bannerEl(S.uid,[bannerRow(S.uid,true,()=>openAvatar())],false,'lg'))),cmTools());
+    h('div',{class:'bnx-pv'},(cmActive(S.uid)?cmEl(S.uid,{avclick:()=>openAvatar()}):bannerEl(S.uid,[bannerRow(S.uid,true,()=>openAvatar())],false,'lg'))),cmTools(),ctBox());
 
   if(tab==='mfx'||tab==='mlogo'||tab==='mframe'||tab==='mplate'||tab==='mbadge'){
     view.append(...cmLayerView(tab));
@@ -11459,7 +11483,7 @@ function bannerSection(){
   }
   if(S.owner&&testable.length)view.append(h('p',{class:'bnx-hint'},'Coach : les cases grisées sont des aperçus non débloqués, actifs 1 minute.'));
 
-  const ok=h('button',{class:'bnx-ok',type:'button',id:'bnx-ok',disabled:!draftOn||!!needPseudo(),onclick:()=>{const nv=cmFinalize(Object.assign({},sv,S._bnDraft));S._bnDraft=null;S._cmPrev=null;S._cmAsk=null;saveLog({banner:nv},'Bannière enregistrée');}},AVSVG('<path d="M5 12.5l4.5 4.5L19 7.5"/>',24),'Valider ma bannière');
+  const ok=h('button',{class:'bnx-ok',type:'button',id:'bnx-ok',disabled:!draftOn||!!needPseudo(),onclick:()=>{if(coachTestOn()){ctApply();return;}const nv=cmFinalize(Object.assign({},sv,S._bnDraft));S._bnDraft=null;S._cmPrev=null;S._cmAsk=null;saveLog({banner:nv},'Bannière enregistrée');}},AVSVG('<path d="M5 12.5l4.5 4.5L19 7.5"/>',24),coachTestOn()?'Voir dans le fil (2 min)':'Valider ma bannière');
   const TI={mbg:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M3 17l5-4 4 3 3-2 6 4"/>',mfx:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/>',mlogo:'<path d="M3 18l3-12 6 8 6-8 3 12z"/>',mbadge:'<circle cx="12" cy="9" r="5"/><path d="M8.5 13.5L7 21l5-3 5 3-1.5-7.5"/>',mframe:'<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/><rect x="8" y="8" width="8" height="8" rx="1.5"/>',mplate:'<rect x="3" y="8" width="18" height="8" rx="2"/><path d="M7 12h6"/>',title:'<path d="M5 5h14M12 5v15"/>',frame:'<circle cx="12" cy="9" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>'};
   const tabs=[['mbg','Fond',TI.mbg],['mfx','Effets',TI.mfx],['mlogo','Logo',TI.mlogo],['mbadge','Badge',TI.mbadge],['mframe','Cadre',TI.mframe],['mplate','Plaque',TI.mplate],['title','Titre',TI.title],['frame','Avatar',TI.frame]];
   requestAnimationFrame(()=>{const t=document.getElementById('bnx-tab-'+tab);if(t&&t.scrollIntoView)t.scrollIntoView({inline:'center',block:'nearest'});});
