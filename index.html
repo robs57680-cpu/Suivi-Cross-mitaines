@@ -877,7 +877,7 @@ body:has(.bnx){overflow:hidden}
 .bnm-frame{z-index:4}
 /* grand avatar à gauche (anneau à la couleur du cadre choisi) ; le badge se pose dessous */
 .bnm-av{position:absolute;z-index:5;left:4.5cqw;top:2.5cqw;width:24cqw;height:24cqw}
-.bnm-av>.feed-av{width:24cqw;height:24cqw}
+.bn.bnm .bnm-av .feed-av{width:24cqw;height:24cqw} /* aussi quand le cercle est dans le cadre d'avatar (.avf) : il gardait la taille 44 px du fil d'origine, en haut à gauche du cadre */
 .bn.bnm .bnm-av .feed-av .av{width:var(--av-w,36cqw)!important;height:var(--av-h,72.6cqw)!important;min-width:0!important;left:var(--av-l,-5.7cqw)!important;top:var(--av-t,0cqw)!important}
 .bn.bnm .bnm-av .avf{width:24cqw;height:24cqw}
 .bn.bnm .bnm-av .avf>.avf-img{width:37.1cqw;height:37.1cqw}
@@ -4181,7 +4181,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-06.4';
+const APP_VERSION='2026-11-06.5';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
