@@ -790,6 +790,14 @@ input[type=checkbox]{width:24px;height:24px;padding:0;accent-color:var(--accent)
 .rxb{min-width:48px;min-height:44px;border:2px solid var(--line);border-radius:4px;background:var(--surface2);font-size:22px;cursor:pointer;padding:0 8px}
 .rxb small{font:600 11px var(--f-mono);margin-left:4px;color:var(--muted)}
 .rxb[aria-pressed="true"]{border-color:var(--accent);background:var(--tint)}
+.plans-wrap{display:grid;gap:10px;min-width:0}
+.plans{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:14px 2px 6px;margin:-14px -2px -6px}
+.plans::-webkit-scrollbar{display:none}
+.plan{position:relative;flex:0 0 86%;scroll-snap-align:center;box-sizing:border-box;display:grid;align-content:start;gap:8px;padding:18px 16px;background:var(--surface);border:2px solid var(--edge);border-radius:6px}
+.plan.best{border-color:var(--accent);background:var(--tint)}
+.plan-tag{position:absolute;top:-12px;right:14px;background:var(--accent);color:var(--accent-ink);font:700 13px var(--f-mono);letter-spacing:.04em;padding:4px 10px;border-radius:4px}
+.plan-price{margin:0;font-family:var(--f-display);font-size:44px;line-height:1;color:var(--ink)}
+.plan-price small{font-family:var(--f-body,inherit);font-size:14px;color:var(--muted)}
 .kbs{display:inline-flex;gap:2px;color:var(--accent);vertical-align:middle}
 .kbs svg{display:block}
 .kbpick{display:flex;gap:6px;flex-wrap:wrap}
@@ -856,6 +864,121 @@ body:has(.bnx){overflow:hidden}
 .bnx-ok:disabled{opacity:.45;box-shadow:none}
 .bnx .av-svg:not(.bnx-t .av-svg){color:inherit}
 
+/* ===== bannière modulaire : la carte du fil devient la bannière (6 couches : fond · effets · logo · badge · cadre · plaque) ===== */
+/* Toutes les bannières ont la même taille (5:2, réglable : --bnm-r, ex. 2.2 = plus haute) et la même police. Tout est placé en cqw (1 cqw = 1 % de la largeur de la bannière ; hauteur = 100 / --bnm-r cqw, soit 40 cqw) : */
+.bn.bnm{container-type:inline-size;position:relative;aspect-ratio:var(--bnm-r,2.5);padding:0;background:#0b0b0e;color:#fff;isolation:isolate;overflow:hidden}
+.bn.bnm.bnm-mini{aspect-ratio:auto}
+.feed-card.th-cm>.bn{border-width:0;border-radius:3px 3px 0 0}
+.bnm-l{position:absolute;inset:0;background-position:center;background-size:100% 100%;background-repeat:no-repeat;pointer-events:none}
+.bnm-bg{z-index:0;background-image:linear-gradient(115deg,#1a1c21 0 72%,var(--accent) 72% 75%,#1a1c21 75% 78%,var(--accent) 78% 80%,#1a1c21 80%)}
+.bnm-fx{z-index:1}
+/* logo (CM, No Excuses…) : grande couche à droite, au-dessus du motif (fond + effets), sous le cadre, les résultats et les points */
+.bnm-logo{position:absolute;z-index:2;right:1.5cqw;top:2.5cqw;width:24cqw;height:32.7cqw;background-position:center;background-size:contain;background-repeat:no-repeat;pointer-events:none}
+.bnm-frame{z-index:4}
+/* grand avatar à gauche (anneau à la couleur du cadre choisi) ; le badge se pose dessous */
+.bnm-av{position:absolute;z-index:5;left:4.5cqw;top:2.5cqw;width:24cqw;height:24cqw}
+.bnm-av>.feed-av{width:24cqw;height:24cqw}
+.bn.bnm .bnm-av .feed-av .av{width:24cqw!important;height:48.4cqw!important;min-width:0!important}
+.bn.bnm .bnm-av .avf{width:24cqw;height:24cqw}
+.bn.bnm .bnm-av .avf>.avf-img{width:37.1cqw;height:37.1cqw}
+.bn.bnm .bnm-av .feed-av{box-shadow:none}
+.bn.bnm .bnm-av>.feed-av{box-shadow:0 0 0 .8cqw var(--cm-line,rgba(255,255,255,.4)),0 0 0 1.6cqw rgba(0,0,0,.45),0 0 3.4cqw .6cqw color-mix(in srgb,var(--cm-line,#fff) 65%,transparent)}
+.bnm-badge{position:absolute;z-index:6;left:9cqw;top:23.6cqw;width:15cqw;height:15cqw;filter:drop-shadow(0 .6cqw 1cqw rgba(0,0,0,.7))}
+.bnm-badge>.badge{width:100%!important;height:100%!important;display:block}
+.bnm-name{position:absolute;z-index:5;left:33cqw;top:3cqw;width:40cqw;min-width:0}
+/* plaque = titre de l'athlète */
+.bnm-plate{--cm-ink:#fff;--cm-sh:0 1px 3px rgba(0,0,0,.85);position:absolute;z-index:5;left:31.2cqw;top:12.2cqw;width:43cqw;height:6.6cqw;display:flex;align-items:center;padding:0 3.4cqw 0 4.2cqw;box-sizing:border-box;background-size:100% 100%;background-repeat:no-repeat;background-position:center;min-width:0}
+.bnm-plate.def{background-image:linear-gradient(90deg,rgba(0,0,0,.7),rgba(0,0,0,.3));clip-path:polygon(3% 0,100% 0,97% 100%,0 100%);border-bottom:.5cqw solid var(--accent)}
+.bnm-pt{font:400 clamp(8px,2.7cqw,17px)/1 var(--f-display);letter-spacing:.025em;text-transform:uppercase;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--cm-ink,#fff);text-shadow:var(--cm-sh,none);max-width:100%}
+/* infos du metcon / de la force */
+.bnm-res{position:absolute;z-index:5;left:33cqw;top:21cqw;width:42cqw;height:9.4cqw;min-width:0;overflow:hidden}
+.bnm-res .feed-result{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);grid-template-columns:none;gap:0;height:100%;margin:0}
+.bnm-res .feed-metric{background:none;border:0;border-radius:0;padding:0 1.6cqw;box-shadow:none;min-width:0;overflow:hidden}
+.bnm-res .feed-metric+.feed-metric{border-left:1px solid rgba(255,255,255,.35)}
+.bnm-res .feed-metric:first-child{padding-left:0}
+.bnm-res .feed-metric b{color:#fff;font-size:clamp(14px,5.3cqw,32px);line-height:1;text-shadow:0 2px 5px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bnm-res .feed-metric span{color:var(--cm-lab,#d9d4d4);font-size:clamp(7px,2.1cqw,13px);line-height:1.15;letter-spacing:.03em;margin-top:.8cqw;text-shadow:0 1px 3px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bnm-res>p.muted{margin:0;font-size:clamp(9px,2.8cqw,14px);color:#d9d4d4;text-shadow:0 1px 3px #000}
+/* réactions (bordure à la couleur du cadre) et points */
+.bnm-rx{position:absolute;z-index:6;left:31cqw;top:30.8cqw;width:47cqw;height:7.6cqw}
+.bnm-rx .rxrow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1.4cqw;height:100%;margin:0;flex-wrap:nowrap}
+.bnm-rx .rxb{min-width:0;min-height:0;max-width:none;height:100%;padding:0;margin:0;position:relative;border:1.5px solid var(--cm-line,rgba(255,255,255,.4));border-radius:2cqw;background:rgba(0,0,0,.6);font-size:clamp(14px,4.4cqw,26px);line-height:1;color:#fff}
+.bnm-rx .rxb[aria-pressed="true"]{background:rgba(255,255,255,.18);border-color:#fff}
+.bnm-rx .rxb small{position:absolute;right:.8cqw;bottom:.2cqw;margin:0;font:700 clamp(7px,2.1cqw,11px) var(--f-mono);color:#fff;text-shadow:0 1px 2px #000}
+.bnm-pts{position:absolute;z-index:6;right:3.5cqw;bottom:2.2cqw;font-family:var(--f-display);font-size:clamp(20px,8.4cqw,46px);line-height:1;color:#fff;-webkit-text-stroke:.8cqw #000;paint-order:stroke fill;text-shadow:0 2px 6px rgba(0,0,0,.5);transform:rotate(-8deg);transform-origin:100% 100%;white-space:nowrap;pointer-events:none}
+:is(.bn.bnm,.cmth) .nm{font:400 clamp(18px,7.2cqw,46px)/1.05 var(--f-display);letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--cm-ink,#fff);text-shadow:0 2px 6px #000,0 0 10px rgba(0,0,0,.7);max-width:100%}
+:is(.bn.bnm,.cmth) .nm .link{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0;border:0;background:none;color:inherit;font:inherit;letter-spacing:inherit;text-shadow:inherit;text-align:left;text-decoration:none;cursor:pointer}
+/* sous la bannière : titre de la séance, niveau, date, message, signalement */
+.feed-card.th-cm{gap:8px}
+/* ---- éléments de démonstration (CSS pur) : à remplacer / compléter par des images (champ src du catalogue CM_ITEMS) ---- */
+.cm-bg-boxscore{background-image:linear-gradient(115deg,#1a1c21 0 72%,var(--accent) 72% 75%,#1a1c21 75% 78%,var(--accent) 78% 80%,#1a1c21 80%)}
+.cm-bg-forge{background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.035) 0 2px,transparent 2px 9px),linear-gradient(180deg,#2a2d33,#0f1114 72%)}
+.cm-bg-braises{background-image:radial-gradient(60% 90% at 15% 115%,rgba(255,90,20,.7),transparent 70%),radial-gradient(45% 70% at 88% 120%,rgba(255,30,60,.55),transparent 70%),linear-gradient(#0b0707,#1b0808)}
+.cm-bg-neoncity{background-image:radial-gradient(50% 90% at 92% 0,rgba(0,229,255,.38),transparent 70%),radial-gradient(40% 80% at 0 100%,rgba(255,31,157,.35),transparent 70%),linear-gradient(120deg,#0a0420,#16093a 55%,#062a33)}
+.cm-bg-premium{background-image:radial-gradient(50% 120% at 100% 50%,rgba(243,196,69,.28),transparent 70%),linear-gradient(115deg,#0b0b0d 0 60%,#1a1508)}
+.cm-fx-stripes{background-image:repeating-linear-gradient(-55deg,rgba(255,255,255,.07) 0 6px,transparent 6px 22px)}
+.cm-fx-particles{background-image:radial-gradient(circle at 12% 30%,rgba(255,255,255,.6) 0 1.2px,transparent 2px),radial-gradient(circle at 38% 72%,rgba(0,229,255,.65) 0 1.5px,transparent 2.5px),radial-gradient(circle at 63% 22%,rgba(255,31,122,.65) 0 1.4px,transparent 2.4px),radial-gradient(circle at 82% 64%,rgba(255,255,255,.55) 0 1.2px,transparent 2px),radial-gradient(circle at 92% 18%,rgba(255,170,40,.65) 0 1.3px,transparent 2.3px)}
+.cm-fx-scratches{background-image:repeating-linear-gradient(103deg,transparent 0 17px,rgba(255,255,255,.1) 17px 18px,transparent 18px 41px),repeating-linear-gradient(77deg,transparent 0 29px,rgba(255,255,255,.06) 29px 30px,transparent 30px 63px)}
+.cm-fx-flames{background-image:linear-gradient(0deg,rgba(255,90,0,.6),rgba(255,40,40,.2) 38%,transparent 62%)}
+.cm-fr-red{box-shadow:inset 0 0 0 2px #ff2a3d,inset 0 0 16px rgba(255,42,61,.75)}
+.cm-fr-cyan{box-shadow:inset 0 0 0 2px #19e6e0,inset 0 0 16px rgba(25,230,224,.7)}
+.cm-fr-magenta{box-shadow:inset 0 0 0 2px #ff1f9d,inset 0 0 16px rgba(255,31,157,.7)}
+.cm-fr-gold{box-shadow:inset 0 0 0 2px #f3c445,inset 0 0 0 4px rgba(0,0,0,.55),inset 0 0 14px rgba(243,196,69,.55)}
+.cm-fr-aurora{box-shadow:inset 0 0 0 2px #ff1f7a,inset 0 0 18px rgba(0,229,255,.7);animation:cm-aurora 6s linear infinite}
+@keyframes cm-aurora{to{filter:hue-rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.cm-fr-aurora{animation:none}}
+.cm-pl-classic{background-image:linear-gradient(90deg,rgba(0,0,0,.72),rgba(0,0,0,.35));clip-path:polygon(3% 0,100% 0,97% 100%,0 100%);border-bottom:.5cqw solid var(--accent)}
+.cm-pl-metal{background-image:linear-gradient(180deg,#9aa1aa,#4a4f57 55%,#2d3036);clip-path:polygon(3% 0,100% 0,97% 100%,0 100%)}
+.cm-pl-redblack{background-image:linear-gradient(105deg,#0a0a0a 0 78%,#d4141c 78% 86%,#0a0a0a 86% 90%,#d4141c 90%);clip-path:polygon(3% 0,100% 0,97% 100%,0 100%)}
+.cm-pl-gold{--cm-ink:#1a1405;--cm-sh:none;background-image:linear-gradient(180deg,#f6dc82,#d9a928 55%,#a87d12);clip-path:polygon(3% 0,100% 0,97% 100%,0 100%)}
+.cm-pl-red{--cm-ink:#2b0407;--cm-sh:none;background-image:linear-gradient(180deg,#ff3b3b,#d4141c);clip-path:polygon(3% 0,100% 0,97% 100%,0 100%)}
+.cm-pl-cyan{--cm-ink:#032a30;--cm-sh:none;background-image:linear-gradient(180deg,#3df0ec,#12bdc9);clip-path:polygon(3% 0,100% 0,97% 100%,0 100%)}
+.cm-pl-red,.cm-pl-cyan,.cm-pl-gold{padding-right:8.5cqw}
+.cm-pl-red::after,.cm-pl-cyan::after,.cm-pl-gold::after{content:"";position:absolute;top:0;bottom:0;right:3.6cqw;width:3.6cqw;background:linear-gradient(105deg,transparent 0 12%,rgba(0,0,0,.55) 12% 38%,transparent 38% 62%,rgba(0,0,0,.55) 62% 88%,transparent 88%)}
+.cm-pl-neon{background-color:rgba(5,10,14,.78);border:.5cqw solid #19e6e0;border-radius:1.2cqw;box-shadow:0 0 1.6cqw rgba(25,230,224,.8),inset 0 0 1.4cqw rgba(25,230,224,.35)}
+.cm-lg-cm_pink,.cm-lg-cm_gold,.cm-lg-noexc{display:flex;align-items:center;justify-content:center;font:italic 400 1em/.9 var(--f-display);text-align:center;font-size:18cqw;padding-top:6cqw;box-sizing:border-box;text-shadow:none;filter:drop-shadow(0 .6cqw 1cqw rgba(0,0,0,.7))}
+.cm-lg-cm_pink::after,.cm-lg-cm_gold::after{content:"";position:absolute;left:50%;top:0;width:62%;height:26%;transform:translateX(-50%);background:center/contain no-repeat}
+.cm-lg-cm_pink::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 56'%3E%3Cpath d='M8 50 L4 12 L28 30 L50 4 L72 30 L96 12 L92 50 Z' fill='%23d9dbe0' stroke='%23777b84' stroke-width='3' stroke-linejoin='round'/%3E%3Ccircle cx='4' cy='10' r='4' fill='%23ff4fa3'/%3E%3Ccircle cx='50' cy='4' r='4' fill='%23ff4fa3'/%3E%3Ccircle cx='96' cy='10' r='4' fill='%23ff4fa3'/%3E%3C/svg%3E")}
+.cm-lg-cm_gold::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 56'%3E%3Cpath d='M8 50 L4 12 L28 30 L50 4 L72 30 L96 12 L92 50 Z' fill='%23f3c445' stroke='%23a87d12' stroke-width='3' stroke-linejoin='round'/%3E%3Ccircle cx='4' cy='10' r='4' fill='%23fff1b0'/%3E%3Ccircle cx='50' cy='4' r='4' fill='%23fff1b0'/%3E%3Ccircle cx='96' cy='10' r='4' fill='%23fff1b0'/%3E%3C/svg%3E")}
+.cm-lg-cm_pink::before{content:"CM";font-size:1em;background:linear-gradient(180deg,#ff5fb0,#e0147a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.cm-lg-cm_gold::before{content:"CM";font-size:1em;background:linear-gradient(180deg,#ffe38a,#c8921a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.cm-lg-noexc{padding-top:0}
+.cm-lg-noexc::before{content:"NO\A EXCUSES";white-space:pre;font-size:.32em;line-height:1.05;background:linear-gradient(180deg,#fff,#9aa0a8);-webkit-background-clip:text;background-clip:text;color:transparent;transform:rotate(-9deg)}
+/* ---- éditeur : onglets défilants (7 onglets), tuiles de couches, barre d'aperçu / achat ---- */
+.bnx-tabs{display:flex;grid-template-columns:none;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.bnx-tabs::-webkit-scrollbar{display:none}
+.bnx-tab{flex:0 0 auto;padding:0 14px}
+.cm-tools{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.bnx-rnd.alt{border-color:rgba(255,255,255,.3);box-shadow:none;background:rgba(255,255,255,.06)}
+.bnx-t.cmt{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:4px;padding:6px 6px 9px;text-align:left}
+.cmt .cmt-nm{font:700 13px/1.15 var(--f-body);color:#fff}
+.cmt .cmt-r{font:700 10px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase}
+.bnx-t.cmt.lock .av-svg{background:#555}
+.bnx-t.cmt.pv{border-color:#19e6e0;border-style:solid;opacity:1;box-shadow:0 0 12px rgba(25,230,224,.6)}
+.cmth{position:relative;container-type:inline-size;width:100%;aspect-ratio:var(--bnm-r,2.5);border-radius:8px;overflow:hidden;background:#111;isolation:isolate;pointer-events:none}
+.cmth .bnm-logo{right:auto;left:50%;transform:translateX(-50%);top:3cqw;width:26cqw;height:35.4cqw}
+.cmth .bnm-name{top:15cqw}
+.cmth .bnm-plate{top:26cqw}
+.cmpv{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 12px;margin-top:12px;border:1.5px solid #19e6e0;border-radius:14px;background:rgba(25,230,224,.08);color:#fff;font-size:14px}
+.cmpv .cmpv-pr{display:inline-flex;align-items:center;gap:6px}
+.cmpv .cmpv-msg{color:#cfc3c8}
+.cmpv-b{min-height:40px;padding:0 16px;border:0;border-radius:12px;background:linear-gradient(90deg,#ff1f7a,#ff7a1a);color:#fff;font:700 14px var(--f-body);text-transform:uppercase;cursor:pointer}
+.cmpv-b.alt{background:rgba(255,255,255,.12)}
+.cmpv-x{margin-left:auto;width:36px;height:36px;border:1px solid rgba(255,255,255,.3);border-radius:10px;background:transparent;color:#fff;cursor:pointer}
+.cmb{display:grid;justify-items:center;gap:2px;padding:6px 2px;text-align:center}
+.cmb .cmt-nm{font:700 12px/1.15 var(--f-body);color:#fff}
+.cmb-s{font:600 11px/1.1 var(--f-body);color:#cfc3c8;text-transform:uppercase;letter-spacing:.05em}
+.bnx-t.cmbl{opacity:.6;border-style:dashed}
+.bnx-t.cmbl .badge{filter:grayscale(1) brightness(.75)}
+/* ---- shop : rareté + filtre ---- */
+.sh-rar{font:700 10px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase}
+.sh-rar.r-standard{color:#9aa3ad}.sh-rar.r-rare{color:#2aa6e0}.sh-rar.r-epique{color:#b44cff}.sh-rar.r-legendaire{color:#ffb21a}
+.sh-rf{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.sh-rf::-webkit-scrollbar{display:none}
+.sh-rfb{flex:none;min-height:34px;padding:0 14px;border:1.5px solid rgba(255,255,255,.25);border-radius:999px;background:transparent;color:#fff;font:700 13px var(--f-body);cursor:pointer}
+.sh-rfb.on{background:var(--g);border-color:transparent}
+.sh-img .cmth{border-radius:8px}
+
 .sh{display:grid;gap:18px;--g:linear-gradient(90deg,#ff1f7a,#ff6a1a);padding-bottom:12px}
 .sh-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .sh-top h1{margin:0;font-family:var(--f-display);font-weight:400;font-size:36px;line-height:1;text-transform:uppercase;letter-spacing:.02em}
@@ -910,6 +1033,13 @@ body:has(.bnx){overflow:hidden}
 .sh-ask{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .sh-box{padding:16px;border:1.5px solid rgba(255,255,255,.2);border-radius:12px;background:rgba(14,14,18,.88);display:grid;gap:10px}
 .sh-note{margin:0;font-size:12px;color:var(--muted)}
+.plan-free{margin:0;font-size:14px;line-height:1.4;font-weight:700;color:var(--ink)}
+.plan-sub,.plan-old,.plan-save{margin:0;font-size:14px;line-height:1.4}
+.plan-old{color:var(--muted)}
+.plan-save{font-weight:700;color:var(--accent)}
+.plan-dots{display:flex;justify-content:center;gap:10px}
+.plan-dot{width:10px;height:10px;padding:0;border-radius:50%;border:2px solid var(--edge);background:none;cursor:pointer}
+.plan-dot[aria-current=true]{background:var(--accent);border-color:var(--accent)}
 .rxhost{position:relative;height:240px;border:2px solid var(--edge);border-radius:4px;background:var(--panel);overflow:hidden}
 .bub.rx .bub-t span{font-size:30px;line-height:1.1;-webkit-line-clamp:1}
 .bub.rx .bub-t b{font-size:10px}
@@ -1805,6 +1935,7 @@ body[data-tab=today] .themed .card{background:color-mix(in srgb,var(--c1) 18%,va
 .wk-b .list{margin:0}
 a.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;color:inherit}
 a.btn.primary{color:var(--accent-ink)}
+.paystat{display:grid;gap:4px}.paystat b{font-size:18px}
 
 /* séances de remplacement (pas ou peu de matériel) */
 .car-slot{perspective:1400px}
@@ -4034,7 +4165,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-05.1';
+const APP_VERSION='2026-11-06.1';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -5779,13 +5910,13 @@ const typing=()=>{const a=document.activeElement;return a&&main.contains(a)&&/^(
 function scheduleRender(){if(typing()){pending=true;return;}render();}
 document.addEventListener('focusout',()=>{if(!pending)return;setTimeout(()=>{if(!typing()){pending=false;render();}},0);});
 
-function go(tab){S._bnDraft=null;if(tab!=='profile'&&infosGuard(()=>go(tab)))return;closeDrawer(true);S._bk=null;S._gk=null;S.movBack=null;S.movFocus=null;if(S.coach){if(S.coach.subEdit)closeSubEditor(true);S.coach.wodOpen=false;}if(tab==='coach'&&S.tab==='coach')S.coach.view=null;S.profView=null;S.viewUser=null;S.tip=null;S.trophOpen='';S.trophSeason='';if(tab==='today'){if(S.tab==='today'&&S.viewDate)S.carDate=S.viewDate;S.viewDate=null;}S.tab=tab;S.boardDetail=false;S.confirm=null;if(S.entry&&S.entry.coach)S.entry=null;if(S.tab!=='today'){S.entry=null;S.redo=null;}render();window.scrollTo(0,0);}
+function go(tab){S._bnDraft=null;S._cmPrev=null;S._cmAsk=null;if(tab!=='profile'&&infosGuard(()=>go(tab)))return;closeDrawer(true);S._bk=null;S._gk=null;S.movBack=null;S.movFocus=null;if(S.coach){if(S.coach.subEdit)closeSubEditor(true);S.coach.wodOpen=false;}if(tab==='coach'&&S.tab==='coach')S.coach.view=null;S.profView=null;S.viewUser=null;S.tip=null;S.trophOpen='';S.trophSeason='';if(tab==='today'){if(S.tab==='today'&&S.viewDate)S.carDate=S.viewDate;S.viewDate=null;}S.tab=tab;S.boardDetail=false;S.confirm=null;if(S.entry&&S.entry.coach)S.entry=null;if(S.tab!=='today'){S.entry=null;S.redo=null;}render();window.scrollTo(0,0);}
 const TAB_ICO={feed:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 5h16M4 10h10M4 15h16M4 20h8"/></svg>',
  today:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8.5 9V8a3.5 3.5 0 0 1 7 0v1"/><circle cx="12" cy="14.5" r="5.5"/></svg>',
  board:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 4h9v5a4.5 4.5 0 0 1-9 0z"/><path d="M7.5 6h-3c0 3 1.2 4.6 3.2 5M16.5 6h3c0 3-1.2 4.6-3.2 5M12 13.8V17M8.5 20h7M9.8 17h4.4"/></svg>'};
 function render(force){
   if(force!==true&&S.rankAnim&&S.rankAnim.busy){S.rankAnim.dirty=true;return;} /* animation du classement en cours : on ne reconstruit pas les éléments animés */
-  planHide();updateCoinChip();
+  planHide();updatePayChip();
   pending=false;S._un=null;S._aw=null;S._ob=null;if(!(S.tab==='profile'&&S.profView==='infos')){S.infDraft=null;S.infWarn=false;S.infLeave=null;}applyTheme();if(document.body.dataset.tab!==(S.tab||''))document.body.dataset.tab=S.tab||'';{const pv=(S.tab==='profile'&&S.uid&&!S.profView)?'1':'';if((document.body.dataset.pv||'')!==pv){if(pv)document.body.dataset.pv=pv;else delete document.body.dataset.pv;}}document.body.classList.remove('modal-open');document.body.classList.remove('board-lock');
   {const av=(!S.uid&&S.authReady&&S.db)?((S.authView==='login'||S.authView==='signup')?S.authView:'home'):'';if((document.body.dataset.auth||'')!==av){if(av)document.body.dataset.auth=av;else delete document.body.dataset.auth;}}
   {const tp=document.querySelector('.top');if(tp)document.documentElement.style.setProperty('--toph',tp.offsetHeight+'px');}
@@ -5807,16 +5938,16 @@ function render(force){
   const p=selPeriod();
   $('#hdr-right').replaceChildren(h('span',{class:'chip '+(periodState(p)==='live'?'live':'done'),style:'max-width:40vw;overflow:hidden;text-overflow:ellipsis;display:block'},p.virtual?'Saison en cours':(p.name||seasonLabel(p))),helpBtn());
   const tabs=[['feed','Fil'],['today','Séance'],['board','Classement'],['shop','Shop']];
-  const tabEls=tabs.map(([k,l])=>{const b=h('button',{class:'tab','data-tour':'tab-'+k,'aria-current':S.tab===k?'page':null,onclick:()=>go(k)});b.innerHTML=TAB_ICO[k]+'<span>'+l+'</span>';return b;});
+  const tabEls=tabs.map(([k,l])=>{const b=h('button',{class:'tab','data-tour':'tab-'+k,'aria-current':(S.tab===k||(k==='shop'&&PAY_PAUSED&&S.tab==='sub'))?'page':null,onclick:()=>go(k)});b.innerHTML=TAB_ICO[k]+'<span>'+l+'</span>';return b;});
   {
-    const activeExtra=['profile','coach','prefs','stats','share','rules','health','bug','moves','avis','recap','msgs'].includes(S.tab);
+    const activeExtra=['profile','coach','prefs','stats','share','rules','health','bug','moves',...(PAY_PAUSED?[]:['sub']),'avis','recap','msgs'].includes(S.tab);
     const bb=h('button',{class:'tab tab-burger','data-tour':'tab-menu','aria-current':activeExtra?'page':null,'aria-haspopup':'dialog','aria-expanded':drawerEl?'true':'false','aria-label':'Menu',title:'Menu',onclick:()=>{drawerEl?closeDrawer():openDrawer();}});
     bb.innerHTML=ICO_MENU;if(menuDot())bb.append(h('span',{class:'ibdot','aria-hidden':'true'}));
     tabEls.push(bb);
   }
   $('#tabs').classList.remove('coach-tabs');
   $('#tabs').replaceChildren(...tabEls);
-  const view={feed:viewFeed,today:viewToday,board:viewBoard,profile:viewProfile,coach:viewCoach,stats:viewStats,prefs:viewPrefs,share:viewShare,shop:viewShop,avis:viewAvis,rules:viewRules,health:viewHealth,bug:viewBug,moves:viewMoves,recap:viewRecap,msgs:viewMsgs}[S.tab]||viewFeed;
+  const view={feed:viewFeed,today:viewToday,board:viewBoard,profile:viewProfile,coach:viewCoach,stats:viewStats,prefs:viewPrefs,share:viewShare,sub:(PAY_PAUSED?viewShop:viewSub),shop:viewShop,avis:viewAvis,rules:viewRules,health:viewHealth,bug:viewBug,moves:viewMoves,recap:viewRecap,msgs:viewMsgs}[S.tab]||viewFeed;
   const _esc=document.querySelector('.entry-sheet'),_escTop=_esc?_esc.scrollTop:0;
   const _arl=document.querySelector('.ar-list'),_arlTop=_arl?_arl.scrollTop:0,_arlKey=_arl?_arl.dataset.key:'';
   main.replaceChildren(...banners(),view());
@@ -7714,15 +7845,22 @@ function viewFeed(){
     const {uid,lg,date,e,w}=post,m=metconOf(w),mine=(S.reactions[uid+'__'+date+'__'+S.uid]||{}).emoji;
     const avwrap=avatarFramed(uid,()=>openAthlete(uid));
     
-    const head=bannerEl(uid,[h('div',{class:'feed-head'},avwrap,h('div',{class:'feed-meta'},h('div',{class:'nm'},h('button',{class:'link',type:'button',onclick:()=>openAthlete(uid)},lg.pseudo||'Athlète')),bannerTitle(uid)))],false,true);
+    const cmOn=cmActive(uid);
+    const head=cmOn?null:bannerEl(uid,[h('div',{class:'feed-head'},avwrap,h('div',{class:'feed-meta'},h('div',{class:'nm'},h('button',{class:'link',type:'button',onclick:()=>openAthlete(uid)},lg.pseudo||'Athlète')),bannerTitle(uid)))],false,true);
     /* badge choisi : accroché en haut à droite de la publication, en diagonale */
-    const fb=badgeOf(uid);let fbEl=null;
+    const fb=cmOn?null:badgeOf(uid);let fbEl=null; /* bannière modulaire : le badge fait partie de la bannière (couche 3) */
     if(fb){fbEl=badgeEl(fb.tid,fb.per.name,108,trophyName(fb.tid)+' · '+fb.per.name,fb.per);fbEl.classList.add('feed-badge');head.classList.add('has-badge');}
     const results=[];
     (w.parts||[]).filter(p=>p.kind==='force').forEach(p=>{const kg=e.loads&&e.loads[p.label];if(kg!==undefined)results.push(h('div',{class:'feed-metric fm-force'},h('b',{},fmtKg(kg)),h('span',{},p.movement||p.name||'Force')));});
     if(m&&hasScore(e))results.push(h('div',{class:'feed-metric fm-mc'},h('b',{},scoreText(m,e.score,e)),h('span',{},'Metcon · '+(m.format==='FT'?'Temps':m.format==='AMRAP'?'Tours / reps':isDead(m)?'Dead by':'Tours'))));
     else if(m&&e.noMetcon)results.push(h('div',{class:'feed-metric'},h('b',{},'Metcon non réalisé'),h('span',{},'Pas de points de metcon')));
     const rx=h('div',{class:'rxrow','data-rx-to':uid,'data-rx-date':date},rxButtons(uid,date));
+    if(cmOn){ /* bannière modulaire : résultats, réactions et points sont dans la bannière ; titre de séance, date, message et signalement dessous */
+      const pts=feedPts(w,e);
+      const cmHead=cmEl(uid,{avatar:avwrap,open:()=>openAthlete(uid),res:results.length?h('div',{class:'feed-result'},results):h('p',{class:'muted'},'Résultat non renseigné.'),rx,pts:pts?pts.textContent:null});
+      el.append(h('section',{class:'card feed-card th-cm'},cmHead,h('div',{class:'feed-wod-head'},h('h2',{class:'wtitle',style:'font-size:24px;margin:0'},w.title,feedLvBadge(m,e)),h('span',{class:'sub feed-wod-date'},'Réalisée le '+cap(fmtShort(dfmt(new Date(e.at)))))),e.message?h('p',{class:'feed-message',style:'white-space:pre-wrap;overflow-wrap:anywhere;margin:0'},e.message):null,repLink(uid,date)));
+      return;
+    }
     el.append(h('section',{class:'card feed-card'+cardTheme(uid)+(fb?' feed-has-badge':'')},head,fbEl,h('div',{class:'feed-wod-head'},h('h2',{class:'wtitle',style:'font-size:24px;margin:0'},w.title,feedLvBadge(m,e)),h('span',{class:'sub feed-wod-date'},'Réalisée le '+cap(fmtShort(dfmt(new Date(e.at)))))),results.length?h('div',{class:'feed-result'},results):h('p',{class:'muted'},'Résultat détaillé non renseigné.'),e.message?h('p',{class:'feed-message',style:'white-space:pre-wrap;overflow-wrap:anywhere;margin:0'},e.message):null,h('div',{class:'rxwrap'},rx,feedPts(w,e)),repLink(uid,date)));
   });
   if(posts.length>visiblePosts.length){
@@ -8173,6 +8311,7 @@ function viewHealthGate(){
   return root;
 }
 function viewToday(){
+  if(!hasAccess())return viewPaywall();
   if(needHealthGate())return viewHealthGate();
   if(!S.viewDate)return viewCards();
   const t=todayStr(),date=S.viewDate||defaultDate(),w0=S.wods[date],w=w0&&myWod(w0,S.uid);
@@ -10964,6 +11103,159 @@ const BG_ASSETS={
 const bgRemoved=r=>r.type==='bg'&&r.asset==='halloween';
 const bgRewardClass=r=>(BG_ASSETS[r.asset]||{}).cls||'bn-bg-base reward-bg';
 const BN_DEFAULT={bg:'base',frame:'',title:'',avframe:''};
+/* ---------- bannière modulaire : 6 couches indépendantes ----------
+   La carte de la publication devient la bannière (format 5:2) : FOND + EFFETS + LOGO + BADGE + CADRE + PLAQUE, superposés dynamiquement
+   (aucune image par combinaison). Avatar, pseudo, résultats, réactions et points restent dynamiques, jamais dans les images.
+   Stockage : logs/{uid}.banner.cm = {background, effect, logo, badge, frame, plate}  (identifiants du catalogue CM_ITEMS ; '' = aucun).
+   · Les anciens champs banner.bg / banner.frame / banner.title / banner.avframe ne sont pas touchés : sans banner.cm, la bannière actuelle s'affiche à l'identique.
+     Le titre (banner.title) s'écrit sur la plaque ; le cadre d'avatar (banner.avframe) est l'anneau autour du grand avatar.
+   · badge = référence « idSaison|idTrophée » d'un badge saisonnier DÉJÀ existant (calculé par awards()) : aucun nouveau système de badges ;
+     absent = on reprend le badge principal du profil (logs/{uid}.badge) ; '' = « Aucun badge ». Possession revérifiée à chaque affichage.
+   · Les objets achetables sont achetés avec le shop existant : logs/{uid}.shopBuy[id] = prix payé, mise en vente par le coach dans Coach › Shop et coins
+     (prix vide = prix de la rareté). Un objet « free » est à tout le monde. Un objet peut aussi se débloquer par une condition (champ unlock).
+   · Un identifiant inconnu (objet retiré du catalogue) ou non possédé est ignoré à l'affichage : la couche retombe sur son défaut.
+   POUR AJOUTER UN OBJET : une ligne dans CM_ITEMS (déposer l'image dans assets/embedded puis renseigner src), rien d'autre à modifier.
+   Formats d'image conseillés (PNG/WebP/SVG ; tous identiques dans une même catégorie ; repère 1280 x 512, format 5:2) :
+     background : 1280x512, opaque · effect : 1280x512, transparent · frame : 1280x512, transparent (contour seul, rester dans les 30 px du bord)
+     logo : 564x768 (zone à droite, 24 % x 33 % de la largeur, au-dessus du fond et des effets), transparent · plate : 1024x180 (bandeau du titre), transparent, sans texte
+   Les éléments ci-dessous sans src sont des éléments de démonstration dessinés en CSS (classe css) : à supprimer ou remplacer quand les images existent. */
+const CM_RARITY={standard:{name:'Standard',price:50,col:'#9aa3ad'},rare:{name:'Rare',price:80,col:'#2aa6e0'},epique:{name:'Épique',price:150,col:'#b44cff'},legendaire:{name:'Légendaire',price:250,col:'#ffb21a'}};
+const CM_LAYERS=[{id:'background',tab:'mbg',name:'Fond',shop:'mfond'},{id:'effect',tab:'mfx',name:'Effets',shop:'meffet'},{id:'logo',tab:'mlogo',name:'Logo',shop:'mlogo'},{id:'badge',tab:'mbadge',name:'Badge'},{id:'frame',tab:'mframe',name:'Cadre',shop:'mcadre'},{id:'plate',tab:'mplate',name:'Plaque',shop:'mplaque'}];
+/* champs : id · layer · name · rarity (standard|rare|epique|legendaire) · src (image) ou css (classe) · free (à tout le monde) · price (sinon prix de la rareté)
+   · avail:false (plus en vente ; les athlètes qui l'ont le gardent) · unlock:{d:'texte',test:uid=>bool} (déblocage par accomplissement / événement, ex. légendaires) */
+const CM_ITEMS=[
+  {id:'background_boxscore_01',layer:'background',name:'Box Score',rarity:'standard',css:'cm-bg-boxscore',free:true},
+  {id:'background_forge_01',layer:'background',name:'Forge',rarity:'standard',css:'cm-bg-forge'},
+  {id:'background_braises_01',layer:'background',name:'Braises',rarity:'rare',css:'cm-bg-braises'},
+  {id:'background_neon_city_01',layer:'background',name:'Néon City',rarity:'epique',css:'cm-bg-neoncity'},
+  {id:'background_premium_01',layer:'background',name:'Premium or',rarity:'legendaire',css:'cm-bg-premium'},
+  {id:'effect_stripes_01',layer:'effect',name:'Rayures',rarity:'standard',css:'cm-fx-stripes'},
+  {id:'effect_scratches_01',layer:'effect',name:'Griffures',rarity:'rare',css:'cm-fx-scratches'},
+  {id:'effect_particles_01',layer:'effect',name:'Particules',rarity:'rare',css:'cm-fx-particles'},
+  {id:'effect_flames_01',layer:'effect',name:'Flammes',rarity:'epique',css:'cm-fx-flames'},
+  {id:'logo_cm_pink_01',layer:'logo',name:'CM rose',rarity:'rare',css:'cm-lg-cm_pink'},
+  {id:'logo_no_excuses_01',layer:'logo',name:'No Excuses',rarity:'rare',css:'cm-lg-noexc'},
+  {id:'logo_cm_gold_01',layer:'logo',name:'CM doré',rarity:'epique',css:'cm-lg-cm_gold'},
+  {id:'frame_red_01',layer:'frame',name:'Rouge lumineux',rarity:'standard',css:'cm-fr-red',tone:'#ff2a3d'},
+  {id:'frame_cyan_neon_01',layer:'frame',name:'Turquoise néon',rarity:'rare',css:'cm-fr-cyan',tone:'#19e6e0'},
+  {id:'frame_magenta_01',layer:'frame',name:'Magenta',rarity:'rare',css:'cm-fr-magenta',tone:'#ff1f9d'},
+  {id:'frame_gold_01',layer:'frame',name:'Doré',rarity:'epique',css:'cm-fr-gold',tone:'#f3c445'},
+  {id:'frame_aurora_01',layer:'frame',name:'Aurore animée',rarity:'legendaire',css:'cm-fr-aurora',tone:'#ff1f7a'},
+  {id:'plate_classic_01',layer:'plate',name:'Classique',rarity:'standard',css:'cm-pl-classic',free:true},
+  {id:'plate_metal_01',layer:'plate',name:'Métallique',rarity:'standard',css:'cm-pl-metal'},
+  {id:'plate_redblack_01',layer:'plate',name:'Noir et rouge',rarity:'rare',css:'cm-pl-redblack'},
+  {id:'plate_red_01',layer:'plate',name:'Rouge',rarity:'standard',css:'cm-pl-red'},
+  {id:'plate_cyan_01',layer:'plate',name:'Turquoise',rarity:'rare',css:'cm-pl-cyan'},
+  {id:'plate_gold_01',layer:'plate',name:'Dorée',rarity:'epique',css:'cm-pl-gold'},
+  {id:'plate_neon_01',layer:'plate',name:'Lumineuse',rarity:'legendaire',css:'cm-pl-neon'}
+];
+const CM_DEFAULT_TITLE='Athlète Cross’Mitaines'; /* texte de la plaque tant que l'athlète n'a pas équipé de titre */
+const CM_LIST=CM_ITEMS.map(x=>Object.assign({cm:true,kind:'cm'},x));
+const CM_BY=Object.fromEntries(CM_LIST.map(x=>[x.id,x]));
+const cmLayer=id=>CM_LAYERS.find(l=>l.id===id)||CM_LAYERS[0];
+const cmPrice=it=>{const p=Math.floor(Number(it.price));return p>=1?p:(CM_RARITY[it.rarity]||CM_RARITY.standard).price;};
+/* possédé : gratuit, acheté au shop (shopBuy), ou condition de déblocage remplie */
+function cmOwned(uid,it){
+  if(!it)return false;
+  if(it.free)return true;
+  const lg=S.logs[uid]||{};
+  if(Object.prototype.hasOwnProperty.call(lg.shopBuy||{},it.id))return true;
+  try{return !!(it.unlock&&typeof it.unlock.test==='function'&&it.unlock.test(uid));}catch(e){return false;}
+}
+function cmApply(el,it){
+  if(!it)return;
+  if(it.src)el.style.backgroundImage='url("'+String(it.src).replace(/"/g,'%22')+'")';
+  if(it.css)el.classList.add(it.css);
+}
+/* bannière brute de l'athlète : enregistrée + aperçu coach + brouillon de l'éditeur (uniquement pour soi, dans l'éditeur) */
+function bnMerged(uid){
+  const saved=((S.logs[uid]||{}).banner)||{};
+  const preview=(S.owner&&uid===S.uid&&S._bannerPreview&&Number(S._bannerPreview.until)>Date.now())?S._bannerPreview.banner:null;
+  const b0=preview?Object.assign({},saved,preview):saved;
+  return (uid===S.uid&&S.tab==='profile'&&S.profView==='banner'&&S._bnDraft)?Object.assign({},b0,S._bnDraft):b0;
+}
+/* composition modulaire active : banner.cm présent ET aucun fond « classique » (thème de carte) équipé */
+function cmActive(uid){
+  const b=bnMerged(uid);
+  if(!(b.cm&&typeof b.cm==='object'))return false;
+  return bannerOf(uid).bg==='base'; /* bannerOf valide le fond : un thème classique reconnu garde le rendu actuel */
+}
+/* composition résolue : objets du catalogue réellement possédés (sinon null = défaut de la couche) + badge saisonnier vérifié */
+function cmOf(uid){
+  const b=bnMerged(uid),raw=(b.cm&&typeof b.cm==='object')?b.cm:{};
+  const prev=(uid===S.uid&&S.tab==='profile'&&S.profView==='banner')?S._cmPrev:null;
+  const out={};
+  for(const L of CM_LAYERS){
+    if(L.id==='badge')continue;
+    let id=raw[L.id];const isPrev=!!(prev&&prev.layer===L.id);
+    if(isPrev)id=prev.id;
+    const it=id?CM_BY[id]:null;
+    out[L.id]=(it&&it.layer===L.id&&(isPrev||cmOwned(uid,it)))?it:null;
+  }
+  const bid=raw.badge===undefined?(((S.logs[uid]||{}).badge)||''):raw.badge;
+  out.badge=bid?((awards()[uid]||[]).find(a=>a.id===bid)||null):null;
+  return out;
+}
+/* vignette d'un objet (éditeur, shop) : la couche seule sur un fond neutre, à l'échelle */
+function cmThumb(it){
+  const t=h('div',{class:'cmth'}),bg=h('div',{class:'bnm-l bnm-bg'});t.append(bg);
+  if(it.layer==='background')cmApply(bg,it);
+  else if(it.layer==='effect'){const l=h('div',{class:'bnm-l bnm-fx'});cmApply(l,it);t.append(l);}
+  else if(it.layer==='frame'){const l=h('div',{class:'bnm-l bnm-frame'});cmApply(l,it);t.append(l);}
+  else if(it.layer==='logo'){const l=h('div',{class:'bnm-logo'});cmApply(l,it);t.append(l);}
+  else if(it.layer==='plate'){const pl=h('div',{class:'bnm-plate'});cmApply(pl,it);pl.append(h('span',{class:'bnm-pt'},'Titre'));t.append(h('div',{class:'bnm-name'},h('div',{class:'nm'},'PSEUDO')),pl);}
+  return t;
+}
+/* bannière modulaire (toute la carte du haut : avatar, badge, pseudo, plaque-titre, résultats, réactions, points).
+   o.open = clic sur le pseudo · o.avatar = avatar déjà construit · o.avclick = clic sur l'avatar · o.mini = couches seules (vignette du profil)
+   o.res / o.rx / o.pts = résultats, ligne de réactions et points de la publication (fil) · o.sample = exemples inertes (éditeur) */
+function cmEl(uid,o){
+  o=o||{};
+  const c=cmOf(uid),b=bannerOf(uid),lg=S.logs[uid]||{},fr=b.frame?BN.frame[b.frame]:null;
+  const el=h('div',{class:'bn bnm'+(o.mini?' bnm-mini':'')+(fr?' '+fr.cls:''),'data-banner':'modular'});
+  const bg=h('div',{class:'bnm-l bnm-bg'});cmApply(bg,c.background);
+  const fx=h('div',{class:'bnm-l bnm-fx'});cmApply(fx,c.effect);
+  const lgo=h('div',{class:'bnm-logo'});cmApply(lgo,c.logo);
+  const fm=h('div',{class:'bnm-l bnm-frame'});cmApply(fm,c.frame);
+  if(c.frame&&c.frame.tone)el.style.setProperty('--cm-line',c.frame.tone); /* anneau de l'avatar + bordures des réactions à la couleur du cadre */
+  el.append(bg,fx);if(c.logo)el.append(lgo);el.append(fm);
+  if(o.mini)return el;
+  el.append(h('div',{class:'bnm-av'},o.avatar||avatarFramed(uid,o.avclick||null)));
+  if(c.badge){
+    const bw=h('div',{class:'bnm-badge'});
+    bw.append(badgeEl(c.badge.tid,c.badge.per.name,110,trophyName(c.badge.tid)+' · '+c.badge.per.name,c.badge.per));
+    el.append(bw);
+  }
+  const ps=lg.pseudo||'Athlète',t=b.title,ttl=t&&BN.title[t]?BN.title[t].text:CM_DEFAULT_TITLE;
+  el.append(h('div',{class:'bnm-name'},h('div',{class:'nm'},o.open?h('button',{class:'link',type:'button',onclick:o.open},ps):ps)));
+  const pl=h('div',{class:'bnm-plate'+(c.plate?'':' def')});cmApply(pl,c.plate);pl.append(h('span',{class:'bnm-pt'},ttl));el.append(pl);
+  if(o.sample){
+    el.append(h('div',{class:'bnm-res'},h('div',{class:'feed-result'},h('div',{class:'feed-metric'},h('b',{},'72,5 kg'),h('span',{},'Shoulder press')),h('div',{class:'feed-metric'},h('b',{},'10:57'),h('span',{},'Metcon · Temps')))),
+      h('div',{class:'bnm-rx'},h('div',{class:'rxrow'},['👑','😭','👍','💪','😂'].map((e,i)=>h('button',{type:'button',class:'rxb',tabindex:'-1','aria-hidden':'true'},e,i===0?h('small',{},'2'):null)))),
+      h('span',{class:'bnm-pts'},'+28'));
+  }else{
+    if(o.res)el.append(h('div',{class:'bnm-res'},o.res));
+    if(o.rx)el.append(h('div',{class:'bnm-rx'},o.rx));
+    if(o.pts)el.append(h('span',{class:'bnm-pts'},o.pts));
+  }
+  return el;
+}
+/* enregistrement : ne garde que des identifiants connus, de la bonne couche et réellement possédés ; badge = référence d'un badge gagné */
+function cmFinalize(nv){
+  const out=Object.assign({},nv);
+  if(!(out.cm&&typeof out.cm==='object')){delete out.cm;return out;}
+  const cm={};
+  for(const L of CM_LAYERS){
+    const v=out.cm[L.id];
+    if(typeof v!=='string')continue;
+    if(L.id==='badge'){if(v===''||(awards()[S.uid]||[]).some(a=>a.id===v))cm.badge=v;continue;}
+    if(v===''){cm[L.id]='';continue;}
+    const it=CM_BY[v];
+    if(it&&it.layer===L.id&&cmOwned(S.uid,it))cm[L.id]=v;
+  }
+  if(Object.keys(cm).length)out.cm=cm;else delete out.cm;
+  return out;
+}
 function bannerOf(uid){
   for(const per of plist())if(!per.virtual&&periodState(per)==='done')botList(botTitleCfg(per)).forEach(b=>{if(botTitleOn(per,b))BN.title['bt:'+b.id+':'+per.id]={text:b.title};});
   for(const per of plist())for(const r of (per.rewards||[])){
@@ -10973,17 +11265,14 @@ function bannerOf(uid){
     if(r.type==='avframe')BN.avframe[r.id]={name:r.name||'Cadre d’avatar',src:avfSrc(r)};
   }
   for(const b of shopBanners()){if(b.kind==='bg')BN.bg[b.id]={name:b.name,cls:b.cls};else BN.avframe[b.id]={name:b.name,src:b.src};} /* éléments vendus au shop */
-  const saved=((S.logs[uid]||{}).banner)||{};
-  // Aperçu temporaire réservé au coach : il remplace uniquement les emplacements testés et n'est pas sauvegardé.
-  const preview=(S.owner&&uid===S.uid&&S._bannerPreview&&Number(S._bannerPreview.until)>Date.now())?S._bannerPreview.banner:null;
-  const b0=preview?Object.assign({},saved,preview):saved;
-  const b=(uid===S.uid&&S.tab==='profile'&&S.profView==='banner'&&S._bnDraft)?Object.assign({},b0,S._bnDraft):b0;
+  const b=bnMerged(uid);
   const pick=k=>(b[k]&&BN[k][b[k]])?b[k]:BN_DEFAULT[k];
-  return {bg:pick('bg'),frame:pick('frame'),title:pick('title'),avframe:pick('avframe')};
+  return {bg:pick('bg'),frame:pick('frame'),title:pick('title'),avframe:pick('avframe'),cm:(b.cm&&typeof b.cm==='object')?b.cm:null};
 }
 /* thème de publication : le fond de bannière « Angry Pumpkin » habille toute la carte du fil */
 function cardTheme(uid){const c=(BN.bg[bannerOf(uid).bg]||{}).cls;return c==='bn-bg-angrypumpkin'?' th-angrypumpkin':c==='bn-bg-alpha'?' th-alpha':c==='bn-bg-crimson'?' th-crimson':c==='bn-bg-neonviolet'?' th-neonviolet':'';}
 function bannerEl(uid,kids,editable=false,withAvf=false){
+  if((!kids||!kids.length)&&cmActive(uid))return cmEl(uid,{mini:true}); /* vignette du profil : bannière modulaire sans texte */
   const b=bannerOf(uid),fr=b.frame?BN.frame[b.frame]:null;
   const el=h('div',{class:'bn '+BN.bg[b.bg].cls+(fr?' '+fr.cls:'')+(withAvf&&b.avframe?' bn-avf'+(withAvf==='lg'?' bn-avf-lg':''):'')+(editable?' bn-editable':''),'data-banner':b.bg,role:editable?'button':null,tabindex:editable?0:null,'aria-label':editable?'Personnaliser ma bannière':null,onclick:editable?e=>{if(e.target.closest&&e.target.closest('.feed-av,button,a'))return;S.profView='banner';render();window.scrollTo(0,0);}:null,onkeydown:editable?e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();S.profView='banner';render();window.scrollTo(0,0);}}:null},kids);
   return el;
@@ -11035,7 +11324,7 @@ function bannerSection(){
   }
   bannerOf(S.uid); /* enregistre les éléments débloqués dans BN */
   if(!S._bnDraft)S._bnDraft={};
-  if(!S.bnTab)S.bnTab='bg';
+  if(!S.bnTab||S.bnTab==='bg')S.bnTab='mbg';
   const eff=bannerOf(S.uid),draftOn=Object.keys(S._bnDraft).length>0;
   const pickV=(k,v)=>{S._bnDraft=Object.assign({},S._bnDraft,{[k]:v});render();};
   const startPreview=r=>{
@@ -11043,7 +11332,7 @@ function bannerSection(){
     const until=Date.now()+60000;S._bannerPreview={banner,until};render();window.scrollTo(0,0);toast('Aperçu actif pendant 1 minute.');
     window.setTimeout(()=>{if(S._bannerPreview&&S._bannerPreview.until===until){S._bannerPreview=null;render();toast('Aperçu terminé : récompense non débloquée.');}},60000);
   };
-  const leave=()=>{S._bnDraft=null;S.profView=null;render();window.scrollTo(0,0);};
+  const leave=()=>{S._bnDraft=null;S._cmPrev=null;S._cmAsk=null;S.profView=null;render();window.scrollTo(0,0);};
   const tile=(inner,on,fn,label,lock)=>{
     const b=h('button',{type:'button',class:'bnx-t'+(on?' on':'')+(lock?' lock':''),'aria-pressed':on?'true':'false','aria-label':label+(lock?' (aperçu coach, 1 minute)':''),onclick:fn},inner);
     if(on)b.append(AVSVG('<path d="M5 12.5l4.5 4.5L19 7.5"/>',16));
@@ -11055,15 +11344,102 @@ function bannerSection(){
   const head=(t,extra)=>h('div',{class:'bnx-h'},h('h2',{},t),extra||null);
   const tab=S.bnTab,view=h('div',{class:'bnx-view'});
 
+  /* ===== bannière modulaire : 5 couches (fond · effets · badge · cadre · plaque) ===== */
+  const cmSv=()=>((sv.cm&&typeof sv.cm==='object')?sv.cm:{});
+  const cmCur=()=>{const d=S._bnDraft;if(d&&d.cm===null)return {};return Object.assign({},cmSv(),(d&&d.cm)||{});};
+  /* équiper / déséquiper : modifie une seule couche du brouillon (rien n'est enregistré avant « Valider ») */
+  const cmPick=(layer,id)=>{
+    S._cmPrev=null;S._cmAsk=null;
+    const d=Object.assign({},S._bnDraft||{});
+    d.cm=Object.assign({},cmCur(),{[layer]:id});
+    if(bannerOf(S.uid).bg!=='base'){d.bg='base';toast('Ton fond classique est remplacé par la composition. Retrouve-le dans Fond › Thèmes classiques.');}
+    S._bnDraft=d;render();
+  };
+  const cmTools=()=>{
+    const mine=awards()[S.uid]||[],pk=a=>a[Math.floor(Math.random()*a.length)];
+    const rnd=()=>{
+      const cm={};
+      for(const L of CM_LAYERS){
+        if(L.id==='badge'){cm.badge=mine.length?pk(mine).id:'';continue;}
+        const pool=CM_LIST.filter(it=>it.layer===L.id&&cmOwned(S.uid,it));
+        cm[L.id]=(pool.length&&(L.id==='background'||Math.random()>.2))?pk(pool).id:'';
+      }
+      const d=Object.assign({},S._bnDraft||{},{cm});
+      if(bannerOf(S.uid).bg!=='base')d.bg='base';
+      S._cmPrev=null;S._cmAsk=null;S._bnDraft=d;render();
+    };
+    return h('div',{class:'cm-tools'},
+      h('button',{class:'bnx-rnd',type:'button',id:'cm-rnd',onclick:rnd},AVSVG('<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1"/><circle cx="15" cy="15" r="1"/><circle cx="15" cy="9" r="1"/><circle cx="9" cy="15" r="1"/>',20),'Aléatoire'),
+      cmActive(S.uid)?h('button',{class:'bnx-rnd alt',type:'button',id:'cm-classic',onclick:()=>{S._cmPrev=null;S._cmAsk=null;S._bnDraft=Object.assign({},S._bnDraft||{},{cm:null});render();}},'Style classique'):null);
+  };
+  const cmBuy=it=>{
+    S._cmAsk=null;
+    Promise.resolve(shopBuy(it)).then(()=>{if(cmOwned(S.uid,it)&&S.profView==='banner')cmPick(it.layer,it.id);});
+  };
+  const CM_CHECK='<path d="M5 12.5l4.5 4.5L19 7.5"/>',CM_LOCK='<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>';
+  /* barre d'aperçu d'un objet verrouillé : prix + achat direct si assez de coins, sinon condition de déblocage */
+  const cmPvBar=L=>{
+    const p=S._cmPrev;if(!p||p.layer!==L.id)return null;
+    const it=CM_BY[p.id];if(!it||cmOwned(S.uid,it))return null;
+    const e=shopEntry(it.id),bal=coinBal(S.uid),r=CM_RARITY[it.rarity]||CM_RARITY.standard;
+    const kids=[h('b',{},'Aperçu : '+it.name),h('span',{class:'sh-rar r-'+it.rarity},r.name)];
+    if(e){
+      kids.push(h('span',{class:'cmpv-pr'},coinIco(18),h('b',{},String(e.price))));
+      if(bal<e.price)kids.push(h('span',{class:'cmpv-msg'},'Il te manque '+(e.price-bal)+' coin'+(e.price-bal>1?'s':'')+'.'));
+      else if(S._cmAsk===it.id)kids.push(h('button',{class:'cmpv-b alt',type:'button',onclick:()=>{S._cmAsk=null;render();}},'Annuler'),h('button',{class:'cmpv-b',type:'button',id:'cm-buy-ok',onclick:()=>cmBuy(it)},'Confirmer l’achat'));
+      else kids.push(h('button',{class:'cmpv-b',type:'button',id:'cm-buy',onclick:()=>{S._cmAsk=it.id;render();}},'Acheter'));
+    }else kids.push(h('span',{class:'cmpv-msg'},it.unlock?'À débloquer : '+it.unlock.d:'Pas en vente pour le moment.'));
+    kids.push(h('button',{class:'cmpv-x',type:'button','aria-label':'Fermer l’aperçu',onclick:()=>{S._cmPrev=null;S._cmAsk=null;render();}},'✕'));
+    return h('div',{class:'cmpv',role:'status'},kids);
+  };
+  const cmItemsView=L=>{
+    const cur=cmCur()[L.id]||'',RK=['standard','rare','epique','legendaire'];
+    const items=CM_LIST.filter(it=>it.layer===L.id).sort((a,b)=>(cmOwned(S.uid,b)-cmOwned(S.uid,a))||(RK.indexOf(a.rarity)-RK.indexOf(b.rarity)));
+    const tl=it=>{
+      const own=cmOwned(S.uid,it),on=own&&cur===it.id,pv=!!(S._cmPrev&&S._cmPrev.id===it.id),r=CM_RARITY[it.rarity]||CM_RARITY.standard;
+      const b=h('button',{type:'button',id:'cm-'+it.id,class:'bnx-t cmt'+(on?' on':'')+(own?'':' lock')+(pv?' pv':''),'aria-pressed':on?'true':'false',
+        'aria-label':it.name+', '+r.name+(own?'':', verrouillé : toucher pour prévisualiser'),
+        onclick:()=>{if(own)cmPick(L.id,on?'':it.id);else{S._cmPrev={layer:L.id,id:it.id};S._cmAsk=null;render();}}},
+        cmThumb(it),h('span',{class:'cmt-nm'},it.name),h('span',{class:'cmt-r',style:'color:'+r.col},r.name));
+      if(on)b.append(AVSVG(CM_CHECK,16));else if(!own)b.append(AVSVG(CM_LOCK,14));
+      return b;
+    };
+    const none=tile(txt(L.id==='background'?'Défaut':'Aucun'),!cur||!items.some(it=>it.id===cur&&cmOwned(S.uid,it)),()=>cmPick(L.id,''),L.id==='background'?'Fond par défaut':'Aucun');
+    return [head(L.name),L.id==='plate'?h('p',{class:'bnx-hint'},'La plaque encadre ton titre : choisis ton titre dans l’onglet Titre.'):null,L.id==='logo'?h('p',{class:'bnx-hint'},'Le logo se place à droite, au-dessus du fond et des effets.'):null,cmPvBar(L),grid([none].concat(items.map(tl))),
+      h('p',{class:'bnx-hint'},'Touche un objet possédé pour l’équiper, touche-le encore pour le retirer. Un objet verrouillé se prévisualise avant achat.')];
+  };
+  const cmBadgeView=()=>{
+    const mine=(awards()[S.uid]||[]).slice().sort((a,b)=>a.per.start<b.per.start?1:a.per.start>b.per.start?-1:0);
+    const c=cmCur(),curId=c.badge===undefined?(lg.badge||''):c.badge,has=mine.some(a=>a.id===curId);
+    const out=[head('Badge de saison'),h('p',{class:'bnx-hint'},'Seuls les badges que tu as remportés en fin de saison peuvent être affichés : il s’affiche sous ton avatar. C’est le même badge que dans « Mes badges », sa rareté dépend de tes résultats.')];
+    const tiles=[tile(txt('Aucun badge'),!has,()=>cmPick('badge',''),'Aucun badge')];
+    mine.forEach(a=>{const on=has&&a.id===curId;
+      tiles.push(tile(h('div',{class:'cmb'},badgeEl(a.tid,a.per.name,badgeImgOn(a.per,a.tid)?112:92,null,a.per),h('span',{class:'cmt-nm'},trophyName(a.tid)),h('span',{class:'cmb-s'},seasonTag(a.per))),on,()=>cmPick('badge',on?'':a.id),trophyName(a.tid)+' '+seasonTag(a.per)));});
+    out.push(grid(tiles));
+    if(!mine.length)out.push(h('p',{class:'bnx-hint'},'Tu n’as pas encore de badge : ils se gagnent en terminant parmi les premiers d’un trophée à la fin d’une saison.'));
+    const all={};for(const list of Object.values(awards()))list.forEach(a=>{all[a.id]=a;});
+    const mineIds=new Set(mine.map(a=>a.id)),missing=Object.values(all).filter(a=>!mineIds.has(a.id)).sort((a,b)=>a.per.start<b.per.start?1:a.per.start>b.per.start?-1:0);
+    if(missing.length){
+      out.push(h('button',{class:'bnx-rnd alt',type:'button',id:'cm-miss',style:'margin-top:14px',onclick:()=>{S._cmMiss=!S._cmMiss;render();}},(S._cmMiss?'Masquer':'Voir')+' les badges pas encore obtenus ('+missing.length+')'));
+      if(S._cmMiss)out.push(grid(missing.map(a=>h('button',{type:'button',class:'bnx-t cmbl','aria-label':trophyName(a.tid)+' '+seasonTag(a.per)+' : pas encore obtenu',onclick:()=>toast('Pas encore obtenu : ce badge se gagne en fin de saison.')},
+        h('div',{class:'cmb'},badgeEl(a.tid,a.per.name,badgeImgOn(a.per,a.tid)?112:92,null,a.per),h('span',{class:'cmt-nm'},trophyName(a.tid)),h('span',{class:'cmb-s'},seasonTag(a.per))),AVSVG(CM_LOCK,14)))));
+    }
+    return out;
+  };
+  const cmLayerView=tabId=>{const L=CM_LAYERS.find(x=>x.tab===tabId);return L.id==='badge'?cmBadgeView():cmItemsView(L);};
+
   /* aperçu de la bannière */
   const prev=h('section',{class:'bnx-prev'},h('h2',{class:'bnx-h2'},'Ma bannière'),
     h('p',{},'Choisis un élément ci-dessous : l’aperçu se met à jour. Valide pour l’enregistrer.'),
-    h('div',{class:'bnx-pv'},bannerEl(S.uid,[bannerRow(S.uid,true,()=>openAvatar())],false,'lg')));
+    h('div',{class:'bnx-pv'},(cmActive(S.uid)?cmEl(S.uid,{avclick:()=>openAvatar()}):bannerEl(S.uid,[bannerRow(S.uid,true,()=>openAvatar())],false,'lg'))),cmTools());
 
-  if(tab==='bg'){
+  if(tab==='mfx'||tab==='mlogo'||tab==='mframe'||tab==='mplate'||tab==='mbadge'){
+    view.append(...cmLayerView(tab));
+  }else if(tab==='mbg'){
+    view.append(...cmLayerView('mbg'));
     const bgs=Object.entries(BN.bg).filter(([id])=>id==='base'||unlocked.some(r=>r.type==='bg'&&r.id===id));
     const rnd=h('button',{class:'bnx-rnd',type:'button',id:'bnx-rnd',disabled:bgs.length<2,onclick:()=>{const o=bgs.filter(([id])=>id!==eff.bg);pickV('bg',o[Math.floor(Math.random()*o.length)][0]);}},AVSVG('<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1"/><circle cx="15" cy="15" r="1"/><circle cx="15" cy="9" r="1"/><circle cx="9" cy="15" r="1"/>',20),'Bannières aléatoires');
-    view.append(head('Choisir une bannière',rnd),
+    view.append(head('Thèmes classiques',rnd),h('p',{class:'bnx-hint'},'Thèmes de carte complets (récompenses et bannières du shop) : ils remplacent la composition ci-dessus.'),
       grid(bgs.map(([id,b])=>tile(h('div',{class:'bnx-bg '+b.cls}),eff.bg===id,()=>pickV('bg',id),b.name)).concat(
         testable.filter(r=>r.type==='bg').map(r=>tile(h('div',{class:'bnx-bg '+BN.bg[r.id].cls}),false,()=>startPreview(r),r.name,true)))));
   }else if(tab==='frame'){
@@ -11083,14 +11459,16 @@ function bannerSection(){
   }
   if(S.owner&&testable.length)view.append(h('p',{class:'bnx-hint'},'Coach : les cases grisées sont des aperçus non débloqués, actifs 1 minute.'));
 
-  const ok=h('button',{class:'bnx-ok',type:'button',id:'bnx-ok',disabled:!draftOn||!!needPseudo(),onclick:()=>{const nv=Object.assign({},sv,S._bnDraft);S._bnDraft=null;saveLog({banner:nv},'Bannière enregistrée');}},AVSVG('<path d="M5 12.5l4.5 4.5L19 7.5"/>',24),'Valider ma bannière');
-  const tabs=[['bg','Fond','<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M3 17l5-4 4 3 3-2 6 4"/>'],['frame','Cadre','<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/><rect x="8" y="8" width="8" height="8" rx="1.5"/>'],['title','Titre','<path d="M5 5h14M12 5v15"/>']];
+  const ok=h('button',{class:'bnx-ok',type:'button',id:'bnx-ok',disabled:!draftOn||!!needPseudo(),onclick:()=>{const nv=cmFinalize(Object.assign({},sv,S._bnDraft));S._bnDraft=null;S._cmPrev=null;S._cmAsk=null;saveLog({banner:nv},'Bannière enregistrée');}},AVSVG('<path d="M5 12.5l4.5 4.5L19 7.5"/>',24),'Valider ma bannière');
+  const TI={mbg:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M3 17l5-4 4 3 3-2 6 4"/>',mfx:'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/>',mlogo:'<path d="M3 18l3-12 6 8 6-8 3 12z"/>',mbadge:'<circle cx="12" cy="9" r="5"/><path d="M8.5 13.5L7 21l5-3 5 3-1.5-7.5"/>',mframe:'<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/><rect x="8" y="8" width="8" height="8" rx="1.5"/>',mplate:'<rect x="3" y="8" width="18" height="8" rx="2"/><path d="M7 12h6"/>',title:'<path d="M5 5h14M12 5v15"/>',frame:'<circle cx="12" cy="9" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>'};
+  const tabs=[['mbg','Fond',TI.mbg],['mfx','Effets',TI.mfx],['mlogo','Logo',TI.mlogo],['mbadge','Badge',TI.mbadge],['mframe','Cadre',TI.mframe],['mplate','Plaque',TI.mplate],['title','Titre',TI.title],['frame','Avatar',TI.frame]];
+  requestAnimationFrame(()=>{const t=document.getElementById('bnx-tab-'+tab);if(t&&t.scrollIntoView)t.scrollIntoView({inline:'center',block:'nearest'});});
   return h('div',{class:'bnx'},
     h('div',{class:'bnx-head'},
       h('div',{class:'bnx-top'},h('button',{class:'bnx-ib',type:'button',id:'bnx-back','aria-label':'Retour au profil',onclick:leave},AVSVG(AV_ICO_BACK,22)),
         h('div',{class:'bnx-ttl'},AVSVG(AV_SLOT_ICO.crown,24),h('span',{},'Personnalisation')),
         h('button',{class:'bnx-ib',type:'button',id:'bnx-close','aria-label':'Fermer',onclick:leave},AVSVG('<path d="M6 6l12 12M18 6L6 18"/>',22))),
-      h('div',{class:'bnx-tabs',role:'tablist'},tabs.map(t=>h('button',{class:'bnx-tab'+(tab===t[0]?' on':''),type:'button',role:'tab','aria-selected':tab===t[0]?'true':'false',id:'bnx-tab-'+t[0],onclick:()=>{S.bnTab=t[0];render();}},AVSVG(t[2],20),t[1])))),
+      h('div',{class:'bnx-tabs',role:'tablist'},tabs.map(t=>h('button',{class:'bnx-tab'+(tab===t[0]?' on':''),type:'button',role:'tab','aria-selected':tab===t[0]?'true':'false',id:'bnx-tab-'+t[0],onclick:()=>{S.bnTab=t[0];S._cmPrev=null;S._cmAsk=null;render();}},AVSVG(t[2],20),t[1])))),
     prev,view,h('div',{class:'bnx-okw'},ok));
 }
 
@@ -14393,7 +14771,7 @@ function authErr(e){
   if(c==='auth/operation-not-allowed')return 'Cette méthode de connexion n’est pas activée dans Firebase.';
   return 'Connexion impossible, réessaie.'+(c?' ('+c.replace('auth/','')+')':'');
 }
-/* présentation du coach et de la méthode, affichée sous le formulaire de connexion */
+/* présentation du coach et de la méthode, affichée sous le formulaire de connexion (pas de prix ici : ils sont dans la page Abonnement) */
 function loginPitch(){
   const ul=(...items)=>h('ul',{style:'margin:0;padding-left:20px;display:grid;gap:4px'},items.map(t=>h('li',{},t)));
   return h('div',{class:'card',id:'login-pitch'},
@@ -14612,20 +14990,12 @@ function openInstallSheet(kind){
       h('button',{class:'btn',type:'button',id:'install-close',onclick:close},'Fermer')));
   document.body.append(ov);document.addEventListener('keydown',esc);
 }
-/* informations de l’éditeur, affichées dans les CGU et la politique de confidentialité */
-const LEGAL_INFO={
-  nom:'Robin Piraino, exerçant sous le nom commercial BOX Score Cross’mitaines',
-  statut:'entrepreneur individuel, micro-entrepreneur',
-  siret:'131 993 776 00015',
-  adresse:'7 rue de la tuilerie, 55100 Belrupt-en-Verdunois',
-  email:'crossmitaines@outlook.fr'
-};
 /* ---------- CGU et politique de confidentialité (textes à relire et valider par l'éditeur) ---------- */
-const LEGAL_VERSION='6 novembre 2026';
+const LEGAL_VERSION='3 novembre 2026';
 function cguSections(){
-  const I=LEGAL_INFO;
+  const I=CGV_INFO;
   return [
-    {t:'1. Objet',p:['Cross’Mitaines (l’application Box Score) est un outil de suivi d’entraînement de Crosstraining édité par '+I.nom+' ('+I.statut+'), SIRET '+I.siret+', '+I.adresse+'. Contact : '+I.email+'.','Ces conditions d’utilisation (CGU) encadrent l’usage de l’application.']},
+    {t:'1. Objet',p:['Cross’Mitaines (l’application Box Score) est un outil de suivi d’entraînement de Crosstraining édité par '+I.nom+' ('+I.statut+'), SIRET '+I.siret+', '+I.adresse+'. Contact : '+I.email+'.','Ces conditions d’utilisation (CGU) encadrent l’usage de l’application. La vente des abonnements est régie par les conditions générales de vente (CGV), consultables dans la page Abonnement.']},
     {t:'2. Compte',p:['Il faut avoir **16 ans ou plus** pour créer un compte. Entre 16 et 17 ans, l’accord d’un responsable légal est obligatoire.','Les informations données à l’inscription (e-mail, pseudo, date de naissance) doivent être exactes. Un compte = une personne. Tu gardes ton mot de passe confidentiel : tout ce qui est fait depuis ton compte est considéré comme fait par toi.']},
     {t:'3. Règlement et fair-play',p:['Les résultats sont saisis par les participants eux-mêmes : la compétition repose sur la confiance. En saisissant un résultat, tu certifies sur l’honneur l’avoir réalisé tel que publié, en respectant les standards des mouvements. Le règlement complet est consultable dans le menu de l’application.','Le coach peut retirer un résultat manifestement irréaliste. L’éditeur peut suspendre ou supprimer un compte en cas de triche, de comptes multiples ou de propos injurieux, après t’avoir informé.']},
     {t:'4. Santé et responsabilité',p:['Les séances sont intenses. **Consulte un médecin avant de commencer ou de reprendre** une activité intense. L’application ne remplace pas un avis médical et n’engage pas la responsabilité de l’éditeur ni du coach en cas de blessure ou de dommage : tu t’entraînes sous ta propre responsabilité et tu choisis le niveau adapté à ton état du jour.']},
@@ -14635,17 +15005,18 @@ function cguSections(){
   ];
 }
 function privacySections(){
-  const I=LEGAL_INFO;
+  const I=CGV_INFO;
   return [
     {t:'1. Qui est responsable de tes données ?',p:[I.nom+' ('+I.statut+'), '+I.adresse+'. Contact pour toute question ou demande : '+I.email+'.']},
     {t:'2. Quelles données sont enregistrées ?',p:[
       '**Compte** : adresse e-mail, mot de passe (jamais lisible par l’éditeur), pseudo, date de naissance.',
       '**Profil** : sexe, poids, avatar, bannière, devise, objectifs si tu les renseignes. Ta date de naissance et ton poids restent privés : seuls la catégorie d’âge (Seniors ou Vétérans) et un rapport charge / poids sont visibles des autres.',
       '**Entraînement** : tes résultats, tes records, ton classement, tes réactions et commentaires, tes messages avec le coach.',
-      '**Usage** : la date de ta dernière ouverture de l’application et les étapes de ton inscription (visibles du coach seul), et l’adresse d’envoi des notifications de ton appareil si tu les actives.']},
-    {t:'3. Pourquoi ?',p:['Pour faire fonctionner l’application (compte, séances, classement, trophées), t’envoyer les notifications que tu as activées et assurer la sécurité du service. Le traitement repose sur l’exécution du service que tu demandes et, pour les notifications, sur ton accord.']},
-    {t:'4. Qui y a accès ?',p:['Le coach et l’éditeur. Les prestataires techniques qui font fonctionner le service : Google (Firebase : connexion et base de données), GitHub et Cloudflare (envoi des notifications). Tes données ne sont pas vendues.']},
-    {t:'5. Combien de temps ?',p:['Tant que ton compte existe. Quand tu le supprimes depuis ton profil, tes données personnelles sont effacées.']},
+      '**Usage** : la date de ta dernière ouverture de l’application et les étapes de ton inscription (visibles du coach seul), et l’adresse d’envoi des notifications de ton appareil si tu les actives.',
+      '**Abonnement** : l’état de ton abonnement. Le paiement est traité par Stripe : l’éditeur ne voit ni ne conserve ta carte bancaire.']},
+    {t:'3. Pourquoi ?',p:['Pour faire fonctionner l’application (compte, séances, classement, trophées), t’envoyer les notifications que tu as activées, gérer ton abonnement et assurer la sécurité du service. Le traitement repose sur l’exécution du service que tu demandes et, pour les notifications, sur ton accord.']},
+    {t:'4. Qui y a accès ?',p:['Le coach et l’éditeur. Les prestataires techniques qui font fonctionner le service : Google (Firebase : connexion et base de données), Stripe (paiement), GitHub et Cloudflare (envoi des notifications, paiement). Tes données ne sont pas vendues.']},
+    {t:'5. Combien de temps ?',p:['Tant que ton compte existe. Quand tu le supprimes depuis ton profil, tes données personnelles sont effacées ; seules subsistent les informations de facturation que la loi oblige à conserver.']},
     {t:'6. Tes droits',p:['Tu peux accéder à tes données, les corriger (depuis ton profil), les effacer, t’opposer à leur traitement ou demander leur portabilité en écrivant à '+I.email+'. Tu peux aussi introduire une réclamation auprès de la CNIL (cnil.fr).']},
     {t:'7. Mineurs',p:['L’application est réservée aux personnes de 16 ans ou plus ; entre 16 et 17 ans, avec l’accord d’un responsable légal.']}
   ];
@@ -14993,6 +15364,7 @@ function drawerItems(){
   out.push({id:'moves',label:'Apprentissage des mouvements',ico:ICO_MOVES,cur:S.tab==='moves',fn:()=>go('moves')});
   out.push({id:'share',label:'Partager l’appli',ico:ICO_PHONE,cur:S.tab==='share',fn:()=>go('share')});
   out.push({id:'avis',label:'Avis',ico:ICO_KB,cur:S.tab==='avis',fn:()=>go('avis')});
+  if(!PAY_PAUSED)out.push({id:'sub',label:'Abonnement',ico:ICO_CARD,cur:S.tab==='sub',fn:()=>go('sub')}); /* le Shop est dans la barre du bas */
   return out;
 }
 function closeDrawer(instant){
@@ -15005,7 +15377,7 @@ function closeDrawer(instant){
 /* ---------- déconnexion et suppression du compte ---------- */
 const POWER_ICO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v8"/><path d="M6.3 6.8a8 8 0 1 0 11.4 0"/></svg>';
 async function logoutNow(){try{await pushForget();}catch(e){}S.authView='home';signOut(auth);}
-const DEL_REASONS=['Je ne m’entraîne plus au club','Je n’utilise pas l’appli','L’appli ne me plaît pas','Problème technique','Autre'];
+const DEL_REASONS=['Je ne m’entraîne plus au club','Je n’utilise pas l’appli','L’appli ne me plaît pas','Problème technique','Je ne veux pas payer l’abonnement','Autre'];
 /* efface les données de la personne puis son compte. La raison est enregistrée sans identité (collection departures). */
 async function deleteMyAccount(reason,detail,pwd){
   const user=auth&&auth.currentUser;if(!user)throw new Error('Tu n’es plus connecté.');
@@ -15029,7 +15401,9 @@ function openDeleteAccount(){
   if(document.getElementById('del-ov'))return;
   const user=auth&&auth.currentUser;if(!user||S.owner)return;
   const hasPwd=(user.providerData||[]).some(x=>x.providerId==='password');
-  const st={step:1,reason:'',detail:'',word:'',pwd:'',err:'',busy:false};
+  const pm=payState();
+  const paid=pm.k==='active'&&pm.plan!=='free'&&!pm.cancel;
+  const st={step:paid?0:1,reason:'',detail:'',word:'',pwd:'',err:'',busy:false};
   const esc=e=>{if(e.key==='Escape'&&!st.busy)close();};
   const close=()=>{ov.remove();document.removeEventListener('keydown',esc);};
   const body=h('div',{class:'stack'});
@@ -15038,7 +15412,12 @@ function openDeleteAccount(){
   const head=t=>[h('p',{class:'eyebrow'},'Compte'),h('h2',{class:'wtitle'},t)];
   const cancelBtn=()=>h('button',{class:'btn',type:'button',onclick:close},'Annuler');
   const draw=()=>{
-    if(st.step===1){
+    if(st.step===0){
+      body.replaceChildren(...head('Abonnement en cours'),
+        h('p',{},'Ton abonnement est encore actif : il continuerait d’être prélevé après la suppression de ton compte. Résilie-le d’abord, puis reviens ici.'),
+        PORTAL_LINK?h('a',{class:'btn',href:PORTAL_LINK,rel:'noopener'},'Gérer mon abonnement'):null,
+        h('button',{class:'btn',type:'button',onclick:close},'Fermer'));
+    }else if(st.step===1){
       const selR=h('select',{id:'del-reason','aria-label':'Raison du départ',onchange:()=>{st.reason=selR.value;upd();}},
         h('option',{value:''},'Choisis une raison…'),...DEL_REASONS.map(r=>h('option',{value:r},r)));
       selR.value=st.reason;
@@ -15294,7 +15673,8 @@ function avisTop(){
    Solde = coinGot (séances encore enregistrées + récompenses) + coinAdj − shopBuy ; il peut être négatif si une séance est retirée après avoir dépensé ses coins. Réglages du shop (coach) : config/features → champ shop = {coin, items:{idObjet:{on,price}}}.
    Les articles du shop sont les objets de AV_ITEMS : pour ajouter un skin, déposer l'image dans assets/embedded et ajouter une ligne dans AV_ITEMS,
    il apparaît ensuite dans Coach › Shop et coins, où on le met en vente et où on fixe son prix.
-   */
+   PAY_PAUSED = true : l'abonnement est en pause (accès gratuit pour tous, aucun blocage, aucune date de passage en restreint). Remettre false pour le réactiver. */
+const PAY_PAUSED=true;
 const COIN_DEFAULT=5;
 const ICO_SHOP='<svg '+SVGA+'><path d="M3.5 9.5L5 4h14l1.5 5.5"/><path d="M5 9.5V20h14V9.5"/><path d="M3.5 9.5a2.8 2.8 0 0 0 5.5 0 2.8 2.8 0 0 0 6 0 2.8 2.8 0 0 0 5.5 0"/><path d="M10 20v-5h4v5"/></svg>';
 function coinIco(sz){
@@ -15312,10 +15692,12 @@ const shopBanners=()=>{
   for(const [k,v] of Object.entries(AVF))out.push({id:'shop-avf-'+k,kind:'avframe',asset:k,name:v.name,src:v.src});
   return out;
 };
-const shopItem=id=>AV_BY[id]||shopBanners().find(b=>b.id===id)||null;
+const shopAll=()=>shopBanners().concat(CM_LIST.filter(x=>!x.free)); /* + objets de la bannière modulaire (CM_ITEMS) */
+const shopItem=id=>AV_BY[id]||shopAll().find(b=>b.id===id)||null;
 /* déjà à l'athlète : acheté au shop, ou gagné en récompense de saison (même fond / même cadre) */
 function bnOwned(uid,it){
   const lg=S.logs[uid]||{};
+  if(it.cm)return cmOwned(uid,it);
   if(Object.prototype.hasOwnProperty.call(lg.shopBuy||{},it.id))return true;
   const owned=new Set(lg.rewardOwned||[]);
   for(const [pid,per] of Object.entries(S.periods||{}))for(const r of (per.rewards||[]))if(r.type===it.kind&&r.asset===it.asset&&owned.has(pid+':'+r.id))return true;
@@ -15324,6 +15706,7 @@ function bnOwned(uid,it){
 /* décor : on montre l'image du décor (comme dans l'avatar), pas seulement une petite icône */
 const shopThemePrev=it=>!it.kind&&it.slot==='theme'&&!!THEME_BG[it.id];
 function shopIcon(it){
+  if(it.cm)return cmThumb(it);
   if(shopThemePrev(it))return h('img',{src:THEME_BG[it.id],alt:'Aperçu : '+it.name,loading:'lazy',draggable:'false',style:'width:100%;height:100%;object-fit:cover;border-radius:8px'});
   if(!it.kind){const d=h('span',{});try{d.append(avIcon(it));}catch(e){}return d.firstChild||d;}
   return h('img',{src:it.src,alt:'',loading:'lazy',draggable:'false',style:'width:100%;height:100%;object-fit:'+(it.kind==='bg'?'cover':'contain')});
@@ -15332,7 +15715,8 @@ const shopCfg=()=>{const s=S.feat&&S.feat.shop;return (s&&typeof s==='object')?s
 const coinPerSession=()=>{const c=shopCfg();if(c.coin===undefined||c.coin===null||c.coin==='')return COIN_DEFAULT;const v=Math.floor(Number(c.coin));return (Number.isFinite(v)&&v>=0)?v:COIN_DEFAULT;};
 /* réduction du coach : pourcentage (1 à 99) ; price = prix réellement payé, base = prix normal */
 const salePrice=(base,pct)=>{pct=Math.floor(Number(pct));return (pct>=1&&pct<=99)?Math.max(1,Math.round(base*(100-pct)/100)):base;};
-const shopEntry=id=>{const x=(shopCfg().items||{})[id],p=x?Math.floor(Number(x.price)):0;if(!(x&&x.on&&p>=1&&shopItem(id)))return null;const pct=Math.floor(Number(x.sale))||0,pr=salePrice(p,pct);return {price:pr,base:p,pct:pr<p?pct:0,fav:!!x.fav};};
+const shopEntry=id=>{const x=(shopCfg().items||{})[id],cmi=CM_BY[id];let p=x?Math.floor(Number(x.price)):0;if(cmi){if(cmi.free||cmi.avail===false)return null;if(x&&x.on&&!(p>=1))p=cmPrice(cmi);} /* objet modulaire : prix vide = prix de la rareté */
+  if(!(x&&x.on&&p>=1&&shopItem(id)))return null;const pct=Math.floor(Number(x.sale))||0,pr=salePrice(p,pct);return {price:pr,base:p,pct:pr<p?pct:0,fav:!!x.fav};};
 const coinSum=o=>Object.values(o||{}).reduce((a,v)=>a+(Number(v)||0),0);
 /* coins gagnés : les coins d'une séance (clé = date) ne comptent QUE tant que la séance est enregistrée ; retirer la séance retire ses coins.
    Les autres clés (récompenses « rw:… ») et l'ajustement du coach comptent toujours. en = entrées à utiliser à la place de lg.entries (simulation d'un retrait). */
@@ -15343,8 +15727,7 @@ const coinBal=uid=>{const lg=S.logs[uid]||{};return coinEarned(lg)-coinSum(lg.sh
 const coinPatch=(uid,date)=>{const lg=S.logs[uid]||{},n=coinPerSession();if(!n||(lg.coinGot&&lg.coinGot[date]!==undefined))return null;return {coinGot:Object.assign({},lg.coinGot||{},{[date]:n})};};
 /* un objet du catalogue sans condition d'obtention (ajouté pour le shop) : jamais gagné par la progression */
 for(const it of AV_ITEMS)if(!AV_OBJ[it.id])AV_OBJ[it.id]={d:'À acheter dans le Shop, avec des coins.',test:()=>false};
-/* pastille de l'en-tête : solde de coins */
-function updateCoinChip(){const el=document.getElementById('pay-chip');if(el)coinChipPaint(el);}
+/* pastille de l'en-tête : solde de coins (remplace l'état de l'abonnement tant qu'il est en pause) */
 function coinChipPaint(el){
   if(!S.uid){el.hidden=true;return;}
   const cb=coinBal(S.uid);el.hidden=false;el.className='paychip coinchip'+(cb<0?' neg':'');el.title='Mes coins : ouvrir le Shop';
@@ -15361,7 +15744,7 @@ function shopBuy(it){
   const bal=coinBal(S.uid);
   if(bal<e.price){toast('Il te manque '+(e.price-bal)+' coins.',true);render();return;}
   const lg=S.logs[S.uid]||{};
-  saveLog({shopBuy:Object.assign({},lg.shopBuy||{},{[it.id]:e.price})},'Acheté : '+it.name+' (−'+e.price+' coins). Retrouve-le dans '+(it.kind?'ta bannière (Profil).':'ton avatar.'));
+  return saveLog({shopBuy:Object.assign({},lg.shopBuy||{},{[it.id]:e.price})},'Acheté : '+it.name+' (−'+e.price+' coins). Retrouve-le dans '+(it.kind?'ta bannière (Profil).':'ton avatar.'));
 }
 /* Shop façon « jeu vidéo » : onglets Objets / Avatars / Bannières, catégories, coups de cœur (cochés par le coach dans Coach › Shop et coins) */
 const SHP=(d)=>'<svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="url(#shg)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><defs><linearGradient id="shg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff1f7a"/><stop offset="1" stop-color="#ff7a1a"/></linearGradient></defs>'+d+'</svg>';
@@ -15369,6 +15752,11 @@ const SHOP_CATS=[
   ['avatars','Avatars',SHP('<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/>')],
   ['bannieres','Bannières',SHP('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15l5-4 4 3 3-2 6 4"/>')],
   ['cadres','Cadres',SHP('<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/><rect x="8" y="8" width="8" height="8" rx="1.5"/>')],
+  ['mfond','Fonds',SHP('<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 12h18"/>')],
+  ['meffet','Effets',SHP('<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>')],
+  ['mlogo','Logos',SHP('<path d=\"M3 18l3-12 6 8 6-8 3 12z\"/>')],
+  ['mcadre','Bordures',SHP('<rect x="4" y="6" width="16" height="12" rx="2"/><rect x="7" y="9" width="10" height="6" rx="1"/>')],
+  ['mplaque','Plaques',SHP('<rect x="3" y="8" width="18" height="8" rx="2"/><path d="M7 12h6"/>')],
   ['chapeaux','Chapeaux',SHP('<path d="M3 17h18M6 17c0-5 2-9 6-9s6 4 6 9"/>')],
   ['tshirts','T-shirts',SHP('<path d="M8 4L3 7l2 4 3-1v10h8V10l3 1 2-4-5-3a4 4 0 0 1-8 0z"/>')],
   ['pantalons','Pantalons',SHP('<path d="M7 3h10l1 18h-4l-2-10-2 10H6z"/>')],
@@ -15376,19 +15764,19 @@ const SHOP_CATS=[
   ['themes','Décors',SHP('<path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 1.5-2-.6-1.2 0-2.5 1.5-2.5H17a4 4 0 0 0 4-4C21 6.5 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7.5" r="1"/><circle cx="14.5" cy="7.5" r="1"/>')],
   ['autres','Autres',SHP('<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>')]
 ];
-const shopCatOf=it=>it.kind==='bg'?'bannieres':it.kind==='avframe'?'cadres':({skin:'avatars',shirt:'tshirts',pants:'pantalons',costume:'deguisements',crown:'chapeaux',hat:'chapeaux',theme:'themes'})[it.slot]||'autres';
+const shopCatOf=it=>it.cm?cmLayer(it.layer).shop:it.kind==='bg'?'bannieres':it.kind==='avframe'?'cadres':({skin:'avatars',shirt:'tshirts',pants:'pantalons',costume:'deguisements',crown:'chapeaux',hat:'chapeaux',theme:'themes'})[it.slot]||'autres';
 function shopCard(it,own,bal){
   const e=shopEntry(it.id),has=it.kind?bnOwned(S.uid,it):own.has(it.id),miss=e.price-bal;
-  const img=h('div',{class:'sh-img'+((it.kind==='bg'||shopThemePrev(it))?' sh-img-bn':'')});img.append(shopIcon(it));if(e.pct&&!has)img.append(h('span',{class:'sh-sale'},'−'+e.pct+'%'));
+  const img=h('div',{class:'sh-img'+((it.kind==='bg'||it.cm||shopThemePrev(it))?' sh-img-bn':'')});img.append(shopIcon(it));if(e.pct&&!has)img.append(h('span',{class:'sh-sale'},'−'+e.pct+'%'));
   const sk=(it.skin&&AV_BY[it.skin])?AV_BY[it.skin].name:'';
   let act;
-  if(has)act=h('button',{class:'sh-btn alt',type:'button',onclick:()=>{if(it.kind){go('profile');S.profView='banner';render();window.scrollTo(0,0);}else openAvatar();}},'Équiper');
+  if(has)act=h('button',{class:'sh-btn alt',type:'button',onclick:()=>{if(it.kind){go('profile');S.profView='banner';if(it.cm)S.bnTab=cmLayer(it.layer).tab;render();window.scrollTo(0,0);}else openAvatar();}},'Équiper');
   else if(S.shopAsk===it.id)act=h('div',{class:'sh-ask'},
     h('button',{class:'sh-btn alt',type:'button',onclick:()=>{S.shopAsk=null;render();}},'Annuler'),
     h('button',{class:'sh-btn',type:'button',id:'shop-ok-'+it.id,onclick:()=>shopBuy(it)},'Confirmer'));
   else{act=h('button',{class:'sh-btn',type:'button',id:'shop-buy-'+it.id,onclick:()=>{S.shopAsk=it.id;render();}},'Acheter');if(miss>0)act.disabled=true;}
   return h('li',{class:'sh-card',id:'shop-'+it.id},img,
-    h('div',{class:'sh-nm'},it.name),
+    h('div',{class:'sh-nm'},it.name),it.cm?h('div',{class:'sh-sub'},'Objet pour ta bannière · '+cmLayer(it.layer).name):null,it.rarity?h('div',{class:'sh-rar r-'+it.rarity},(CM_RARITY[it.rarity]||{}).name):null,
     sk?h('div',{class:'sh-sub'},'Avatar '+sk):null,
     has?h('div',{class:'sh-own'},'Possédé'):h('div',{class:'sh-pr'},coinIco(20),h('b',{},String(e.price)),e.pct?h('s',{class:'sh-old','aria-label':'Ancien prix '+e.base+' coins'},String(e.base)):null),
     (!has&&miss>0)?h('div',{class:'sh-sub'},'Il te manque '+miss+' coin'+(miss>1?'s':'')+'.'):null,
@@ -15418,14 +15806,15 @@ function viewShop(){
     return el;
   }
   const sx=coach?null:avSex(),own=avOwned(S.uid);
-  const all=AV_ITEMS.filter(it=>shopEntry(it.id)&&it.slot!=='hand'&&it.slot!=='wrist'&&(coach||avSexOk(it,sx))).concat(shopBanners().filter(b=>shopEntry(b.id)));
-  const open=c=>{S.shopCat=c;render();window.scrollTo(0,0);};
+  const all=AV_ITEMS.filter(it=>shopEntry(it.id)&&it.slot!=='hand'&&it.slot!=='wrist'&&(coach||avSexOk(it,sx))).concat(shopAll().filter(b=>shopEntry(b.id)));
+  const open=c=>{S.shopCat=c;S.shopRar='';render();window.scrollTo(0,0);};
   const grid=its=>h('ul',{class:'sh-grid'},its.map(it=>shopCard(it,own,bal)));
   const cat=S.shopCat;
   if(cat){
-    const label=cat==='all'?'Tout le shop':(SHOP_CATS.find(c=>c[0]===cat)||[0,''])[1];
-    const its=cat==='all'?all:all.filter(x=>shopCatOf(x)===cat);
+    const label=cat==='all'?'Tout le shop':(['mfond','meffet','mlogo','mcadre','mplaque'].includes(cat)?'Bannière · ':'')+(SHOP_CATS.find(c=>c[0]===cat)||[0,''])[1];
+    const its0=cat==='all'?all:all.filter(x=>shopCatOf(x)===cat),its=S.shopRar?its0.filter(x=>x.rarity===S.shopRar):its0;
     el.append(h('div',{class:'sh-h'},h('button',{class:'sh-link',type:'button',onclick:()=>{S.shopCat=null;render();window.scrollTo(0,0);}},'← Retour'),h('h2',{},label)),
+      its0.some(x=>x.rarity)?h('div',{class:'sh-rf',role:'group','aria-label':'Filtrer par rareté'},[['','Toutes']].concat(Object.entries(CM_RARITY).map(([k,v])=>[k,v.name])).map(([k,t])=>h('button',{class:'sh-rfb'+((S.shopRar||'')===k?' on':''),type:'button',id:'sh-rar-'+(k||'all'),'aria-pressed':(S.shopRar||'')===k?'true':'false',onclick:()=>{S.shopRar=k;render();}},t))):null,
       its.length?grid(its):h('section',{class:'sh-box'},h('p',{class:'muted'},'Rien dans cette catégorie pour l’instant. Reviens bientôt : de nouveaux objets arrivent !')));
   }else{
     el.append(h('section',{class:'sh-hero'},h('div',{class:'sh-hero-t'},'Personnalise',h('br'),h('span',{},'ton univers')),
@@ -15444,7 +15833,7 @@ function shopDraft(){
   const c=S.coach;
   if(!c.shopDraft){
     const cfg=shopCfg(),it={};
-    for(const x of AV_ITEMS.concat(shopBanners())){const e=(cfg.items||{})[x.id];it[x.id]={on:!!(e&&e.on),fav:!!(e&&e.fav),price:(e&&Number(e.price)>0)?String(e.price):'',sale:(e&&Number(e.sale)>0)?String(e.sale):''};}
+    for(const x of AV_ITEMS.concat(shopAll())){const e=(cfg.items||{})[x.id];it[x.id]={on:!!(e&&e.on),fav:!!(e&&e.fav),price:(e&&Number(e.price)>0)?String(e.price):'',sale:(e&&Number(e.sale)>0)?String(e.sale):''};}
     c.shopDraft={coin:String(coinPerSession()),items:it};
   }
   return c.shopDraft;
@@ -15453,10 +15842,10 @@ function saveShop(){
   const d=shopDraft(),coin=Math.floor(Number(String(d.coin).replace(',','.')));
   if(!Number.isFinite(coin)||coin<0){toast('Coins par séance : entre un nombre entier, 0 ou plus.',true);return;}
   const items={};
-  for(const it of AV_ITEMS.concat(shopBanners())){
+  for(const it of AV_ITEMS.concat(shopAll())){
     const x=d.items[it.id];if(!x)continue;
     const p=Math.floor(Number(String(x.price).replace(',','.')));
-    if(x.on&&!(p>=1)){toast('« '+it.name+' » : entre un prix d’au moins 1 coin, ou retire-le de la vente.',true);return;}
+    if(x.on&&!(p>=1)&&!it.cm){toast('« '+it.name+' » : entre un prix d’au moins 1 coin, ou retire-le de la vente.',true);return;}
     const sl=x.sale===''||x.sale==null?0:Math.floor(Number(String(x.sale).replace(',','.')));
     if(x.on&&!(Number.isFinite(sl)&&sl>=0&&sl<=99)){toast('« '+it.name+' » : la réduction doit être entre 1 et 99 %, ou vide.',true);return;}
     if(x.on||p>=1)items[it.id]={on:!!x.on,price:p>=1?p:0,fav:!!(x.on&&x.fav),sale:(x.on&&sl>=1)?sl:0};
@@ -15467,7 +15856,7 @@ function saveShop(){
     S.coach.shopDraft=null;toast('Shop enregistré');render();
   });
 }
-const shopCount=()=>AV_ITEMS.concat(shopBanners()).filter(x=>shopEntry(x.id)).length;
+const shopCount=()=>AV_ITEMS.concat(shopAll()).filter(x=>shopEntry(x.id)).length;
 /* coins des séances déjà enregistrées : une seule fois par date et par athlète (les dates qui ont déjà leurs coins sont ignorées) */
 function coinBackfillPlan(){
   const n=coinPerSession(),plan=[];let tot=0,ses=0;
@@ -15521,11 +15910,11 @@ function coachShop(){
   el.append(coinBackfillCard());
   const sec=h('section',{class:'card'},h('h2',{class:'h2'},'Articles du shop'),
     h('p',{class:'hint'},'Coche « En vente » et fixe un prix en coins ; « Coup de cœur » met l’objet en avant en haut du shop ; « % de réduc. » (1 à 99) affiche une réduction sur l’objet dans le shop, avec l’ancien prix barré. Puis enregistre. Un objet déjà acheté reste à l’athlète même si tu le retires. Pour ajouter un skin : dépose son image dans assets/embedded et ajoute une ligne dans AV_ITEMS ; il apparaît ici.'));
-  AV_SLOTS.map(([sl,label])=>[label,AV_ITEMS.filter(x=>x.slot===sl)]).concat([['Fonds de bannière',shopBanners().filter(b=>b.kind==='bg')],['Cadres d’avatar (fil)',shopBanners().filter(b=>b.kind==='avframe')]]).forEach(([label,its])=>{
+  AV_SLOTS.map(([sl,label])=>[label,AV_ITEMS.filter(x=>x.slot===sl)]).concat([['Fonds de bannière',shopBanners().filter(b=>b.kind==='bg')],['Cadres d’avatar (fil)',shopBanners().filter(b=>b.kind==='avframe')]].concat(CM_LAYERS.filter(L=>L.shop).map(L=>['Bannière modulaire · '+L.name,CM_LIST.filter(x=>x.layer===L.id&&!x.free)]))).forEach(([label,its])=>{
     if(!its.length)return;
     sec.append(h('div',{class:'flabel',style:'margin-top:14px'},label+' · '+its.filter(x=>d.items[x.id]&&d.items[x.id].on).length+' en vente'),
       h('ul',{class:'list shop-list'},its.map(it=>{
-        const x=d.items[it.id]||(d.items[it.id]={on:false,fav:false,price:'',sale:''}),ic=h('span',{class:'shop-ic'+(it.kind==='bg'?' shop-ic-bn':'')});
+        const x=d.items[it.id]||(d.items[it.id]={on:false,fav:false,price:'',sale:''}),ic=h('span',{class:'shop-ic'+((it.kind==='bg'||it.cm)?' shop-ic-bn':'')});
         ic.append(shopIcon(it));
         const fin=h('span',{class:'shop-fin',id:'shopc-fin-'+it.id});
         const upd=()=>{const b=Math.floor(Number(String(x.price).replace(',','.'))),pc=Math.floor(Number(String(x.sale).replace(',','.')));fin.textContent=(b>=1&&pc>=1&&pc<=99)?'→ '+salePrice(b,pc)+' coins':'';};upd();
@@ -15535,7 +15924,7 @@ function coachShop(){
           h('div',{class:'shop-ctl'},
             h('label',{class:'chk'},h('input',{type:'checkbox',id:'shopc-on-'+it.id,checked:x.on,onchange:e=>{x.on=e.target.checked;}}),h('span',{},'En vente')),
             h('label',{class:'chk'},h('input',{type:'checkbox',id:'shopc-fav-'+it.id,checked:!!x.fav,onchange:e=>{x.fav=e.target.checked;}}),h('span',{},'Coup de cœur')),
-            h('input',{type:'number',min:'1',step:'1',inputmode:'numeric',placeholder:'Prix','aria-label':'Prix en coins : '+it.name,value:x.price,oninput:e=>{x.price=e.target.value;upd();}}),
+            h('input',{type:'number',min:'1',step:'1',inputmode:'numeric',placeholder:it.cm?String(cmPrice(it)):'Prix','aria-label':'Prix en coins : '+it.name,value:x.price,oninput:e=>{x.price=e.target.value;upd();}}),
             coinIco(20),
             h('span',{class:'shop-sale'},
               h('input',{type:'number',min:'0',max:'99',step:'1',inputmode:'numeric',placeholder:'0','aria-label':'Réduction en pourcentage : '+it.name,id:'shopc-sale-'+it.id,value:x.sale||'',oninput:e=>{x.sale=e.target.value;upd();}}),
@@ -15563,6 +15952,235 @@ function coachShop(){
   return el;
 }
 
+/* ---------- abonnement : tarifs (repris sur la page de connexion) ---------- */
+const PRICE_4W=7.99,PRICE_SEASON=19.99,SEASON_WEEKS=12;
+const eur=v=>(Math.round(v*100)/100).toFixed(2).replace('.',',')+' €';
+const ICO_CARD='<svg '+SVGA+'><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h4"/></svg>';
+/* ---------- paiements Stripe ----------
+   Les liens de paiement (Payment Links) et le lien du portail client se créent dans Stripe (voir README paiements).
+   Le paiement est relié au compte par client_reference_id = identifiant du compte. Un script GitHub (sync-stripe.mjs)
+   recopie l'état des abonnements dans Firestore : subs/{uid} = { active, status, plan, periodEnd, cancelAtPeriodEnd }.
+   L'appli lit ce document ; elle ne l'écrit jamais. Essai gratuit : TRIAL_DAYS jours depuis la création du compte. */
+const CHECKOUT_URL='/api/checkout'; /* fonction Cloudflare (functions/api/checkout.js) : crée la session de paiement Stripe avec l'essai restant */
+const PORTAL_LINK='https://billing.stripe.com/p/login/dRm3cvcE4fTj1jWh095wI00';                  /* À COMPLÉTER : lien de connexion au portail client Stripe (https://billing.stripe.com/p/login/…) */
+const TRIAL_DAYS=14;
+const PAY_OPEN='2026-11-02'; /* À COMPLÉTER au lancement des paiements (AAAA-MM-JJ) : l'essai des comptes déjà créés démarre à cette date ; sans cela, ils seraient bloqués dès l'ouverture */
+const PLAN_NAMES={'4w':'4 semaines','season':'12 semaines'};
+function payState(){
+  if(S.owner)return {k:'coach'};
+  const d=S.pay&&S.pay.doc;
+  if(d&&d.active===true)return {k:'active',plan:d.plan,end:d.periodEnd,cancel:!!d.cancelAtPeriodEnd,trial:d.status==='trialing'};
+  let c=S.created?Date.parse(S.created):NaN;const po=PAY_OPEN?Date.parse(PAY_OPEN+'T00:00:00'):NaN;if(!isNaN(c)&&!isNaN(po)&&po>c)c=po;
+  const te=isNaN(c)?null:new Date(c+TRIAL_DAYS*864e5);
+  if(te&&te>new Date())return {k:'trial',end:te};
+  /* statut encore inconnu (chargement, hors ligne, règles non publiées) : on ne bloque pas */
+  if(!S.pay||!S.pay.loaded||S.pay.err||!S.coachLoaded||!te)return {k:'unknown'};
+  return {k:'blocked',status:d&&d.status};
+}
+const hasAccess=()=>PAY_PAUSED||payState().k!=='blocked';
+/* cadre d'état de l'abonnement à côté du titre (Accès coach / Accès gratuit / Abonné jusqu'au / Accès à vie) */
+const PAYTRY_KEY='bs_pay_try';
+const payTryRecent=()=>{try{const t=Number(localStorage.getItem(PAYTRY_KEY)||0);return t>0&&Date.now()-t<2*3600e3;}catch(e){return false;}};
+const payShort=x=>new Date(x).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+function payChipInfo(){
+  const st=payState();
+  if(st.k==='coach')return {t:'Accès coach'};
+  if(st.k==='active'){
+    try{localStorage.removeItem(PAYTRY_KEY);}catch(e){}
+    if(st.plan==='free')return {t:'Accès à vie'};
+    if(st.end&&st.trial&&!st.cancel)return {t:'Abonné · 1er paiement le '+payShort(st.end)};
+    if(st.end)return {t:(st.cancel?'Fin le ':'Abonné jusqu’au ')+payShort(st.end)};
+    return {t:'Abonné'};
+  }
+  if(payTryRecent())return {t:'Paiement en cours…',off:true};
+  if(st.k==='trial')return {t:'Accès gratuit · jusqu’au '+payShort(st.end),off:true};
+  if(st.k==='blocked')return {t:'Non abonné',off:true};
+  return null;
+}
+function updatePayChip(){
+  const el=document.getElementById('pay-chip');if(!el)return;
+  if(PAY_PAUSED){coinChipPaint(el);return;}
+  const i=S.uid?payChipInfo():null;
+  if(!i){el.hidden=true;return;}
+  el.hidden=false;el.textContent=i.t;el.className='paychip'+(i.off?' off':'');
+  el.onclick=()=>go('sub');
+  el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go('sub');}};
+  if(i.t==='Paiement en cours…'&&!S._payToast){S._payToast=1;toast('Si tu viens de payer, ton accès s’ouvre en moins de 30 minutes.');}
+}
+function buyBtn(key){
+  if(!S.uid||!PLAN_NAMES[key])return h('button',{class:'btn btn-block',type:'button',disabled:true},'Bientôt disponible');
+  const b=h('button',{class:'btn primary btn-block',type:'button'},'S’abonner');
+  b.onclick=async()=>{
+    if(b.disabled)return;
+    if(!S.payAgree){ /* CGV + demande d'exécution immédiate : obligatoires avant de payer */
+      toast('Coche d’abord la case des conditions de vente, sous les forfaits.',true);
+      const c=document.getElementById('pay-agree');if(c){c.scrollIntoView({block:'center',behavior:'smooth'});c.focus();}
+      return;
+    }
+    try{if(S.prof&&S.profLoaded){S.prof.consent={cgv:CGV_VERSION,at:new Date().toISOString(),plan:key,immediate:true};saveProf();}}catch(e){}
+    const t0=b.textContent;b.disabled=true;b.textContent='Ouverture du paiement…';
+    try{
+      const tok=await auth.currentUser.getIdToken();
+      const r=await fetch(CHECKOUT_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},body:JSON.stringify({plan:key})});
+      const j=await r.json().catch(()=>({}));
+      if(!r.ok||!j.url){const er=new Error('PAY-'+(r.ok?'URL':r.status));er.payCode=er.message;throw er;}
+      try{localStorage.setItem(PAYTRY_KEY,String(Date.now()));}catch(e){}
+      location.href=j.url;
+    }catch(e){
+      b.disabled=false;b.textContent=t0;
+      toast('Impossible d’ouvrir le paiement. Réessaie dans un instant.',true);
+      const old=b.parentNode&&b.parentNode.querySelector('.paydiag');if(old)old.remove();
+      const code=(e&&e.payCode)||'PAY-RESEAU'; /* uniquement un code : aucun détail technique (clés, serveur…) n'est affiché */
+      if(b.parentNode)b.after(h('p',{class:'hint paydiag'},'Code d’erreur : '+code+'. Partage ce code d’erreur dans l’onglet bug.'));
+    }
+  };
+  return b;
+}
+function payStatusCard(){
+  const st=payState(),fd=x=>cap(fmtDate(dfmt(new Date(x))));
+  const card=h('section',{class:'card paystat'},h('p',{class:'flabel'},'Ton accès'));
+  if(st.k==='coach')card.append(h('b',{},'Accès coach'));
+  else if(st.k==='trial')card.append(h('b',{},'Essai gratuit'),h('p',{class:'muted'},'Jusqu’au '+fd(st.end)+'. Abonne-toi avant la fin pour garder l’accès aux séances.'+(st.end-Date.now()>52*36e5?' Si tu t’abonnes maintenant, tu ne perds pas ton essai : le premier paiement n’a lieu qu’à la fin de l’essai.':'')));
+  else if(st.k==='active'&&st.plan==='free')card.append(h('b',{},'Accès offert à vie'),h('p',{class:'muted'},'Ton accès aux séances est offert, sans durée limitée.'));
+  else if(st.k==='active'){
+    card.append(h('b',{},'Abonné'+(PLAN_NAMES[st.plan]?' · '+PLAN_NAMES[st.plan]:'')),
+      st.end?h('p',{class:'muted'},st.cancel?'Fin de l’abonnement le '+fd(st.end)+'.':(st.trial?'Ton essai gratuit continue jusqu’au '+fd(st.end)+' : le premier paiement aura lieu ce jour-là.':'Prochain renouvellement le '+fd(st.end)+'.')):null);
+    if(PORTAL_LINK)card.append(h('a',{class:'btn',href:PORTAL_LINK,rel:'noopener'},'Gérer mon abonnement'));
+  }
+  else if(st.k==='blocked')card.append(h('b',{},'Aucun abonnement actif'),h('p',{class:'muted'},'Ton essai est terminé : abonne-toi pour retrouver les séances.'),
+    PORTAL_LINK?h('a',{class:'btn',href:PORTAL_LINK,rel:'noopener'},'J’ai déjà un abonnement'):null);
+  else card.append(h('p',{class:'muted'},'Chargement de ton abonnement…'));
+  if(st.k!=='active'&&st.k!=='coach'&&payTryRecent())card.append(h('p',{class:'hint'},'Si tu viens de payer : ton accès s’ouvre tout seul en moins de 30 minutes. Tu peux continuer à utiliser l’appli en attendant.'));
+  if(S.pay&&S.pay.doc&&!S.pay.doc.active&&st.k!=='active'&&S.pay.doc.status&&st.k!=='coach')card.append(h('p',{class:'hint'},'Dernier état du paiement : '+S.pay.doc.status+'.'));
+  return card;
+}
+function viewPaywall(){
+  return h('div',{class:'stack'},
+    h('div',{},h('p',{class:'eyebrow'},'Box Score'),h('h1',{class:'day'},'Abonne-toi pour accéder aux séances')),
+    payStatusCard(),
+    plansCarousel(true),
+    h('p',{class:'hint'},'Après le paiement, l’accès s’ouvre tout seul en moins de 30 minutes (rouvre l’appli si besoin). Résiliation possible à tout moment. TVA non applicable, art. 293 B du CGI.'),
+    cgvButton());
+}
+/* deux cartes de forfaits qui se font glisser (page Abonnement et page de connexion) */
+function plansCarousel(buy){
+  const plan=(cls,name,price,lines,key)=>h('article',{class:'plan '+cls},
+    h('p',{class:'flabel'},name),
+    h('p',{class:'plan-price',style:'font-size:28px'},price),
+    ...lines,buy?buyBtn(key):null);
+  const track=h('div',{class:'plans',role:'region','aria-label':'Forfaits : fais glisser pour voir les deux','tabindex':'0'},
+    plan('','4 semaines',eur(PRICE_4W)+' / 4 semaines',[
+      h('p',{class:'plan-free'},'Les 2 premières semaines sont offertes à l’inscription.'),
+      h('p',{class:'plan-sub'},'Renouvelé toutes les 4 semaines.'),
+      h('p',{class:'plan-sub'},'Sans engagement : tu arrêtes quand tu veux.')],'4w'),
+    plan('best',SEASON_WEEKS+' semaines',eur(PRICE_SEASON)+' / '+SEASON_WEEKS+' semaines',[
+      h('p',{class:'plan-old'},'au lieu de ',h('s',{},eur(PRICE_4W*SEASON_WEEKS/4)),' en 3 forfaits de 4 semaines'),
+      h('p',{class:'plan-save'},'−'+Math.round((1-PRICE_SEASON/(PRICE_4W*SEASON_WEEKS/4))*100)+' % de réduction'),
+      h('p',{class:'plan-free'},'Les 2 premières semaines sont offertes à l’inscription.'),
+      h('p',{class:'plan-sub'},'Renouvelé toutes les '+SEASON_WEEKS+' semaines.'),
+      h('p',{class:'plan-sub'},'Sans engagement : tu arrêtes quand tu veux.')],'season'));
+  const dots=[0,1].map(i=>h('button',{type:'button',class:'plan-dot','aria-label':i?'Forfait '+SEASON_WEEKS+' semaines':'Forfait 4 semaines','aria-current':i?null:'true',onclick:()=>track.scrollTo({left:i*(track.scrollWidth-track.clientWidth),behavior:'smooth'})}));
+  track.addEventListener('scroll',()=>{const mx=track.scrollWidth-track.clientWidth,i=mx>0&&track.scrollLeft>mx/2?1:0;dots.forEach((d,k)=>{if(k===i)d.setAttribute('aria-current','true');else d.removeAttribute('aria-current');});},{passive:true});
+  return h('div',{class:'plans-wrap'},track,h('div',{class:'plan-dots'},...dots),h('p',{class:'hint',style:'text-align:center'},'Fais glisser pour comparer les deux forfaits.'),buy?payConsent():null);
+}
+/* case obligatoire avant « S’abonner » : acceptation des CGV, demande de début immédiat du service, information sur la part due en cas de rétractation (art. L221-25 du Code de la consommation) */
+function payConsent(){
+  return h('div',{id:'pay-consent',style:'display:grid;gap:4px;margin-top:10px'},
+    h('label',{class:'chk'},h('input',{type:'checkbox',id:'pay-agree',checked:!!S.payAgree,onchange:e=>{S.payAgree=e.target.checked;}}),
+      h('span',{},'J’ai lu et j’accepte les conditions générales de vente. Je demande que le service commence immédiatement et je reconnais que, si je me rétracte dans les 14 jours, je devrai payer la part du service déjà fourni.')),
+    h('button',{class:'link',type:'button',onclick:openCGV},'Lire les conditions générales de vente'));
+}
+/* ---------- CGV : conditions générales de vente (bouton sous les forfaits, ouvre une fenêtre) ---------- */
+const CGV_VERSION='29 octobre 2026';
+/* À COMPLÉTER avant d’ouvrir les paiements : ces informations s’affichent dans les articles 1 et 13 des CGV */
+const CGV_INFO={
+  nom:'Robin Piraino, exerçant sous le nom commercial BOX Score Cross’mitaines',
+  statut:'entrepreneur individuel, micro-entrepreneur',
+  siret:'131 993 776 00015',
+  adresse:'7 rue de la tuilerie, 55100 Belrupt-en-Verdunois',
+  email:'crossmitaines@outlook.fr',
+  mediateur:'à venir'
+};
+function cgvSections(){
+  const n4=SEASON_WEEKS/4,per4=PRICE_SEASON/n4,I=CGV_INFO;
+  return [
+    {t:'1. Éditeur et contact',p:[
+      'Box Score est éditée par '+I.nom+' ('+I.statut+'), SIRET '+I.siret+', '+I.adresse+'. Contact : '+I.email+'.',
+      'Dans ces conditions, « l’éditeur » désigne l’éditeur de Box Score, qui est aussi le coach, et « tu » ou « l’athlète » désigne toute personne qui crée un compte.']},
+    {t:'2. Objet',p:[
+      'Ces conditions générales de vente (CGV) encadrent la vente des abonnements qui donnent accès à Box Score : le programme de Crosstraining du coach, le classement de saison, les trophées, les badges et la communauté.',
+      'Créer un compte et choisir un forfait vaut acceptation des CGV. Elles sont consultables à tout moment, sur l’écran de connexion et dans la page Abonnement.',
+      'L’abonnement est réservé aux personnes majeures. Pour des raisons de sécurité, Box Score est inaccessible aux moins de 16 ans. Un mineur de 16 ou 17 ans ne peut l’utiliser qu’avec l’autorisation de son représentant légal, qui accepte les présentes CGV et réalise le paiement. Cette autorisation est déclarée dans l’appli avant la première séance (voir l’article 9).']},
+    {t:'3. Forfaits et prix',p:[
+      'Forfait 4 semaines : '+eur(PRICE_4W)+' toutes les 4 semaines.',
+      'Forfait '+SEASON_WEEKS+' semaines : '+eur(PRICE_SEASON)+' toutes les '+SEASON_WEEKS+' semaines, soit '+eur(per4)+' par 4 semaines.',
+      'Les prix sont en euros. TVA non applicable, art. 293 B du CGI.',
+      'L’éditeur peut modifier ses prix. Le nouveau prix ne s’applique qu’au renouvellement suivant, après une information envoyée au moins 30 jours avant. Tu peux résilier avant son entrée en vigueur.']},
+    {t:'4. Essai gratuit',p:[
+      'Les 2 premières semaines sont offertes à l’inscription. L’essai est limité à une fois par personne : créer plusieurs comptes pour renouveler l’essai est interdit et peut entraîner la suspension des comptes concernés.',
+      'À la fin de l’essai, l’accès aux séances est réservé aux athlètes abonnés. Aucun moyen de paiement n’est demandé tant que tu n’as pas choisi un forfait, et rien n’est prélevé sans que tu l’aies choisi. Si tu t’abonnes pendant l’essai, tu ne perds pas ton essai : le premier paiement n’a lieu qu’à sa fin (la date t’est indiquée avant de payer) et le forfait commence ce jour-là.']},
+    {t:'5. Paiement et renouvellement',p:[
+      'Le paiement se fait en ligne par carte bancaire, via Stripe, prestataire de paiement sécurisé. L’éditeur ne voit pas et ne conserve pas tes coordonnées bancaires.',
+      'Le montant est dû au début de chaque période. L’abonnement est renouvelé automatiquement à chaque échéance (toutes les 4 semaines pour le forfait 4 semaines, toutes les '+SEASON_WEEKS+' semaines pour le forfait '+SEASON_WEEKS+' semaines) jusqu’à ta résiliation.',
+      'En cas d’échec de paiement, l’accès peut être suspendu jusqu’à la régularisation. Un reçu est envoyé par e-mail à chaque paiement.']},
+    {t:'6. Accès au service',p:[
+      'L’accès est personnel : ne communique pas tes identifiants. Il commence à la création du compte (essai) puis se poursuit avec le forfait choisi.',
+      'Le coach publie les séances, tu les réalises quand tu veux dans la semaine et tu notes ton résultat.',
+      'L’éditeur peut offrir un accès gratuit à certaines personnes, à titre gracieux. Cet accès peut être retiré et n’ouvre aucun droit pour l’avenir.']},
+    {t:'7. Droit de rétractation',p:[
+      'Si tu es consommateur, tu disposes de 14 jours à compter de la souscription pour te rétracter, sans motif.',
+      'Avant de t’abonner, tu coches une case par laquelle tu demandes que le service commence immédiatement et tu reconnais que, si tu te rétractes, tu paies la part du service déjà fourni jusqu’à ta demande, proportionnelle au prix du forfait. Sans cette case, l’abonnement ne peut pas être souscrit. L’essai gratuit n’entraîne aucun paiement.',
+      'Pour te rétracter, envoie une demande claire par e-mail à '+I.email+'. Le remboursement éventuel est effectué dans les 14 jours, par le même moyen de paiement.']},
+    {t:'8. Résiliation',p:[
+      'Tu peux résilier à tout moment, sans motif ni pénalité, depuis la gestion de ton abonnement dans l’appli ou par e-mail à '+I.email+'.',
+      'La résiliation prend effet à la fin de la période déjà payée (4 semaines ou '+SEASON_WEEKS+' semaines en cours) : tu gardes l’accès jusque-là. La période commencée n’est pas remboursée, sauf cas prévu par la loi.',
+      'L’éditeur peut suspendre ou résilier un compte en cas de non-respect des CGV ou du règlement (triche, propos injurieux, comptes multiples), après t’avoir informé.']},
+    {t:'9. Santé, pratique sportive et responsabilité',p:[
+      'Box Score est un **outil de suivi** de l’entraînement : l’éditeur et le coach ne dispensent aucun conseil médical et ne surveillent pas tes séances. L’appli ne remplace pas un avis médical.',
+      'Le programme est intense, notamment sur le plan cardiovasculaire. Consulte un médecin avant de commencer ou de reprendre une activité physique intense ; au-delà de 35 ans, une visite chez le cardiologue est fortement recommandée.',
+      'Avant la première séance, tu déclares sur l’honneur avoir pris connaissance du message de prévention. Si tu as 16 ou 17 ans, ton responsable légal doit avoir lu ces informations et t’autoriser à suivre le programme : tu le déclares aussi. La version du texte et la date de ta déclaration sont enregistrées dans ton profil privé.',
+      'Tu t’entraînes sous ta seule responsabilité : tu choisis ton niveau, ta charge et ton intensité, et tu restes attentif à tes sensations (voir la page « Santé et sécurité » et le règlement). Dans les limites autorisées par la loi, l’éditeur n’est pas responsable des blessures, malaises, accidents ou autres dommages survenus pendant ou après une séance, ni d’une mauvaise utilisation du programme. L’éditeur ne garantit aucun résultat sportif. Cet article ne limite pas les droits que la loi te reconnaît, ni la responsabilité de l’éditeur en cas de faute de sa part.']},
+    {t:'10. Disponibilité de l’appli',p:[
+      'L’éditeur met tout en œuvre pour que l’appli soit accessible, mais il ne peut pas garantir un accès sans interruption : maintenance, panne d’un prestataire, problème de connexion internet de ton côté.']},
+    {t:'11. Propriété intellectuelle',p:[
+      'Les programmes, textes, images, vidéos, badges, trophées et le nom Box Score sont protégés. Ton abonnement te donne un droit d’usage personnel : tu ne peux pas les copier, les diffuser ou les revendre sans l’accord de l’éditeur.']},
+    {t:'12. Données personnelles',p:[
+      'Pour fournir le service, l’éditeur traite ton e-mail, ton pseudo, les informations de ton profil (dont ta date de naissance, qui reste privée), ta déclaration de prévention santé (version et date), tes résultats et l’état de ton abonnement. Ces données ne sont pas vendues. Elles sont hébergées par des prestataires techniques (dont Firebase et Stripe pour le paiement).',
+      'Tu disposes d’un droit d’accès, de rectification, d’effacement, d’opposition et de portabilité de tes données : écris à '+I.email+'. Tu peux aussi saisir la CNIL.']},
+    {t:'13. Réclamations, médiation et loi applicable',p:[
+      'Pour toute réclamation, écris d’abord à '+I.email+'. À défaut de solution amiable, tu peux saisir gratuitement le médiateur de la consommation : '+I.mediateur+'.',
+      'Les CGV sont soumises au droit français. En cas de litige, les tribunaux compétents sont ceux déterminés par la loi, et un consommateur peut saisir le tribunal de son domicile.']},
+    {t:'14. Modification des CGV',p:[
+      'L’éditeur peut modifier les CGV. La version applicable est celle en vigueur à ta souscription ou à ton renouvellement. Tu es informé de toute modification importante avant qu’elle s’applique.']}
+  ];
+}
+function openCGV(){
+  const esc=e=>{if(e.key==='Escape')close();};
+  const close=()=>{ov.remove();document.removeEventListener('keydown',esc);};
+  const ov=h('div',{class:'ov',id:'cgv-ov',style:'z-index:70',onclick:e=>{if(e.target===ov)close();}},
+    h('div',{class:'sheet',role:'dialog','aria-modal':'true','aria-label':'Conditions générales de vente'},
+      h('p',{class:'eyebrow'},'Box Score'),
+      h('h2',{class:'wtitle'},'Conditions générales de vente'),
+      h('p',{class:'hint'},'Version du '+CGV_VERSION),
+      ...cgvSections().map(s=>h('section',{style:'display:grid;gap:6px'},h('b',{},s.t),...s.p.map(x=>h('p',{style:'margin:0'},...rlText(x))))),
+      h('button',{class:'btn primary',type:'button',id:'cgv-close',onclick:close},'Fermer')));
+  document.body.append(ov);document.addEventListener('keydown',esc);
+}
+const cgvButton=()=>h('button',{class:'btn',type:'button',id:'cgv-btn',style:'width:100%',onclick:openCGV},'Conditions générales de vente');
+function viewSub(){
+  const gains=['Un programme avec des niveaux de pratique adaptés à chacun',
+    'Un système motivant qui booste ta régularité et ton dépassement de soi : classement de saison, trophées, badges, flamme',
+    'Une communauté pour te comparer et t’encourager',
+    'Une appli personnalisable : avatar, bannière, variantes adaptées'];
+  return h('div',{class:'stack'},
+    h('div',{},h('p',{class:'eyebrow'},'Box Score'),h('h1',{class:'day'},'Abonnement')),
+    h('section',{class:'card'},h('h2',{class:'h2'},'Ce que tu y gagnes'),
+      h('ul',{style:'margin:0;padding-left:20px;display:grid;gap:6px'},gains.map(t=>h('li',{},t)))),
+    payStatusCard(),
+    (payState().k==='active'&&payState().plan==='free')?null:plansCarousel(true),
+    h('p',{class:'hint'},'Résiliation possible à tout moment. TVA non applicable, art. 293 B du CGI.'),
+    cgvButton());
+}
 /* ---------- QR code (mode octets, correction M, versions 1 à 10) : généré dans l'appli, rien à charger ---------- */
 function qrMatrix(text){
   const data=Array.from(new TextEncoder().encode(String(text)));
@@ -15781,7 +16399,7 @@ const TOURS={
     {title:'Ton niveau, ta performance',text:'Sur chaque metcon, tu choisis le niveau qui te correspond (Débutant, Intermédiaire ou Rx). Les points récompensent ta performance à ton niveau : tout le monde peut viser le haut du classement.'},
     {title:'Plus qu’un classement',text:'Des trophées en fin de saison, des flammes pour la régularité, un avatar à habiller et un fil pour s’encourager avec des emojis.'},
     TOUR_STEPS.loginEmail,TOUR_STEPS.loginPw,TOUR_STEPS.loginCreate,
-    {title:'Des coins à gagner',text:'L’accès à l’appli est gratuit. Chaque séance enregistrée te rapporte des coins, à dépenser dans le Shop (menu) contre des skins pour ton avatar.'},
+    (PAY_PAUSED?{title:'Des coins à gagner',text:'L’accès à l’appli est gratuit. Chaque séance enregistrée te rapporte des coins, à dépenser dans le Shop (menu) contre des skins pour ton avatar.'}:{title:'Deux semaines offertes',text:'Tes 2 premières semaines de participation sont gratuites. Ensuite, un abonnement est nécessaire pour accéder aux séances.'}),
     {sel:'#tour-help',title:'Besoin d’un rappel ?',text:'Ce bouton « ? » te remet ce guide quand tu veux.'}],
   welcome:()=>[
     {title:'Bienvenue sur Box Score',text:'Le classement de ton groupe de Crosstraining : le coach publie des séances, tu les fais quand tu veux dans la semaine, tu notes ton résultat et tu gagnes des points.'},
@@ -15853,6 +16471,11 @@ TOURS.avis=()=>[
     {sel:'.kbpick',title:'Ta note',text:'Note l’appli de 1 à 5 kettlebells.'},
     {sel:'#avis-text',title:'Ton petit mot',text:'Quelques mots, 200 caractères au maximum : ce qui te plaît, ce qui t’aide.'},
     {sel:'#avis-send',title:'Envoyer',text:'Tu as un seul avis, que tu peux modifier quand tu veux. Seul le coach peut le lire ; s’il est affiché sur l’écran de connexion, ton pseudo, ta note et ton mot apparaissent.'}];
+TOURS.sub=()=>[
+    {sel:'.paystat',title:'Ton accès',text:'Ton statut : essai gratuit avec sa date de fin, ou abonnement en cours. Une fois abonné, « Gérer mon abonnement » te permet de changer de carte ou de résilier.'},
+    {sel:'.plans',title:'Les deux forfaits',text:'4 semaines à '+eur(PRICE_4W)+' ou '+SEASON_WEEKS+' semaines à '+eur(PRICE_SEASON)+'. Fais glisser pour comparer. Les deux se renouvellent automatiquement et tu peux résilier à tout moment.'},
+    {sel:'.plan .btn',title:'S’abonner',text:'Le paiement par carte se fait sur la page sécurisée de Stripe. Moins de 30 minutes plus tard, ton accès aux séances est ouvert.'},
+    {sel:'#cgv-btn',title:'Conditions générales de vente',text:'Les conditions de l’abonnement, à lire avant de t’abonner.'}];
 TOURS.shop=()=>[
     {sel:'.shop-bal',title:'Tes coins',text:'Ton solde de coins. Tu en gagnes à chaque séance enregistrée, et tu les dépenses ici contre des skins pour ton avatar.'},
     {sel:'.shop-list',title:'Les skins en vente',text:'Chaque skin a son prix en coins. Touche « Acheter », puis « Confirmer ». Il rejoint ensuite ton inventaire d’avatar.'}];
@@ -15880,7 +16503,7 @@ const tourKey=t=>'bs-tour-'+(t==='login'?'login':(S.uid||'anon')+'-'+t)+(TOUR_VE
 const tourSeen=t=>{try{return localStorage.getItem(tourKey(t))==='1';}catch(e){return true;}}; /* stockage indisponible : on n'insiste pas */
 const tourMark=t=>{try{localStorage.setItem(tourKey(t),'1');}catch(e){}};
 const tourBusy=()=>!!document.querySelector('.ov,.cer,.tm,.avfs,.ann,.reward-pop,#tm-ov');
-const curTourId=()=>!S.uid?((S.authReady&&S.db)?'login':null):((S.viewUser||S.boardDetail)?null:((S.tab==='today'&&!S.viewDate)?'cards':(TOURS[S.tab]?S.tab:null)));
+const curTourId=()=>!S.uid?((S.authReady&&S.db)?'login':null):((S.viewUser||S.boardDetail)?null:((S.tab==='today'&&!hasAccess())?'sub':(S.tab==='today'&&!S.viewDate)?'cards':(TOURS[S.tab]?S.tab:null)));
 function helpBtn(){return h('button',{class:'help-btn',id:'tour-help',type:'button','aria-label':'Afficher le guide de cet écran',title:'Guide de cet écran',onclick:()=>{const t=curTourId();if(t)startTour(TOURS[t]());}},'?');}
 function maybeTour(){
   if(tourEl||!S.uid||tourSeen('welcome'))return;
@@ -16100,7 +16723,7 @@ function startFirebase(){
     S.coach={wod:null,editing:false,period:null,resDate:null};S.avisFor=null;S.profView=null;S.viewUser=null;S.tip=null;S.tab=user?takeInitialTab():'feed';S.authReady=true;
     if(!user){S.uid=null;S.pre=null;try{localStorage.removeItem(SNAP_KEY);localStorage.removeItem(WC_KEY);}catch(e){}render();return;}
     S.pre=null;{const wc=wcRead();if(wc&&wc.uid===user.uid&&Object.keys(wc.wods||{}).length){S.pre=true;S.wods=wc.wods;S.periods=wc.periods||{};S._wcSeen=wc.seen||{};if(wc.mylog)S.logs={[user.uid]:wc.mylog};}}
-    S.uid=user.uid;S.created=(user.metadata&&user.metadata.creationTime)||'';S.email=user.email||'';setTimeout(pushSync,2500);S.meName=user.displayName||(user.email||'').split('@')[0]||'';
+    S.uid=user.uid;S.pay={loaded:false,doc:null,err:false};S.created=(user.metadata&&user.metadata.creationTime)||'';S.email=user.email||'';setTimeout(pushSync,2500);S.meName=user.displayName||(user.email||'').split('@')[0]||'';
     const fail=e=>{S.error=(e&&e.code==='permission-denied')?'Accès refusé par la base de données. Publie les règles de sécurité (voir README).':'Lecture des données impossible pour le moment.';scheduleRender();};
     const watch=(path,key)=>unsubs.push(S.db.collection(path).onSnapshot(sn=>{S[key]=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));S.loaded[key]=true;S._srv[key]=!sn.fromCache;
       if(S._netOff&&ready())backOnline();
@@ -16111,6 +16734,8 @@ function startFirebase(){
       scheduleRender();if(key==='logs')selfSync();launchRecapMaybe();},fail,true));
     watch('periods','periods');watch('wods','wods');watch('logs','logs');
     if(persist)cacheT=setTimeout(()=>{if(S.uid===user.uid&&!ready()&&snapRead()&&snapRead().uid===user.uid)goCache();},3000);
+    /* état de l'abonnement (écrit par le script GitHub, lecture seule ici) ; en cas d'erreur de lecture on ne bloque personne */
+    unsubs.push(S.db.doc('subs/'+S.uid).onSnapshot(sn=>{S.pay={loaded:true,doc:sn.exists?sn.data():null,err:false};scheduleRender();},()=>{S.pay={loaded:true,doc:null,err:true};scheduleRender();}));
     unsubs.push(S.db.doc('config/coach').onSnapshot(sn=>{S.coachUid=sn.exists?(sn.data().uid||null):null;S.coachLoaded=true;S.owner=!!S.coachUid&&S.coachUid===S.uid;if(S.owner&&!S._bugOn){S._bugOn=true;unsubs.push(bugWatch());}dmSync();wuMaybeSeed();scheduleRender();launchRecapMaybe();},fail));
     /* les groupes ne bloquent jamais l'appli : si les règles ne sont pas encore publiées, on ignore l'erreur */
     unsubs.push(S.db.doc('config/groups').onSnapshot(sn=>{const d=sn.exists?sn.data():null;S.groups={list:(d&&Array.isArray(d.list))?d.list:[],of:(d&&d.of&&typeof d.of==='object')?d.of:{},snap:(d&&d.snap&&typeof d.snap==='object')?d.snap:{},bots:(d&&d.bots&&typeof d.bots==='object')?d.bots:{},loaded:true};S._freezing=false;scheduleRender();},()=>{}));
