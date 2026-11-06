@@ -846,7 +846,7 @@ body:has(.bnx){overflow:hidden}
 .bnx-tab.on{color:#fff;background:linear-gradient(90deg,#ff1f7a,#ff6a1a);box-shadow:0 4px 16px rgba(255,45,111,.5),inset 0 1px 0 rgba(255,255,255,.3)}
 .bnx-h2,.bnx-h h2{margin:0;font:italic 400 30px/1.05 var(--f-display);text-transform:uppercase;transform:skewX(-6deg);padding-bottom:6px;border-bottom:3px solid #ff2d6f;display:inline-block}
 .bnx-prev p{margin:8px 0 0;max-width:30ch;color:#ddd;font-size:15px}
-.bnx-pv{margin-top:14px;padding:4px;border:2px solid #ff2d6f;border-radius:22px;box-shadow:0 0 16px rgba(255,45,111,.6),inset 0 0 10px rgba(255,45,111,.25);background:rgba(10,4,8,.7);overflow:hidden}
+.bnx-pv{margin-top:14px;padding:4px;border:2px solid #ff2d6f;border-radius:22px;box-shadow:0 0 16px rgba(255,45,111,.6),inset 0 0 10px rgba(255,45,111,.25);background:rgba(10,4,8,.7);overflow:visible}
 .bnx-h{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .bnx-rnd{display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:0 14px;border:2px solid #ff2d6f;border-radius:14px;background:rgba(20,6,12,.85);color:#fff;font:700 13px var(--f-body);text-transform:uppercase;cursor:pointer;box-shadow:0 0 10px rgba(255,45,111,.4)}
 .bnx-rnd:disabled{opacity:.4}
@@ -868,6 +868,13 @@ body:has(.bnx){overflow:hidden}
 /* Toutes les bannières ont la même taille (5:2, réglable : --bnm-r, ex. 2.2 = plus haute) et la même police. Tout est placé en cqw (1 cqw = 1 % de la largeur de la bannière ; hauteur = 100 / --bnm-r cqw, soit 40 cqw) : */
 .bn.bnm{container-type:inline-size;position:relative;aspect-ratio:var(--bnm-r,2.5);padding:0;background:#0b0b0e;color:#fff;isolation:isolate;overflow:hidden}
 .bn.bnm.bnm-mini{aspect-ratio:auto}
+/* la bannière ne coupe plus ce qui dépasse : seul .bnm-in (tout sauf le cadre) est découpé aux bords ; le cadre peut déborder */
+.bn.bnm{overflow:visible}
+.bn.bnm.bnm-mini{overflow:hidden}
+.bnm-in{position:absolute;inset:0;overflow:hidden;border-radius:inherit}
+/* cadre de bannière : l'image (1280 x 800) est agrandie pour que son trait lumineux tombe pile sur le bord de la bannière ; glaçons, neige et cristaux dépassent à l'extérieur */
+.bn.bnm>.bnm-frame{inset:auto;left:-2.46%;top:-4.56%;width:105.08%;height:111.23%}
+.bn.bnm.bnm-mini>.bnm-frame{inset:0;width:auto;height:auto}
 .feed-card.th-cm>.bn{border-width:0;border-radius:3px 3px 0 0}
 .bnm-l{position:absolute;inset:0;background-position:center;background-size:100% 100%;background-repeat:no-repeat;pointer-events:none}
 .bnm-bg{z-index:0;background-image:radial-gradient(60% 90% at 15% 115%,rgba(255,90,20,.7),transparent 70%),radial-gradient(45% 70% at 88% 120%,rgba(255,30,60,.55),transparent 70%),linear-gradient(#0b0707,#1b0808)}
@@ -909,7 +916,7 @@ body:has(.bnx){overflow:hidden}
 :is(.bn.bnm,.cmth) .nm{font:400 clamp(18px,7.2cqw,46px)/1.05 var(--f-display);letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--cm-ink,#fff);text-shadow:0 2px 6px #000,0 0 10px rgba(0,0,0,.7);max-width:100%}
 :is(.bn.bnm,.cmth) .nm .link{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0;border:0;background:none;color:inherit;font:inherit;letter-spacing:inherit;text-shadow:inherit;text-align:left;text-decoration:none;cursor:pointer}
 /* sous la bannière : titre de la séance, niveau, date, message, signalement */
-.feed-card.th-cm{gap:0;padding:0;overflow:hidden}
+.feed-card.th-cm{gap:0;padding:0;overflow:visible}
 .feed-card.th-cm>.bn{margin:0;width:100%;max-width:none;border-radius:2px}
 .feed-card.th-cm>.cm-foot{display:grid;gap:8px;padding:12px 16px 14px}
 /* bannière modulaire plus haute : tout est dedans (avatar, nom, plaque, résultats, réactions, points, titre de la séance et date) */
@@ -926,6 +933,12 @@ body:has(.bnx){overflow:hidden}
 .bnm-ses{position:absolute;z-index:5;left:4.5cqw;right:4.5cqw;top:48.5cqw;bottom:2.5cqw;min-width:0;border-top:1px solid rgba(255,255,255,.22);padding-top:1.4cqw;display:flex;flex-direction:column;justify-content:center;gap:.8cqw}
 .bnm-ses .wtitle{margin:0;font-size:clamp(16px,6cqw,30px);line-height:1.05;color:#fff;text-shadow:0 2px 6px #000;display:flex;align-items:center;gap:2cqw;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bnm-ses .sub{font-size:clamp(11px,3.1cqw,15px);line-height:1.2;color:#d9d4d4;text-shadow:0 1px 3px #000}
+/* lisibilité sur tous les fonds : voile dégradé sous le bloc séance (au-dessus du fond, des effets et du logo, sous le cadre et les textes) */
+.bnm-in::after{content:"";position:absolute;left:0;right:0;bottom:0;top:44cqw;z-index:3;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,.55) 38%,rgba(0,0,0,.78))}
+.bn.bnm.bnm-mini .bnm-in::after{display:none}
+.bnm-ses .sub{color:#fff;font-weight:600;text-shadow:0 1px 2px #000,0 0 6px rgba(0,0,0,.95),0 0 12px rgba(0,0,0,.7)}
+.bnm-ses .wtitle{text-shadow:0 2px 6px #000,0 0 12px rgba(0,0,0,.8)}
+.bnm-res .feed-metric span{color:#f1eded;text-shadow:0 1px 2px #000,0 0 6px rgba(0,0,0,.95)}
 /* ---- éléments de démonstration (CSS pur) : à remplacer / compléter par des images (champ src du catalogue CM_ITEMS) ---- */
 .cm-bg-braises{background-image:radial-gradient(60% 90% at 15% 115%,rgba(255,90,20,.7),transparent 70%),radial-gradient(45% 70% at 88% 120%,rgba(255,30,60,.55),transparent 70%),linear-gradient(#0b0707,#1b0808)}
 .cm-pl-classic{background-image:linear-gradient(90deg,rgba(0,0,0,.72),rgba(0,0,0,.35));clip-path:polygon(3% 0,100% 0,97% 100%,0 100%);border-bottom:.5cqw solid var(--accent)}
@@ -11251,14 +11264,15 @@ function avFrameAuto(uid,div){
 function cmEl(uid,o){
   o=o||{};
   const c=cmOf(uid),b=bannerOf(uid),lg=S.logs[uid]||{},fr=b.frame?BN.frame[b.frame]:null;
-  const el=h('div',{class:'bn bnm'+(o.mini?' bnm-mini':'')+(c.logo?' has-logo':'')+(fr?' '+fr.cls:''),'data-banner':'modular'});
+  const root=h('div',{class:'bn bnm'+(o.mini?' bnm-mini':'')+(c.logo?' has-logo':'')+(fr?' '+fr.cls:''),'data-banner':'modular'}),el=h('div',{class:'bnm-in'}); /* .bnm-in garde tout dans la bannière (découpé) ; le cadre, lui, est posé sur root et peut dépasser */
+  root.append(el);
   const bg=h('div',{class:'bnm-l bnm-bg'});cmApply(bg,c.background);
   const fx=h('div',{class:'bnm-l bnm-fx'});cmApply(fx,c.effect);
   const lgo=h('div',{class:'bnm-logo'});cmApply(lgo,c.logo);
   const fm=h('div',{class:'bnm-l bnm-frame'});cmApply(fm,c.frame);
-  if(c.frame&&c.frame.tone)el.style.setProperty('--cm-line',c.frame.tone); /* anneau de l'avatar + bordures des réactions à la couleur du cadre */
-  el.append(bg,fx);if(c.logo)el.append(lgo);el.append(fm);
-  if(o.mini)return el;
+  if(c.frame&&c.frame.tone)root.style.setProperty('--cm-line',c.frame.tone); /* anneau de l'avatar + bordures des réactions à la couleur du cadre */
+  el.append(bg,fx);if(c.logo)el.append(lgo);root.append(fm);
+  if(o.mini)return root;
   const avDiv=h('div',{class:'bnm-av'},o.avatar||avatarFramed(uid,o.avclick||null));el.append(avDiv);avFrameAuto(uid,avDiv);
   if(c.badge){
     const bw=h('div',{class:'bnm-badge'});
@@ -11279,7 +11293,7 @@ function cmEl(uid,o){
     if(o.rx)el.append(h('div',{class:'bnm-rx'},o.rx));
     if(o.pts)el.append(h('span',{class:'bnm-pts'},o.pts));
   }
-  return el;
+  return root;
 }
 /* enregistrement : ne garde que des identifiants connus, de la bonne couche et réellement possédés ; badge = référence d'un badge gagné */
 function cmFinalize(nv){
