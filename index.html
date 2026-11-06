@@ -965,12 +965,24 @@ body:has(.bnx){overflow:hidden}
 .bnx-t.cmbl .badge{filter:grayscale(1) brightness(.75)}
 /* ---- shop : rareté + filtre ---- */
 .sh-rar{font:700 10px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase}
-.sh-rar.r-standard{color:#9aa3ad}.sh-rar.r-rare{color:#2aa6e0}.sh-rar.r-epique{color:#b44cff}.sh-rar.r-legendaire{color:#ffb21a}
+.sh-rar.r-standard{color:#9aa3ad}.sh-rar.r-rare{color:#2aa6e0}.sh-rar.r-epique{color:#ff2fb4}.sh-rar.r-legendaire{color:#ffb21a}
 .sh-rf{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
 .sh-rf::-webkit-scrollbar{display:none}
 .sh-rfb{flex:none;min-height:34px;padding:0 14px;border:1.5px solid rgba(255,255,255,.25);border-radius:999px;background:transparent;color:#fff;font:700 13px var(--f-body);cursor:pointer}
 .sh-rfb.on{background:var(--g);border-color:transparent}
 .sh-img .cmth{border-radius:8px}
+/* éclats de rareté (shop + objets de la personnalisation) : standard = rien · rare = léger bleu · épique = fuchsia plus fort · légendaire = doré encore plus fort */
+.sh-row{padding:14px 10px 18px;margin:-14px -10px -12px}
+.shop-rar select{min-width:110px}
+.sh-card.rar-rare{border-color:rgba(42,166,224,.6);background:radial-gradient(90% 55% at 50% 0,rgba(42,166,224,.2),transparent 75%),linear-gradient(180deg,rgba(14,14,18,.9),rgba(14,14,18,.92));box-shadow:0 0 12px 1px rgba(42,166,224,.3),0 0 3px rgba(42,166,224,.5)}
+.sh-card.rar-epique{border-color:rgba(255,47,180,.7);background:radial-gradient(90% 60% at 50% 0,rgba(255,47,180,.27),transparent 75%),linear-gradient(180deg,rgba(14,14,18,.9),rgba(14,14,18,.92));box-shadow:0 0 16px 2px rgba(255,47,180,.45),0 0 4px rgba(255,47,180,.6)}
+.sh-card.rar-legendaire{border-color:rgba(255,178,26,.85);background:radial-gradient(90% 65% at 50% 0,rgba(255,178,26,.34),transparent 75%),linear-gradient(180deg,rgba(14,14,18,.9),rgba(14,14,18,.92));box-shadow:0 0 22px 3px rgba(255,178,26,.6),0 0 6px rgba(255,214,102,.65)}
+.bnx-t.cmt.rar-rare:not(.on):not(.pv){border-color:rgba(42,166,224,.6);background:radial-gradient(90% 55% at 50% 0,rgba(42,166,224,.2),transparent 75%),rgba(14,12,14,.9);box-shadow:0 0 12px 1px rgba(42,166,224,.3),0 0 3px rgba(42,166,224,.5)}
+.bnx-t.cmt.rar-epique:not(.on):not(.pv){border-color:rgba(255,47,180,.7);background:radial-gradient(90% 60% at 50% 0,rgba(255,47,180,.27),transparent 75%),rgba(14,12,14,.9);box-shadow:0 0 16px 2px rgba(255,47,180,.45),0 0 4px rgba(255,47,180,.6)}
+.bnx-t.cmt.rar-legendaire:not(.on):not(.pv){border-color:rgba(255,178,26,.85);background:radial-gradient(90% 65% at 50% 0,rgba(255,178,26,.34),transparent 75%),rgba(14,12,14,.9);box-shadow:0 0 22px 3px rgba(255,178,26,.6),0 0 6px rgba(255,214,102,.65)}
+.bnx-t.cmt.rar-rare.on{box-shadow:0 0 14px rgba(255,45,111,.7),0 0 18px rgba(42,166,224,.35)}
+.bnx-t.cmt.rar-epique.on{box-shadow:0 0 14px rgba(255,45,111,.7),0 0 20px rgba(255,47,180,.5)}
+.bnx-t.cmt.rar-legendaire.on{box-shadow:0 0 14px rgba(255,45,111,.7),0 0 24px rgba(255,178,26,.65)}
 
 .sh{display:grid;gap:18px;--g:linear-gradient(90deg,#ff1f7a,#ff6a1a);padding-bottom:12px}
 .sh-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -11080,7 +11092,8 @@ const BN={bg:{base:{name:'Box Score',cls:'bn-bg-base'}},frame:{},title:{},avfram
 /* Cadres d'avatar (affichés autour de l'avatar dans le fil uniquement). Les images sont dans le dossier assets du dépôt, pas dans index.html.
    Pour en ajouter : déposer l'image dans assets/embedded/ puis ajouter une ligne ici (id: {name, src}). */
 const AVF={gold:{name:'Cadre doré',src:'assets/embedded/cadre-avatar-dore.webp'},
-  fumee:{name:'Cadre fumée noire',src:'assets/embedded/cadre-avatar-fumee-noire.webp'}};
+  fumee:{name:'Cadre fumée noire',src:'assets/embedded/cadre-avatar-fumee-noire.webp'},
+  glace:{name:'Cadre glacé',src:'assets/embedded/cadre-avatar-glace.webp'}};
 /* cadres sombres : léger halo clair pour rester visibles par-dessus un fond de bannière foncé */
 const ALPHA_BN_SRC='assets/embedded/banniere-box-score-Alpha.png';
 (()=>{const im=new Image();im.onload=()=>{if(im.naturalWidth&&im.naturalHeight)document.documentElement.style.setProperty('--alpha-r',(im.naturalWidth/im.naturalHeight).toFixed(4));};im.src=ALPHA_BN_SRC;})();
@@ -11113,13 +11126,15 @@ const BN_DEFAULT={bg:'base',frame:'',title:'',avframe:''};
      background : 1280x512, opaque · effect : 1280x512, transparent · frame : 1280x512, transparent (contour seul, rester dans les 30 px du bord)
      logo : 564x768 (zone à droite, 24 % x 33 % de la largeur, au-dessus du fond et des effets), transparent · plate : 1024x180 (bandeau du titre), transparent, sans texte
    Les éléments ci-dessous sans src sont des éléments de démonstration dessinés en CSS (classe css) : à supprimer ou remplacer quand les images existent. */
-const CM_RARITY={standard:{name:'Standard',price:50,col:'#9aa3ad'},rare:{name:'Rare',price:80,col:'#2aa6e0'},epique:{name:'Épique',price:150,col:'#b44cff'},legendaire:{name:'Légendaire',price:250,col:'#ffb21a'}};
+const CM_RARITY={standard:{name:'Standard',price:50,col:'#9aa3ad'},rare:{name:'Rare',price:80,col:'#2aa6e0'},epique:{name:'Épique',price:150,col:'#ff2fb4'},legendaire:{name:'Légendaire',price:250,col:'#ffb21a'}};
 const CM_LAYERS=[{id:'background',tab:'mbg',name:'Fond',shop:'mfond'},{id:'effect',tab:'mfx',name:'Effets',shop:'meffet'},{id:'logo',tab:'mlogo',name:'Logo',shop:'mlogo'},{id:'badge',tab:'mbadge',name:'Badge'},{id:'frame',tab:'mframe',name:'Cadre',shop:'mcadre'},{id:'plate',tab:'mplate',name:'Plaque',shop:'mplaque'}];
 /* champs : id · layer · name · rarity (standard|rare|epique|legendaire) · src (image) ou css (classe) · free (à tout le monde) · price (sinon prix de la rareté)
    · avail:false (plus en vente ; les athlètes qui l'ont le gardent) · unlock:{d:'texte',test:uid=>bool} (déblocage par accomplissement / événement, ex. légendaires) */
 const CM_ITEMS=[
   {id:'background_braises_01',layer:'background',name:'Braises',rarity:'standard',css:'cm-bg-braises',free:true},
-  /* catégories Effets, Logo et Cadre : vides pour le moment (ajouter ici des lignes {id,layer:'effect'|'logo'|'frame',name,rarity,src}) */
+  {id:'background_salle_glacee_01',layer:'background',name:'Salle glacée',rarity:'rare',src:'assets/embedded/fond-salle-glacee.webp'},
+  {id:'frame_glace_01',layer:'frame',name:'Cadre de glace',rarity:'rare',src:'assets/embedded/cadre-banniere-glace.webp',tone:'#3fb4ff'},
+  /* catégories Effets et Logo : vides pour le moment (ajouter ici des lignes {id,layer:'effect'|'logo',name,rarity,src}) */
   {id:'plate_classic_01',layer:'plate',name:'Classique',rarity:'standard',css:'cm-pl-classic',free:true},
   {id:'plate_metal_01',layer:'plate',name:'Métallique',rarity:'standard',css:'cm-pl-metal'},
   {id:'plate_redblack_01',layer:'plate',name:'Noir et rouge',rarity:'rare',css:'cm-pl-redblack'},
@@ -11132,7 +11147,9 @@ const CM_DEFAULT_TITLE='Athlète Cross’Mitaines'; /* texte de la plaque tant q
 const CM_LIST=CM_ITEMS.map(x=>Object.assign({cm:true,kind:'cm'},x));
 const CM_BY=Object.fromEntries(CM_LIST.map(x=>[x.id,x]));
 const cmLayer=id=>CM_LAYERS.find(l=>l.id===id)||CM_LAYERS[0];
-const cmPrice=it=>{const p=Math.floor(Number(it.price));return p>=1?p:(CM_RARITY[it.rarity]||CM_RARITY.standard).price;};
+/* rareté effective : celle fixée par le coach dans Coach › Shop et coins (config.shop.items[id].rar), sinon celle du catalogue, sinon '' (aucune) */
+const rarOf=it=>{const x=((((S.feat||{}).shop)||{}).items||{})[it.id];return (x&&CM_RARITY[x.rar])?x.rar:(CM_RARITY[it.rarity]?it.rarity:'');};
+const cmPrice=it=>{const p=Math.floor(Number(it.price));return p>=1?p:(CM_RARITY[rarOf(it)]||CM_RARITY.standard).price;};
 /* possédé : gratuit, acheté au shop (shopBuy), ou condition de déblocage remplie */
 /* mode test coach : tout est équipable gratuitement pendant 2 minutes (rien n'est enregistré) */
 function coachTestOn(uid){return !!(S.owner&&(uid===undefined||uid===S.uid)&&S._coachTest&&Number(S._coachTest.until)>Date.now());}
@@ -11406,8 +11423,8 @@ function bannerSection(){
   const cmPvBar=L=>{
     const p=S._cmPrev;if(!p||p.layer!==L.id)return null;
     const it=CM_BY[p.id];if(!it||cmOwned(S.uid,it))return null;
-    const e=shopEntry(it.id),bal=coinBal(S.uid),r=CM_RARITY[it.rarity]||CM_RARITY.standard;
-    const kids=[h('b',{},'Aperçu : '+it.name),h('span',{class:'sh-rar r-'+it.rarity},r.name)];
+    const e=shopEntry(it.id),bal=coinBal(S.uid),r=CM_RARITY[rarOf(it)]||CM_RARITY.standard;
+    const kids=[h('b',{},'Aperçu : '+it.name),h('span',{class:'sh-rar r-'+(rarOf(it)||'standard')},r.name)];
     if(e){
       kids.push(h('span',{class:'cmpv-pr'},coinIco(18),h('b',{},String(e.price))));
       if(bal<e.price)kids.push(h('span',{class:'cmpv-msg'},'Il te manque '+(e.price-bal)+' coin'+(e.price-bal>1?'s':'')+'.'));
@@ -11419,10 +11436,10 @@ function bannerSection(){
   };
   const cmItemsView=L=>{
     const cur=cmCur()[L.id]||'',RK=['standard','rare','epique','legendaire'];
-    const items=CM_LIST.filter(it=>it.layer===L.id).sort((a,b)=>(cmOwned(S.uid,b)-cmOwned(S.uid,a))||(RK.indexOf(a.rarity)-RK.indexOf(b.rarity)));
+    const items=CM_LIST.filter(it=>it.layer===L.id).sort((a,b)=>(cmOwned(S.uid,b)-cmOwned(S.uid,a))||(RK.indexOf(rarOf(a))-RK.indexOf(rarOf(b))));
     const tl=it=>{
-      const own=cmOwned(S.uid,it),on=own&&cur===it.id,pv=!!(S._cmPrev&&S._cmPrev.id===it.id),r=CM_RARITY[it.rarity]||CM_RARITY.standard;
-      const b=h('button',{type:'button',id:'cm-'+it.id,class:'bnx-t cmt'+(on?' on':'')+(own?'':' lock')+(pv?' pv':''),'aria-pressed':on?'true':'false',
+      const own=cmOwned(S.uid,it),on=own&&cur===it.id,pv=!!(S._cmPrev&&S._cmPrev.id===it.id),rk=rarOf(it)||'standard',r=CM_RARITY[rk];
+      const b=h('button',{type:'button',id:'cm-'+it.id,class:'bnx-t cmt rar-'+rk+(on?' on':'')+(own?'':' lock')+(pv?' pv':''),'aria-pressed':on?'true':'false',
         'aria-label':it.name+', '+r.name+(own?'':', verrouillé : toucher pour prévisualiser'),
         onclick:()=>{if(own)cmPick(L.id,on?'':it.id);else{S._cmPrev={layer:L.id,id:it.id};S._cmAsk=null;render();}}},
         cmThumb(it),h('span',{class:'cmt-nm'},it.name),h('span',{class:'cmt-r',style:'color:'+r.col},r.name));
@@ -15813,8 +15830,9 @@ function shopCard(it,own,bal){
     h('button',{class:'sh-btn alt',type:'button',onclick:()=>{S.shopAsk=null;render();}},'Annuler'),
     h('button',{class:'sh-btn',type:'button',id:'shop-ok-'+it.id,onclick:()=>shopBuy(it)},'Confirmer'));
   else{act=h('button',{class:'sh-btn',type:'button',id:'shop-buy-'+it.id,onclick:()=>{S.shopAsk=it.id;render();}},'Acheter');if(miss>0)act.disabled=true;}
-  return h('li',{class:'sh-card',id:'shop-'+it.id},img,
-    h('div',{class:'sh-nm'},it.name),it.cm?h('div',{class:'sh-sub'},'Objet pour ta bannière · '+cmLayer(it.layer).name):null,it.rarity?h('div',{class:'sh-rar r-'+it.rarity},(CM_RARITY[it.rarity]||{}).name):null,
+  const rk=rarOf(it);
+  return h('li',{class:'sh-card'+(rk?' rar-'+rk:''),id:'shop-'+it.id},img,
+    h('div',{class:'sh-nm'},it.name),it.cm?h('div',{class:'sh-sub'},'Objet pour ta bannière · '+cmLayer(it.layer).name):null,rk?h('div',{class:'sh-rar r-'+rk},(CM_RARITY[rk]||{}).name):null,
     sk?h('div',{class:'sh-sub'},'Avatar '+sk):null,
     has?h('div',{class:'sh-own'},'Possédé'):h('div',{class:'sh-pr'},coinIco(20),h('b',{},String(e.price)),e.pct?h('s',{class:'sh-old','aria-label':'Ancien prix '+e.base+' coins'},String(e.base)):null),
     (!has&&miss>0)?h('div',{class:'sh-sub'},'Il te manque '+miss+' coin'+(miss>1?'s':'')+'.'):null,
@@ -15850,9 +15868,9 @@ function viewShop(){
   const cat=S.shopCat;
   if(cat){
     const label=cat==='all'?'Tout le shop':(['mfond','meffet','mlogo','mcadre','mplaque'].includes(cat)?'Bannière · ':'')+(SHOP_CATS.find(c=>c[0]===cat)||[0,''])[1];
-    const its0=cat==='all'?all:all.filter(x=>shopCatOf(x)===cat),its=S.shopRar?its0.filter(x=>x.rarity===S.shopRar):its0;
+    const its0=cat==='all'?all:all.filter(x=>shopCatOf(x)===cat),its=S.shopRar?its0.filter(x=>rarOf(x)===S.shopRar):its0;
     el.append(h('div',{class:'sh-h'},h('button',{class:'sh-link',type:'button',onclick:()=>{S.shopCat=null;render();window.scrollTo(0,0);}},'← Retour'),h('h2',{},label)),
-      its0.some(x=>x.rarity)?h('div',{class:'sh-rf',role:'group','aria-label':'Filtrer par rareté'},[['','Toutes']].concat(Object.entries(CM_RARITY).map(([k,v])=>[k,v.name])).map(([k,t])=>h('button',{class:'sh-rfb'+((S.shopRar||'')===k?' on':''),type:'button',id:'sh-rar-'+(k||'all'),'aria-pressed':(S.shopRar||'')===k?'true':'false',onclick:()=>{S.shopRar=k;render();}},t))):null,
+      its0.some(x=>rarOf(x))?h('div',{class:'sh-rf',role:'group','aria-label':'Filtrer par rareté'},[['','Toutes']].concat(Object.entries(CM_RARITY).map(([k,v])=>[k,v.name])).map(([k,t])=>h('button',{class:'sh-rfb'+((S.shopRar||'')===k?' on':''),type:'button',id:'sh-rar-'+(k||'all'),'aria-pressed':(S.shopRar||'')===k?'true':'false',onclick:()=>{S.shopRar=k;render();}},t))):null,
       its.length?grid(its):h('section',{class:'sh-box'},h('p',{class:'muted'},'Rien dans cette catégorie pour l’instant. Reviens bientôt : de nouveaux objets arrivent !')));
   }else{
     el.append(h('section',{class:'sh-hero'},h('div',{class:'sh-hero-t'},'Personnalise',h('br'),h('span',{},'ton univers')),
@@ -15871,7 +15889,7 @@ function shopDraft(){
   const c=S.coach;
   if(!c.shopDraft){
     const cfg=shopCfg(),it={};
-    for(const x of AV_ITEMS.concat(shopAll())){const e=(cfg.items||{})[x.id];it[x.id]={on:!!(e&&e.on),fav:!!(e&&e.fav),price:(e&&Number(e.price)>0)?String(e.price):'',sale:(e&&Number(e.sale)>0)?String(e.sale):''};}
+    for(const x of AV_ITEMS.concat(shopAll())){const e=(cfg.items||{})[x.id];it[x.id]={on:!!(e&&e.on),fav:!!(e&&e.fav),price:(e&&Number(e.price)>0)?String(e.price):'',sale:(e&&Number(e.sale)>0)?String(e.sale):'',rar:(e&&CM_RARITY[e.rar])?e.rar:''};}
     c.shopDraft={coin:String(coinPerSession()),items:it};
   }
   return c.shopDraft;
@@ -15886,7 +15904,8 @@ function saveShop(){
     if(x.on&&!(p>=1)&&!it.cm){toast('« '+it.name+' » : entre un prix d’au moins 1 coin, ou retire-le de la vente.',true);return;}
     const sl=x.sale===''||x.sale==null?0:Math.floor(Number(String(x.sale).replace(',','.')));
     if(x.on&&!(Number.isFinite(sl)&&sl>=0&&sl<=99)){toast('« '+it.name+' » : la réduction doit être entre 1 et 99 %, ou vide.',true);return;}
-    if(x.on||p>=1)items[it.id]={on:!!x.on,price:p>=1?p:0,fav:!!(x.on&&x.fav),sale:(x.on&&sl>=1)?sl:0};
+    const rr=CM_RARITY[x.rar]?x.rar:'';
+    if(x.on||p>=1||rr){items[it.id]={on:!!x.on,price:p>=1?p:0,fav:!!(x.on&&x.fav),sale:(x.on&&sl>=1)?sl:0};if(rr)items[it.id].rar=rr;}
   }
   if(!S.db||S.snapMode){toast('Connexion nécessaire pour enregistrer.',true);return;}
   run(async()=>{
@@ -15947,14 +15966,16 @@ function coachShop(){
       'Attribués une seule fois par séance, au moment où le résultat est enregistré (par l’athlète ou par toi). 0 = plus de coins gagnés. Les séances déjà enregistrées se créditent avec « Séances passées » plus bas.')));
   el.append(coinBackfillCard());
   const sec=h('section',{class:'card'},h('h2',{class:'h2'},'Articles du shop'),
-    h('p',{class:'hint'},'Coche « En vente » et fixe un prix en coins ; « Coup de cœur » met l’objet en avant en haut du shop ; « % de réduc. » (1 à 99) affiche une réduction sur l’objet dans le shop, avec l’ancien prix barré. Puis enregistre. Un objet déjà acheté reste à l’athlète même si tu le retires. Pour ajouter un skin : dépose son image dans assets/embedded et ajoute une ligne dans AV_ITEMS ; il apparaît ici.'));
+    h('p',{class:'hint'},'Coche « En vente », fixe un prix en coins (vide = prix de la rareté) et une rareté (Standard, Rare, Épique, Légendaire : elle donne l’éclat de l’objet dans le shop et la personnalisation) ; « Coup de cœur » met l’objet en avant en haut du shop ; « % de réduc. » (1 à 99) affiche une réduction sur l’objet dans le shop, avec l’ancien prix barré. Puis enregistre. Un objet déjà acheté reste à l’athlète même si tu le retires. Pour ajouter un skin : dépose son image dans assets/embedded et ajoute une ligne dans AV_ITEMS ; il apparaît ici.'));
   AV_SLOTS.map(([sl,label])=>[label,AV_ITEMS.filter(x=>x.slot===sl)]).concat([['Fonds de bannière',shopBanners().filter(b=>b.kind==='bg')],['Cadres d’avatar (fil)',shopBanners().filter(b=>b.kind==='avframe')]].concat(CM_LAYERS.filter(L=>L.shop).map(L=>['Bannière modulaire · '+L.name,CM_LIST.filter(x=>x.layer===L.id&&!x.free)]))).forEach(([label,its])=>{
     if(!its.length)return;
     sec.append(h('div',{class:'flabel',style:'margin-top:14px'},label+' · '+its.filter(x=>d.items[x.id]&&d.items[x.id].on).length+' en vente'),
       h('ul',{class:'list shop-list'},its.map(it=>{
-        const x=d.items[it.id]||(d.items[it.id]={on:false,fav:false,price:'',sale:''}),ic=h('span',{class:'shop-ic'+((it.kind==='bg'||it.cm)?' shop-ic-bn':'')});
+        const x=d.items[it.id]||(d.items[it.id]={on:false,fav:false,price:'',sale:'',rar:''}),ic=h('span',{class:'shop-ic'+((it.kind==='bg'||it.cm)?' shop-ic-bn':'')});
         ic.append(shopIcon(it));
         const fin=h('span',{class:'shop-fin',id:'shopc-fin-'+it.id});
+        const pin=h('input',{type:'number',min:'1',step:'1',inputmode:'numeric','aria-label':'Prix en coins : '+it.name,value:x.price,oninput:e=>{x.price=e.target.value;upd();}});
+        const setPh=()=>{pin.placeholder=it.cm?String((CM_RARITY[x.rar||it.rarity]||CM_RARITY.standard).price):'Prix';};setPh();
         const upd=()=>{const b=Math.floor(Number(String(x.price).replace(',','.'))),pc=Math.floor(Number(String(x.sale).replace(',','.')));fin.textContent=(b>=1&&pc>=1&&pc<=99)?'→ '+salePrice(b,pc)+' coins':'';};upd();
         const who=[(it.sex==='f'?'filles':it.sex==='h'?'garçons':''),(it.skin&&AV_BY[it.skin])?'avatar '+AV_BY[it.skin].name:''].filter(Boolean).join(' · ');
         return h('li',{id:'shopc-'+it.id},ic,
@@ -15962,8 +15983,10 @@ function coachShop(){
           h('div',{class:'shop-ctl'},
             h('label',{class:'chk'},h('input',{type:'checkbox',id:'shopc-on-'+it.id,checked:x.on,onchange:e=>{x.on=e.target.checked;}}),h('span',{},'En vente')),
             h('label',{class:'chk'},h('input',{type:'checkbox',id:'shopc-fav-'+it.id,checked:!!x.fav,onchange:e=>{x.fav=e.target.checked;}}),h('span',{},'Coup de cœur')),
-            h('input',{type:'number',min:'1',step:'1',inputmode:'numeric',placeholder:it.cm?String(cmPrice(it)):'Prix','aria-label':'Prix en coins : '+it.name,value:x.price,oninput:e=>{x.price=e.target.value;upd();}}),
+            pin,
             coinIco(20),
+            h('label',{class:'shop-sale shop-rar'},h('span',{},'Rareté'),
+              sel([['',it.cm?'Défaut ('+(CM_RARITY[it.rarity]||CM_RARITY.standard).name+')':'Aucune']].concat(Object.entries(CM_RARITY).map(([k,v])=>[k,v.name])),x.rar||'',v=>{x.rar=v;setPh();},{id:'shopc-rar-'+it.id,'aria-label':'Rareté : '+it.name})),
             h('span',{class:'shop-sale'},
               h('input',{type:'number',min:'0',max:'99',step:'1',inputmode:'numeric',placeholder:'0','aria-label':'Réduction en pourcentage : '+it.name,id:'shopc-sale-'+it.id,value:x.sale||'',oninput:e=>{x.sale=e.target.value;upd();}}),
               h('span',{},'% de réduc.')),
