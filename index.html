@@ -887,7 +887,7 @@ body:has(.bnx){overflow:hidden}
 .bnm-badge>.badge{width:100%!important;height:100%!important;display:block}
 .bnm-name{position:absolute;z-index:5;left:33cqw;top:3cqw;width:40cqw;min-width:0}
 /* plaque = titre de l'athlète */
-.bnm-plate{--cm-ink:#fff;--cm-sh:0 1px 3px rgba(0,0,0,.85);position:absolute;z-index:5;left:31.2cqw;top:12.2cqw;width:43cqw;height:6.6cqw;display:flex;align-items:center;padding:0 3.4cqw 0 4.2cqw;box-sizing:border-box;background-size:100% 100%;background-repeat:no-repeat;background-position:center;min-width:0}
+.bnm-plate{--cm-ink:#fff;--cm-sh:0 1px 3px rgba(0,0,0,.85);position:absolute;z-index:5;left:31.2cqw;top:12.2cqw;width:max-content;min-width:43cqw;max-width:58cqw;height:6.6cqw;display:flex;align-items:center;padding:0 3.4cqw 0 4.2cqw;box-sizing:border-box;background-size:100% 100%;background-repeat:no-repeat;background-position:center;min-width:0}
 .bnm-plate.def{background-image:linear-gradient(90deg,rgba(0,0,0,.7),rgba(0,0,0,.3));clip-path:polygon(3% 0,100% 0,97% 100%,0 100%);border-bottom:.5cqw solid var(--accent)}
 .bnm-pt{font:400 clamp(8px,2.7cqw,17px)/1 var(--f-display);letter-spacing:.025em;text-transform:uppercase;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--cm-ink,#fff);text-shadow:var(--cm-sh,none);max-width:100%}
 /* infos du metcon / de la force */
@@ -4165,7 +4165,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-06.1';
+const APP_VERSION='2026-11-06.2';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
