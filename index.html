@@ -870,7 +870,7 @@ body:has(.bnx){overflow:hidden}
 .bn.bnm.bnm-mini{aspect-ratio:auto}
 .feed-card.th-cm>.bn{border-width:0;border-radius:3px 3px 0 0}
 .bnm-l{position:absolute;inset:0;background-position:center;background-size:100% 100%;background-repeat:no-repeat;pointer-events:none}
-.bnm-bg{z-index:0;background-image:linear-gradient(115deg,#1a1c21 0 72%,var(--accent) 72% 75%,#1a1c21 75% 78%,var(--accent) 78% 80%,#1a1c21 80%)}
+.bnm-bg{z-index:0;background-image:radial-gradient(60% 90% at 15% 115%,rgba(255,90,20,.7),transparent 70%),radial-gradient(45% 70% at 88% 120%,rgba(255,30,60,.55),transparent 70%),linear-gradient(#0b0707,#1b0808)}
 .bnm-fx{z-index:1}
 /* logo (CM, No Excuses…) : grande couche à droite, au-dessus du motif (fond + effets), sous le cadre, les résultats et les points */
 .bnm-logo{position:absolute;z-index:2;right:1.5cqw;top:2.5cqw;width:24cqw;height:32.7cqw;background-position:center;background-size:contain;background-repeat:no-repeat;pointer-events:none}
@@ -927,22 +927,7 @@ body:has(.bnx){overflow:hidden}
 .bnm-ses .wtitle{margin:0;font-size:clamp(16px,6cqw,30px);line-height:1.05;color:#fff;text-shadow:0 2px 6px #000;display:flex;align-items:center;gap:2cqw;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bnm-ses .sub{font-size:clamp(11px,3.1cqw,15px);line-height:1.2;color:#d9d4d4;text-shadow:0 1px 3px #000}
 /* ---- éléments de démonstration (CSS pur) : à remplacer / compléter par des images (champ src du catalogue CM_ITEMS) ---- */
-.cm-bg-boxscore{background-image:linear-gradient(115deg,#1a1c21 0 72%,var(--accent) 72% 75%,#1a1c21 75% 78%,var(--accent) 78% 80%,#1a1c21 80%)}
-.cm-bg-forge{background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.035) 0 2px,transparent 2px 9px),linear-gradient(180deg,#2a2d33,#0f1114 72%)}
 .cm-bg-braises{background-image:radial-gradient(60% 90% at 15% 115%,rgba(255,90,20,.7),transparent 70%),radial-gradient(45% 70% at 88% 120%,rgba(255,30,60,.55),transparent 70%),linear-gradient(#0b0707,#1b0808)}
-.cm-bg-neoncity{background-image:radial-gradient(50% 90% at 92% 0,rgba(0,229,255,.38),transparent 70%),radial-gradient(40% 80% at 0 100%,rgba(255,31,157,.35),transparent 70%),linear-gradient(120deg,#0a0420,#16093a 55%,#062a33)}
-.cm-bg-premium{background-image:radial-gradient(50% 120% at 100% 50%,rgba(243,196,69,.28),transparent 70%),linear-gradient(115deg,#0b0b0d 0 60%,#1a1508)}
-.cm-fx-stripes{background-image:repeating-linear-gradient(-55deg,rgba(255,255,255,.07) 0 6px,transparent 6px 22px)}
-.cm-fx-particles{background-image:radial-gradient(circle at 12% 30%,rgba(255,255,255,.6) 0 1.2px,transparent 2px),radial-gradient(circle at 38% 72%,rgba(0,229,255,.65) 0 1.5px,transparent 2.5px),radial-gradient(circle at 63% 22%,rgba(255,31,122,.65) 0 1.4px,transparent 2.4px),radial-gradient(circle at 82% 64%,rgba(255,255,255,.55) 0 1.2px,transparent 2px),radial-gradient(circle at 92% 18%,rgba(255,170,40,.65) 0 1.3px,transparent 2.3px)}
-.cm-fx-scratches{background-image:repeating-linear-gradient(103deg,transparent 0 17px,rgba(255,255,255,.1) 17px 18px,transparent 18px 41px),repeating-linear-gradient(77deg,transparent 0 29px,rgba(255,255,255,.06) 29px 30px,transparent 30px 63px)}
-.cm-fx-flames{background-image:linear-gradient(0deg,rgba(255,90,0,.6),rgba(255,40,40,.2) 38%,transparent 62%)}
-.cm-fr-red{box-shadow:inset 0 0 0 2px #ff2a3d,inset 0 0 16px rgba(255,42,61,.75)}
-.cm-fr-cyan{box-shadow:inset 0 0 0 2px #19e6e0,inset 0 0 16px rgba(25,230,224,.7)}
-.cm-fr-magenta{box-shadow:inset 0 0 0 2px #ff1f9d,inset 0 0 16px rgba(255,31,157,.7)}
-.cm-fr-gold{box-shadow:inset 0 0 0 2px #f3c445,inset 0 0 0 4px rgba(0,0,0,.55),inset 0 0 14px rgba(243,196,69,.55)}
-.cm-fr-aurora{box-shadow:inset 0 0 0 2px #ff1f7a,inset 0 0 18px rgba(0,229,255,.7);animation:cm-aurora 6s linear infinite}
-@keyframes cm-aurora{to{filter:hue-rotate(360deg)}}
-@media (prefers-reduced-motion:reduce){.cm-fr-aurora{animation:none}}
 .cm-pl-classic{background-image:linear-gradient(90deg,rgba(0,0,0,.72),rgba(0,0,0,.35));clip-path:polygon(3% 0,100% 0,97% 100%,0 100%);border-bottom:.5cqw solid var(--accent)}
 .cm-pl-metal{background-image:linear-gradient(180deg,#9aa1aa,#4a4f57 55%,#2d3036);clip-path:polygon(3% 0,100% 0,97% 100%,0 100%)}
 .cm-pl-redblack{background-image:linear-gradient(105deg,#0a0a0a 0 78%,#d4141c 78% 86%,#0a0a0a 86% 90%,#d4141c 90%);clip-path:polygon(3% 0,100% 0,97% 100%,0 100%)}
@@ -952,14 +937,6 @@ body:has(.bnx){overflow:hidden}
 .cm-pl-red,.cm-pl-cyan,.cm-pl-gold{padding-right:8.5cqw}
 .cm-pl-red::after,.cm-pl-cyan::after,.cm-pl-gold::after{content:"";position:absolute;top:0;bottom:0;right:3.6cqw;width:3.6cqw;background:linear-gradient(105deg,transparent 0 12%,rgba(0,0,0,.55) 12% 38%,transparent 38% 62%,rgba(0,0,0,.55) 62% 88%,transparent 88%)}
 .cm-pl-neon{background-color:rgba(5,10,14,.78);border:.5cqw solid #19e6e0;border-radius:1.2cqw;box-shadow:0 0 1.6cqw rgba(25,230,224,.8),inset 0 0 1.4cqw rgba(25,230,224,.35)}
-.cm-lg-cm_pink,.cm-lg-cm_gold,.cm-lg-noexc{display:flex;align-items:center;justify-content:center;font:italic 400 1em/.9 var(--f-display);text-align:center;font-size:16cqw;padding-top:6cqw;box-sizing:border-box;text-shadow:none;filter:drop-shadow(0 .6cqw 1cqw rgba(0,0,0,.7))}
-.cm-lg-cm_pink::after,.cm-lg-cm_gold::after{content:"";position:absolute;left:50%;top:0;width:62%;height:26%;transform:translateX(-50%);background:center/contain no-repeat}
-.cm-lg-cm_pink::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 56'%3E%3Cpath d='M8 50 L4 12 L28 30 L50 4 L72 30 L96 12 L92 50 Z' fill='%23d9dbe0' stroke='%23777b84' stroke-width='3' stroke-linejoin='round'/%3E%3Ccircle cx='4' cy='10' r='4' fill='%23ff4fa3'/%3E%3Ccircle cx='50' cy='4' r='4' fill='%23ff4fa3'/%3E%3Ccircle cx='96' cy='10' r='4' fill='%23ff4fa3'/%3E%3C/svg%3E")}
-.cm-lg-cm_gold::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 56'%3E%3Cpath d='M8 50 L4 12 L28 30 L50 4 L72 30 L96 12 L92 50 Z' fill='%23f3c445' stroke='%23a87d12' stroke-width='3' stroke-linejoin='round'/%3E%3Ccircle cx='4' cy='10' r='4' fill='%23fff1b0'/%3E%3Ccircle cx='50' cy='4' r='4' fill='%23fff1b0'/%3E%3Ccircle cx='96' cy='10' r='4' fill='%23fff1b0'/%3E%3C/svg%3E")}
-.cm-lg-cm_pink::before{content:"CM";font-size:1em;padding:0 .16em 0 .04em;background:linear-gradient(180deg,#ff5fb0,#e0147a);-webkit-background-clip:text;background-clip:text;color:transparent}
-.cm-lg-cm_gold::before{content:"CM";font-size:1em;padding:0 .16em 0 .04em;background:linear-gradient(180deg,#ffe38a,#c8921a);-webkit-background-clip:text;background-clip:text;color:transparent}
-.cm-lg-noexc{padding-top:0}
-.cm-lg-noexc::before{content:"NO\A EXCUSES";white-space:pre;font-size:.32em;line-height:1.05;background:linear-gradient(180deg,#fff,#9aa0a8);-webkit-background-clip:text;background-clip:text;color:transparent;transform:rotate(-9deg)}
 /* ---- éditeur : onglets défilants (7 onglets), tuiles de couches, barre d'aperçu / achat ---- */
 .bnx-tabs{display:flex;grid-template-columns:none;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .bnx-tabs::-webkit-scrollbar{display:none}
@@ -4181,7 +4158,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-06.6';
+const APP_VERSION='2026-11-06.7';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -11141,23 +11118,8 @@ const CM_LAYERS=[{id:'background',tab:'mbg',name:'Fond',shop:'mfond'},{id:'effec
 /* champs : id · layer · name · rarity (standard|rare|epique|legendaire) · src (image) ou css (classe) · free (à tout le monde) · price (sinon prix de la rareté)
    · avail:false (plus en vente ; les athlètes qui l'ont le gardent) · unlock:{d:'texte',test:uid=>bool} (déblocage par accomplissement / événement, ex. légendaires) */
 const CM_ITEMS=[
-  {id:'background_boxscore_01',layer:'background',name:'Box Score',rarity:'standard',css:'cm-bg-boxscore',free:true},
-  {id:'background_forge_01',layer:'background',name:'Forge',rarity:'standard',css:'cm-bg-forge'},
-  {id:'background_braises_01',layer:'background',name:'Braises',rarity:'rare',css:'cm-bg-braises'},
-  {id:'background_neon_city_01',layer:'background',name:'Néon City',rarity:'epique',css:'cm-bg-neoncity'},
-  {id:'background_premium_01',layer:'background',name:'Premium or',rarity:'legendaire',css:'cm-bg-premium'},
-  {id:'effect_stripes_01',layer:'effect',name:'Rayures',rarity:'standard',css:'cm-fx-stripes'},
-  {id:'effect_scratches_01',layer:'effect',name:'Griffures',rarity:'rare',css:'cm-fx-scratches'},
-  {id:'effect_particles_01',layer:'effect',name:'Particules',rarity:'rare',css:'cm-fx-particles'},
-  {id:'effect_flames_01',layer:'effect',name:'Flammes',rarity:'epique',css:'cm-fx-flames'},
-  {id:'logo_cm_pink_01',layer:'logo',name:'CM rose',rarity:'rare',css:'cm-lg-cm_pink'},
-  {id:'logo_no_excuses_01',layer:'logo',name:'No Excuses',rarity:'rare',css:'cm-lg-noexc'},
-  {id:'logo_cm_gold_01',layer:'logo',name:'CM doré',rarity:'epique',css:'cm-lg-cm_gold'},
-  {id:'frame_red_01',layer:'frame',name:'Rouge lumineux',rarity:'standard',css:'cm-fr-red',tone:'#ff2a3d'},
-  {id:'frame_cyan_neon_01',layer:'frame',name:'Turquoise néon',rarity:'rare',css:'cm-fr-cyan',tone:'#19e6e0'},
-  {id:'frame_magenta_01',layer:'frame',name:'Magenta',rarity:'rare',css:'cm-fr-magenta',tone:'#ff1f9d'},
-  {id:'frame_gold_01',layer:'frame',name:'Doré',rarity:'epique',css:'cm-fr-gold',tone:'#f3c445'},
-  {id:'frame_aurora_01',layer:'frame',name:'Aurore animée',rarity:'legendaire',css:'cm-fr-aurora',tone:'#ff1f7a'},
+  {id:'background_braises_01',layer:'background',name:'Braises',rarity:'standard',css:'cm-bg-braises',free:true},
+  /* catégories Effets, Logo et Cadre : vides pour le moment (ajouter ici des lignes {id,layer:'effect'|'logo'|'frame',name,rarity,src}) */
   {id:'plate_classic_01',layer:'plate',name:'Classique',rarity:'standard',css:'cm-pl-classic',free:true},
   {id:'plate_metal_01',layer:'plate',name:'Métallique',rarity:'standard',css:'cm-pl-metal'},
   {id:'plate_redblack_01',layer:'plate',name:'Noir et rouge',rarity:'rare',css:'cm-pl-redblack'},
@@ -11257,7 +11219,7 @@ function avMeasure(sx,full){
 function avApplyFrame(div,box){
   if(!box)return;
   /* la tête (≈ 55 % du cercle) est centrée dans le rond ; si elle touche le haut de l'image, le haut du cercle est complété par le décor */
-  const Wn=Math.max(330,Math.min(440,box.hw*2.7)),k=24/Wn,yc=box.top+box.hw*.48,y0=yc-Wn*.34;
+  const Wn=Math.max(460,Math.min(600,box.hw*3.9)),k=24/Wn,y0=box.top-Wn*.04; /* plan large : de la tête jusqu'aux hanches */
   div.style.setProperty('--av-w',(AV_W*k).toFixed(2)+'cqw');div.style.setProperty('--av-h',(AV_H*k).toFixed(2)+'cqw');
   div.style.setProperty('--av-l',(12-box.cx*k).toFixed(2)+'cqw');div.style.setProperty('--av-t',(-y0*k).toFixed(2)+'cqw');
 }
@@ -11415,7 +11377,7 @@ function bannerSection(){
     S._cmPrev=null;S._cmAsk=null;
     const d=Object.assign({},S._bnDraft||{});
     d.cm=Object.assign({},cmCur(),{[layer]:id});
-    if(bannerOf(S.uid).bg!=='base'){d.bg='base';toast('Ton fond classique est remplacé par la composition. Retrouve-le dans Fond › Thèmes classiques.');}
+    if(bannerOf(S.uid).bg!=='base'){d.bg='base';toast('Ton ancien fond de carte est remplacé par la composition de bannière.');}
     S._bnDraft=d;render();
   };
   const cmTools=()=>{
@@ -11433,7 +11395,7 @@ function bannerSection(){
     };
     return h('div',{class:'cm-tools'},
       h('button',{class:'bnx-rnd',type:'button',id:'cm-rnd',onclick:rnd},AVSVG('<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1"/><circle cx="15" cy="15" r="1"/><circle cx="15" cy="9" r="1"/><circle cx="9" cy="15" r="1"/>',20),'Aléatoire'),
-      cmActive(S.uid)?h('button',{class:'bnx-rnd alt',type:'button',id:'cm-classic',onclick:()=>{S._cmPrev=null;S._cmAsk=null;S._bnDraft=Object.assign({},S._bnDraft||{},{cm:null});render();}},'Style classique'):null);
+      null);
   };
   const cmBuy=it=>{
     S._cmAsk=null;
@@ -11467,8 +11429,8 @@ function bannerSection(){
       if(on)b.append(AVSVG(CM_CHECK,16));else if(!own)b.append(AVSVG(CM_LOCK,14));
       return b;
     };
-    const none=tile(txt(L.id==='background'?'Défaut':'Aucun'),!cur||!items.some(it=>it.id===cur&&cmOwned(S.uid,it)),()=>cmPick(L.id,''),L.id==='background'?'Fond par défaut':'Aucun');
-    return [head(L.name),L.id==='plate'?h('p',{class:'bnx-hint'},'La plaque encadre ton titre : choisis ton titre dans l’onglet Titre.'):null,L.id==='logo'?h('p',{class:'bnx-hint'},'Le logo se place à droite, au-dessus du fond et des effets.'):null,cmPvBar(L),grid([none].concat(items.map(tl))),
+    const none=L.id==='background'?null:tile(txt('Aucun'),!cur||!items.some(it=>it.id===cur&&cmOwned(S.uid,it)),()=>cmPick(L.id,''),'Aucun');
+    return [head(L.name),L.id==='plate'?h('p',{class:'bnx-hint'},'La plaque encadre ton titre : choisis ton titre dans l’onglet Titre.'):null,L.id==='logo'?h('p',{class:'bnx-hint'},'Le logo se place à droite, au-dessus du fond et des effets.'):null,cmPvBar(L),grid([none].concat(items.map(tl)).filter(Boolean)),items.length?null:h('p',{class:'bnx-hint'},'Aucun objet pour le moment : de nouveaux designs arrivent bientôt.'),
       h('p',{class:'bnx-hint'},'Touche un objet possédé pour l’équiper, touche-le encore pour le retirer. Un objet verrouillé se prévisualise avant achat.')];
   };
   const cmBadgeView=()=>{
@@ -11518,11 +11480,6 @@ function bannerSection(){
     view.append(...cmLayerView(tab));
   }else if(tab==='mbg'){
     view.append(...cmLayerView('mbg'));
-    const bgs=Object.entries(BN.bg).filter(([id])=>id==='base'||unlocked.some(r=>r.type==='bg'&&r.id===id));
-    const rnd=h('button',{class:'bnx-rnd',type:'button',id:'bnx-rnd',disabled:bgs.length<2,onclick:()=>{const o=bgs.filter(([id])=>id!==eff.bg);pickV('bg',o[Math.floor(Math.random()*o.length)][0]);}},AVSVG('<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1"/><circle cx="15" cy="15" r="1"/><circle cx="15" cy="9" r="1"/><circle cx="9" cy="15" r="1"/>',20),'Bannières aléatoires');
-    view.append(head('Thèmes classiques',rnd),h('p',{class:'bnx-hint'},'Thèmes de carte complets (récompenses et bannières du shop) : ils remplacent la composition ci-dessus.'),
-      grid(bgs.map(([id,b])=>tile(h('div',{class:'bnx-bg '+b.cls}),eff.bg===id,()=>pickV('bg',id),b.name)).concat(
-        testable.filter(r=>r.type==='bg').map(r=>tile(h('div',{class:'bnx-bg '+BN.bg[r.id].cls}),false,()=>startPreview(r),r.name,true)))));
   }else if(tab==='frame'){
     const avs=unlocked.filter(r=>r.type==='avframe'),frs=unlocked.filter(r=>r.type==='frame');
     view.append(head('Cadre d’avatar'),h('p',{class:'bnx-hint'},'S’affiche autour de ton avatar dans le fil.'),
