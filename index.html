@@ -4181,7 +4181,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-06.3';
+const APP_VERSION='2026-11-06.4';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -11256,12 +11256,15 @@ function avMeasure(sx,full){
 }
 function avApplyFrame(div,box){
   if(!box)return;
-  const Wn=Math.max(300,Math.min(420,box.hw*2.1)),k=24/Wn,y0=Math.max(0,box.top-Wn*.1);
+  /* la tête (≈ 55 % du cercle) est centrée dans le rond ; si elle touche le haut de l'image, le haut du cercle est complété par le décor */
+  const Wn=Math.max(230,Math.min(400,box.hw*1.95)),k=24/Wn,yc=box.top+box.hw*.48,y0=yc-Wn*.40;
   div.style.setProperty('--av-w',(AV_W*k).toFixed(2)+'cqw');div.style.setProperty('--av-h',(AV_H*k).toFixed(2)+'cqw');
   div.style.setProperty('--av-l',(12-box.cx*k).toFixed(2)+'cqw');div.style.setProperty('--av-t',(-y0*k).toFixed(2)+'cqw');
 }
 function avFrameAuto(uid,div){
   if(!sexKnown(uid))return;
+  const av0=div.querySelector('.av'),fa0=div.querySelector('.feed-av');
+  if(av0&&fa0&&av0.style.backgroundImage){fa0.style.backgroundImage=av0.style.backgroundImage;fa0.style.backgroundSize='cover';fa0.style.backgroundPosition='center';}
   const f=avFrameKey(uid);
   if(AVF_RES[f.key]!==undefined){avApplyFrame(div,AVF_RES[f.key]);return;}
   avMeasure(f.sx,f.full).then(b=>{AVF_RES[f.key]=b||null;avApplyFrame(div,b);});
