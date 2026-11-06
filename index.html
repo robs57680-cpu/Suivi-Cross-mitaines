@@ -1022,7 +1022,14 @@ body:has(.bnx){overflow:hidden}
 .sh-cat.empty{opacity:.7}
 .sh-cat.empty svg{filter:none}
 .sh-cwrap{position:relative;margin-inline:-16px}
-.sh-cwrap .sh-cats{margin-inline:0;padding:4px 16px 10px;scroll-padding-inline:16px;scroll-snap-type:x proximity}
+.sh-cwrap .sh-cats{margin-inline:0;padding:4px 16px 10px;scroll-snap-type:none}
+/* défilement en tourniquet (sans fin) : pas d'aimantation, la bande ne rebondit pas sur le navigateur */
+.sh-cats,.sh-row{position:relative;scroll-snap-type:none;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.sh-cats::-webkit-scrollbar,.sh-row::-webkit-scrollbar{display:none}
+.sh-cat{scroll-snap-align:none}
+.sh-hid summary{cursor:pointer;font:700 15px var(--f-body);padding:6px 0}
+.sh-hid .shop-ic{opacity:.75}
+
 .sh-arr{position:absolute;top:calc(50% - 3px);transform:translateY(-50%);z-index:2;width:34px;height:34px;padding:0 0 3px;border-radius:50%;border:1.5px solid rgba(255,255,255,.35);background:rgba(10,10,13,.9);color:#fff;font:700 24px/1 var(--f-body);cursor:pointer;display:grid;place-items:center;box-shadow:0 2px 10px rgba(0,0,0,.55)}
 .sh-arr.l{left:6px}.sh-arr.r{right:6px}.sh-arr[hidden]{display:none}
 .sh-arr:active{transform:translateY(-50%) scale(.92)}
@@ -11106,11 +11113,13 @@ const BN={bg:{base:{name:'Box Score',cls:'bn-bg-base'}},frame:{},title:{},avfram
    Pour en ajouter : déposer l'image dans assets/embedded/ puis ajouter une ligne ici (id: {name, src}). */
 const AVF={gold:{name:'Cadre doré',src:'assets/embedded/cadre-avatar-dore.webp'},
   fumee:{name:'Cadre fumée noire',src:'assets/embedded/cadre-avatar-fumee-noire.webp'},
-  glace:{name:'Cadre glacé',src:'assets/embedded/cadre-avatar-glace.webp'}};
+  glace:{name:'Cadre glacé',src:'assets/embedded/cadre-avatar-glace.webp'},
+  metalsombre:{name:'Cadre métal sombre',src:'assets/embedded/cadre-avatar-metal-sombre.webp'},
+  neoncyber:{name:'Cadre néon cyberpunk',src:'assets/embedded/cadre-avatar-neon-cyber.webp'}};
 /* cadres sombres : léger halo clair pour rester visibles par-dessus un fond de bannière foncé */
 const ALPHA_BN_SRC='assets/embedded/banniere-box-score-Alpha.png';
 (()=>{const im=new Image();im.onload=()=>{if(im.naturalWidth&&im.naturalHeight)document.documentElement.style.setProperty('--alpha-r',(im.naturalWidth/im.naturalHeight).toFixed(4));};im.src=ALPHA_BN_SRC;})();
-const AVF_GLOW={'assets/embedded/cadre-avatar-fumee-noire.webp':1};
+const AVF_GLOW={'assets/embedded/cadre-avatar-fumee-noire.webp':1,'assets/embedded/cadre-avatar-metal-sombre.webp':1};
 const avfSrc=r=>(AVF[r.asset]||AVF.gold).src;
 /* fonds de bannière à image (dossier assets/embedded). Pour en ajouter : déposer l'image, ajouter une ligne ici et le CSS .bn-bg-<id> */
 const BG_ASSETS={
@@ -11136,7 +11145,7 @@ const BN_DEFAULT={bg:'base',frame:'',title:'',avframe:''};
    · Un identifiant inconnu (objet retiré du catalogue) ou non possédé est ignoré à l'affichage : la couche retombe sur son défaut.
    POUR AJOUTER UN OBJET : une ligne dans CM_ITEMS (déposer l'image dans assets/embedded puis renseigner src), rien d'autre à modifier.
    Formats d'image conseillés (PNG/WebP/SVG ; tous identiques dans une même catégorie ; repère 1280 x 512, format 5:2) :
-     background : 1280x512, opaque · effect : 1280x512, transparent · frame : 1280x512, transparent (contour seul, rester dans les 30 px du bord)
+     background : 1280x800, opaque · effect : 1280x800, transparent · frame : 1280x800, transparent (contour seul, rester dans les 30 px du bord)
      logo : 564x768 (zone à droite, 24 % x 33 % de la largeur, au-dessus du fond et des effets), transparent · plate : 1024x180 (bandeau du titre), transparent, sans texte
    Les éléments ci-dessous sans src sont des éléments de démonstration dessinés en CSS (classe css) : à supprimer ou remplacer quand les images existent. */
 const CM_RARITY={standard:{name:'Standard',price:50,col:'#9aa3ad'},rare:{name:'Rare',price:80,col:'#2aa6e0'},epique:{name:'Épique',price:150,col:'#ff2fb4'},legendaire:{name:'Légendaire',price:250,col:'#ffb21a'}};
@@ -11147,14 +11156,22 @@ const CM_ITEMS=[
   {id:'background_braises_01',layer:'background',name:'Braises',rarity:'standard',css:'cm-bg-braises',free:true},
   {id:'background_salle_glacee_01',layer:'background',name:'Salle glacée',rarity:'rare',src:'assets/embedded/fond-salle-glacee.webp'},
   {id:'frame_glace_01',layer:'frame',name:'Cadre de glace',rarity:'rare',src:'assets/embedded/cadre-banniere-glace.webp',tone:'#3fb4ff'},
-  /* catégories Effets et Logo : vides pour le moment (ajouter ici des lignes {id,layer:'effect'|'logo',name,rarity,src}) */
+  {id:'background_salle_industrielle_01',layer:'background',name:'Salle industrielle',rarity:'rare',src:'assets/embedded/fond-salle-industrielle.webp'},
+  {id:'background_salle_neon_01',layer:'background',name:'Salle néon',rarity:'epique',src:'assets/embedded/fond-salle-neon.webp'},
+  {id:'frame_hexagone_bleu_01',layer:'frame',name:'Hexagone bleu',rarity:'rare',src:'assets/embedded/cadre-banniere-hexagone-bleu.webp',tone:'#3f8bff'},
+  {id:'frame_metal_chrome_01',layer:'frame',name:'Métal chromé',rarity:'rare',src:'assets/embedded/cadre-banniere-metal-chrome.webp',tone:'#dfe8ff'},
+  {id:'frame_neon_cyber_01',layer:'frame',name:'Néon cyberpunk',rarity:'epique',src:'assets/embedded/cadre-banniere-neon-cyber.webp',tone:'#8a5cff'},
+  {id:'logo_no_excuses_01',layer:'logo',name:'No Excuses',rarity:'rare',src:'assets/embedded/logo-no-excuses.webp'},
+  {id:'logo_cm_givre_01',layer:'logo',name:'CM givré',rarity:'epique',src:'assets/embedded/logo-cm-givre.webp'},
+  {id:'logo_couronne_neon_01',layer:'logo',name:'Couronne néon',rarity:'legendaire',src:'assets/embedded/logo-couronne-neon.webp'},
   {id:'plate_classic_01',layer:'plate',name:'Classique',rarity:'standard',css:'cm-pl-classic',free:true},
   {id:'plate_metal_01',layer:'plate',name:'Métallique',rarity:'standard',css:'cm-pl-metal'},
   {id:'plate_redblack_01',layer:'plate',name:'Noir et rouge',rarity:'rare',css:'cm-pl-redblack'},
   {id:'plate_red_01',layer:'plate',name:'Rouge',rarity:'standard',css:'cm-pl-red'},
   {id:'plate_cyan_01',layer:'plate',name:'Turquoise',rarity:'rare',css:'cm-pl-cyan'},
   {id:'plate_gold_01',layer:'plate',name:'Dorée',rarity:'epique',css:'cm-pl-gold'},
-  {id:'plate_neon_01',layer:'plate',name:'Lumineuse',rarity:'legendaire',css:'cm-pl-neon'}
+  {id:'plate_neon_01',layer:'plate',name:'Lumineuse',rarity:'legendaire',css:'cm-pl-neon'},
+  {id:'plate_eclairs_01',layer:'plate',name:'Éclairs',rarity:'epique',src:'assets/embedded/plaque-eclairs.webp'}
 ];
 const CM_DEFAULT_TITLE='Athlète Cross’Mitaines'; /* texte de la plaque tant que l'athlète n'a pas équipé de titre */
 const CM_LIST=CM_ITEMS.map(x=>Object.assign({cm:true,kind:'cm'},x));
@@ -15852,17 +15869,62 @@ function shopCard(it,own,bal){
     (!has&&miss>0)?h('div',{class:'sh-sub'},'Il te manque '+miss+' coin'+(miss>1?'s':'')+'.'):null,
     act);
 }
-/* bande des catégories : défile au doigt et avec deux flèches (gauche / droite) ; la 1re carte n'est plus collée ni coupée au bord gauche
-   (marge intérieure + scroll-padding), la position est gardée quand l'écran se redessine */
+/* ---- défilement en tourniquet : la bande tourne sans fin, vers la droite comme vers la gauche ----
+   loopStrip(strip, mk, key) : mk() fabrique UN jeu complet d'éléments ; la bande en contient plusieurs copies côte à côte
+   et, quand on s'approche d'un bord (ou que le défilement s'arrête), elle est recentrée d'un nombre entier de jeux :
+   comme le contenu est identique, on ne voit aucun saut. Si tout tient déjà à l'écran, la bande reste fixe (pas de boucle).
+   Seul le jeu du milieu garde ses id (pas de doublon) ; les copies sont masquées aux lecteurs d'écran et sortent de l'ordre de tabulation.
+   La position (« phase » dans le jeu) est gardée quand l'écran se redessine : S.shLoop[key]. */
+function loopStrip(strip,mk,key,onFit){
+  S.shLoop=S.shLoop||{};
+  strip.append(...mk());
+  requestAnimationFrame(()=>{
+    if(!strip.isConnected)return;
+    const probe=mk();strip.append(...probe);
+    const first=strip.children[0],second=strip.children[probe.length];
+    const setW=(second&&first)?second.offsetLeft-first.offsetLeft:0;
+    if(!(setW>0)||setW<=strip.clientWidth+4){ /* tout tient : pas de boucle */
+      strip.replaceChildren(...mk());strip.scrollLeft=0;if(onFit)onFit(false);return;
+    }
+    const n=probe.length;
+    let c=Math.max(2,Math.ceil(2500/setW));c=Math.max(1,Math.min(c,Math.floor((220/n-1)/2)));
+    const K=2*c+1,home=c*setW;
+    const sets=[];for(let i=0;i<K;i++)sets.push(mk());
+    sets.forEach((set,i)=>{if(i===c)return;set.forEach(nd=>{nd.removeAttribute('id');nd.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));nd.setAttribute('aria-hidden','true');nd.querySelectorAll('button,a,input,select').forEach(e=>{e.tabIndex=-1;});});});
+    strip.replaceChildren(...sets.flat());
+    const ph=Number(S.shLoop[key])||0;
+    strip.scrollLeft=home+ph;
+    const recentre=(edgeOnly)=>{
+      const p=strip.scrollLeft,total=strip.scrollWidth;
+      if(edgeOnly&&!(p<setW*.5||p>total-strip.clientWidth-setW*.5))return;
+      const k=Math.round((p-home)/setW);if(!k)return;
+      strip.scrollLeft=p-k*setW;
+    };
+    let t=0;
+    strip.addEventListener('scroll',()=>{
+      recentre(true);
+      S.shLoop[key]=(((strip.scrollLeft-home)%setW)+setW)%setW;
+      clearTimeout(t);t=setTimeout(()=>recentre(false),140); /* au repos : on revient au milieu */
+    },{passive:true});
+    strip.addEventListener('scrollend',()=>recentre(false));
+    if(onFit)onFit(true);
+  });
+}
+/* bande des catégories : tourniquet sans fin (au doigt, à la souris ou avec les deux flèches) */
 function shopCatsStrip(all,open){
-  const strip=h('div',{class:'sh-cats','aria-label':'Catégories du shop'},SHOP_CATS.map(c=>{const n=all.filter(x=>shopCatOf(x)===c[0]).length;const b=h('button',{class:'sh-cat',type:'button','aria-label':c[1],onclick:()=>open(c[0])});b.innerHTML=c[2];b.append(h('span',{},c[1]));if(n)b.append(h('i',{class:'sh-cnt'},String(n)));else b.classList.add('empty');return b;}));
+  const mk=()=>SHOP_CATS.map(c=>{const n=all.filter(x=>shopCatOf(x)===c[0]).length;const b=h('button',{class:'sh-cat',type:'button','aria-label':c[1],onclick:()=>open(c[0])});b.innerHTML=c[2];b.append(h('span',{},c[1]));if(n)b.append(h('i',{class:'sh-cnt'},String(n)));else b.classList.add('empty');return b;});
+  const strip=h('div',{class:'sh-cats','aria-label':'Catégories du shop'});
   const go=d=>strip.scrollBy({left:d*Math.max(120,Math.round(strip.clientWidth*.75)),behavior:reducedMotion()?'auto':'smooth'});
   const L=h('button',{class:'sh-arr l',type:'button','aria-label':'Catégories précédentes',onclick:()=>go(-1)},'‹'),R=h('button',{class:'sh-arr r',type:'button','aria-label':'Catégories suivantes',onclick:()=>go(1)},'›');
-  const upd=()=>{const max=strip.scrollWidth-strip.clientWidth;L.hidden=strip.scrollLeft<=4;R.hidden=max<=4||strip.scrollLeft>=max-4;};
-  strip.addEventListener('scroll',()=>{S.shCatX=strip.scrollLeft;upd();},{passive:true});
-  L.hidden=true;
-  requestAnimationFrame(()=>{strip.scrollLeft=S.shCatX||0;upd();});
+  L.hidden=R.hidden=true;
+  loopStrip(strip,mk,'cats',on=>{L.hidden=R.hidden=!on;});
   return h('div',{class:'sh-cwrap'},strip,L,R);
+}
+/* coups de cœur : même tourniquet */
+function shopFavStrip(fav,own,bal){
+  const strip=h('ul',{class:'sh-row'});
+  loopStrip(strip,()=>fav.map(it=>shopCard(it,own,bal)),'fav');
+  return strip;
 }
 function viewShop(){
   const el=h('div',{class:'sh'});
@@ -15893,7 +15955,7 @@ function viewShop(){
     el.append(h('div',{class:'sh-h',id:'sh-cats'},h('h2',{},'Catégories'),h('button',{class:'sh-link',type:'button',onclick:()=>open('all')},'Tout voir →')),
       shopCatsStrip(all,open));
     const fav=all.filter(x=>shopEntry(x.id).fav);
-    el.append(h('div',{class:'sh-h'},h('h2',{},'Coups de cœur')),fav.length?h('ul',{class:'sh-row'},fav.map(it=>shopCard(it,own,bal))):h('p',{class:'sh-note'},coach?'Aucun coup de cœur pour l’instant : coche « Coup de cœur » sur un article en vente dans Coach › Shop et coins, puis enregistre.':'Aucun coup de cœur pour l’instant.'));
+    el.append(h('div',{class:'sh-h'},h('h2',{},'Coups de cœur')),fav.length?shopFavStrip(fav,own,bal):h('p',{class:'sh-note'},coach?'Aucun coup de cœur pour l’instant : coche « Coup de cœur » sur un article en vente dans Coach › Shop et coins, puis enregistre.':'Aucun coup de cœur pour l’instant.'));
   }
   el.append(h('p',{class:'sh-note'},(per?'Tu gagnes '+per+' coin'+(per>1?'s':'')+' à chaque séance enregistrée. ':'')+'Un objet acheté est à toi pour toujours : équipe-le depuis ton avatar ou ta bannière (Profil).'));
   return el;
@@ -15904,7 +15966,8 @@ function shopDraft(){
   if(!c.shopDraft){
     const cfg=shopCfg(),it={};
     for(const x of AV_ITEMS.concat(shopAll())){const e=(cfg.items||{})[x.id];it[x.id]={on:!!(e&&e.on),fav:!!(e&&e.fav),price:(e&&Number(e.price)>0)?String(e.price):'',sale:(e&&Number(e.sale)>0)?String(e.sale):'',rar:(e&&CM_RARITY[e.rar])?e.rar:''};}
-    c.shopDraft={coin:String(coinPerSession()),items:it};
+    const hid={};for(const k of Object.keys(cfg.hidden||{}))if(cfg.hidden[k])hid[k]=true; /* éléments masqués de la liste du coach (rangement) */
+    c.shopDraft={coin:String(coinPerSession()),items:it,hidden:hid};
   }
   return c.shopDraft;
 }
@@ -15921,11 +15984,21 @@ function saveShop(){
     const rr=CM_RARITY[x.rar]?x.rar:'';
     if(x.on||p>=1||rr){items[it.id]={on:!!x.on,price:p>=1?p:0,fav:!!(x.on&&x.fav),sale:(x.on&&sl>=1)?sl:0};if(rr)items[it.id].rar=rr;}
   }
+  const cleanHid={};for(const it of AV_ITEMS.concat(shopAll()))if(d.hidden&&d.hidden[it.id])cleanHid[it.id]=true;
   if(!S.db||S.snapMode){toast('Connexion nécessaire pour enregistrer.',true);return;}
   run(async()=>{
-    await S.db.doc('config/features').set(Object.assign({},S.feat||{},{shop:{coin,items,at:new Date().toISOString()}}));
+    await S.db.doc('config/features').set(Object.assign({},S.feat||{},{shop:{coin,items,hidden:cleanHid,at:new Date().toISOString()}}));
     S.coach.shopDraft=null;toast('Shop enregistré');render();
   });
+}
+/* masquer / réafficher un article dans la liste du coach : enregistré tout de suite (seul ce réglage est écrit, pas les autres modifications en cours) */
+function shopHide(id,v){
+  const d=shopDraft();d.hidden=d.hidden||{};
+  if(v)d.hidden[id]=true;else delete d.hidden[id];
+  render();
+  if(!S.db||S.snapMode)return;
+  const hid=Object.assign({},d.hidden);
+  run(async()=>{await S.db.doc('config/features').set(Object.assign({},S.feat||{},{shop:Object.assign({},shopCfg(),{hidden:hid})}));});
 }
 const shopCount=()=>AV_ITEMS.concat(shopAll()).filter(x=>shopEntry(x.id)).length;
 /* coins des séances déjà enregistrées : une seule fois par date et par athlète (les dates qui ont déjà leurs coins sont ignorées) */
@@ -15982,9 +16055,10 @@ function coachShop(){
   const sec=h('section',{class:'card'},h('h2',{class:'h2'},'Articles du shop'),
     h('p',{class:'hint'},'Coche « En vente », fixe un prix en coins (vide = prix de la rareté) et une rareté (Standard, Rare, Épique, Légendaire : elle donne l’éclat de l’objet dans le shop et la personnalisation) ; « Coup de cœur » met l’objet en avant en haut du shop ; « % de réduc. » (1 à 99) affiche une réduction sur l’objet dans le shop, avec l’ancien prix barré. Puis enregistre. Un objet déjà acheté reste à l’athlète même si tu le retires. Pour ajouter un skin : dépose son image dans assets/embedded et ajoute une ligne dans AV_ITEMS ; il apparaît ici.'));
   AV_SLOTS.map(([sl,label])=>[label,AV_ITEMS.filter(x=>x.slot===sl)]).concat([['Fonds de bannière',shopBanners().filter(b=>b.kind==='bg')],['Cadres d’avatar (fil)',shopBanners().filter(b=>b.kind==='avframe')]].concat(CM_LAYERS.filter(L=>L.shop).map(L=>['Bannière modulaire · '+L.name,CM_LIST.filter(x=>x.layer===L.id&&!x.free)]))).forEach(([label,its])=>{
-    if(!its.length)return;
-    sec.append(h('div',{class:'flabel',style:'margin-top:14px'},label+' · '+its.filter(x=>d.items[x.id]&&d.items[x.id].on).length+' en vente'),
-      h('ul',{class:'list shop-list'},its.map(it=>{
+    const vis=its.filter(x=>!(d.hidden&&d.hidden[x.id]));
+    if(!vis.length)return;
+    sec.append(h('div',{class:'flabel',style:'margin-top:14px'},label+' · '+vis.filter(x=>d.items[x.id]&&d.items[x.id].on).length+' en vente'),
+      h('ul',{class:'list shop-list'},vis.map(it=>{
         const x=d.items[it.id]||(d.items[it.id]={on:false,fav:false,price:'',sale:'',rar:''}),ic=h('span',{class:'shop-ic'+((it.kind==='bg'||it.cm)?' shop-ic-bn':'')});
         ic.append(shopIcon(it));
         const fin=h('span',{class:'shop-fin',id:'shopc-fin-'+it.id});
@@ -16004,7 +16078,8 @@ function coachShop(){
             h('span',{class:'shop-sale'},
               h('input',{type:'number',min:'0',max:'99',step:'1',inputmode:'numeric',placeholder:'0','aria-label':'Réduction en pourcentage : '+it.name,id:'shopc-sale-'+it.id,value:x.sale||'',oninput:e=>{x.sale=e.target.value;upd();}}),
               h('span',{},'% de réduc.')),
-            fin));
+            fin,
+            h('button',{class:'btn sm',type:'button',id:'shopc-hide-'+it.id,'aria-label':'Masquer : '+it.name,onclick:()=>shopHide(it.id,true)},'Masquer')));
       })));
   });
   sec.append(h('div',{class:'row',style:'margin-top:14px'},h('button',{class:'btn primary',type:'button',id:'shop-save',onclick:saveShop},'Enregistrer le shop')));
@@ -16024,6 +16099,17 @@ function coachShop(){
           h('div',{class:'sub'},'Gagnés '+coinEarned(a.lg)+' · dépensés '+coinSum(a.lg.shopBuy)+' · '+pl_(nb,'achat')),a.bal<0?h('div',{class:'sub',style:'color:#ff5a5a;font-weight:700'},'Solde négatif : séance retirée après dépense'):null),
         h('div',{class:'shop-act'},h('span',{class:'shop-price'},coinIco(20),h('b',{},String(a.bal))),inp,btn));
     })):h('p',{class:'muted'},'Aucun athlète pour l’instant.')));
+  /* tout en bas : éléments masqués (retrouvés ici, à réafficher en un clic) */
+  const allIts=AV_SLOTS.flatMap(([sl,label])=>AV_ITEMS.filter(x=>x.slot===sl).map(x=>[label,x])).concat(shopBanners().filter(b=>b.kind==='bg').map(x=>['Fonds de bannière',x]),shopBanners().filter(b=>b.kind==='avframe').map(x=>['Cadres d’avatar (fil)',x]),CM_LAYERS.filter(L=>L.shop).flatMap(L=>CM_LIST.filter(x=>x.layer===L.id&&!x.free).map(x=>['Bannière modulaire · '+L.name,x])));
+  const hidd=allIts.filter(([l,x])=>d.hidden&&d.hidden[x.id]);
+  const hs=h('details',{class:'card sh-hid',id:'shop-hidden'},h('summary',{},'Éléments masqués ('+hidd.length+')'),
+    h('p',{class:'hint'},'Ces articles n’apparaissent plus dans la liste ci-dessus, pour la garder claire. Masquer ne change rien pour les athlètes : un article « En vente » reste en vente (et un article masqué qui n’est pas en vente reste invisible dans le shop).'),
+    hidd.length?h('ul',{class:'list shop-list'},hidd.map(([l,it])=>{const x=d.items[it.id]||{},ic=h('span',{class:'shop-ic'+((it.kind==='bg'||it.cm)?' shop-ic-bn':'')});ic.append(shopIcon(it));
+      return h('li',{id:'shoph-'+it.id},ic,h('div',{class:'l',style:'flex:1;min-width:120px'},h('div',{class:'nm'},it.name),h('div',{class:'sub'},l+(x.on?' · en vente':''))),
+        h('button',{class:'btn sm',type:'button',id:'shopc-show-'+it.id,'aria-label':'Réafficher : '+it.name,onclick:()=>shopHide(it.id,false)},'Réafficher'));})):h('p',{class:'muted'},'Aucun élément masqué.'));
+  if(S.coach.hidOpen)hs.open=true;
+  hs.addEventListener('toggle',()=>{S.coach.hidOpen=hs.open;});
+  el.append(hs);
   return el;
 }
 
