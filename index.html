@@ -961,9 +961,16 @@ body:has(.bnx){overflow:hidden}
 /* ---- taille STANDARD de la bannière : hauteur = largeur / --bnm-ratio, quoi qu'il y ait dedans (message, titre long, réactions…) ----
    height:0 + padding-bottom en % : la hauteur ne dépend plus ni du contenu, ni de l'étirement de la grille de la carte.
    Gouttière --bn-g de chaque côté : le cadre déborde de la bannière dans cet espace libre au lieu d'être coupé par la colonne de l'appli. */
-:root{--bnm-ratio:1.6;--bn-g:3.5%}
+:root{--bnm-ratio:1.3333;--bn-g:3.5%} /* 4:3 : la zone du bas (62 → 72,5 cqw) est réservée au message */
 .bn.bnm:not(.bnm-mini){aspect-ratio:auto;height:0;min-height:0;box-sizing:border-box;align-self:start;border:0;width:calc(100% - 2*var(--bn-g));max-width:none;margin:var(--bn-g) var(--bn-g) 0;padding:0 0 calc((100% - 2*var(--bn-g))/var(--bnm-ratio))}
 .sh-cats,.sh-row{touch-action:pan-x pan-y}
+/* zone message : toujours là (vide s'il n'y a pas de message), 2 lignes max, « voir tout » si c'est plus long (toucher pour tout lire) */
+.bn.bnm .bnm-ses{bottom:auto;height:12cqw}
+.bnm-msg{position:absolute;z-index:5;left:4.5cqw;right:4.5cqw;top:62cqw;height:10.5cqw;min-width:0;overflow:hidden;border-top:1px solid rgba(255,255,255,.22);padding-top:1.2cqw;box-sizing:border-box;color:#fff;font-size:clamp(11px,3.5cqw,15px);line-height:1.25;font-weight:600;text-shadow:0 1px 2px #000,0 0 6px rgba(0,0,0,.95)}
+.bnm-msg.empty{border-top-color:transparent}
+.bnm-mt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere}
+.bnm-msg.more{cursor:pointer}
+.bnm-more{position:absolute;right:0;bottom:0;padding:0 0 0 7cqw;background:linear-gradient(90deg,transparent,rgba(0,0,0,.85) 40%);font:700 clamp(10px,3cqw,13px)/1.25 var(--f-body);color:var(--accent,#ff8a2a);text-shadow:none}
 .cmpv{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 12px;margin-top:12px;border:1.5px solid #19e6e0;border-radius:14px;background:rgba(25,230,224,.08);color:#fff;font-size:14px}
 .cmpv .cmpv-pr{display:inline-flex;align-items:center;gap:6px}
 .cmpv .cmpv-msg{color:#cfc3c8}
@@ -4181,7 +4188,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-06.7';
+const APP_VERSION='2026-11-07.1';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -5667,7 +5674,7 @@ function blockAthlete(uid,on){
   if(on&&i<0)l.push(uid);
   if(!on&&i>=0)l.splice(i,1);
   S.prof.blocked=l;S.confirm=null;saveProf();
-  toast(on?'Athlète masqué. Tu peux le réafficher depuis ton profil.':'Athlète réaffiché.');render();
+  toast(on?'Athlète masqué. Pour le réafficher : ton profil, section « Athlètes masqués ».':'Athlète réaffiché.');render();
 }
 function openBlocked(){
   if(document.getElementById('blk-ov'))return;
@@ -5697,13 +5704,16 @@ function reportPost(uid,date){
 }
 function repLink(uid,date){
   if(uid===S.uid)return null;
-  const kb='bl-'+uid;
-  if(S.confirm===kb)return h('div',{class:'row',style:'justify-content:flex-end'},h('span',{class:'hint'},'Masquer cet athlète ? Ses publications et ses réactions ne s’afficheront plus chez toi.'),h('button',{class:'btn sm danger',type:'button',onclick:()=>blockAthlete(uid,true)},'Masquer'),h('button',{class:'btn sm',type:'button',onclick:()=>{S.confirm=null;render();}},'Annuler'));
-  const blockBtn=h('button',{class:'link',type:'button','aria-label':'Masquer cet athlète',onclick:()=>{S.confirm=kb;render();}},'🚫 Masquer cet athlète');
-  if(S.reports[uid+'__'+date+'__'+S.uid])return h('div',{style:'display:grid;gap:4px;justify-items:end'},h('p',{class:'hint',style:'margin:0'},'Publication signalée, merci.'),blockBtn);
-  const k='rl-'+uid+date;
-  return S.confirm===k?h('div',{class:'row',style:'justify-content:flex-end'},h('span',{class:'hint'},'Signaler cette publication au coach ?'),h('button',{class:'btn sm danger',type:'button',onclick:()=>reportPost(uid,date)},'Signaler'),h('button',{class:'btn sm',type:'button',onclick:()=>{S.confirm=null;render();}},'Annuler'))
-    :h('div',{style:'display:flex;gap:16px;justify-content:flex-end;flex-wrap:wrap'},h('button',{class:'link',type:'button','aria-label':'Signaler cette publication',onclick:()=>{S.confirm=k;render();}},'⚑ Signaler'),blockBtn);
+  const kb='bl-'+uid,k='rl-'+uid+date,done=!!S.reports[uid+'__'+date+'__'+S.uid];
+  const cancel=h('button',{class:'btn sm',type:'button',onclick:()=>{S.confirm=null;render();}},'Annuler');
+  if(S.confirm===kb)return h('div',{class:'row',style:'justify-content:flex-end'},h('span',{class:'hint'},'Masquer cet athlète ? Ses publications et ses réactions ne s’afficheront plus chez toi. Tu pourras le réafficher depuis ton profil, section « Athlètes masqués ».'),h('button',{class:'btn sm danger',type:'button',onclick:()=>blockAthlete(uid,true)},'Masquer'),cancel);
+  if(S.confirm===k)return h('div',{style:'display:grid;gap:8px;justify-items:end'},
+    done?h('p',{class:'hint',style:'margin:0'},'Publication signalée, merci.'):h('span',{class:'hint'},'Que veux-tu faire ?'),
+    h('div',{class:'row',style:'justify-content:flex-end;flex-wrap:wrap'},
+      done?null:h('button',{class:'btn sm danger',type:'button',onclick:()=>reportPost(uid,date)},'⚑ Signaler la publication'),
+      h('button',{class:'btn sm',type:'button',onclick:()=>{S.confirm=kb;render();}},'🚫 Masquer cet athlète'),
+      cancel));
+  return h('div',{style:'display:flex;justify-content:flex-end'},h('button',{class:'link',type:'button','aria-label':done?'Publication signalée : options':'Signaler cette publication ou masquer cet athlète',onclick:()=>{S.confirm=k;render();}},done?'⚑ Signalée':'⚑ Signaler'));
 }
 function reportsPanel(){
   const ps=repPosts(),wrap=h('div',{class:'stack'},h('b',{},'Signalements à vérifier'+(ps.length?' ('+ps.length+')':'')));
@@ -7904,9 +7914,9 @@ function viewFeed(){
     const rx=h('div',{class:'rxrow','data-rx-to':uid,'data-rx-date':date},rxButtons(uid,date));
     if(cmOn){ /* bannière modulaire : résultats, réactions et points sont dans la bannière ; titre de séance, date, message et signalement dessous */
       const pts=feedPts(w,e);
-      const cmHead=cmEl(uid,{avatar:avwrap,open:()=>openAthlete(uid),res:results.length?h('div',{class:'feed-result'},results):h('p',{class:'muted'},'Résultat non renseigné.'),rx,pts:pts?pts.textContent:null,ses:[h('h2',{class:'wtitle'},w.title,feedLvBadge(m,e)),h('span',{class:'sub feed-wod-date'},'Réalisée le '+cap(fmtShort(dfmt(new Date(e.at)))))]});
+      const cmHead=cmEl(uid,{avatar:avwrap,open:()=>openAthlete(uid),res:results.length?h('div',{class:'feed-result'},results):h('p',{class:'muted'},'Résultat non renseigné.'),rx,pts:pts?pts.textContent:null,msg:e.message||'',ses:[h('h2',{class:'wtitle'},w.title,feedLvBadge(m,e)),h('span',{class:'sub feed-wod-date'},'Réalisée le '+cap(fmtShort(dfmt(new Date(e.at)))))]});
       const rl=repLink(uid,date);
-      el.append(h('section',{class:'card feed-card th-cm'},cmHead,(e.message||rl)?h('div',{class:'cm-foot'},e.message?h('p',{class:'feed-message',style:'white-space:pre-wrap;overflow-wrap:anywhere;margin:0'},e.message):null,rl):null));
+      el.append(h('section',{class:'card feed-card th-cm'},cmHead,rl?h('div',{class:'cm-foot'},rl):null));
       return;
     }
     el.append(h('section',{class:'card feed-card'+cardTheme(uid)+(fb?' feed-has-badge':'')},head,fbEl,h('div',{class:'feed-wod-head'},h('h2',{class:'wtitle',style:'font-size:24px;margin:0'},w.title,feedLvBadge(m,e)),h('span',{class:'sub feed-wod-date'},'Réalisée le '+cap(fmtShort(dfmt(new Date(e.at)))))),results.length?h('div',{class:'feed-result'},results):h('p',{class:'muted'},'Résultat détaillé non renseigné.'),e.message?h('p',{class:'feed-message',style:'white-space:pre-wrap;overflow-wrap:anywhere;margin:0'},e.message):null,h('div',{class:'rxwrap'},rx,feedPts(w,e)),repLink(uid,date)));
@@ -9257,7 +9267,7 @@ function viewAthlete(uid){
   const xp=Number(me.weighted)||0,nextReward=(p.rewards||[]).filter(r=>Number(r.xp)>xp&&rwFits(r,uid)).sort((a,b)=>Number(a.xp)-Number(b.xp))[0];
   el.append(pf2HeadOther(uid,me.pseudo),pf2Stats(me,board,rank,xp,nextReward));
   if(S.owner&&uid!==S.uid)el.append(h('div',{class:'row'},h('button',{class:'btn primary',type:'button',id:'dm-start',onclick:()=>dmOpenWith(uid)},'Envoyer un message')));
-  if(!S.owner&&uid!==S.uid)el.append(h('div',{class:'row'},h('button',{class:'btn sm',type:'button',id:'blk-toggle',onclick:()=>blockAthlete(uid,!isBlocked(uid))},isBlocked(uid)?'Réafficher cet athlète':'🚫 Masquer cet athlète')));
+  if(uid!==S.uid&&isBlocked(uid))el.append(h('div',{class:'row'},h('button',{class:'btn sm',type:'button',id:'blk-toggle',onclick:()=>blockAthlete(uid,false)},'Réafficher cet athlète')));
   /* objectifs choisis : priorités + nombre de séances par semaine */
   {const lgO=S.logs[uid]||{},fk=Array.isArray(lgO.focus)?lgO.focus:[],goal=lgO.goals?Number(lgO.goals[p.id])||0:0;
    const chips=PF_FOCUS.map(([k,l],i)=>({k,l,i})).filter(c=>fk.includes(c.k)).map(c=>h('span',{class:'pf2-chip c'+(c.i%5)+' ro'},c.l));
@@ -11356,6 +11366,21 @@ function cmEl(uid,o){
   const sesKids=o.sample?[h('h2',{class:'wtitle'},'Titre de la séance'),h('span',{class:'sub feed-wod-date'},'Réalisée le '+cap(fmtShort(dfmt(new Date()))))]:o.ses;
   if(sesKids&&sesKids.length)el.append(h('div',{class:'bnm-ses'},sesKids));
   const pl=h('div',{class:'bnm-plate'+(c.plate?'':' def')});cmApply(pl,c.plate);pl.append(h('span',{class:'bnm-pt'},ttl));el.append(pl);
+  { /* zone du message de l'athlète (toujours présente) */
+    const mt=String(o.sample?'Ton message apparaît ici.':(o.msg||'')).trim(),mEl=h('div',{class:'bnm-msg'+(mt?'':' empty')});
+    if(mt){
+      const sp=h('span',{class:'bnm-mt'},mt);mEl.append(sp);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        if(!(sp.scrollHeight>sp.clientHeight+1||mt.length>80))return;
+        mEl.classList.add('more');mEl.append(h('span',{class:'bnm-more'},'voir tout'));
+        if(o.sample)return;
+        const op=()=>openBubble({pseudo:ps,text:mt});
+        mEl.setAttribute('role','button');mEl.tabIndex=0;mEl.onclick=op;
+        mEl.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();op();}};
+      }));
+    }
+    el.append(mEl);
+  }
   if(o.sample){
     el.append(h('div',{class:'bnm-res'},h('div',{class:'feed-result'},h('div',{class:'feed-metric'},h('b',{},'72,5 kg'),h('span',{},'Shoulder press')),h('div',{class:'feed-metric'},h('b',{},'10:57'),h('span',{},'Metcon · Temps')))),
       h('div',{class:'bnm-rx'},h('div',{class:'rxrow'},['👑','😭','👍','💪','😂'].map((e,i)=>h('button',{type:'button',class:'rxb',tabindex:'-1','aria-hidden':'true'},e,i===0?h('small',{},'2'):null)))),
@@ -12313,7 +12338,8 @@ function viewProfile(){
   }else{
     el.append(badgesSection(),trophCard);
   }
-  if(tab==='profil')el.append(h('div',{class:'pf2-out'},S.owner?h('span',{}):h('span',{style:'display:inline-flex;gap:16px;flex-wrap:wrap'},(S.prof&&Array.isArray(S.prof.blocked)&&S.prof.blocked.length)?h('button',{type:'button',class:'pf2-del',onclick:openBlocked},'Athlètes masqués ('+S.prof.blocked.length+')'):null,h('button',{type:'button',class:'pf2-del',onclick:openDeleteAccount},'Supprimer mon compte')),h('span',{},'Version '+APP_VERSION)));
+  if(tab==='profil'&&S.prof&&Array.isArray(S.prof.blocked)&&S.prof.blocked.length)el.append(h('section',{class:'card',id:'blk-card'},h('h2',{class:'h2'},'Athlètes masqués'),h('p',{class:'hint'},'Tu ne vois plus leurs séances dans le fil. Tu peux les réafficher ici.'),h('div',{class:'row'},h('button',{class:'btn',type:'button',id:'blk-open',onclick:openBlocked},'Gérer les athlètes masqués ('+S.prof.blocked.length+')'))));
+  if(tab==='profil')el.append(h('div',{class:'pf2-out'},h('span',{style:'display:inline-flex;gap:16px;flex-wrap:wrap'},(S.prof&&Array.isArray(S.prof.blocked)&&S.prof.blocked.length)?h('button',{type:'button',class:'pf2-del',onclick:openBlocked},'Athlètes masqués ('+S.prof.blocked.length+')'):null,S.owner?null:h('button',{type:'button',class:'pf2-del',onclick:openDeleteAccount},'Supprimer mon compte')),h('span',{},'Version '+APP_VERSION)));
   return el;
 }
 /* ---------- carnet de progression : PR enregistrés automatiquement (force à 1, 3, 5 ou 10 reps) ----------
@@ -15977,12 +16003,19 @@ function loopStrip(strip,mk,key,onFit){
 }
 /* bande des catégories : tourniquet sans fin (au doigt, à la souris ou avec les deux flèches) */
 function shopCatsStrip(all,open){
-  const mk=()=>SHOP_CATS.map(c=>{const n=all.filter(x=>shopCatOf(x)===c[0]).length;const b=h('button',{class:'sh-cat',type:'button','aria-label':c[1],onclick:()=>open(c[0])});b.innerHTML=c[2];b.append(h('span',{},c[1]));if(n)b.append(h('i',{class:'sh-cnt'},String(n)));else b.classList.add('empty');return b;});
   const strip=h('div',{class:'sh-cats','aria-label':'Catégories du shop'});
-  const go=d=>strip.scrollBy({left:d*Math.max(120,Math.round(strip.clientWidth*.75)),behavior:reducedMotion()?'auto':'smooth'});
+  SHOP_CATS.forEach(c=>{const n=all.filter(x=>shopCatOf(x)===c[0]).length;const b=h('button',{class:'sh-cat',type:'button','aria-label':c[1],onclick:()=>open(c[0])});b.innerHTML=c[2];b.append(h('span',{},c[1]));if(n)b.append(h('i',{class:'sh-cnt'},String(n)));else b.classList.add('empty');strip.append(b);});
+  /* défilement natif : toutes les catégories restent atteignables ; les flèches bouclent (au bout, on repart de l'autre côté) ;
+     la position est gardée quand l'écran se redessine (sinon la bande revenait au début) */
+  const go=d=>{
+    const x=strip.scrollLeft,m=Math.max(0,strip.scrollWidth-strip.clientWidth),step=Math.max(120,Math.round(strip.clientWidth*.75));
+    let t=x+d*step;if(d>0&&x>=m-4)t=0;else if(d<0&&x<=4)t=m;
+    strip.scrollTo({left:t,behavior:reducedMotion()?'auto':'smooth'});
+  };
   const L=h('button',{class:'sh-arr l',type:'button','aria-label':'Catégories précédentes',onclick:()=>go(-1)},'‹'),R=h('button',{class:'sh-arr r',type:'button','aria-label':'Catégories suivantes',onclick:()=>go(1)},'›');
-  L.hidden=R.hidden=true;
-  loopStrip(strip,mk,'cats',on=>{L.hidden=R.hidden=!on;});
+  strip.addEventListener('scroll',()=>{S.shCatsX=strip.scrollLeft;},{passive:true});
+  const restore=n=>{if(!strip.isConnected&&n>30)return;if(strip.scrollWidth>strip.clientWidth||n>30){strip.scrollLeft=S.shCatsX||0;return;}requestAnimationFrame(()=>restore(n+1));};
+  requestAnimationFrame(()=>restore(0));
   return h('div',{class:'sh-cwrap'},strip,L,R);
 }
 /* coups de cœur : même tourniquet */
