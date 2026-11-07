@@ -1033,6 +1033,10 @@ body:has(.bnx){overflow:hidden}
 .sh-cats,.sh-row{position:relative;scroll-snap-type:none;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .sh-cats::-webkit-scrollbar,.sh-row::-webkit-scrollbar{display:none}
 .sh-cat{scroll-snap-align:none}
+.sh-cats.sh-cloop{overflow:hidden;touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:grab}
+.sh-cloop:active{cursor:grabbing}
+.sh-ctrack{display:flex;gap:10px;position:relative;width:max-content;will-change:transform}
+.sh-ctrack .sh-cat{flex:0 0 76px}
 .sh-hid summary{cursor:pointer;font:700 15px var(--f-body);padding:6px 0}
 .sh-hid .shop-ic{opacity:.75}
 
@@ -4188,7 +4192,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-07.1';
+const APP_VERSION='2026-11-07.2';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -16001,22 +16005,73 @@ function loopStrip(strip,mk,key,onFit){
   };
   requestAnimationFrame(run);
 }
-/* bande des catégories : tourniquet sans fin (au doigt, à la souris ou avec les deux flèches) */
+/* bande des catégories : tourniquet sans fin. Le défilement natif n'est pas utilisé (il se bloquait) : la bande est déplacée par du JS
+   (doigt / souris : glisser ; trackpad ; flèches ‹ › ; clavier : Tab). Elle contient 3 copies du jeu de catégories côte à côte et la position
+   est ramenée modulo la largeur d'un jeu : quand on atteint la fin, on repart du début, sans saut visible. Si tout tient à l'écran, pas de boucle. */
 function shopCatsStrip(all,open){
-  const strip=h('div',{class:'sh-cats','aria-label':'Catégories du shop'});
-  SHOP_CATS.forEach(c=>{const n=all.filter(x=>shopCatOf(x)===c[0]).length;const b=h('button',{class:'sh-cat',type:'button','aria-label':c[1],onclick:()=>open(c[0])});b.innerHTML=c[2];b.append(h('span',{},c[1]));if(n)b.append(h('i',{class:'sh-cnt'},String(n)));else b.classList.add('empty');strip.append(b);});
-  /* défilement natif : toutes les catégories restent atteignables ; les flèches bouclent (au bout, on repart de l'autre côté) ;
-     la position est gardée quand l'écran se redessine (sinon la bande revenait au début) */
-  const go=d=>{
-    const x=strip.scrollLeft,m=Math.max(0,strip.scrollWidth-strip.clientWidth),step=Math.max(120,Math.round(strip.clientWidth*.75));
-    let t=x+d*step;if(d>0&&x>=m-4)t=0;else if(d<0&&x<=4)t=m;
-    strip.scrollTo({left:t,behavior:reducedMotion()?'auto':'smooth'});
+  const mk=()=>SHOP_CATS.map(c=>{const n=all.filter(x=>shopCatOf(x)===c[0]).length;const b=h('button',{class:'sh-cat',type:'button','aria-label':c[1],onclick:()=>open(c[0])});b.innerHTML=c[2];b.append(h('span',{},c[1]));if(n)b.append(h('i',{class:'sh-cnt'},String(n)));else b.classList.add('empty');return b;});
+  const view=h('div',{class:'sh-cats sh-cloop','aria-label':'Catégories du shop'}),track=h('div',{class:'sh-ctrack'});
+  track.append(...mk());view.append(track);
+  const N=SHOP_CATS.length;
+  let setW=0,pos=Number(S.shCatsX)||0,loop=false,raf=0,moved=false,down=false,sx=0,sp=0,lastX=0,lastT=0,vel=0,pid=0;
+  const apply=()=>{if(!loop){track.style.transform='';return;}pos=((pos%setW)+setW)%setW;track.style.transform='translate3d('+(-(setW+pos))+'px,0,0)';S.shCatsX=pos;};
+  const stop=()=>{cancelAnimationFrame(raf);raf=0;};
+  const slide=d=>{ /* glissement animé de d pixels (flèches) */
+    if(!loop)return;stop();
+    if(reducedMotion()){pos+=d;apply();return;}
+    const from=pos,t0=performance.now(),ms=380;
+    const step=t=>{const k=Math.min(1,(t-t0)/ms),e=1-Math.pow(1-k,3);pos=from+d*e;apply();if(k<1)raf=requestAnimationFrame(step);};
+    raf=requestAnimationFrame(step);
   };
-  const L=h('button',{class:'sh-arr l',type:'button','aria-label':'Catégories précédentes',onclick:()=>go(-1)},'‹'),R=h('button',{class:'sh-arr r',type:'button','aria-label':'Catégories suivantes',onclick:()=>go(1)},'›');
-  strip.addEventListener('scroll',()=>{S.shCatsX=strip.scrollLeft;},{passive:true});
-  const restore=n=>{if(!strip.isConnected&&n>30)return;if(strip.scrollWidth>strip.clientWidth||n>30){strip.scrollLeft=S.shCatsX||0;return;}requestAnimationFrame(()=>restore(n+1));};
-  requestAnimationFrame(()=>restore(0));
-  return h('div',{class:'sh-cwrap'},strip,L,R);
+  const fling=()=>{ /* élan après le lâcher du doigt */
+    if(!loop||reducedMotion()||Math.abs(vel)<0.05)return;
+    let last=performance.now();
+    const step=t=>{const dt=t-last;last=t;pos+=vel*dt;vel*=Math.exp(-dt/325);apply();if(Math.abs(vel)>0.02)raf=requestAnimationFrame(step);};
+    raf=requestAnimationFrame(step);
+  };
+  view.addEventListener('pointerdown',e=>{
+    if(!loop||(e.pointerType==='mouse'&&e.button!==0))return;
+    stop();down=true;moved=false;sx=lastX=e.clientX;sp=pos;lastT=performance.now();vel=0;pid=e.pointerId;
+  });
+  view.addEventListener('pointermove',e=>{
+    if(!down)return;
+    const dx=e.clientX-sx;
+    if(!moved&&Math.abs(dx)>6){moved=true;try{view.setPointerCapture(pid);}catch(_){}}
+    if(!moved)return;
+    const now=performance.now(),dt=now-lastT;
+    if(dt>0){vel=.8*vel+.2*((lastX-e.clientX)/dt);lastX=e.clientX;lastT=now;}
+    pos=sp-dx;apply();
+  });
+  const up=()=>{
+    if(!down)return;down=false;
+    if(moved){if(performance.now()-lastT>80)vel=0;fling();setTimeout(()=>{moved=false;},50);}
+  };
+  view.addEventListener('pointerup',up);view.addEventListener('pointercancel',up);
+  view.addEventListener('click',e=>{if(moved){e.preventDefault();e.stopPropagation();}},true); /* un glissé n'ouvre pas une catégorie */
+  view.addEventListener('wheel',e=>{if(!loop||Math.abs(e.deltaX)<=Math.abs(e.deltaY))return;e.preventDefault();stop();pos+=e.deltaX;apply();},{passive:false});
+  view.addEventListener('focusin',e=>{ /* Tab : amène la catégorie focalisée à l'écran */
+    view.scrollLeft=0;
+    const b=e.target&&e.target.closest?e.target.closest('.sh-cat'):null;
+    if(!loop||!b)return;
+    const x=16+b.offsetLeft-(setW+pos);
+    if(x<0||x+b.offsetWidth>view.clientWidth){stop();pos=b.offsetLeft-setW;apply();}
+  });
+  view.addEventListener('scroll',()=>{if(view.scrollLeft)view.scrollLeft=0;},{passive:true});
+  const L=h('button',{class:'sh-arr l',type:'button',hidden:true,'aria-label':'Catégories précédentes',onclick:()=>slide(-Math.max(120,Math.round(view.clientWidth*.75)))},'‹'),
+        R=h('button',{class:'sh-arr r',type:'button',hidden:true,'aria-label':'Catégories suivantes',onclick:()=>slide(Math.max(120,Math.round(view.clientWidth*.75)))},'›');
+  let tries=0;
+  const setup=()=>{
+    if(!view.isConnected||!(view.clientWidth>0)){if(++tries<60)requestAnimationFrame(setup);return;}
+    const probe=mk();track.append(...probe);
+    const w=track.children[N].offsetLeft-track.children[0].offsetLeft;
+    if(!(w>0)||w<=view.clientWidth+4){probe.forEach(n=>n.remove());loop=false;apply();return;} /* tout tient : pas de boucle */
+    track.append(...mk());setW=w;
+    Array.from(track.children).forEach((nd,k)=>{if(k>=N&&k<2*N)return;nd.setAttribute('aria-hidden','true');nd.tabIndex=-1;});
+    loop=true;L.hidden=false;R.hidden=false;apply();
+    if(window.ResizeObserver)new ResizeObserver(()=>{if(!loop||!view.isConnected)return;const w2=track.children[N].offsetLeft-track.children[0].offsetLeft;if(w2>0){setW=w2;apply();}}).observe(view);
+  };
+  requestAnimationFrame(setup);
+  return h('div',{class:'sh-cwrap'},view,L,R);
 }
 /* coups de cœur : même tourniquet */
 function shopFavStrip(fav,own,bal){
