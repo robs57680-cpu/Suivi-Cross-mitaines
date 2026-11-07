@@ -8931,7 +8931,7 @@ function removeSession(date,uid){
   const tid=(S.owner&&uid!==S.uid&&(en[date]||rd[date]))?trashPush('result','Résultat de '+(lg.pseudo||'athlète')+' · '+fmtShort(date),{uid,date,entry:en[date]||null,redo:rd[date]||null}):null;
   const spent=coinSum(lg.shopBuy),before=coinEarned(lg)-spent;
   delete en[date];delete rd[date];S.confirm=null;
-  const after=coinEarned(lg,en)-spent; /* les coins de cette séance partent avec elle : le solde peut devenir négatif s'ils étaient déjà dépensés */
+  const after=coinEarned(lg,en,rd)-spent; /* les coins de cette séance partent avec elle : le solde peut devenir négatif s'ils étaient déjà dépensés */
   const warn=uid===S.uid&&after<0&&after<before,alertCoach=warn&&!S.owner;
   saveLog({entries:en,redos:rd},tid?null:'Séance retirée',uid).then(()=>{
     if(tid)toastUndo('Résultat retiré',tid);
@@ -9000,7 +9000,7 @@ function redoBlock(w,date){
           ?h('button',{class:'btn sm danger',onclick:()=>{const r=Object.assign({},S.logs[S.uid].redos);delete r[date];S.confirm=null;saveLog({redos:r},'REDO retiré');}},'Confirmer le retrait')
           :h('button',{class:'btn sm danger',onclick:()=>{S.confirm='redo-'+date;render();}},'Retirer mon REDO')));
   }else{
-    el.append(h('p',{class:'hint'},'Refais ce metcon aujourd’hui : 1 point si tu fais moins bien que ton premier résultat, 2 si tu marques autant de points, 3 si tu t’améliores. Le REDO compte dans ta semaine pour ton objectif.'),
+    el.append(h('p',{class:'hint'},'Refais ce metcon aujourd’hui : 1 point si tu fais moins bien que ton premier résultat, 2 si tu marques autant de points, 3 si tu t’améliores. Le REDO compte dans ta semaine pour ton objectif et rapporte 3 coins (une seule fois par séance).'),
       h('div',{class:'row'},h('button',{class:'btn',disabled:needPseudo(),onclick:()=>openRedo(w,date)},'Faire un REDO')));
   }
   return el;
@@ -9058,9 +9058,10 @@ function submitRedoNow(w){
   else{rd.score=v;if(r.rounds!==undefined){rd.rounds=r.rounds;rd.reps=r.reps;}}
   S.redo=null;
   const rk=rankSnap(date);
-  const sv=saveLog({redos:Object.assign({},cur.redos||{},{[date]:rd})},'REDO enregistré : +'+redoPts(m,(cur.entries||{})[date],rd)+' pt'+(redoPts(m,(cur.entries||{})[date],rd)>1?'s':''));
+  const coinCg=coinRedoPatch(S.uid,date),coinWon=coinCg?COIN_REDO:0;
+  const sv=saveLog(Object.assign({redos:Object.assign({},cur.redos||{},{[date]:rd})},coinCg||{}),'REDO enregistré : +'+redoPts(m,(cur.entries||{})[date],rd)+' pt'+(redoPts(m,(cur.entries||{})[date],rd)>1?'s':'')+(coinWon?' · +'+coinWon+' coins':''));
   render();
-  if(rk){S._rankPend=true;sv.then(()=>rankAnimStart(rk)).catch(()=>{}).finally(()=>{S._rankPend=false;if(!S.rankAnim)rankFlush();});}
+  if(rk||coinWon){S._rankPend=true;sv.then(()=>coinWon?coinWin(coinWon):null).then(()=>rk?rankAnimStart(rk):null).catch(()=>{}).finally(()=>{S._rankPend=false;if(!S.rankAnim)rankFlush();});}
 }
 function lastLevel(uid){
   const en=(S.logs[uid||S.uid]&&S.logs[uid||S.uid].entries)||{};
@@ -16095,6 +16096,7 @@ function avisTop(){
    il apparaît ensuite dans Coach › Shop et coins, où on le met en vente et où on fixe son prix.
    */
 const COIN_DEFAULT=5;
+const COIN_REDO=3; /* coins gagnés par REDO (une seule fois par séance refaite ; ils partent avec le REDO s'il est retiré) */
 const ICO_SHOP='<svg '+SVGA+'><path d="M3.5 9.5L5 4h14l1.5 5.5"/><path d="M5 9.5V20h14V9.5"/><path d="M3.5 9.5a2.8 2.8 0 0 0 5.5 0 2.8 2.8 0 0 0 6 0 2.8 2.8 0 0 0 5.5 0"/><path d="M10 20v-5h4v5"/></svg>';
 function coinIco(sz){
   const s=h('span',{class:'coin',role:'img','aria-label':'coins'});
@@ -16140,9 +16142,10 @@ const coinSum=o=>Object.values(o||{}).reduce((a,v)=>a+(Number(v)||0),0);
 /* coins gagnés : les coins d'une séance (clé = date) ne comptent QUE tant que la séance est enregistrée ; retirer la séance retire ses coins.
    Les autres clés (récompenses « rw:… ») et l'ajustement du coach comptent toujours. en = entrées à utiliser à la place de lg.entries (simulation d'un retrait). */
 const coinDateKey=k=>/^\d{4}-\d{2}-\d{2}$/.test(k);
-const coinEarned=(lg,en)=>{const cg=(lg&&lg.coinGot)||{},E=en||(lg&&lg.entries)||{};let t=0;for(const [k,v] of Object.entries(cg)){if(coinDateKey(k)&&!E[k])continue;t+=Number(v)||0;}return t+(Number(lg&&lg.coinAdj)||0);};
+const coinEarned=(lg,en,rd)=>{const cg=(lg&&lg.coinGot)||{},E=en||(lg&&lg.entries)||{},R=rd||(lg&&lg.redos)||{};let t=0;for(const [k,v] of Object.entries(cg)){if(coinDateKey(k)&&!E[k])continue;if(k.startsWith('redo:')&&!R[k.slice(5)])continue;t+=Number(v)||0;}return t+(Number(lg&&lg.coinAdj)||0);};
 const coinBal=uid=>{const lg=S.logs[uid]||{};return coinEarned(lg)-coinSum(lg.shopBuy);};
 /* coins d'une séance : une seule fois par date, au moment où le résultat est enregistré */
+const coinRedoPatch=(uid,date)=>{const lg=S.logs[uid]||{},k='redo:'+date;if(lg.coinGot&&lg.coinGot[k]!==undefined)return null;return {coinGot:Object.assign({},lg.coinGot||{},{[k]:COIN_REDO})};};
 const coinPatch=(uid,date)=>{const lg=S.logs[uid]||{},n=coinPerSession();if(!n||(lg.coinGot&&lg.coinGot[date]!==undefined))return null;return {coinGot:Object.assign({},lg.coinGot||{},{[date]:n})};};
 /* un objet du catalogue sans condition d'obtention (ajouté pour le shop) : jamais gagné par la progression */
 for(const it of AV_ITEMS)if(!AV_OBJ[it.id])AV_OBJ[it.id]={d:'À acheter dans le Shop, avec des coins.',test:()=>false};
