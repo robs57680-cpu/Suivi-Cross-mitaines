@@ -1033,7 +1033,8 @@ body:has(.bnx){overflow:hidden}
 .sh-cats,.sh-row{position:relative;scroll-snap-type:none;overscroll-behavior-x:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .sh-cats::-webkit-scrollbar,.sh-row::-webkit-scrollbar{display:none}
 .sh-cat{scroll-snap-align:none}
-.sh-cats.sh-cloop{overflow:hidden;touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:grab}
+.sh-cwrap{min-width:0;max-width:100%}
+.sh-cats.sh-cloop{min-width:0;max-width:100%;contain:inline-size;overflow:hidden;touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:grab}
 .sh-cloop:active{cursor:grabbing}
 .sh-ctrack{display:flex;gap:10px;position:relative;width:max-content;will-change:transform}
 .sh-ctrack .sh-cat{flex:0 0 76px}
@@ -4192,7 +4193,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-07.2';
+const APP_VERSION='2026-11-07.3';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
