@@ -5662,7 +5662,19 @@ function annCoach(){
    Un appareil dont l'abonnement a disparu alors que la permission est toujours accordée est réabonné au lancement (pushSync), sauf s'il a été désactivé à la main (bouton « Désactiver »). */
 const VAPID_PUBLIC='BDA1Z_RZ-siu2ygyWOGTzbVpPu-m-OIok7gxoZt9ZrJcXfzcfc_-Wp0c9G5t-P3-CgbuOsygEofEldWU7SWdNwg';
 const PUSH_SW='push-sw.js';
-const pushSupported=()=>('serviceWorker' in navigator)&&('PushManager' in window)&&('Notification' in window);
+/* appli iPhone (Capacitor) : notifications par Firebase Cloud Messaging / APNs grâce au plugin @capacitor-firebase/messaging ; le jeton de l'appareil est enregistré dans pushSubs (champ « fcm »).
+   Navigateur : Web Push (VAPID) comme avant. */
+const pushNative=()=>!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
+let _fcm;
+const fcm=()=>{if(_fcm)return _fcm;try{if(!pushNative())return null;const C=window.Capacitor;_fcm=(typeof C.registerPlugin==='function')?C.registerPlugin('FirebaseMessaging'):(C.Plugins&&C.Plugins.FirebaseMessaging)||null;}catch(e){_fcm=null;}return _fcm||null;};
+let NPERM='default'; /* permission des notifications de l'appli : 'granted' | 'denied' | 'default' (lue au démarrage et après chaque changement) */
+const pushPerm=()=>pushNative()?NPERM:(('Notification' in window)?Notification.permission:'default');
+async function pushPermRefresh(){
+  if(!pushNative())return;
+  const F=fcm();if(!F)return;
+  try{const r=await F.checkPermissions();NPERM=r.receive==='granted'?'granted':r.receive==='denied'?'denied':'default';}catch(e){}
+}
+const pushSupported=()=>pushNative()?!!fcm():(('serviceWorker' in navigator)&&('PushManager' in window)&&('Notification' in window));
 const isStandalone=()=>!!((window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform())||navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches));
 const pushConfigured=()=>VAPID_PUBLIC.indexOf('COLLE')!==0;
 const b64u=t=>{const b=(t+'='.repeat((4-t.length%4)%4)).replace(/-/g,'+').replace(/_/g,'/'),r=atob(b);return Uint8Array.from(r,c=>c.charCodeAt(0));};
@@ -5673,12 +5685,35 @@ async function pushSave(sub){
   await S.db.doc('pushSubs/'+subId(sub.endpoint)).set({uid:S.uid,endpoint:j.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth,at:new Date().toISOString()});
   pushMark(true);
 }
+async function pushSaveToken(token){
+  if(!S.uid||!S.db||!token)return;
+  await S.db.doc('pushSubs/'+subId('fcm:'+token)).set({uid:S.uid,fcm:token,platform:'ios',at:new Date().toISOString()});
+  pushMark(true);
+}
+/* le jeton FCM peut mettre quelques secondes à arriver juste après l'autorisation (Apple doit d'abord donner son jeton APNs) */
+async function fcmToken(F){
+  let last;
+  for(let i=0;i<8;i++){
+    try{const r=await F.getToken();if(r&&r.token)return r.token;}catch(e){last=e;}
+    await new Promise(r=>setTimeout(r,1000));
+  }
+  throw last||new Error('token');
+}
 /* mémoire locale : cet appareil a (eu) un abonnement et l'utilisateur ne l'a pas désactivé à la main. Sert à décider si pushSync peut le recréer tout seul. */
 const PUSH_MARK='bs-push-on';
 const pushMark=on=>{try{if(on)localStorage.setItem(PUSH_MARK,'1');else localStorage.removeItem(PUSH_MARK);}catch(e){}};
 const pushWanted=()=>{try{return localStorage.getItem(PUSH_MARK)==='1';}catch(e){return false;}};
 /* à appeler directement depuis un clic (iOS exige un geste de l'utilisateur pour la permission) */
 async function pushEnable(){
+  if(pushNative()){
+    const F=fcm();if(!F)throw new Error('plugin');
+    let p=await F.checkPermissions();
+    if(p.receive!=='granted')p=await F.requestPermissions();
+    NPERM=p.receive==='granted'?'granted':p.receive==='denied'?'denied':'default';
+    if(NPERM!=='granted')throw new Error('perm');
+    await pushSaveToken(await fcmToken(F));
+    return;
+  }
   const perm=await Notification.requestPermission();
   if(perm!=='granted')throw new Error('perm');
   await navigator.serviceWorker.register(PUSH_SW);
@@ -5690,6 +5725,13 @@ async function pushEnable(){
 async function pushForget(manual){
   if(!pushSupported())return;
   if(manual)pushMark(false); /* « Désactiver » : on ne recrée pas l'abonnement au lancement. La déconnexion, elle, le garde pour la prochaine connexion. */
+  if(pushNative()){
+    if(NPERM!=='granted'&&!pushWanted())return;
+    const F=fcm();if(!F)return;
+    try{const r=await F.getToken();if(r&&r.token){try{await S.db.doc('pushSubs/'+subId('fcm:'+r.token)).delete();}catch(e){}}}catch(e){}
+    try{await F.deleteToken();}catch(e){}
+    return;
+  }
   const reg=await navigator.serviceWorker.getRegistration();
   const sub=reg&&await reg.pushManager.getSubscription();
   if(!sub)return;
@@ -5699,7 +5741,14 @@ async function pushForget(manual){
 /* au démarrage : remet à jour l'abonnement de cet appareil dans Firestore (il peut avoir changé) ; si le système l'a supprimé alors que la permission
    est toujours accordée, on le recrée (sans rien demander) tant que l'utilisateur ne l'a pas désactivé à la main sur cet appareil */
 async function pushSync(){
-  if(!pushSupported()||!pushConfigured()||!S.uid||Notification.permission!=='granted')return;
+  if(!pushSupported()||!pushConfigured()||!S.uid)return;
+  if(pushNative()){
+    await pushPermRefresh();
+    if(NPERM!=='granted'||!pushWanted())return;
+    try{await pushSaveToken(await fcmToken(fcm()));}catch(e){}
+    return;
+  }
+  if(Notification.permission!=='granted')return;
   try{
     let reg=await navigator.serviceWorker.getRegistration();
     let sub=reg&&await reg.pushManager.getSubscription();
@@ -5712,7 +5761,7 @@ async function pushSync(){
     if(sub)await pushSave(sub);
   }catch(e){}
 }
-const notifStatus=()=>!pushSupported()||!pushConfigured()?'Non disponible':Notification.permission==='granted'?'Activées sur cet appareil':'Désactivées';
+const notifStatus=()=>!pushSupported()||!pushConfigured()?'Non disponible':pushPerm()==='granted'?'Activées sur cet appareil':'Désactivées';
 function notifSection(){
   const sec=h('section',{class:'card'},h('h2',{class:'h2'},'Notifications'),
     h('p',{class:'muted'},(S.owner
@@ -5722,19 +5771,21 @@ function notifSection(){
   const act=(fn,okMsg)=>async()=>{try{await fn();if(okMsg)toast(okMsg);}catch(e){toast(e&&e.message==='perm'?'Notifications refusées : autorise-les dans les réglages de ton téléphone.':'Action impossible, réessaie.',true);}draw();};
   async function draw(){
     let kids;
+    await pushPermRefresh();
     if(!pushSupported()){
       const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
-      kids=[h('p',{class:'hint'},ios&&!isStandalone()?'Sur iPhone, les notifications ne marchent que depuis l’icône de l’écran d’accueil. Ajoute l’appli (Partager, puis « Sur l’écran d’accueil »), ouvre-la depuis l’icône, puis reviens ici.':((window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform())?'Les notifications ne sont pas encore disponibles dans l’appli.':'Ton navigateur ne gère pas les notifications.'))];
+      kids=[h('p',{class:'hint'},ios&&!isStandalone()?'Sur iPhone, les notifications ne marchent que depuis l’icône de l’écran d’accueil. Ajoute l’appli (Partager, puis « Sur l’écran d’accueil »), ouvre-la depuis l’icône, puis reviens ici.':((window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform())?'Les notifications ne sont pas disponibles : mets l’appli à jour.':'Ton navigateur ne gère pas les notifications.'))];
     }else if(!pushConfigured()){
       kids=[h('p',{class:'hint'},'Les notifications ne sont pas encore configurées par le coach.')];
-    }else if(Notification.permission==='denied'){
+    }else if(pushPerm()==='denied'){
       kids=[h('p',{class:'hint'},'Les notifications sont bloquées pour cette appli. Autorise-les dans les réglages de ton téléphone ou de ton navigateur, puis reviens ici.')];
     }else{
       let sub=null;
-      try{const reg=await navigator.serviceWorker.getRegistration();sub=(reg&&Notification.permission==='granted')?await reg.pushManager.getSubscription():null;}catch(e){}
+      if(pushNative())sub=(pushPerm()==='granted'&&pushWanted())?true:null;
+      else try{const reg=await navigator.serviceWorker.getRegistration();sub=(reg&&Notification.permission==='granted')?await reg.pushManager.getSubscription():null;}catch(e){}
       kids=sub?[h('div',{class:'row'},h('span',{class:'chip ok'},'Activées sur cet appareil')),
         h('div',{class:'row'},
-          h('button',{class:'btn',type:'button',id:'push-test',onclick:act(async()=>{const reg=await navigator.serviceWorker.getRegistration();await reg.showNotification('Box Score',{body:'Test : l’affichage des notifications fonctionne.',icon:new URL('assets/icons/icon-192.png',reg.scope).href});})},'Tester l’affichage'),
+          pushNative()?null:h('button',{class:'btn',type:'button',id:'push-test',onclick:act(async()=>{const reg=await navigator.serviceWorker.getRegistration();await reg.showNotification('Box Score',{body:'Test : l’affichage des notifications fonctionne.',icon:new URL('assets/icons/icon-192.png',reg.scope).href});})},'Tester l’affichage'),
           h('button',{class:'btn danger',type:'button',id:'push-off',onclick:act(()=>pushForget(true),'Notifications désactivées')},'Désactiver'))]
         :[h('div',{class:'row'},h('button',{class:'btn primary',type:'button',id:'push-on',onclick:act(pushEnable,'Notifications activées')},'Activer les notifications')),
           h('p',{class:'hint'},'À activer sur chaque appareil où tu veux les recevoir.')];
@@ -5749,11 +5800,13 @@ function notifBar(){
   const box=h('div',{class:'stack'});
   const draw=async()=>{
     let on=false,msg='';
-    if(!pushSupported())msg=isIOS()&&!isStandalone()?'Sur iPhone, ajoute d’abord l’appli à l’écran d’accueil, puis ouvre-la depuis l’icône.':((window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform())?'Les notifications ne sont pas encore disponibles dans l’appli.':'Ton navigateur ne gère pas les notifications.');
+    await pushPermRefresh();
+    if(!pushSupported())msg=isIOS()&&!isStandalone()?'Sur iPhone, ajoute d’abord l’appli à l’écran d’accueil, puis ouvre-la depuis l’icône.':((window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform())?'Les notifications ne sont pas disponibles : mets l’appli à jour.':'Ton navigateur ne gère pas les notifications.');
     else if(!pushConfigured())msg='Les notifications ne sont pas encore configurées par le coach.';
-    else if(Notification.permission==='denied')msg='Bloquées : autorise-les dans les réglages de ton téléphone ou de ton navigateur.';
+    else if(pushPerm()==='denied')msg='Bloquées : autorise-les dans les réglages de ton téléphone ou de ton navigateur.';
+    else if(pushNative()){on=pushPerm()==='granted'&&pushWanted();}
     else{try{const reg=await navigator.serviceWorker.getRegistration();on=!!(reg&&Notification.permission==='granted'&&await reg.pushManager.getSubscription());}catch(e){}}
-    const can=pushSupported()&&pushConfigured()&&Notification.permission!=='denied';
+    const can=pushSupported()&&pushConfigured()&&pushPerm()!=='denied';
     const sw=h('button',{class:'tgl'+(on?' on':''),type:'button',id:'push-toggle',role:'switch','aria-checked':String(on),disabled:!can,onclick:async()=>{try{if(on)await pushForget(true);else await pushEnable();}catch(e){toast(e&&e.message==='perm'?'Notifications refusées : autorise-les dans les réglages de ton téléphone.':'Action impossible, réessaie.',true);}await draw();render();}},h('i'),h('span',{},on?'ON':'OFF'));
     const kids=[h('div',{class:'nb-row'},h('b',{},'Notifications'),h('span',{class:'nb-r'},sw,h('button',{class:'dx nb-x',type:'button','aria-label':'Fermer les notifications',onclick:()=>{const n=document.getElementById('nbar');if(n&&n.closeBar)n.closeBar();}},'✕')))];
     if(msg)kids.push(h('p',{class:'hint'},msg));
@@ -11278,19 +11331,14 @@ const AVF={gold:{name:'Cadre doré',src:'assets/embedded/cadre-avatar-dore.webp'
   metalsombre:{name:'Cadre métal sombre',src:'assets/embedded/cadre-avatar-metal-sombre.webp'},
   neoncyber:{name:'Cadre néon cyberpunk',src:'assets/embedded/cadre-avatar-neon-cyber.webp'}};
 /* cadres sombres : léger halo clair pour rester visibles par-dessus un fond de bannière foncé */
-const ALPHA_BN_SRC='assets/embedded/banniere-box-score-Alpha.png';
-(()=>{const im=new Image();im.onload=()=>{if(im.naturalWidth&&im.naturalHeight)document.documentElement.style.setProperty('--alpha-r',(im.naturalWidth/im.naturalHeight).toFixed(4));};im.src=ALPHA_BN_SRC;})();
 const AVF_GLOW={'assets/embedded/cadre-avatar-fumee-noire.webp':1,'assets/embedded/cadre-avatar-metal-sombre.webp':1};
 const avfSrc=r=>(AVF[r.asset]||AVF.gold).src;
 /* fonds de bannière à image (dossier assets/embedded). Pour en ajouter : déposer l'image, ajouter une ligne ici et le CSS .bn-bg-<id> */
 const BG_ASSETS={
-  alpha:{name:'Box Score Alpha',cls:'bn-bg-alpha',src:'assets/embedded/banniere-box-score-Alpha.png'},
-  angrypumpkin:{name:'Angry Pumpkin',cls:'bn-bg-angrypumpkin',src:'assets/embedded/cadre-halloween-entete.webp'},
-  crimson:{name:'Crimson Crown',cls:'bn-bg-crimson',src:'assets/embedded/banniere-crimson-crown.webp'},
   neonviolet:{name:'Néon Violet',cls:'bn-bg-neonviolet',src:'assets/embedded/banniere-neon-violet.webp'}
 };
 /* fond Halloween retiré : une ancienne récompense qui l'utiliserait n'est plus proposée aux athlètes ni au coach */
-const bgRemoved=r=>r.type==='bg'&&r.asset==='halloween';
+const bgRemoved=r=>r.type==='bg'&&['halloween','alpha','angrypumpkin','crimson'].includes(r.asset);
 const bgRewardClass=r=>(BG_ASSETS[r.asset]||{}).cls||'bn-bg-base reward-bg';
 const BN_DEFAULT={bg:'base',frame:'',title:'',avframe:''};
 /* ---------- bannière modulaire : 6 couches indépendantes ----------
@@ -11542,7 +11590,7 @@ function bannerOf(uid){
   for(const per of plist())for(const r of (per.rewards||[])){
     if(r.type==='title')BN.title[r.id]={text:r.name||'Champion'};
     if(r.type==='frame')BN.frame[r.id]={name:r.name||'Encadré',cls:'reward-frame'};
-    if(r.type==='bg')BN.bg[r.id]={name:r.name||'Fond de bannière',cls:bgRewardClass(r)};
+    if(r.type==='bg'&&!bgRemoved(r))BN.bg[r.id]={name:r.name||'Fond de bannière',cls:bgRewardClass(r)};
     if(r.type==='avframe')BN.avframe[r.id]={name:r.name||'Cadre d’avatar',src:avfSrc(r)};
   }
   for(const b of shopBanners()){if(b.kind==='bg')BN.bg[b.id]={name:b.name,cls:b.cls};else BN.avframe[b.id]={name:b.name,src:b.src};} /* éléments vendus au shop */
@@ -15652,7 +15700,7 @@ function viewHealth(){
       acts));
 }
 let drawerEl=null;
-const notifDotOn=()=>(pushConfigured()&&pushSupported()&&Notification.permission==='default')||(!!S.owner&&repPosts().length>0);
+const notifDotOn=()=>(pushConfigured()&&pushSupported()&&pushPerm()==='default')||(!!S.owner&&repPosts().length>0);
 /* infos du profil a renseigner (poids, date de naissance, sexe ; pseudo s'il manque) : la pastille reste rouge tant qu'il en manque une */
 function infosMissing(){
   if(!S.uid||!S.profLoaded||!S.loaded.logs||S.snapMode)return [];
@@ -16895,6 +16943,21 @@ function init(){
   if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{const d=e.data;if(!d||d.type!=='go'||!GO_TABS.includes(d.go))return;
     if(!S.uid){initialTab=d.go;LAUNCH_GO=true;return;} /* pas encore connecté : l'onglet s'ouvrira à la connexion */
     if(d.go==='today')S.viewDate=null;go(d.go);});
+  /* appli iPhone : toucher une notification ouvre le bon onglet ; si le système renouvelle le jeton de l'appareil, on le réenregistre */
+  if(pushNative()){
+    const F=fcm();
+    if(F&&F.addListener){
+      F.addListener('notificationActionPerformed',ev=>{try{
+        const d=(ev&&ev.notification&&ev.notification.data)||{},g=d.go;
+        if(!GO_TABS.includes(g))return;
+        if(!S.uid){initialTab=g;LAUNCH_GO=true;return;}
+        if(g==='today')S.viewDate=null;
+        go(g);
+      }catch(e){}});
+      F.addListener('tokenReceived',ev=>{try{if(ev&&ev.token&&S.uid&&pushWanted()&&pushPerm()==='granted')pushSaveToken(ev.token).catch(()=>{});}catch(e){}});
+    }
+    pushPermRefresh().then(()=>{try{render();}catch(e){}});
+  }
   setTimeout(()=>checkVersion(true),1500);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkVersion();});
   setInterval(checkVersion,300000);
