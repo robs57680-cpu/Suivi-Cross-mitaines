@@ -966,10 +966,18 @@ body section.feed-card.th-cm:has(>.bn.has-frame){border:0;background:none;box-sh
 :root{--bnm-ratio:1.3333;--bn-g:3.5%} /* 4:3 : la zone du bas (62 → 72,5 cqw) est réservée au message */
 .bn.bnm:not(.bnm-mini){aspect-ratio:auto;height:0;min-height:0;box-sizing:border-box;align-self:start;border:0;width:calc(100% - 2*var(--bn-g));max-width:none;margin:var(--bn-g) var(--bn-g) 0;padding:0 0 calc((100% - 2*var(--bn-g))/var(--bnm-ratio))}
 .sh-cats,.sh-row{touch-action:pan-x pan-y}
+/* sans cadre : le fond va jusqu'au bord de la carte (la gouttière ne sert qu'aux cadres qui débordent) */
+.bn.bnm:not(.bnm-mini):not(.has-frame){width:100%;margin:0;padding-bottom:calc(100%/var(--bnm-ratio))}
+/* résultats (temps, tours, charge) : toute la largeur disponible ; le logo est plus compact pour ne pas passer dessus */
+.bn.bnm .bnm-res{width:62cqw}
+/* score long (ex. « 2 tours + 5 reps ») : deux lignes plus petites au lieu d'être coupé */
+.bnm-res .feed-metric.fm-long b{white-space:normal;font-size:clamp(11px,3.7cqw,22px);line-height:1.05;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;text-overflow:clip}
+.bn.bnm .bnm-logo{top:3cqw;right:3cqw;width:16cqw;height:21.8cqw}
+.bn.bnm.has-logo .bnm-plate{max-width:48cqw}
 /* zone message : toujours là (vide s'il n'y a pas de message), 2 lignes max, « voir tout » si c'est plus long (toucher pour tout lire) */
 .bn.bnm .bnm-ses{bottom:auto;height:12cqw}
 .bnm-msg{position:absolute;z-index:5;left:4.5cqw;right:4.5cqw;top:62cqw;height:10.5cqw;min-width:0;overflow:hidden;border-top:1px solid rgba(255,255,255,.22);padding-top:1.2cqw;box-sizing:border-box;color:#fff;font-size:clamp(11px,3.5cqw,15px);line-height:1.25;font-weight:600;text-shadow:0 1px 2px #000,0 0 6px rgba(0,0,0,.95)}
-.bnm-msg.empty{border-top-color:transparent}
+.bnm-msg.blank{border-top-color:transparent}
 .bnm-mt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere}
 .bnm-msg.more{cursor:pointer}
 .bnm-more{position:absolute;right:0;bottom:0;padding:0 0 0 7cqw;background:linear-gradient(90deg,transparent,rgba(0,0,0,.85) 40%);font:700 clamp(10px,3cqw,13px)/1.25 var(--f-body);color:var(--accent,#ff8a2a);text-shadow:none}
@@ -8074,7 +8082,7 @@ function viewFeed(){
     if(fb){fbEl=badgeEl(fb.tid,fb.per.name,108,trophyName(fb.tid)+' · '+fb.per.name,fb.per);fbEl.classList.add('feed-badge');head.classList.add('has-badge');}
     const results=[];
     (w.parts||[]).filter(p=>p.kind==='force').forEach(p=>{const kg=e.loads&&e.loads[p.label];if(kg!==undefined)results.push(h('div',{class:'feed-metric fm-force'},h('b',{},fmtKg(kg)),h('span',{},p.movement||p.name||'Force')));});
-    if(m&&hasScore(e))results.push(h('div',{class:'feed-metric fm-mc'},h('b',{},scoreText(m,e.score,e)),h('span',{},'Metcon · '+(m.format==='FT'?'Temps':m.format==='AMRAP'?'Tours / reps':isDead(m)?'Dead by':'Tours'))));
+    if(m&&hasScore(e))results.push(h('div',{class:'feed-metric fm-mc'+(String(e.cap?capLabel(m,capValue(m,e)):scoreText(m,e.score,e)).length>10?' fm-long':'')},h('b',{},e.cap?capLabel(m,capValue(m,e)):scoreText(m,e.score,e)),h('span',{},'Metcon · '+(e.cap?'Time cap':m.format==='FT'?'Temps':m.format==='AMRAP'?'Tours / reps':isDead(m)?'Dead by':'Tours'))));
     else if(m&&e.noMetcon)results.push(h('div',{class:'feed-metric'},h('b',{},'Metcon non réalisé'),h('span',{},'Pas de points de metcon')));
     const rx=h('div',{class:'rxrow','data-rx-to':uid,'data-rx-date':date},rxButtons(uid,date));
     if(cmOn){ /* bannière modulaire : résultats, réactions et points sont dans la bannière ; titre de séance, date, message et signalement dessous */
@@ -11556,7 +11564,7 @@ function cmEl(uid,o){
   if(sesKids&&sesKids.length)el.append(h('div',{class:'bnm-ses'},sesKids));
   const pl=h('div',{class:'bnm-plate'+(c.plate?'':' def')});cmApply(pl,c.plate);pl.append(h('span',{class:'bnm-pt'},ttl));el.append(pl);
   { /* zone du message de l'athlète (toujours présente) */
-    const mt=String(o.sample?'Ton message apparaît ici.':(o.msg||'')).trim(),mEl=h('div',{class:'bnm-msg'+(mt?'':' empty')});
+    const mt=String(o.sample?'Ton message apparaît ici.':(o.msg||'')).trim(),mEl=h('div',{class:'bnm-msg'+(mt?'':' blank')});
     if(mt){
       const sp=h('span',{class:'bnm-mt'},mt);mEl.append(sp);
       requestAnimationFrame(()=>requestAnimationFrame(()=>{
