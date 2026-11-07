@@ -911,6 +911,8 @@ body:has(.bnx){overflow:hidden}
 .feed-card.th-cm{gap:0;padding:0;overflow:visible}
 .feed-card.th-cm>.bn{margin:0;width:100%;max-width:none;border-radius:2px}
 .feed-card.th-cm>.cm-foot{display:grid;gap:8px;padding:12px 16px 14px}
+/* avec un cadre, le cadre EST le contour : pas de trait gris de la carte autour */
+body section.feed-card.th-cm:has(>.bn.has-frame){border:0;background:none;box-shadow:none;border-radius:0}
 /* bannière modulaire plus haute : tout est dedans (avatar, nom, plaque, résultats, réactions, points, titre de la séance et date) */
 .bn.bnm:not(.bnm-mini){aspect-ratio:var(--bnm-r2,1.6)}
 .bn.bnm .bnm-logo{top:3.5cqw;right:3cqw}
@@ -1099,7 +1101,8 @@ html,body{overflow-x:clip;max-width:100%}
 .bb{width:clamp(36px,12vw,58px);height:auto}
 #hdr-right{min-width:0;flex:0 1 auto}
 .shell,#main,.stack,.card,.pedit,.field{max-width:100%}
-#main{overflow-x:clip}
+/* #main ne rogne plus les côtés : le cadre des bannières du fil dépasse de quelques pixels dans la marge de 16 px ; html et body rognent toujours à l'écran (pas de défilement latéral) */
+#main{overflow-x:visible}
 input[type=date]{display:block;width:100%;max-width:100%;min-width:0;-webkit-appearance:none;appearance:none;min-height:46px;text-align:left}
 input[type=date]::-webkit-date-and-time-value{text-align:left;min-width:0}
 input[type=date]::-webkit-datetime-edit{padding:0;min-width:0}
@@ -4193,7 +4196,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-07.3';
+const APP_VERSION='2026-11-07.4';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -11351,7 +11354,7 @@ function cmFrameFit(fm,src){
 function cmEl(uid,o){
   o=o||{};
   const c=cmOf(uid),b=bannerOf(uid),lg=S.logs[uid]||{},fr=b.frame?BN.frame[b.frame]:null;
-  const root=h('div',{class:'bn bnm'+(o.mini?' bnm-mini':'')+(c.logo?' has-logo':'')+(fr?' '+fr.cls:''),'data-banner':'modular'}),el=h('div',{class:'bnm-in'}); /* .bnm-in garde tout dans la bannière (découpé) ; le cadre, lui, est posé sur root et peut dépasser */
+  const root=h('div',{class:'bn bnm'+(o.mini?' bnm-mini':'')+(c.logo?' has-logo':'')+(c.frame?' has-frame':'')+(fr?' '+fr.cls:''),'data-banner':'modular'}),el=h('div',{class:'bnm-in'}); /* .bnm-in garde tout dans la bannière (découpé) ; le cadre, lui, est posé sur root et peut dépasser */
   root.append(el);
   const bg=h('div',{class:'bnm-l bnm-bg'});cmApply(bg,c.background);
   const fx=h('div',{class:'bnm-l bnm-fx'});cmApply(fx,c.effect);
