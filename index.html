@@ -1494,6 +1494,10 @@ section.feed-card.th-crimson>.feed-badge{position:absolute!important;left:2cqw;r
 
 /* didacticiel */
 #hdr-right{display:flex;align-items:center;gap:8px}
+.help-fab{position:fixed;z-index:6;top:calc(env(safe-area-inset-top,0px) + var(--toph,56px) + 6px);right:max(10px,env(safe-area-inset-right,0px));opacity:.92;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+body[data-pv] .help-fab,body[data-auth=home] .help-fab{display:none}
+.season-row{display:flex;justify-content:flex-start;margin:0 0 8px}
+.season-row .chip{max-width:70vw;overflow:hidden;text-overflow:ellipsis;display:block}
 .help-btn{flex:none;width:32px;height:32px;border-radius:50%;border:2px solid var(--edge);background:var(--surface);color:var(--ink);font:700 17px var(--f-display);cursor:pointer;display:grid;place-items:center;padding:0;line-height:1}
 .tour{position:fixed;inset:0;z-index:90;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .tour svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
@@ -2708,6 +2712,14 @@ section.feed-card.th-neonviolet>.feed-badge{position:absolute!important;left:aut
 .tabs .in>.tab[aria-current="page"]::before{top:-6px}
 .tabs .in>.tab[aria-current="page"]::after{bottom:-6px}
 
+.tabs .in>.tab[data-tour="tab-shop"]{position:relative;overflow:visible}
+.tab-coin{position:absolute;left:50%;top:-10px;transform:translateX(-50%);display:inline-flex;align-items:center;gap:3px;background:none;border:0;padding:0;pointer-events:none;z-index:2;white-space:nowrap;line-height:1}
+.tab-coin b{font:800 14px var(--f-mono,monospace);color:#ffd54a;letter-spacing:0;text-shadow:0 1px 2px #000,0 0 5px #000,0 0 9px #000}
+.tab-coin.neg b{color:#ff6b6b}
+.tab-coin .coin{display:block;filter:drop-shadow(0 1px 2px #000)}
+.tab-coin.wiggle{animation:coinWig 1.4s ease-in-out}
+@keyframes coinWig{0%,100%{transform:translateX(-50%) rotate(0) scale(1)}10%{transform:translateX(-50%) translateY(-7px) rotate(-12deg) scale(1.25)}22%{transform:translateX(-50%) translateY(0) rotate(10deg) scale(1.12)}34%{transform:translateX(-50%) translateY(-5px) rotate(-9deg) scale(1.2)}46%{transform:translateX(-50%) translateY(0) rotate(7deg) scale(1.08)}58%{transform:translateX(-50%) translateY(-3px) rotate(-5deg) scale(1.12)}72%{transform:translateX(-50%) rotate(3deg) scale(1.04)}}
+@media(prefers-reduced-motion:reduce){.tab-coin.wiggle{animation:none}}
 /* ===== « Mon avatar » : tout tient dans l'écran, sans défilement de la page ===== */
 .avfs{overflow:hidden;grid-template-rows:auto minmax(0,1fr) auto auto;gap:10px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}
 .avfs .av-top{gap:8px}
@@ -2807,7 +2819,7 @@ details.fwarn{display:block;padding:0}
 </head>
 <body>
 <div class="shell">
-  <header class="top"><div class="brand"><svg class="bb" viewBox="0 0 72 24" aria-hidden="true"><rect x="0" y="11" width="72" height="2"/><rect class="pl" x="12" y="1" width="6" height="22" rx="1"/><rect x="19" y="5" width="4" height="14" rx="1"/><rect x="25" y="9" width="2" height="6"/><rect x="45" y="9" width="2" height="6"/><rect x="49" y="5" width="4" height="14" rx="1"/><rect class="pl" x="54" y="1" width="6" height="22" rx="1"/></svg><div class="bt"><span>BOX SCORE</span><span id="pay-chip" class="paychip" role="button" tabindex="0" hidden></span></div></div><div id="hdr-right"></div></header>
+  <header class="top"><div class="brand"><svg class="bb" viewBox="0 0 72 24" aria-hidden="true"><rect x="0" y="11" width="72" height="2"/><rect class="pl" x="12" y="1" width="6" height="22" rx="1"/><rect x="19" y="5" width="4" height="14" rx="1"/><rect x="25" y="9" width="2" height="6"/><rect x="45" y="9" width="2" height="6"/><rect x="49" y="5" width="4" height="14" rx="1"/><rect class="pl" x="54" y="1" width="6" height="22" rx="1"/></svg><div class="bt"><span>BOX SCORE</span></div></div><div id="hdr-right"></div></header>
   <main id="main" class="stack"></main>
 </div>
 <nav class="tabs" aria-label="Navigation"><div class="in" id="tabs"></div></nav>
@@ -4253,7 +4265,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-08.3';
+const APP_VERSION='2026-11-08.4';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -5557,10 +5569,32 @@ async function logLateError(e,patch,msg,uid){
   await saveLog(p,null,uid);
   if(!S._runErr)toast('Ta saisie faite hors ligne a bien été enregistrée.');
 }
+/* Met le document au gabarit des règles Firestore (clés, longueurs, tailles de listes) : une valeur hors gabarit (objet d'avatar inconnu, liste trop longue…)
+   faisait refuser TOUTES les écritures suivantes de l'athlète (« écriture refusée » à chaque fois). On retire ce qui dépasse plutôt que de bloquer. */
+function clampLogData(d){
+  const AK=['skin','hat','crown','shirt','pants','tattoo','hand','wrist','costume','theme'];
+  if(d.avatar&&typeof d.avatar==='object'){
+    const a={};
+    for(const k of AK)if(typeof d.avatar[k]==='string'&&d.avatar[k].length<=30)a[k]=d.avatar[k];
+    const pr=d.avatar._preview;
+    if(pr&&typeof pr==='object'){const np={};for(const k of AK){const p=pr[k];if(p&&typeof p.id==='string'&&p.id.length<=30&&typeof p.until==='number')np[k]={id:p.id,until:p.until};}if(Object.keys(np).length)a._preview=np;}
+    if(Object.keys(a).length)d.avatar=a;else delete d.avatar;
+  }
+  if(d.banner&&typeof d.banner==='object'){
+    const b={};
+    for(const k of ['title','frame','bg','avframe'])if(typeof d.banner[k]==='string'&&d.banner[k].length<=80)b[k]=d.banner[k];
+    const c=d.banner.cm;
+    if(c&&typeof c==='object'){const cm={};for(const k of ['background','effect','logo','badge','frame','plate'])if(typeof c[k]==='string'&&c[k].length<=80)cm[k]=c[k];if(Object.keys(cm).length)b.cm=cm;}
+    if(Object.keys(b).length)d.banner=b;else delete d.banner;
+  }
+  const cap=(k,n)=>{if(Array.isArray(d[k])&&d[k].length>n)d[k]=d[k].slice(-n);};
+  cap('rewardSeen',200);cap('rewardOwned',200);cap('annSeen',30);cap('avSeen',100);cap('mvSeen',200);
+  return d;
+}
 function saveLog(patch,msg,uid){
   uid=uid||S.uid;
   return run(async()=>{
-    const cur=S.logs[uid]||{};
+    const build=(cur,patch)=>{
     const data={
       pseudo:patch.pseudo!==undefined?patch.pseudo:(cur.pseudo||''),
       entries:patch.entries||cur.entries||{},
@@ -5610,7 +5644,26 @@ function saveLog(patch,msg,uid){
     if(sbu&&typeof sbu==='object'&&Object.keys(sbu).length)data.shopBuy=sbu; /* objets achetés au shop : {idObjet: prix payé} */
     const gw=patch.groupWish!==undefined?patch.groupWish:cur.groupWish;
     if(typeof gw==='string'&&gw)data.groupWish=gw; /* souhait de groupe : 'any' (indifférent) ou id du groupe */
-    await S.db.doc('logs/'+uid).set(data,undefined,{onLateError:e=>logLateError(e,patch,msg,uid)});
+    return clampLogData(data);
+    };
+    let cur=S.logs[uid]||{},data=build(cur,patch);
+    try{
+      await S.db.doc('logs/'+uid).set(data,undefined,{onLateError:e=>logLateError(e,patch,msg,uid)});
+    }catch(e){
+      /* refus du serveur : la copie du téléphone est peut-être en retard (coins, objets, autre appareil). On relit le serveur et on ré-applique UNE fois. */
+      if(!(e&&e.code==='permission-denied')||patch._retried)throw e;
+      let srv=null;
+      try{const sn=await S.db.doc('logs/'+uid).get();if(sn.exists)srv=sn.data()||{};}catch(x){}
+      if(!srv)throw e;
+      S.logs[uid]=Object.assign({},srv);cur=S.logs[uid];
+      const p2=Object.assign({},patch,{_retried:true});
+      if(!S.owner)delete p2.coinAdj;
+      if(p2.coinGot)p2.coinGot=Object.assign({},srv.coinGot||{},p2.coinGot);
+      if(p2.shopBuy)p2.shopBuy=Object.assign({},srv.shopBuy||{},p2.shopBuy);
+      data=build(cur,p2);
+      if(!S.owner&&(Date.now()-(S._lateAlertAt||0))>3e5){S._lateAlertAt=Date.now();coachAlert(uid,'Saisie refusée','Écriture refusée par le serveur (nouvelle tentative depuis la version du serveur). Version '+APP_VERSION+'.');}
+      await S.db.doc('logs/'+uid).set(data,undefined,{onLateError:e2=>logLateError(e2,p2,msg,uid)});
+    }
     // Keep the local log synchronized so the reward popup does not reopen.
     S.logs[uid]=Object.assign({},cur,data);delete S.logs[uid].weight;if(!data.avatar)delete S.logs[uid].avatar;if(!data.groupWish)delete S.logs[uid].groupWish;if(!data.motto)delete S.logs[uid].motto;if(!data.troph)delete S.logs[uid].troph;if(!data.focus)delete S.logs[uid].focus;
     if(msg)toast(msg);
@@ -5955,9 +6008,18 @@ function openReport(uid,date){
   const close=()=>{ov.remove();document.removeEventListener('keydown',esc);};
   let ask=false;
   const body=h('div',{class:'stack'});
+  const incoMsg=()=>{const lg=S.logs[uid]||{},w=S.wods[date],ps=lg.pseudo||'';return 'Bonjour'+(ps?' '+ps:'')+', ton résultat de la séance'+(w&&w.title?' « '+w.title+' »':'')+' du '+fmtShort(date)+' me paraît incohérent. Peux-tu le vérifier et le corriger ? Merci.';};
   const ov=h('div',{class:'ov',id:'rep-ov',style:'z-index:70',onclick:e=>{if(e.target===ov)close();}},
     h('div',{class:'sheet',role:'dialog','aria-modal':'true','aria-label':'Signaler ou masquer'},body));
   const draw=()=>{
+    if(ask==='inco'){
+      body.replaceChildren(h('p',{class:'eyebrow'},'Message du coach'),h('h2',{class:'wtitle'},'Signaler un résultat incohérent ?'),
+        h('p',{class:'hint'},'Cet athlète recevra ce message dans sa messagerie :'),h('p',{class:'hand'},incoMsg()),
+        h('div',{class:'row',style:'justify-content:flex-end'},
+          h('button',{class:'btn sm',type:'button',onclick:()=>{ask=false;draw();}},'Retour'),
+          h('button',{class:'btn sm primary',type:'button',onclick:()=>{const t=incoMsg();close();dmSend(uid,t);toast('Message envoyé à '+(((S.logs[uid]||{}).pseudo)||'l’athlète'));}},'Envoyer')));
+      return;
+    }
     if(ask){
       body.replaceChildren(h('p',{class:'eyebrow'},'Fil d’actualité'),h('h2',{class:'wtitle'},'Masquer cet athlète ?'),
         h('p',{class:'hint'},'Ses publications et ses réactions ne s’afficheront plus chez toi. Tu pourras le réafficher depuis ton profil, section « Athlètes masqués ».'),
@@ -5969,6 +6031,7 @@ function openReport(uid,date){
     body.replaceChildren(...[h('p',{class:'eyebrow'},'Fil d’actualité'),h('h2',{class:'wtitle'},'Un souci avec cette publication ?'),
       done?h('p',{class:'hint',style:'margin:0'},'Publication signalée, merci.'):null,
       h('div',{class:'stack'},
+        S.owner?h('button',{class:'btn danger',type:'button',id:'rep-inco',onclick:()=>{ask='inco';draw();}},'⚠️ Signaler un résultat incohérent'):null,
         done?null:h('button',{class:'btn danger',type:'button',onclick:()=>{close();reportPost(uid,date);}},'🚨 Signaler la publication'),
         h('button',{class:'btn',type:'button',onclick:()=>{ask=true;draw();}},'🚫 Masquer cet athlète'),
         h('button',{class:'btn',type:'button',onclick:close},'Annuler'))].filter(Boolean));
@@ -6237,7 +6300,7 @@ function render(force){
   {const av=(!S.uid&&S.authReady&&S.db)?((S.authView==='login'||S.authView==='signup')?S.authView:'home'):'';if((document.body.dataset.auth||'')!==av){if(av)document.body.dataset.auth=av;else delete document.body.dataset.auth;}}
   {const tp=document.querySelector('.top');if(tp)document.documentElement.style.setProperty('--toph',tp.offsetHeight+'px');}
   if(!S.uid){
-    $('#tabs').replaceChildren();$('#hdr-right').replaceChildren(S.authReady&&S.db?helpBtn():null);
+    $('#tabs').replaceChildren();$('#hdr-right').replaceChildren();placeHelp();
     if(!S.authReady)main.replaceChildren(...updateBanner(),h('p',{class:'muted'},S.slow?'Chargement… connexion lente, un instant.':'Chargement…'));
     else if(!S.db)main.replaceChildren(...banners());
     else{main.replaceChildren(...updateBanner(),loginView());}
@@ -6252,9 +6315,9 @@ function render(force){
   try{googleTermsApply();}catch(e){}
   if(S.uid&&ready()&&S.profLoaded&&S.logs[S.uid]){const ac=ageCatOf(S.prof.birth);if((S.logs[S.uid].ageCat||'')!==ac&&S.ageSync!==ac){S.ageSync=ac;saveLog({ageCat:ac});}}
   const p=selPeriod();
-  $('#hdr-right').replaceChildren(h('span',{class:'chip '+(periodState(p)==='live'?'live':'done'),style:'max-width:40vw;overflow:hidden;text-overflow:ellipsis;display:block'},p.virtual?'Saison en cours':(p.name||seasonLabel(p))),helpBtn());
+  $('#hdr-right').replaceChildren(); /* le bandeau du haut est réservé à la publicité : logo + nom seulement */
   const tabs=[['feed','Fil'],['today','Séance'],['board','Classement'],['shop','Shop']];
-  const tabEls=tabs.map(([k,l])=>{const b=h('button',{class:'tab','data-tour':'tab-'+k,'aria-current':S.tab===k?'page':null,onclick:()=>go(k)});b.innerHTML=TAB_ICO[k]+'<span>'+l+'</span>';return b;});
+  const tabEls=tabs.map(([k,l])=>{const b=h('button',{class:'tab','data-tour':'tab-'+k,'aria-current':S.tab===k?'page':null,onclick:()=>go(k)});b.innerHTML=TAB_ICO[k]+'<span>'+l+'</span>';if(k==='shop'&&S.uid)b.append(coinBadge());return b;});
   {
     const activeExtra=['profile','coach','prefs','stats','share','rules','health','bug','moves','avis','recap','msgs'].includes(S.tab);
     const bb=h('button',{class:'tab tab-burger','data-tour':'tab-menu','aria-current':activeExtra?'page':null,'aria-haspopup':'dialog','aria-expanded':drawerEl?'true':'false','aria-label':'Menu',title:'Menu',onclick:()=>{drawerEl?closeDrawer():openDrawer();}});
@@ -6266,7 +6329,8 @@ function render(force){
   const view={feed:viewFeed,today:viewToday,board:viewBoard,profile:viewProfile,coach:viewCoach,stats:viewStats,prefs:viewPrefs,share:viewShare,shop:viewShop,avis:viewAvis,rules:viewRules,health:viewHealth,bug:viewBug,moves:viewMoves,recap:viewRecap,msgs:viewMsgs}[S.tab]||viewFeed;
   const _esc=document.querySelector('.entry-sheet'),_escTop=_esc?_esc.scrollTop:0;
   const _arl=document.querySelector('.ar-list'),_arlTop=_arl?_arl.scrollTop:0,_arlKey=_arl?_arl.dataset.key:'';
-  main.replaceChildren(...banners(),view());
+  main.replaceChildren(...banners(),...(S.tab==='today'?[seasonRow(p)]:[]),view());
+  placeHelp();
   fitArena();planPlace();rwpPlace();
   {const n=document.querySelector('.ar-list');if(n&&_arl&&n.dataset.key===_arlKey)n.scrollTop=_arlTop;}
   {const n=document.querySelector('.entry-sheet');if(n&&_esc)n.scrollTop=_escTop;document.body.classList.toggle('modal-open',!!document.getElementById('entry-ov'));}
@@ -7432,7 +7496,7 @@ function openTimer(w,date,m,lvIdx){
         pl?h('div',{class:'tm-two'},h('div',{class:'tm-fld'},h('span',{class:'flabel tm-eb'},'Tours complets'),ri),h('div',{class:'tm-fld'},h('span',{class:'flabel tm-eb'},'Reps en plus'),pi))
           :h('div',{class:'tm-fld'},h('span',{class:'flabel tm-eb'},'Reps réalisées'),pi),lapsList());
       {const tl=capTools(m,()=>pl?{capped:true,rounds:ri.value,reps:pi.value}:{capped:true,creps:pi.value});
-       [ri,pi].forEach(x=>x&&x.addEventListener('input',()=>tl.reset()));mid.append(tl);}
+       [ri,pi].forEach(x=>x&&x.addEventListener('input',()=>tl.reset()));if(!pl)pi.addEventListener('input',()=>capClamp(pi,m));mid.append(tl);}
       bot.append(h('button',{type:'button',class:'btn primary tm-save',onclick:()=>{
         const tmp=pl?{capped:true,rounds:ri.value,reps:pi.value}:{capped:true,creps:pi.value};
         const r=readScore(m,tmp);
@@ -8715,6 +8779,10 @@ function readRounds(m,st){
   if(rp>=eqTotal(m)-1e-9)return {over:true,max:fmtN(eqTotal(m))};
   return {v:Math.round((rn+fracOf(m,rp))*10000)/10000,rounds:rn,reps:rp};
 }
+/* total de reps du WOD (reps équivalentes), 0 si on ne sait pas le calculer */
+function capMaxReps(m){try{const e=metEstimate(m);return e&&e.R>0?Math.floor(e.R+1e-9):0;}catch(x){return 0;}}
+/* empêche de taper plus de reps que le WOD n'en contient */
+function capClamp(inp,m){const mx=capMaxReps(m);let v=String(inp.value||'').replace(/[^\d]/g,'');if(mx&&+v>mx)v=String(mx);if(v!==inp.value)inp.value=v;}
 function readScore(m,st){
   if(m.format==='FT'){
     if(st.capped){ /* time cap atteint : tours + reps (si le WOD a des tours), sinon nombre de reps */
@@ -8728,10 +8796,13 @@ function readScore(m,st){
         const sz=sizeAt(pl,rn);
         const rr=eqToRaw(pl,rn,rp);
         if(rr>=sz)return {over:true,max:pl.lines?fmtN(pl.items[rn].eq):(pl.rm?fmtN(pl.rm.eq):sz)};
+        {const cv=planCum(pl,rn,rr),mx=(pl.lines||pl.rm)?0:capMaxReps(m);if(mx&&cv>mx)return {over:true,capOver:true,max:mx};}
         return {v:planCum(pl,rn,rr),cap:true,rounds:rn,reps:rr};
       }
       const s=String(st.creps||'').trim();if(s==='')return {empty:true};
-      const cv=parseNum(s);return (cv===null||cv<0||cv%1)?{bad:true,capBad:true}:{v:cv,cap:true,reps:cv};
+      const cv=parseNum(s);if(cv===null||cv<0||cv%1)return {bad:true,capBad:true};
+      {const mx=capMaxReps(m);if(mx&&cv>mx)return {over:true,capOver:true,max:mx};}
+      return {v:cv,cap:true,reps:cv};
     }
     if(String(st.score||'').trim()==='')return {empty:true};
     const v=parseTime(st.score);return v===null?{bad:true}:{v};
@@ -8744,6 +8815,7 @@ function readScore(m,st){
 function scoreErr(m,r){
   if(r.hold)return 'Temps tenu illisible ou supérieur au time cap. Écris-le comme 14:00 (14 minutes) ou 14.';
   if(r.many)return 'Tu as indiqué plus de tours que le WOD n’en contient. Si tu as tout terminé, choisis « Terminé dans le temps ».';
+  if(r.capOver)return 'Tu ne peux pas écrire plus de reps que le WOD n’en contient ('+r.max+' au total). Vérifie ton résultat.';
   if(r.over)return 'Les reps en plus doivent être inférieures à '+(r.max||roundTotal(m))+' (le tour en cours).';
   if(r.capBad)return 'Score illisible. Écris des nombres entiers.';
   if(m.format==='FT')return 'Temps illisible. Écris-le comme 12:45.';
@@ -8945,8 +9017,8 @@ function scoreFields(m,st,upd,pre,canSkip){
   if(ft&&st.capped&&!pl){
     const tl0=capTools(m,()=>({capped:true,creps:st.creps}));
     return head.concat([field(m.label+' · Reps réalisées au time cap',
-      h('input',{id:pre+'-creps',type:'text',inputmode:'numeric',placeholder:'81',value:st.creps||'',oninput:e=>{bind('creps')(e);tl0.reset();}}),
-      'Écris le nombre total de reps faites quand le time cap a sonné, tous mouvements confondus. Exemple : 81.'),tl0]);
+      h('input',{id:pre+'-creps',type:'text',inputmode:'numeric',placeholder:'81',value:st.creps||'',oninput:e=>{capClamp(e.target,m);bind('creps')(e);tl0.reset();}}),
+      'Écris le nombre total de reps faites quand le time cap a sonné, tous mouvements confondus. Exemple : 81.'+(capMaxReps(m)?' Maximum : '+capMaxReps(m)+' reps (le WOD en contient autant).':'')),tl0]);
   }
   if(isDead(m)){
     const iv=emomIv(m),d=metDuration(m);
@@ -16369,14 +16441,21 @@ const coinPatch=(uid,date)=>{const lg=S.logs[uid]||{},n=coinPerSession();if(!n||
 /* un objet du catalogue sans condition d'obtention (ajouté pour le shop) : jamais gagné par la progression */
 for(const it of AV_ITEMS)if(!AV_OBJ[it.id])AV_OBJ[it.id]={d:'À acheter dans le Shop, avec des coins.',test:()=>false};
 /* pastille de l'en-tête : solde de coins */
-function updateCoinChip(){const el=document.getElementById('pay-chip');if(el)coinChipPaint(el);}
+/* coins : la pièce et le nombre, sans fond, à cheval sur l'icône Shop de la barre du bas. Au-dessus de 100 coins, ils s'agitent une fois par minute (à dépenser !). */
+function updateCoinChip(){const el=document.querySelector('.tab-coin');if(el)coinChipPaint(el);}
 function coinChipPaint(el){
-  if(!S.uid){el.hidden=true;return;}
-  const cb=coinBal(S.uid);el.hidden=false;el.className='paychip coinchip'+(cb<0?' neg':'');el.title='Mes coins : ouvrir le Shop';
-  el.replaceChildren(coinIco(18),document.createTextNode(String(cb)));
-  el.onclick=()=>go('shop');
-  el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go('shop');}};
+  const cb=S.uid?coinBal(S.uid):0;
+  el.className='tab-coin'+(cb<0?' neg':'');el.dataset.bal=String(cb);
+  el.setAttribute('aria-label',cb+' coins');
+  el.replaceChildren(coinIco(18),h('b',{},String(cb)));
 }
+function coinBadge(){const el=h('span',{class:'tab-coin'});coinChipPaint(el);return el;}
+setInterval(()=>{
+  const el=document.querySelector('.tab-coin');
+  if(!el||document.hidden||reducedMotion()||!(Number(el.dataset.bal)>100))return;
+  el.classList.remove('wiggle');void el.offsetWidth;el.classList.add('wiggle');
+  setTimeout(()=>el.classList.remove('wiggle'),1500);
+},60000);
 function shopBuy(it){
   S.shopAsk=null;
   if(!S.uid||!S.db||S.snapMode){toast('Connexion nécessaire pour acheter.',true);render();return;}
@@ -16957,7 +17036,6 @@ const TOURS={
     {sel:'.tabs',title:'Commence par la séance',text:'Touche « Séance » : tu y trouves les séances de la semaine et tu notes ton résultat. « Fil » montre l’actualité du groupe, « Classement » les points de tous. Le menu (les trois traits) contient ton profil, tes notifications et plus encore ; le bouton « ? » en haut à droite explique chaque écran.'}],
   feed:()=>[
     ...installSteps(),
-    {sel:'#hdr-right .chip',title:'La saison',text:'La saison affichée. Tes points comptent pour la saison en cours.'},
     {sel:'main .day',title:'Le fil d’actualité',text:'Ici apparaissent les séances validées par les athlètes du groupe, de la plus récente à la plus ancienne.'},
     {sel:'.rv',title:'Tes actualités de la semaine',text:'Cette carte te parle de ta saison : rivalités avec les athlètes proches de toi au classement, objectif de séances, prochaine récompense. Touche son en-tête pour la déplier ou la replier.'},
     {sel:'.feed-card',title:'Une séance publiée',text:'Le pseudo, le titre de la séance et les résultats. Touche un pseudo pour ouvrir le profil de l’athlète.'},
@@ -17049,6 +17127,17 @@ const tourSeen=t=>{try{return localStorage.getItem(tourKey(t))==='1';}catch(e){r
 const tourMark=t=>{try{localStorage.setItem(tourKey(t),'1');}catch(e){}};
 const tourBusy=()=>!!document.querySelector('.ov,.cer,.tm,.avfs,.ann,.reward-pop,#tm-ov');
 const curTourId=()=>!S.uid?((S.authReady&&S.db)?'login':null):((S.viewUser||S.boardDetail)?null:((S.tab==='today'&&!S.viewDate)?'cards':(TOURS[S.tab]?S.tab:null)));
+/* nom de la saison : en haut de la page Séance seulement */
+function seasonRow(p){return h('div',{class:'season-row'},h('span',{class:'chip season-chip '+(periodState(p)==='live'?'live':'done'),'data-tour':'season'},p.virtual?'Saison en cours':(p.name||seasonLabel(p))));}
+/* bouton « ? » : fixé en haut de l'écran, sous le bandeau, sur les pages qui ont un guide */
+function placeHelp(){
+  const old=document.getElementById('tour-help');
+  let want=false;try{want=!!(S.authReady&&S.db&&curTourId());}catch(e){}
+  if(!want){if(old)old.remove();return;}
+  if(old&&old.classList.contains('help-fab'))return;
+  if(old)old.remove();
+  const b=helpBtn();b.classList.add('help-fab');document.body.append(b);
+}
 function helpBtn(){return h('button',{class:'help-btn',id:'tour-help',type:'button','aria-label':'Afficher le guide de cet écran',title:'Guide de cet écran',onclick:()=>{const t=curTourId();if(t)startTour(TOURS[t]());}},'?');}
 function maybeTour(){
   if(tourEl||!S.uid||tourSeen('welcome'))return;
