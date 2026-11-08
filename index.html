@@ -4269,7 +4269,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-08.20';
+const APP_VERSION='2026-11-08.21';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -5643,6 +5643,21 @@ function avClean(uid,av){
 /* Une saisie faite hors ligne (ou en connexion lente) est refusée par le serveur au retour du réseau : le plus souvent, la copie gardée sur le téléphone était
    en retard sur le serveur (autre appareil, coins ou objets ajoutés entre-temps) et le document complet réécrit ne respecte plus les règles.
    On relit alors la version du serveur et on ré-applique la saisie UNE fois ; le coach reçoit une alerte pour comprendre si ça se répète. */
+/* Compare le document à écrire (d) à celui du serveur (srv) comme le verrou des règles : coinGot / shopBuy / coinAdj. */
+function logLockProblems(srv,d){
+  const pb=[];srv=srv||{};d=d||{};
+  for(const f of ['coinGot','shopBuy']){
+    const o=srv[f],n=d[f];
+    if(o===undefined){if(n&&Object.keys(n).length>3)pb.push(f+' : '+Object.keys(n).length+' ajouts (3 max)');continue;}
+    if(n===undefined){pb.push(f+' absent du document réécrit');continue;}
+    let add=0;
+    for(const k of Object.keys(o)){if(!(k in n))pb.push(f+' « '+k+' » retiré');else if(JSON.stringify(o[k])!==JSON.stringify(n[k]))pb.push(f+' « '+k+' » modifié ('+o[k]+' → '+n[k]+')');}
+    for(const k of Object.keys(n))if(!(k in o))add++;
+    if(add>3)pb.push(f+' : '+add+' ajouts (3 max)');
+  }
+  if((Number(d.coinAdj)||0)!==(Number(srv.coinAdj)||0))pb.push('coinAdj '+(Number(srv.coinAdj)||0)+' → '+(Number(d.coinAdj)||0));
+  return pb;
+}
 /* Contrôle un document logs/{uid} comme le font les règles Firestore : renvoie la liste de ce qui serait refusé (pour l'alerte au coach). */
 function logRuleProblems(d){
   const pb=[],OK=['pseudo','entries','goals','redos','ratios','sex','ageCat','badge','avatar','rewardSeen','rewardOwned','banner','annSeen','avSeen','jokers','recapSeen','mvSeen','subs','groupWish','motto','focus','troph','coinGot','coinAdj','shopBuy'];
@@ -5819,7 +5834,7 @@ function saveLog(patch,msg,uid){
       if(p2.coinGot)p2.coinGot=Object.assign({},srv.coinGot||{},p2.coinGot);
       if(p2.shopBuy)p2.shopBuy=Object.assign({},srv.shopBuy||{},p2.shopBuy);
       data=build(cur,p2);
-      if(!S.owner&&(Date.now()-(S._lateAlertAt||0))>3e5){S._lateAlertAt=Date.now();coachAlert(uid,'Saisie refusée','Écriture refusée par le serveur ('+(e.code||'?')+'), nouvelle tentative depuis la version du serveur. Champs écrits : '+Object.keys(patch).filter(k=>k!=='_retried').join(', ')+'. Version '+APP_VERSION+'. Si ça se répète : vérifie que firestore.rules est bien publié.');}
+      if(!S.owner&&(Date.now()-(S._lateAlertAt||0))>3e5){S._lateAlertAt=Date.now();coachAlert(uid,'Saisie refusée','Écriture refusée par le serveur ('+(e.code||'?')+'), nouvelle tentative depuis la version du serveur. Champs écrits : '+Object.keys(patch).filter(k=>k!=='_retried').join(', ')+'. Version '+APP_VERSION+'. Document réécrit : '+logRuleProblems(data).join(' ; ').slice(0,350)+'. Verrous coins : '+(logLockProblems(srv,data).join(' ; ')||'aucun écart').slice(0,250)+'. Si ça se répète : vérifie que firestore.rules est bien publié.');}
       await S.db.doc('logs/'+uid).set(data,undefined,{onLateError:e2=>logLateError(e2,p2,msg,uid)});
     }
     // Keep the local log synchronized so the reward popup does not reopen.
