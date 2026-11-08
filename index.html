@@ -2261,7 +2261,7 @@ button.pf2-xp{width:calc(100% - 8px);background:none;border-left:0;border-right:
 .pf2-xp .xv i{font-style:normal;color:#2ad4ff;margin-left:3px}
 /* passe d'XP */
 .reward-pop.bp-ov{display:flex;flex-direction:column;justify-content:center;align-items:stretch;place-items:stretch;padding:max(12px,env(safe-area-inset-top)) 0 max(12px,env(safe-area-inset-bottom));overflow:hidden;overscroll-behavior:contain;background:radial-gradient(circle at 0 0,#ff1f7acc 0,transparent 34%),radial-gradient(circle at 100% 0,#ff6a1fcc 0,transparent 30%),radial-gradient(circle at 100% 100%,#19d3ffaa 0,transparent 34%),radial-gradient(circle at 0 100%,#ff1f7a88 0,transparent 30%),#0d0e12;color:#fff;z-index:90}
-.reward-pop.bp-ov>*{width:100%;max-width:760px;margin-left:auto;margin-right:auto;box-sizing:border-box}
+.reward-pop.bp-ov>*{width:100%;max-width:520px;margin-left:auto;margin-right:auto;box-sizing:border-box}
 .bp-top{display:flex;align-items:center;gap:12px;padding:0 14px 10px}
 .bp-hex{flex:none;width:52px;height:58px;display:grid;place-items:center}
 .bp-hex svg{grid-area:1/1;width:100%;height:100%}
@@ -2273,23 +2273,24 @@ button.pf2-xp{width:calc(100% - 8px);background:none;border-left:0;border-right:
 .bp-track::-webkit-scrollbar{display:none}
 .bp-in{position:relative;display:flex;align-items:flex-start;width:max-content;padding:34px var(--bpp) 8px}
 .bp-me{position:absolute;top:4px;transform:translateX(-50%);z-index:3;display:grid;justify-items:center;pointer-events:none}
-.bp-me span{background:linear-gradient(90deg,#ff2d6f,#ff6a1f);color:#fff;font:700 10px var(--f-mono,monospace);padding:3px 7px;border-radius:99px;white-space:nowrap;box-shadow:0 2px 8px #0008}
+.bp-me span{background:linear-gradient(90deg,#ff2d6f,#ff6a1f);color:#fff;font:700 12px var(--f-mono,monospace);padding:3px 7px;border-radius:99px;white-space:nowrap;box-shadow:0 2px 8px #0008}
 .bp-me i{width:0;height:0;border:5px solid transparent;border-top-color:#ff4d4d;border-bottom:0}
 .bp-c{flex:none;width:var(--bpw);background:none;border:0;padding:0;color:inherit;font:inherit;cursor:pointer;display:grid;gap:6px;justify-items:center;-webkit-tap-highlight-color:transparent}
-.bp-box{position:relative;width:var(--bpw);height:var(--bpw);box-sizing:border-box;border:2px solid #4a4e60;border-radius:10px;background:linear-gradient(160deg,#2b2e3b,#1b1d27);display:grid;place-items:center;overflow:hidden;clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 9px,100% calc(100% - 9px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 9px),0 9px)}
-.bp-box.got{border-color:#ff4d8d;background:linear-gradient(160deg,#4a2240,#241a2e)}
+.bp-box{position:relative;width:var(--bpw);height:var(--bpw);box-sizing:border-box;border:3px solid #4a4e60;border-radius:14px;background:linear-gradient(160deg,#2b2e3b,#1b1d27);display:grid;place-items:center;overflow:hidden;clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 14px,100% calc(100% - 14px),calc(100% - 14px) 100%,14px 100%,0 calc(100% - 14px),0 14px)}
+.bp-box.got{border-color:#2ee66b;background:linear-gradient(160deg,#17502e,#0f2a1b);box-shadow:inset 0 0 14px #2ee66b44}
 .bp-box.lock .bp-art{filter:grayscale(.75) brightness(.7)}
 .bp-art{width:78%;height:78%;display:grid;place-items:center}
-.bp-art .reward-art{width:100%;height:100%;border:0;border-radius:6px;background:none;font-size:clamp(20px,7vw,30px)}
+.bp-art .reward-art{width:100%;height:100%;border:0;border-radius:6px;background:none;font-size:clamp(34px,12vw,56px)}
 .bp-art img,.bp-art video{width:100%;height:100%;object-fit:contain;max-height:none;display:block;border-radius:4px}
 .bp-gift{width:56%;height:56%;color:#59607a;opacity:.8}
-.bp-st{position:absolute;right:3px;bottom:2px;font-size:11px;line-height:1}
-.bp-n{position:absolute;left:3px;top:2px;font:700 10px var(--f-mono,monospace);color:#fff;background:#000a;border-radius:6px;padding:1px 4px}
-.bp-xp{font:italic 800 11px var(--f-display,sans-serif);color:#e8eaf2;background:#14151c;border:1px solid #4a4e60;border-radius:6px;padding:3px 0;width:100%;text-align:center;box-sizing:border-box;white-space:nowrap}
+.bp-st{position:absolute;right:6px;bottom:5px;font-size:18px;line-height:1}
+.bp-n{position:absolute;left:6px;top:5px;font:700 13px var(--f-mono,monospace);color:#fff;background:#000a;border-radius:8px;padding:2px 6px}
+.bp-c.got .bp-xp{border-color:#2ee66b;color:#9bffbd}
+.bp-xp{font:italic 800 16px var(--f-display,sans-serif);color:#e8eaf2;background:#14151c;border:1px solid #4a4e60;border-radius:8px;padding:5px 0;width:100%;text-align:center;box-sizing:border-box;white-space:nowrap}
 .bp-c.sel .bp-box{outline:2px solid #19d3ff;outline-offset:2px}
 .bp-c.sel .bp-xp{border-color:#19d3ff;color:#19d3ff}
-.bp-cn{flex:none;width:var(--bpg);height:8px;margin-top:calc(var(--bpw)/2 - 4px);background:#3a3e4e;position:relative;overflow:hidden}
-.bp-cn i{display:block;height:100%;background:linear-gradient(90deg,#ff2d6f,#ff6a1f)}
+.bp-cn{flex:none;width:var(--bpg);height:10px;margin-top:calc(var(--bpw)/2 - 5px);background:#3a3e4e;position:relative;overflow:hidden}
+.bp-cn i{display:block;height:100%;background:linear-gradient(90deg,#2ee66b,#19d3ff)}
 .bp-det{margin:6px 14px 0;padding:12px 14px;border:1px solid #fff3;border-radius:10px;background:#0009;display:grid;gap:8px;min-height:56px}
 .bp-dr{display:grid;gap:2px}
 .bp-dr b{font-size:15px}
@@ -2713,12 +2714,12 @@ section.feed-card.th-neonviolet>.feed-badge{position:absolute!important;left:aut
 .tabs .in>.tab[aria-current="page"]::after{bottom:-6px}
 
 .tabs .in>.tab[data-tour="tab-shop"]{position:relative;overflow:visible}
-.tab-coin{position:absolute;left:50%;top:-10px;transform:translateX(-50%);display:inline-flex;align-items:center;gap:3px;background:none;border:0;padding:0;pointer-events:none;z-index:2;white-space:nowrap;line-height:1}
+.tab-coin{position:absolute;left:50%;top:-10px;transform:translateX(-50%) rotate(-18deg);display:inline-flex;align-items:center;gap:3px;background:none;border:0;padding:0;pointer-events:none;z-index:2;white-space:nowrap;line-height:1}
 .tab-coin b{font:800 14px var(--f-mono,monospace);color:#ffd54a;letter-spacing:0;text-shadow:0 1px 2px #000,0 0 5px #000,0 0 9px #000}
 .tab-coin.neg b{color:#ff6b6b}
 .tab-coin .coin{display:block;filter:drop-shadow(0 1px 2px #000)}
 .tab-coin.wiggle{animation:coinWig 1.4s ease-in-out}
-@keyframes coinWig{0%,100%{transform:translateX(-50%) rotate(0) scale(1)}10%{transform:translateX(-50%) translateY(-7px) rotate(-12deg) scale(1.25)}22%{transform:translateX(-50%) translateY(0) rotate(10deg) scale(1.12)}34%{transform:translateX(-50%) translateY(-5px) rotate(-9deg) scale(1.2)}46%{transform:translateX(-50%) translateY(0) rotate(7deg) scale(1.08)}58%{transform:translateX(-50%) translateY(-3px) rotate(-5deg) scale(1.12)}72%{transform:translateX(-50%) rotate(3deg) scale(1.04)}}
+@keyframes coinWig{0%,100%{transform:translateX(-50%) rotate(-18deg) scale(1)}10%{transform:translateX(-50%) translateY(-7px) rotate(-30deg) scale(1.25)}22%{transform:translateX(-50%) translateY(0) rotate(-8deg) scale(1.12)}34%{transform:translateX(-50%) translateY(-5px) rotate(-28deg) scale(1.2)}46%{transform:translateX(-50%) translateY(0) rotate(-11deg) scale(1.08)}58%{transform:translateX(-50%) translateY(-3px) rotate(-24deg) scale(1.12)}72%{transform:translateX(-50%) rotate(-16deg) scale(1.04)}}
 @media(prefers-reduced-motion:reduce){.tab-coin.wiggle{animation:none}}
 /* ===== « Mon avatar » : tout tient dans l'écran, sans défilement de la page ===== */
 .avfs{overflow:hidden;grid-template-rows:auto minmax(0,1fr) auto auto;gap:10px;padding-bottom:calc(8px + env(safe-area-inset-bottom,0px))}
@@ -4265,7 +4266,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-08.4';
+const APP_VERSION='2026-11-08.8';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -12220,13 +12221,13 @@ function pf2Head(pseudo,pf){
     h('div',{class:'pf2-meta'},h('div',{class:'pf2-name'},h('h1',{},pseudo||'Mon profil'),edit),logo,l2,motto,pinRow));
 }
 /* ---------- barre d'XP + passe d'XP ---------- */
-const XP_BAR_MAX=1150; /* fin de la barre quand la saison n'a aucune récompense ; sinon la barre va jusqu'à la récompense la plus haute */
+const XP_BAR_MAX=1150; /* total d'XP possible sur une saison : fin de la barre et du passe (à changer ici) */
 const BP_TYPE={title:'Titre',frame:'Encadré de bannière',bg:'Fond de bannière',avatar:'Cosmétique avatar',avframe:'Cadre d’avatar',joker:'Joker',coins:'Coins'};
 function bpRewards(uid){
   const p=selPeriod();
   return ((p&&p.rewards)||[]).filter(r=>Number.isFinite(Number(r.xp))&&Number(r.xp)>=0&&rwFits(r,uid)).sort((a,b)=>Number(a.xp)-Number(b.xp));
 }
-const bpMaxOf=rw=>rw.length?Math.max(1,Number(rw[rw.length-1].xp)):XP_BAR_MAX;
+const bpMaxOf=rw=>Math.max(XP_BAR_MAX,rw.length?Number(rw[rw.length-1].xp):0); /* la barre va toujours jusqu'au total possible de la saison (1150), même si la dernière récompense est plus bas */
 /* une carte par tranche de 20 XP, plus une carte à l'XP exacte de chaque récompense qui tombe entre deux tranches */
 function bpSlots(rw,mx){
   const step=20*Math.max(1,Math.ceil(mx/20/300)),set=new Set();
@@ -12259,7 +12260,7 @@ function bpArt(r){
 }
 function openXpPass(uid,xp){
   if(document.querySelector('.bp-ov'))return;
-  const rw=bpRewards(uid),mx=bpMaxOf(rw),sl=bpSlots(rw,mx),PAD=12,G=10;
+  const rw=bpRewards(uid),mx=bpMaxOf(rw),sl=bpSlots(rw,mx),PAD=14,G=12;
   if(!sl.length)return;
   let sel=sl.findIndex(s=>s.rs.length&&s.x>xp);if(sel<0)sel=sl.length-1;
   const prevOv=document.body.style.overflow;
@@ -12289,20 +12290,23 @@ function openXpPass(uid,xp){
     const box=h('div',{class:'bp-box '+(got?'got':'lock')+(has?'':' empty')},has?bpArt(s.rs[0]):bpGift(),
       s.rs.length>1?h('span',{class:'bp-n'},'×'+s.rs.length):null,
       has?h('span',{class:'bp-st'},got?'✅':'🔒'):(got?h('span',{class:'bp-st'},'✔'):null));
-    const c=h('button',{type:'button',class:'bp-c'+(i===sel?' sel':''),'aria-label':fmtN(s.x)+' XP'+(has?' : '+(s.rs[0].name||'récompense'):''),onclick:()=>pick(i)},box,h('span',{class:'bp-xp'},fmtN(s.x)+' XP'));
+    const c=h('button',{type:'button',class:'bp-c'+(got?' got':'')+(i===sel?' sel':''),'aria-label':fmtN(s.x)+' XP'+(has?' : '+(s.rs[0].name||'récompense'):''),onclick:()=>pick(i)},box,h('span',{class:'bp-xp'},fmtN(s.x)+' XP'));
     cards.push(c);inner.append(c);
     if(i<sl.length-1){const nx=sl[i+1].x,fr=Math.max(0,Math.min(1,(xp-s.x)/Math.max(0.0001,nx-s.x)));inner.append(h('div',{class:'bp-cn'},h('i',{style:'width:'+(fr*100)+'%'})));}
   });
   const track=h('div',{class:'bp-track'},inner);
   ov.append(top,track,det,h('p',{class:'bp-hint'},'Fais défiler vers la droite pour voir les prochaines récompenses.'));
   const lay=first=>{
-    const W=track.clientWidth||360,cw=Math.max(44,Math.floor((W-2*PAD-4*G)/5));
+    const W=track.clientWidth||360,cw=Math.max(70,Math.floor((W-2*PAD-2*G)/3)); /* 3 cartes visibles */
     track.style.setProperty('--bpw',cw+'px');track.style.setProperty('--bpg',G+'px');track.style.setProperty('--bpp',PAD+'px');
     const cx=i=>PAD+i*(cw+G)+cw/2;let x;
     if(xp<sl[0].x)x=PAD+(sl[0].x>0?Math.max(0,xp)/sl[0].x:0)*(cw/2);
     else{let i=sl.length-1;while(i>0&&sl[i].x>xp)i--;x=i>=sl.length-1?cx(sl.length-1):cx(i)+(xp-sl[i].x)/Math.max(0.0001,sl[i+1].x-sl[i].x)*(cw+G);}
     me.style.left=x+'px';
-    if(first)track.scrollLeft=Math.max(0,x-W/2);
+    if(first){ /* on centre la carte la plus proche de l'XP actuelle : 3 cartes entières visibles */
+      let k=0;for(let i=1;i<sl.length;i++)if(Math.abs(sl[i].x-xp)<Math.abs(sl[k].x-xp))k=i;
+      track.scrollLeft=Math.max(0,cx(k)-W/2);
+    }
   };
   const onResize=()=>lay(false);
   ov.addEventListener('click',e=>{if(e.target===ov)close();});
@@ -16450,12 +16454,16 @@ function coinChipPaint(el){
   el.replaceChildren(coinIco(18),h('b',{},String(cb)));
 }
 function coinBadge(){const el=h('span',{class:'tab-coin'});coinChipPaint(el);return el;}
-setInterval(()=>{
+/* au-dessus de 100 coins : la pièce s'agite toutes les 15 s pendant 2 minutes après l'ouverture de l'appli, puis s'arrête (pas d'animation sans fin) */
+let _coinWigT0=0;
+const _coinWigTimer=setInterval(()=>{
   const el=document.querySelector('.tab-coin');
   if(!el||document.hidden||reducedMotion()||!(Number(el.dataset.bal)>100))return;
+  if(!_coinWigT0)_coinWigT0=Date.now();
+  if(Date.now()-_coinWigT0>120000){clearInterval(_coinWigTimer);return;}
   el.classList.remove('wiggle');void el.offsetWidth;el.classList.add('wiggle');
   setTimeout(()=>el.classList.remove('wiggle'),1500);
-},60000);
+},15000);
 function shopBuy(it){
   S.shopAsk=null;
   if(!S.uid||!S.db||S.snapMode){toast('Connexion nécessaire pour acheter.',true);render();return;}
