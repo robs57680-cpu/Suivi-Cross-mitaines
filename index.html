@@ -4269,7 +4269,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-08.21';
+const APP_VERSION='2026-11-08.22';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -5685,9 +5685,22 @@ function logRuleProblems(d){
   }catch(x){pb.push('contrôle impossible : '+x.message);}
   return pb.length?pb:['aucun problème repéré dans le document (voir les règles publiées dans Firebase)'];
 }
+/* Diagnostic d'un refus (alerte au coach) : message exact de l'erreur Firebase, compte réellement connecté, champs du document serveur. */
+function dbgDenied(e,uid,srv,data){
+  try{
+    const cu=auth&&auth.currentUser;
+    const prov=cu&&cu.providerData?cu.providerData.map(x=>x&&x.providerId).join('+'):'?';
+    return ' [diag] msg='+String((e&&e.message)||'?').slice(0,160)
+      +' | auth='+(cu?(cu.uid===uid?'ok':'DIFFERENT '+cu.uid):'aucun')+' prov='+prov+(cu&&cu.emailVerified===false?' mailNonVerifie':'')
+      +' | srv='+(srv?Object.keys(srv).join(','):'?')
+      +' | srv.shopBuy='+(srv&&srv.shopBuy?Object.keys(srv.shopBuy).length:0)+' srv.coinGot='+(srv&&srv.coinGot?Object.keys(srv.coinGot).length:0)
+      +' | ecrit='+(data?Object.keys(data).join(','):'?')
+      +' | en ligne='+(navigator.onLine!==false);
+  }catch(x){return ' [diag] erreur '+x.message;}
+}
 async function logLateError(e,patch,msg,uid){
   const code=e&&e.code;
-  if(!S.owner&&(Date.now()-(S._lateAlertAt||0))>3e5){S._lateAlertAt=Date.now();coachAlert(uid,'Saisie refusée','Saisie hors ligne ou lente refusée par le serveur ('+(code||'?')+'). '+(patch&&patch._retried?'Après une nouvelle tentative. ':'Nouvelle tentative automatique. ')+'Version '+APP_VERSION+'. Champs écrits : '+Object.keys(patch||{}).filter(k=>k[0]!=='_').join(', ')+'. Document : '+logRuleProblems(S.logs[uid]||{}).join(' ; ').slice(0,500)+'.');}
+  if(!S.owner&&(Date.now()-(S._lateAlertAt||0))>3e5){S._lateAlertAt=Date.now();coachAlert(uid,'Saisie refusée','Saisie hors ligne ou lente refusée par le serveur ('+(code||'?')+'). '+(patch&&patch._retried?'Après une nouvelle tentative. ':'Nouvelle tentative automatique. ')+'Version '+APP_VERSION+'. Champs écrits : '+Object.keys(patch||{}).filter(k=>k[0]!=='_').join(', ')+'. Document : '+logRuleProblems(S.logs[uid]||{}).join(' ; ').slice(0,200)+'.'+dbgDenied(e,uid,S.logs[uid],null));}
   if(code!=='permission-denied'||(patch&&patch._retried)){if(netState.onLateError)netState.onLateError(e);return;}
   let srv={};
   try{const sn=await S.db.doc('logs/'+uid).get();if(sn.exists){srv=sn.data()||{};S.logs[uid]=Object.assign({},srv);}}catch(x){}
@@ -5834,8 +5847,13 @@ function saveLog(patch,msg,uid){
       if(p2.coinGot)p2.coinGot=Object.assign({},srv.coinGot||{},p2.coinGot);
       if(p2.shopBuy)p2.shopBuy=Object.assign({},srv.shopBuy||{},p2.shopBuy);
       data=build(cur,p2);
-      if(!S.owner&&(Date.now()-(S._lateAlertAt||0))>3e5){S._lateAlertAt=Date.now();coachAlert(uid,'Saisie refusée','Écriture refusée par le serveur ('+(e.code||'?')+'), nouvelle tentative depuis la version du serveur. Champs écrits : '+Object.keys(patch).filter(k=>k!=='_retried').join(', ')+'. Version '+APP_VERSION+'. Document réécrit : '+logRuleProblems(data).join(' ; ').slice(0,350)+'. Verrous coins : '+(logLockProblems(srv,data).join(' ; ')||'aucun écart').slice(0,250)+'. Si ça se répète : vérifie que firestore.rules est bien publié.');}
-      await S.db.doc('logs/'+uid).set(data,undefined,{onLateError:e2=>logLateError(e2,p2,msg,uid)});
+      if(!S.owner&&(Date.now()-(S._lateAlertAt||0))>3e5){S._lateAlertAt=Date.now();coachAlert(uid,'Saisie refusée','Écriture refusée par le serveur ('+(e.code||'?')+'), nouvelle tentative depuis la version du serveur. Champs écrits : '+Object.keys(patch).filter(k=>k!=='_retried').join(', ')+'. Version '+APP_VERSION+'. Doc : '+logRuleProblems(data).join(' ; ').slice(0,120)+'. Verrous : '+(logLockProblems(srv,data).join(' ; ')||'aucun écart').slice(0,100)+'.'+dbgDenied(e,uid,srv,data));}
+      try{
+        await S.db.doc('logs/'+uid).set(data,undefined,{onLateError:e2=>logLateError(e2,p2,msg,uid)});
+      }catch(e3){
+        if(!S.owner&&(Date.now()-(S._lateAlert3At||0))>3e5){S._lateAlert3At=Date.now();coachAlert(uid,'Saisie refusée','2e tentative (document complet relu du serveur) refusée aussi ('+((e3&&e3.code)||'?')+').'+dbgDenied(e3,uid,srv,data));}
+        throw e3;
+      }
     }
     // Keep the local log synchronized so the reward popup does not reopen.
     S.logs[uid]=Object.assign({},cur,data);delete S.logs[uid].weight;if(!data.avatar)delete S.logs[uid].avatar;if(!data.groupWish)delete S.logs[uid].groupWish;if(!data.motto)delete S.logs[uid].motto;if(!data.troph)delete S.logs[uid].troph;if(!data.focus)delete S.logs[uid].focus;
