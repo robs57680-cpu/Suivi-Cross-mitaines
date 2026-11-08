@@ -4269,7 +4269,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-08.17';
+const APP_VERSION='2026-11-08.19';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -5649,7 +5649,7 @@ async function logLateError(e,patch,msg,uid){
   if(code!=='permission-denied'||(patch&&patch._retried)){if(netState.onLateError)netState.onLateError(e);return;}
   let srv={};
   try{const sn=await S.db.doc('logs/'+uid).get();if(sn.exists){srv=sn.data()||{};S.logs[uid]=Object.assign({},srv);}}catch(x){}
-  const p=Object.assign({},patch,{_retried:true});
+  const p=Object.assign({},patch,{_retried:true,_full:true});
   delete p.coinAdj; /* réglé par le coach uniquement */
   if(p.coinGot)p.coinGot=Object.assign({},srv.coinGot||{},p.coinGot);
   if(p.shopBuy)p.shopBuy=Object.assign({},srv.shopBuy||{},p.shopBuy);
@@ -5739,9 +5739,9 @@ function saveLog(patch,msg,uid){
     const SAFE_KEYS=['rewardSeen','rewardOwned','annSeen','avSeen','mvSeen','recapSeen'];
     const MAP_KEYS=['entries','redos','coinGot','shopBuy'];
     const OPT_KEYS=['motto','focus','troph','badge']; /* valeurs simples : en écriture ciblée seulement si non vides (une valeur vide = champ à retirer, ce que seule l'écriture complète sait faire) */
-    const pks=Object.keys(patch).filter(k=>k!=='_retried');
+    const pks=Object.keys(patch).filter(k=>k!=='_retried'&&k!=='_full');
     const base=S.logs[uid];
-    if(pks.length&&base&&base.pseudo&&pks.every(k=>SAFE_KEYS.includes(k)||MAP_KEYS.includes(k)||OPT_KEYS.includes(k))){
+    if(pks.length&&base&&base.pseudo&&!patch._full&&pks.every(k=>SAFE_KEYS.includes(k)||MAP_KEYS.includes(k)||OPT_KEYS.includes(k))){
       /* cartes (séances, coins…) : on n'envoie QUE les clés nouvelles. Si une clé existante est modifiée ou retirée (modification / suppression de séance), on garde l'écriture complète. */
       const part={};let ok=true;
       for(const k of pks){
@@ -5835,6 +5835,19 @@ function annMarkSeen(a){
   const lg=S.logs[S.uid];
   if(lg){const l=(lg.annSeen||[]).slice();if(!l.includes(a.id)){l.push(a.id);saveLog({annSeen:l.slice(-30)});}}
 }
+/* coins joints à un message du coach : champ « coins » du document config/announcement ; l'athlète les reçoit UNE fois (clé coinGot « msg:id ») en appuyant sur le bouton de la lettre. Le coach ne les reçoit pas. */
+const annCoins=a=>{const n=Math.floor(Number(a&&a.coins));return (Number.isFinite(n)&&n>=1)?Math.min(n,500):0;};
+const annCoinKey=a=>'msg:'+a.id;
+function annCoinsDue(a,preview){
+  if(preview||S.owner||!a||!a.id||a.id==='preview'||!annCoins(a))return false;
+  const lg=S.logs[S.uid];if(!lg||!lg.pseudo)return false;
+  return !(lg.coinGot&&lg.coinGot[annCoinKey(a)]!==undefined);
+}
+function annClaim(a){
+  if(!S.db||S.snapMode||!annCoinsDue(a,false))return;
+  const lg=S.logs[S.uid],n=annCoins(a);
+  saveLog({coinGot:Object.assign({},lg.coinGot||{},{[annCoinKey(a)]:n})},'+'+n+' coins offerts par le coach.');
+}
 const annActive=()=>{const a=S.ann;return (a&&a.active!==false&&String(a.text||'').trim())?a:null;};
 let annTries=0;
 function maybeAnnouncement(){
@@ -5856,13 +5869,15 @@ function openAnnouncement(a,opt){
   const close=()=>{ov.remove();document.removeEventListener('keydown',esc);};
   const stage=h('div',{class:'ann-stage'});
   const ov=h('div',{class:'ann',id:'ann-ov',role:'dialog','aria-modal':'true','aria-label':'Message du coach'},stage);
+  const due=annCoinsDue(a,preview),nc=annCoins(a);
   const when=a.at?'Publié le '+fmtDate(String(a.at).slice(0,10),{day:'numeric',month:'long'}):'';
   const letter=h('div',{class:'ann-letter'},
     preview?h('span',{class:'chip live'},'Aperçu coach · rien n’est publié'):null,
     h('p',{class:'eyebrow'},when||'Message du coach'),
     h('h2',{class:'wtitle'},a.title||'Message du coach'),
     h('p',{class:'ann-text'},linkText(a.text)),
-    h('div',{class:'row'},h('button',{class:'btn primary',type:'button',id:'ann-vu',onclick:()=>{if(!preview&&!already)annMarkSeen(a);close();}},preview?'Fermer l’aperçu':already?'Fermer':'Vu')));
+    nc>0?h('p',{style:'display:flex;align-items:center;gap:6px;margin:0;font-weight:700'},coinIco(20),h('span',{},'+'+nc+' coins'+(preview?' offerts avec ce message':due?' à récupérer avec le bouton ci-dessous':' déjà récupérés'))):null,
+    h('div',{class:'row'},h('button',{class:'btn primary',type:'button',id:'ann-vu',onclick:()=>{if(!preview&&!already)annMarkSeen(a);if(due)annClaim(a);close();}},preview?'Fermer l’aperçu':due?'Vu, récupérer '+nc+' coins':already?'Fermer':'Vu')));
   const showLetter=()=>{stage.replaceChildren(letter);letter.classList.add('ann-in');const b=document.getElementById('ann-vu');if(b)b.focus();};
   if(review){stage.append(letter);letter.classList.add('ann-in');}
   else{
@@ -5886,7 +5901,7 @@ const ICO_MAIL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strok
 function feedIcons(){
   const mk=(id,label,svg,dot,fn)=>{const b=h('button',{class:'ibtn',type:'button',id,'aria-label':label,title:label,onclick:fn});b.innerHTML=svg;if(dot)b.append(h('span',{class:'ibdot','aria-hidden':'true'}));return b;};
   const a=annActive(),out=[];
-  if(a)out.push(mk('ib-mail','Dernier message du coach',ICO_MAIL,!annIsSeen(a),()=>openAnnouncement(a,{review:true})));
+  if(a)out.push(mk('ib-mail','Dernier message du coach',ICO_MAIL,!annIsSeen(a)||annCoinsDue(a,false),()=>openAnnouncement(a,{review:true})));
   const notifDot=notifDotOn();
   out.push(mk('ib-bell','Notifications',ICO_BELL,notifDot,()=>{S.nbOpen=true;openDrawer();}));
   return h('div',{class:'row',style:'flex-wrap:nowrap;gap:8px'},out);
@@ -5894,22 +5909,23 @@ function feedIcons(){
 /* page coach : écrire, tester l'aperçu, publier, retirer */
 function annCoach(){
   const cur=annActive();
-  if(!S.coach.annDraft)S.coach.annDraft={title:(cur&&cur.title)||'',text:(cur&&cur.text)||'',fix:false,notify:true};
+  if(!S.coach.annDraft)S.coach.annDraft={title:(cur&&cur.title)||'',text:(cur&&cur.text)||'',coins:(cur&&annCoins(cur))?String(annCoins(cur)):'',fix:false,notify:true};
   const d=S.coach.annDraft;
   const el=h('div',{class:'stack'});
-  const athletes=Object.values(S.logs).filter(l=>l&&l.pseudo),nSeen=cur?athletes.filter(l=>(l.annSeen||[]).includes(cur.id)).length:0;
+  const athletes=Object.values(S.logs).filter(l=>l&&l.pseudo),nSeen=cur?athletes.filter(l=>(l.annSeen||[]).includes(cur.id)).length:0,nGot=(cur&&annCoins(cur))?athletes.filter(l=>l.coinGot&&l.coinGot[annCoinKey(cur)]!==undefined).length:0;
   el.append(h('p',{class:'muted'},'Le message s’affiche à chaque athlète, sous forme d’enveloppe, à l’ouverture de l’appli. Quand il appuie sur « Vu », il ne revient plus jamais pour lui. Il n’interrompt jamais un minuteur de metcon en cours : il apparaît au prochain lancement de l’appli. Les athlètes peuvent le relire avec la petite lettre en haut du fil.'));
-  if(cur)el.append(h('div',{class:'banner'},h('div',{class:'row'},h('span',{class:'chip live'},'Message en ligne'),h('span',{class:'sub'},'Publié le '+fmtShort(String(cur.at||todayStr()).slice(0,10))+' · vu par '+nSeen+' athlète'+(nSeen>1?'s':'')+' sur '+athletes.length)),
+  if(cur)el.append(h('div',{class:'banner'},h('div',{class:'row'},h('span',{class:'chip live'},'Message en ligne'),h('span',{class:'sub'},'Publié le '+fmtShort(String(cur.at||todayStr()).slice(0,10))+' · vu par '+nSeen+' athlète'+(nSeen>1?'s':'')+' sur '+athletes.length+(cur&&annCoins(cur)?' · '+annCoins(cur)+' coins joints, récupérés par '+nGot:''))),
     h('p',{style:'white-space:pre-wrap;overflow-wrap:anywhere'},(cur.title?cur.title+'\n':''),linkText(cur.text))));
   else el.append(h('div',{class:'empty'},h('p',{},'Aucun message en ligne pour l’instant.')));
   const ta=h('textarea',{id:'ann-text',rows:'6',maxlength:'600',placeholder:'Ex : Les séances de la semaine du 26 octobre seront en costume !',value:d.text,oninput:e=>{d.text=e.target.value;cnt.textContent=e.target.value.length+'/600';}});
   const cnt=h('span',{class:'hint','aria-live':'polite'},d.text.length+'/600');
   const form=h('section',{class:'card'},h('h2',{class:'h2'},cur?'Modifier ou remplacer le message':'Écrire un message'),
     field('Titre (facultatif)',tin(d,'title',{id:'ann-title',maxlength:'60',placeholder:'Message du coach'})),
-    field('Message',ta,cnt));
+    field('Message',ta,cnt),
+    field('Coins offerts (facultatif)',h('input',{type:'number',id:'ann-coins',min:'0',max:'500',step:'1',inputmode:'numeric',placeholder:'0',value:d.coins||'',oninput:e=>{d.coins=e.target.value;}}),'Chaque athlète les reçoit une seule fois, en appuyant sur le bouton de la lettre (500 au maximum). Vide ou 0 = message sans coins. Une simple correction ajoute les coins même à ceux qui ont déjà vu le message.'));
   if(cur)form.append(h('label',{class:'chk'},h('input',{type:'checkbox',id:'ann-fix',checked:!!d.fix,onchange:e=>{d.fix=e.target.checked;}}),h('span',{},'Simple correction : ne pas le réafficher à ceux qui l’ont déjà vu')));
   form.append(h('label',{class:'chk'},h('input',{type:'checkbox',id:'ann-notify',checked:d.notify!==false,onchange:e=>{d.notify=e.target.checked;}}),h('span',{},'Prévenir les athlètes par notification (envoyée dans les 15 minutes, jamais pour une simple correction)')));
-  const draft=()=>{const t=String(d.text||'').trim();if(!t){toast('Écris un message.',true);return null;}return {title:String(d.title||'').trim().slice(0,60),text:t.slice(0,600)};};
+  const draft=()=>{const t=String(d.text||'').trim();if(!t){toast('Écris un message.',true);return null;}return {title:String(d.title||'').trim().slice(0,60),text:t.slice(0,600),coins:annCoins({coins:d.coins})};};
   form.append(h('div',{class:'row'},
     h('button',{class:'btn',type:'button',id:'ann-preview',onclick:()=>{const x=draft();if(x)openAnnouncement(Object.assign({id:'preview',at:new Date().toISOString()},x),{preview:true});}},'Aperçu (test)'),
     h('button',{class:'btn primary',type:'button',id:'ann-publish',onclick:async()=>{
@@ -16092,13 +16108,14 @@ function viewRules(){
   if(r.b)body.append(h('ul',{},r.b.map(x=>h('li',{},...rlText(x)))));
   (r.after||[]).forEach(x=>body.append(h('p',{},...rlText(x))));
   const acts=h('div',{class:'rl-acts'},
-    h('button',{class:'btn primary',type:'button',id:'rules-next',onclick:()=>{S.rulesI=i+1;render();window.scrollTo(0,0);}},i===n-1?'J’ai lu et j’accepte le règlement':'J’ai lu et j’accepte, point suivant'));
+    h('button',{class:'btn primary',type:'button',id:'rules-next',onclick:()=>{S.rulesI=i+1;if(i===n-1)coinReadAward('rules','Règlement');render();window.scrollTo(0,0);}},i===n-1?'J’ai lu et j’accepte le règlement':'J’ai lu et j’accepte, point suivant'));
   if(i>0)acts.append(h('button',{class:'btn',type:'button',id:'rules-prev',onclick:()=>{S.rulesI=i-1;render();window.scrollTo(0,0);}},'Revenir au point précédent'));
   return h('div',{class:'stack'},head,bar,
     h('section',{class:'card'},
       h('p',{class:'rl-num'},'POINT '+(i+1)+' SUR '+n),
       h('h2',{class:'rl-t'},r.t),body,
       h('p',{class:'hint'},'Passer au point suivant signifie que tu as lu et accepté ce qui est écrit.'),
+      (i===n-1&&coinReadOpen('rules'))?h('p',{class:'hint'},'En acceptant ce dernier point, tu gagnes '+READ_COIN+' coins (une seule fois).'):null,
       acts));
 }
 /* ---------- santé et sécurité : même principe que le règlement (un point à la fois, « suivant » = lu et accepté, jamais bloquant) ---------- */
@@ -16194,13 +16211,14 @@ function viewHealth(){
   if(r.b)body.append(h('ul',{},r.b.map(x=>h('li',{},...rlText(x)))));
   (r.after||[]).forEach(x=>body.append(h('p',{},...rlText(x))));
   const acts=h('div',{class:'rl-acts'},
-    h('button',{class:'btn primary',type:'button',id:'health-next',onclick:()=>{S.healthI=i+1;render();window.scrollTo(0,0);}},i===n-1?'J’ai lu et j’accepte':'J’ai lu et j’accepte, point suivant'));
+    h('button',{class:'btn primary',type:'button',id:'health-next',onclick:()=>{S.healthI=i+1;if(i===n-1)coinReadAward('health','Santé et sécurité');render();window.scrollTo(0,0);}},i===n-1?'J’ai lu et j’accepte':'J’ai lu et j’accepte, point suivant'));
   if(i>0)acts.append(h('button',{class:'btn',type:'button',id:'health-prev',onclick:()=>{S.healthI=i-1;render();window.scrollTo(0,0);}},'Revenir au point précédent'));
   return h('div',{class:'stack'},head,bar,
     h('section',{class:'card'},
       h('p',{class:'rl-num'},'POINT '+(i+1)+' SUR '+n),
       h('h2',{class:'rl-t'},r.t),body,
       h('p',{class:'hint'},'Passer au point suivant signifie que tu as lu et compris ce qui est écrit.'),
+      (i===n-1&&coinReadOpen('health'))?h('p',{class:'hint'},'En acceptant ce dernier point, tu gagnes '+READ_COIN+' coins (une seule fois).'):null,
       acts));
 }
 let drawerEl=null;
@@ -16603,6 +16621,15 @@ const coinEarned=(lg,en,rd)=>{const cg=(lg&&lg.coinGot)||{},E=en||(lg&&lg.entrie
 const coinBal=uid=>{const lg=S.logs[uid]||{};return coinEarned(lg)-coinSum(lg.shopBuy);};
 /* coins d'une séance : une seule fois par date, au moment où le résultat est enregistré */
 const coinRedoPatch=(uid,date)=>{const lg=S.logs[uid]||{},k='redo:'+date;if(lg.coinGot&&lg.coinGot[k]!==undefined)return null;return {coinGot:Object.assign({},lg.coinGot||{},{[k]:COIN_REDO})};};
+/* coins de lecture : READ_COIN coins, UNE seule fois par compte, quand l'athlète valide le dernier point du règlement (clé coinGot « rd:rules ») ou des conseils santé et sécurité (clé « rd:health »).
+   Une mise à jour du texte (RULES_VER / HEALTH_VER) ne redonne pas de coins. */
+const READ_COIN=10;
+const coinReadOpen=kind=>{const lg=S.logs[S.uid];return !!(S.uid&&lg&&lg.pseudo&&!(lg.coinGot&&lg.coinGot['rd:'+kind]!==undefined));};
+function coinReadAward(kind,what){
+  if(!S.db||S.snapMode||!coinReadOpen(kind))return;
+  const lg=S.logs[S.uid];
+  saveLog({coinGot:Object.assign({},lg.coinGot||{},{['rd:'+kind]:READ_COIN})},what+' lu : +'+READ_COIN+' coins.');
+}
 const coinPatch=(uid,date)=>{const lg=S.logs[uid]||{},n=coinForDate(date);if(!n||(lg.coinGot&&lg.coinGot[date]!==undefined))return null;return {coinGot:Object.assign({},lg.coinGot||{},{[date]:n})};};
 /* un objet du catalogue sans condition d'obtention (ajouté pour le shop) : jamais gagné par la progression */
 for(const it of AV_ITEMS)if(!AV_OBJ[it.id])AV_OBJ[it.id]={d:'À acheter dans le Shop, avec des coins.',test:()=>false};
@@ -16958,18 +16985,22 @@ function coachShop(){
   el.append(sec);
   const ath=Object.entries(S.logs).filter(([u,l])=>l&&l.pseudo).map(([u,l])=>({uid:u,lg:l,bal:coinBal(u)})).sort((a,b)=>b.bal-a.bal);
   el.append(h('section',{class:'card'},h('h2',{class:'h2'},'Soldes des athlètes'),
-    h('p',{class:'hint'},'« Ajuster » ajoute (nombre positif : cadeau, rattrapage) ou retire (nombre négatif) des coins au solde.'),
+    h('p',{class:'hint'},'« Ajuster » ajoute (nombre positif : cadeau, rattrapage) ou retire (nombre négatif) des coins au solde. Touche le bouton + / − à gauche du nombre pour passer en retrait (le signe devient rouge) : le clavier numérique de l’iPhone n’a pas de signe moins.'),
     ath.length?h('ul',{class:'list'},ath.map(a=>{
       const nb=Object.keys(a.lg.shopBuy||{}).length;
       const inp=h('input',{type:'number',step:'1',inputmode:'numeric',placeholder:'±',style:'width:84px','aria-label':'Ajuster les coins de '+a.lg.pseudo,value:S.coach.coinD[a.uid]||'',oninput:e=>{S.coach.coinD[a.uid]=e.target.value;}});
+      /* le clavier numérique de l'iPhone n'a pas de signe moins : un bouton +/− choisit le signe (un « - » tapé au clavier complet marche aussi) */
+      S.coach.coinNeg=S.coach.coinNeg||{};
+      const neg=!!S.coach.coinNeg[a.uid];
+      const sgn=h('button',{class:'btn sm',type:'button','aria-label':'Signe de l’ajustement pour '+a.lg.pseudo+' : '+(neg?'retirer':'ajouter'),title:neg?'Retirer des coins':'Ajouter des coins',style:'min-width:40px;font-size:18px;font-weight:800'+(neg?';color:#ff5a5a':''),onclick:()=>{S.coach.coinNeg[a.uid]=!neg;render();}},neg?'−':'+');
       const btn=h('button',{class:'btn sm',type:'button',onclick:()=>{
-        const n=Math.trunc(Number(String(S.coach.coinD[a.uid]||'').replace(',','.')));
+        let n=Math.trunc(Number(String(S.coach.coinD[a.uid]||'').replace(',','.')));if(S.coach.coinNeg[a.uid])n=-Math.abs(n);
         if(!Number.isFinite(n)||n===0){toast('Entre un nombre de coins (positif ou négatif).',true);return;}
-        saveLog({coinAdj:(Number((S.logs[a.uid]||{}).coinAdj)||0)+n},(n>0?'+':'')+n+' coins pour '+a.lg.pseudo,a.uid).then(()=>{S.coach.coinD[a.uid]='';render();});
+        saveLog({coinAdj:(Number((S.logs[a.uid]||{}).coinAdj)||0)+n},(n>0?'+':'')+n+' coins pour '+a.lg.pseudo,a.uid).then(()=>{S.coach.coinD[a.uid]='';S.coach.coinNeg[a.uid]=false;render();});
       }},'Ajuster');
       return h('li',{},h('div',{class:'l',style:'flex:1;min-width:120px'},h('div',{class:'nm'},a.lg.pseudo+(a.uid===S.uid?' (toi)':'')),
           h('div',{class:'sub'},'Gagnés '+coinEarned(a.lg)+' · dépensés '+coinSum(a.lg.shopBuy)+' · '+pl_(nb,'achat')),a.bal<0?h('div',{class:'sub',style:'color:#ff5a5a;font-weight:700'},'Solde négatif : séance retirée après dépense'):null),
-        h('div',{class:'shop-act'},h('span',{class:'shop-price'},coinIco(20),h('b',{},String(a.bal))),inp,btn));
+        h('div',{class:'shop-act'},h('span',{class:'shop-price'},coinIco(20),h('b',{},String(a.bal))),sgn,inp,btn));
     })):h('p',{class:'muted'},'Aucun athlète pour l’instant.')));
   /* tout en bas : éléments masqués (retrouvés ici, à réafficher en un clic) */
   const allIts=AV_SLOTS.flatMap(([sl,label])=>AV_ITEMS.filter(x=>x.slot===sl).map(x=>[label,x])).concat(shopBanners().filter(b=>b.kind==='bg').map(x=>['Fonds de bannière',x]),shopBanners().filter(b=>b.kind==='avframe').map(x=>['Cadres d’avatar (fil)',x]),CM_LAYERS.filter(L=>L.shop).flatMap(L=>CM_LIST.filter(x=>x.layer===L.id&&!x.free).map(x=>['Bannière modulaire · '+L.name,x])));
