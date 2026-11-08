@@ -4269,7 +4269,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-08.16';
+const APP_VERSION='2026-11-08.17';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -4685,7 +4685,7 @@ function subFresh(sw,date){
 }
 /* ---------- SÉANCE BONUS ----------
    Une séance bonus par semaine, datée du samedi (faisable toute la semaine), fabriquée toute seule : échauffement habituel + un renforcement + un metcon
-   tirés au hasard dans les saisons PRÉCÉDENTES (jamais un metcon TEST, jamais une séance DELOAD, jamais une autre séance bonus).
+   tirés au hasard dans les saisons PRÉCÉDENTES, hors saison 1 Bêta (jamais un metcon TEST, jamais une séance DELOAD, jamais une autre séance bonus). Le niveau « Scaled » des anciens metcons est devenu « Débutant » dans la copie.
    Points : corps de séance BONUS_BASE, points des paliers du metcon divisés par 2 (la copie du metcon porte déjà les paliers divisés).
    Pas de REDO (redo:false sur le metcon), pas de remplacement, pas de bots, coins réglables (Coach › Shop et coins).
    Fabrication : déterministe (graine = date du samedi), donc identique chez tous les athlètes ; quand le coach ouvre l'appli, la séance est enregistrée dans wods/{date}
@@ -4707,16 +4707,18 @@ function bonusMetcon(p){
   const o=JSON.parse(JSON.stringify(p));
   delete o.test;delete o.word;o.redo=false;
   const hv=a=>Array.isArray(a)?a.map(t=>Object.assign({},t,{p:bonusHalf(t.p)})):a;
-  if(Array.isArray(o.levels))o.levels=o.levels.map(l=>{const q=Object.assign({},l);if(q.tiers)q.tiers=hv(q.tiers);if(q.capTiers)q.capTiers=hv(q.capTiers);return q;});
+  if(Array.isArray(o.levels))o.levels=o.levels.map(l=>{const q=Object.assign({},l);if(norm(q.name||'')==='scaled')q.name='Débutant';if(q.tiers)q.tiers=hv(q.tiers);if(q.capTiers)q.capTiers=hv(q.capTiers);return q;});
   if(o.tiers)o.tiers=hv(o.tiers);
   return o;
 }
+/* saison 1 (Bêta) : ses séances ne sont pas remplies correctement, elles ne servent jamais de source à une séance bonus */
+const bonusBetaSeason=q=>/beta/.test(norm(q.name||''))||seasonNum(q)===1;
 function bonusBuild(day){
   const per=periodFor(day),mon=mondayOf(day);
   if(!per||per.virtual)return null;
   const srcs=Object.values(S.wods).filter(w=>{
     if(!w||w.bonus||w.deload||!Array.isArray(w.parts)||w.date>=mon)return false;
-    const q=periodFor(w.date);return !!q&&!q.virtual&&q.id!==per.id&&q.end<per.start; /* saisons précédentes seulement */
+    const q=periodFor(w.date);return !!q&&!q.virtual&&q.id!==per.id&&q.end<per.start&&!bonusBetaSeason(q); /* saisons précédentes seulement, hors saison 1 (Bêta) */
   }).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
   const renfos=[],mets=[];
   for(const w of srcs)for(const p of w.parts){
