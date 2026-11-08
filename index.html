@@ -4269,7 +4269,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-08.15';
+const APP_VERSION='2026-11-08.16';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -5027,7 +5027,7 @@ function computeBoard(period,withBots,gid){
     /* saison terminée : tout le monde (y compris soi-même) est comparé sur le rapport PUBLIÉ, pour que le trophée Poids / puissance et son badge soient les mêmes sur tous les téléphones (sinon chacun voit son propre ratio exact et celui des autres publié, d'où des gagnants différents selon l'appareil) */
     const pubRatio=(r.ratioN>0&&lg.ratios&&Number(lg.ratios[period.id])>0)?Number(lg.ratios[period.id]):0;
     r.ratioLocal=(r.weight>0&&r.ratioN>0)?Math.round(r.strengthRel/r.ratioN/r.weight*100)/100:0; /* calcul exact avec le poids privé : sert à (re)publier */
-    r.ratio=(!period.virtual&&periodState(period)==='done'&&pubRatio>0)?pubRatio:(r.ratioLocal>0?r.ratioLocal:pubRatio);
+    r.ratio=(!period.virtual&&periodState(period)==='done')?pubRatio:(r.ratioLocal>0?r.ratioLocal:pubRatio); /* saison terminée : seul le rapport publié compte (un poids saisi après coup ne crée plus de trophée) */
     r.perfAvg=r.perfN?r.perf/r.perfN:0;
     r.lvlAvg=r.lvlN?r.lvlSum/r.lvlN:0;
     r.mult=r.lvlN?r.lvlAvg/LEVEL_DIV:1;
@@ -5157,6 +5157,9 @@ function trophyShort(t,board,gid){
 }
 function winners(t,board,gid){
   if(gid!==undefined)board=Object.assign({},board,{rows:board.rows.filter(r=>inScope(r.uid,gid,board.period))});
+  /* trophée retiré par le coach à un athlète pour cette saison (periods/{id}.revoked = {idTrophée:[uid,…]}) : il ne compte plus (ni pour le seuil), le suivant gagne */
+  {const rv=board.period&&board.period.revoked&&Array.isArray(board.period.revoked[t.id])?board.period.revoked[t.id]:[];
+   if(rv.length)board=Object.assign({},board,{rows:board.rows.filter(r=>!rv.includes(r.uid))});}
   {const min=minEligOf(board.period);if(min&&eligCount(t,board)<min)return [];} /* tous les trophées : seuil de participants */
   if(t.custom)return t.custom(board).filter(r=>r.sessions>0);
   const pool=board.rows.filter(r=>r.sessions>0&&(!t.elig||t.elig(r,board))&&t.key(r)[0]>0);
@@ -5592,7 +5595,10 @@ function botRow(b,period,wods){
 function myRatios(){
   const out={};
   if(!S.uid||!(Number(S.prof.weight)>0))return out;
+  const pubOld=(S.logs[S.uid]&&S.logs[S.uid].ratios)||{};
   for(const p of [...Object.values(S.periods),ALL]){
+    /* saison terminée : le rapport déjà publié est conservé tel quel et rien de nouveau n'est publié (un poids saisi après la fin de la saison ne doit pas créer un trophée rétroactif) */
+    if(!p.virtual&&periodState(p)==='done'){if(Number(pubOld[p.id])>0)out[p.id]=Number(pubOld[p.id]);continue;}
     const row=computeBoard(p).rows.find(r=>r.uid===S.uid);
     if(row&&row.weight>0&&row.ratioLocal>0)out[p.id]=Math.round(row.ratioLocal*100)/100;
   }
@@ -6686,6 +6692,19 @@ const TROPHY_BLURB={goat:'Meilleur score pondéré par le niveau',lagoat:'Meille
 const trophyBlurb=t=>{if(TROPHY_BLURB[t.id])return TROPHY_BLURB[t.id];const x=String(t.desc||'').split(/[.(]/)[0].trim();return x.length>60?x.slice(0,57).trim()+'…':x;};
 const reducedMotion=()=>!!(window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches);
 /* trophées d'une saison pour un groupe, dans l'ordre de la remise : du dernier trophée de la liste au GOAT, qui clôt le livre */
+/* coach : retire un trophée à un athlète pour une saison (le suivant au classement le gagne) ; « Rétablir » dans Coach › saisons annule tous les retraits de la saison */
+function revokeTrophy(per,tid,uid,pseudo){
+  if(!S.owner||!per||!uid||String(uid).startsWith('bot:'))return;
+  const cur=Object.assign({},S.periods[per.id]||{}),rv=Object.assign({},cur.revoked||{});
+  rv[tid]=[...new Set([...(Array.isArray(rv[tid])?rv[tid]:[]),uid])];
+  cur.revoked=rv;
+  run(async()=>{await S.db.doc('periods/'+per.id).set(cur);S._aw=null;toast('Trophée retiré à '+(pseudo||'l’athlète'));scheduleRender();});
+}
+function restoreTrophies(per){
+  if(!S.owner||!per)return;
+  const cur=Object.assign({},S.periods[per.id]||{});delete cur.revoked;
+  run(async()=>{await S.db.doc('periods/'+per.id).set(cur);S._aw=null;toast('Trophées rétablis pour cette saison');scheduleRender();});
+}
 function bookWins(per,gid){const board=computeBoard(per);return {board,wins:TROPHIES.map(t=>({t,ws:winners(t,board,gid)})).filter(x=>x.ws.length).reverse()};}
 /* Le livre d'or d'une saison. animate:true = le livre se ferme sur sa couverture, s'ouvre, l'écran s'en rapproche, puis les trophées
    apparaissent un par un en quinconce (gauche, droite, gauche…) : explication à côté du trophée, pseudo du gagnant écrit en lettres d'or,
@@ -6711,7 +6730,8 @@ function goldenBook(per,gid,wins,o){
       const pen=h('i',{class:'gb-pen'}),ul=h('span',{class:'gb-ul'});
       nm.append(pen);
       const me=r.uid===S.uid;
-      const line=h('div',{class:'gb-line'+(me?' me':'')},h('span',{class:'gb-sr'},r.pseudo+(me?' (toi)':'')),nm,ul);
+      const rvBtn=(S.owner&&!animate&&!r.bot&&!String(r.uid).startsWith('bot:'))?h('button',{type:'button',class:'btn sm danger',style:'margin-left:8px;font-size:11px;padding:2px 8px',onclick:ev=>{ev.stopPropagation();if(confirm('Retirer le trophée « '+t.name+' » à '+(r.pseudo||'cet athlète')+' pour '+seasonTag(per)+' ?'))revokeTrophy(per,t.id,r.uid,r.pseudo);}},'Retirer'):null;
+      const line=h('div',{class:'gb-line'+(me?' me':'')},h('span',{class:'gb-sr'},r.pseudo+(me?' (toi)':'')),nm,ul,rvBtn);
       return {line,letters,pen,ul,me};
     });
     const me=lines.some(L=>L.me);
@@ -15583,7 +15603,7 @@ function periodEditor(){
         if(!d.name.trim()||!d.start||!d.end||b===null||b<0||!(n>=1)){toast('Renseigne le numéro, le nom, la date de début, le nombre de semaines et les points.',true);return;}
         if(d.end<d.start){toast('La fin doit être après le début.',true);return;}
         const col=S.db.collection('periods');const ref=d.id?col.doc(d.id):col.doc();
-        await run(async()=>{await ref.set(Object.assign({num:n,name:d.name.trim(),start:d.start,end:d.end,base:b,avItems:d.av||[],botTitles:Array.isArray(d.botTitles)?d.botTitles:[],subs:(d.id&&S.periods[d.id]&&Array.isArray(S.periods[d.id].subs))?S.periods[d.id].subs:[],minElig:(parseInt(d.minElig,10)>0?parseInt(d.minElig,10):0),rewards:(d.rewards||[]).map(r=>({id:r.id||('rw'+Date.now().toString(36)),type:r.type||'title',name:String(r.name||'').trim(),xp:Math.max(0,Number(r.xp)||0),asset:r.asset||'',image:String(r.image||'').trim(),...(r.type==='coins'?{coins:Math.max(0,Math.floor(Number(r.coins)||0))}:{})}))},d.id&&S.periods[d.id]&&S.periods[d.id].locked?{locked:true}:{}));toast('Saison enregistrée');});
+        await run(async()=>{await ref.set(Object.assign({num:n,name:d.name.trim(),start:d.start,end:d.end,base:b,avItems:d.av||[],botTitles:Array.isArray(d.botTitles)?d.botTitles:[],subs:(d.id&&S.periods[d.id]&&Array.isArray(S.periods[d.id].subs))?S.periods[d.id].subs:[],minElig:(parseInt(d.minElig,10)>0?parseInt(d.minElig,10):0),rewards:(d.rewards||[]).map(r=>({id:r.id||('rw'+Date.now().toString(36)),type:r.type||'title',name:String(r.name||'').trim(),xp:Math.max(0,Number(r.xp)||0),asset:r.asset||'',image:String(r.image||'').trim(),...(r.type==='coins'?{coins:Math.max(0,Math.floor(Number(r.coins)||0))}:{})}))},d.id&&S.periods[d.id]&&S.periods[d.id].locked?{locked:true}:{},d.id&&S.periods[d.id]&&S.periods[d.id].revoked?{revoked:S.periods[d.id].revoked}:{}));toast('Saison enregistrée');});
         S.coach.period=null;render();}},d.id?'Enregistrer la saison':'Créer la saison'),
       d.id?h('button',{class:'btn',type:'button',onclick:()=>{S.coach.period=null;render();}},'Annuler'):null));
 }
@@ -15595,6 +15615,7 @@ function periodList(){
       h('div',{class:'row'},
         h('button',{class:'btn sm'+(p.locked?' primary':''),type:'button',id:'lock-'+p.id,onclick:()=>run(async()=>{const d=Object.assign({},S.periods[p.id]);if(p.locked)delete d.locked;else d.locked=true;await S.db.doc('periods/'+p.id).set(d);toast(p.locked?'Saison déverrouillée':'Saison verrouillée');})},p.locked?'Déverrouiller':'Verrouiller'),
         h('button',{class:'btn sm',type:'button',onclick:()=>openCeremony(p.id)},'Aperçu remise'),
+        (p.revoked&&Object.keys(p.revoked).length)?h('button',{class:'btn sm',type:'button',onclick:()=>{if(confirm('Rétablir tous les trophées retirés pour cette saison ?'))restoreTrophies(p);}},'Rétablir les trophées retirés'):null,
         h('button',{class:'btn sm',onclick:()=>{S.coach.period={id:p.id,num:String(seasonNum(p)),name:p.name,start:p.start,end:p.end,base:String(p.base),minElig:minEligOf(p)>0?String(minEligOf(p)):'',av:(p.avItems||[]),botTitles:(p.botTitles||[]).slice(),rewards:JSON.parse(JSON.stringify(p.rewards||[]))};render();window.scrollTo(0,0);}},'Modifier'),
         S.confirm==='per-'+p.id?h('button',{class:'btn sm danger',onclick:()=>{S.confirm=null;const tid=trashPush('period','Saison '+(p.name||p.id),{id:p.id,period:S.periods[p.id]});run(async()=>{await S.db.doc('periods/'+p.id).delete();if(tid)toastUndo('Saison supprimée',tid);else toast('Saison supprimée');});}},'Confirmer')
                                 :h('button',{class:'btn sm danger',onclick:()=>{S.confirm='per-'+p.id;render();}},'Supprimer')));}))
