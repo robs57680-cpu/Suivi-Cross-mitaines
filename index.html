@@ -1719,6 +1719,9 @@ body.board-lock .top{position:relative;top:0}
 .cc-flags{display:flex;flex-wrap:wrap;gap:6px}
 .cc-tag{font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:#fff;color:#14161A;border-radius:2px;padding:2px 8px;box-shadow:0 1px 2px rgba(0,0,0,.35)}
 .cc-tag.deload{background:#14161A;color:#F4C400;letter-spacing:.16em;padding:3px 10px}
+.cc-tag.bonus{background:#FFD54A;color:#3A2400;letter-spacing:.14em}
+.car-card.bonus{outline:3px solid #FFD54A;outline-offset:-3px}
+.car-card.bonus .cc-title::before{content:'★ ';color:#FFD54A}
 .cc-redo{display:grid;gap:1px;margin:2px -18px 0 -18px;padding:8px 40px 8px 18px;color:#14161A;background:linear-gradient(90deg,#FFC857,#FF9A3C);clip-path:polygon(0 0,100% 0,calc(100% - 16px) 50%,100% 100%,0 100%);border-left:6px solid #14161A}
 .cc-redo b{font-family:var(--f-mono);font-size:13px;letter-spacing:.08em;text-transform:uppercase;line-height:1.2}
 .cc-redo span{font-size:12px;font-weight:600;line-height:1.25}
@@ -4266,7 +4269,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-08.9';
+const APP_VERSION='2026-11-08.11';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -4680,6 +4683,79 @@ function subFresh(sw,date){
   SUB_FRESH.set(sw,{live,per,out});
   return out;
 }
+/* ---------- SÉANCE BONUS ----------
+   Une séance bonus par semaine, datée du samedi (faisable toute la semaine), fabriquée toute seule : échauffement habituel + un renforcement + un metcon
+   tirés au hasard dans les saisons PRÉCÉDENTES (jamais un metcon TEST, jamais une séance DELOAD, jamais une autre séance bonus).
+   Points : corps de séance BONUS_BASE, points des paliers du metcon divisés par 2 (la copie du metcon porte déjà les paliers divisés).
+   Pas de REDO (redo:false sur le metcon), pas de remplacement, pas de bots, coins réglables (Coach › Shop et coins).
+   Fabrication : déterministe (graine = date du samedi), donc identique chez tous les athlètes ; quand le coach ouvre l'appli, la séance est enregistrée dans wods/{date}
+   (il peut alors la modifier dans « Entrer un WOD »). Les séances bonus ne sont plus affichées dans les saisons terminées. */
+const BONUS_BASE=5;
+const BONUS_COIN_DEFAULT=5;
+const BONUS_PAST_POINTS=true; /* true : les points d'une séance bonus restent dans le classement d'une saison terminée (seule la séance n'y est plus affichée) ; false : ils en disparaissent aussi */
+const BONUS_COL=['#B45309','#4A1D05'];
+const isBonus=w=>!!(w&&w.bonus);
+const isBonusDate=d=>isBonus(S.wods[d]);
+const bonusHidden=w=>isBonus(w)&&pastSeasonDate(w.date);
+function bonusRng(seed){
+  let hs=2166136261;for(let i=0;i<seed.length;i++){hs^=seed.charCodeAt(i);hs=Math.imul(hs,16777619);}
+  let a=hs>>>0;
+  return ()=>{a=(a+0x6D2B79F5)|0;let t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};
+}
+const bonusHalf=x=>Math.round((Number(x)||0)/2*100)/100;
+function bonusMetcon(p){
+  const o=JSON.parse(JSON.stringify(p));
+  delete o.test;delete o.word;o.redo=false;
+  const hv=a=>Array.isArray(a)?a.map(t=>Object.assign({},t,{p:bonusHalf(t.p)})):a;
+  if(Array.isArray(o.levels))o.levels=o.levels.map(l=>{const q=Object.assign({},l);if(q.tiers)q.tiers=hv(q.tiers);if(q.capTiers)q.capTiers=hv(q.capTiers);return q;});
+  if(o.tiers)o.tiers=hv(o.tiers);
+  return o;
+}
+function bonusBuild(day){
+  const per=periodFor(day),mon=mondayOf(day);
+  if(!per||per.virtual)return null;
+  const srcs=Object.values(S.wods).filter(w=>{
+    if(!w||w.bonus||w.deload||!Array.isArray(w.parts)||w.date>=mon)return false;
+    const q=periodFor(w.date);return !!q&&!q.virtual&&q.id!==per.id&&q.end<per.start; /* saisons précédentes seulement */
+  }).sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
+  const renfos=[],mets=[];
+  for(const w of srcs)for(const p of w.parts){
+    if(!p||!String(p.content||'').trim())continue;
+    if(p.kind==='renfo')renfos.push(p);
+    else if(p.kind==='metcon'&&!p.test&&levelsOf(p).some(l=>(l.tiers||[]).length))mets.push(p);
+  }
+  if(!mets.length)return null;
+  const rnd=bonusRng('bonus|'+day),pick=a=>a[Math.min(a.length-1,Math.floor(rnd()*a.length))];
+  const parts=[];
+  if(renfos.length){const o=JSON.parse(JSON.stringify(pick(renfos)));o.label='P1';parts.push(o);}
+  const mo=bonusMetcon(pick(mets));mo.label='P'+(parts.length+1);parts.push(mo);
+  return {date:day,title:'Séance bonus',base:BONUS_BASE,bonus:true,parts};
+}
+/* appelée à chaque rendu : ajoute (sans l'enregistrer) la séance bonus de la semaine si elle n'existe pas encore ; le coach, lui, l'enregistre */
+function bonusSync(){
+  try{
+    for(const k of Object.keys(S.wods)){const x=S.wods[k];if(x&&x.virtual&&x.bonus)delete S.wods[k];}
+    if(!S.uid||S.snapMode||!S.loaded.wods||!S.loaded.periods||S.feat===undefined)return;
+    const t=todayStr(),mon=mondayOf(t),sat=addDays(mon,5),sun=addDays(mon,6);
+    for(let i=0;i<7;i++){const x=S.wods[addDays(mon,i)];if(x&&x.bonus)return;} /* déjà publiée cette semaine */
+    if(S.feat&&S.feat.bonusOff&&S.feat.bonusOff[mon])return; /* supprimée par le coach */
+    const day=!S.wods[sat]?sat:(!S.wods[sun]?sun:null); /* samedi ; dimanche si le coach y a mis une séance */
+    if(!day)return;
+    const per=periodFor(day);
+    if(!per||per.virtual||per.locked||periodState(per)==='done')return;
+    const key=day+'|'+Object.keys(S.wods).length+'|'+plist().length;
+    if(!S._bonusMemo||S._bonusMemo.key!==key){const w=bonusBuild(day);S._bonusMemo={key,w,v:w?Object.assign({},w,{virtual:true}):null};}
+    const M=S._bonusMemo;if(!M.w)return;
+    S.wods[day]=M.v;
+    if(S.owner&&S.db&&!S.cacheMode&&S._srv&&S._srv.wods&&S._srv.periods){
+      S._bonusW=S._bonusW||{};
+      if(!S._bonusW[day]){
+        S._bonusW[day]=1;
+        S.db.doc('wods/'+day).get().then(x=>{if(!x.exists)return S.db.doc('wods/'+day).set(M.w);}).catch(()=>{S._bonusW[day]=0;});
+      }
+    }
+  }catch(e){}
+}
 function wodFor(w,e){
   if(!w||!e||!e.sw)return w;
   const sw=subFresh(e.sw,w.date);
@@ -4848,7 +4924,7 @@ function flameAll(lg){
     for(const d of days){
       const e=lg.entries&&lg.entries[d];
       if(e&&onTime(d,e)){cur++;best=Math.max(best,cur);brk=null;extra=0;}
-      else if(!e&&!closed)continue;
+      else if((!e&&!closed)||isBonusDate(d))continue;
       else if(kept)continue;
       else if(jk.has(d))continue;
       else{if(cur>0){brk={day:d,prev:cur};extra=0;}else if(brk)extra++;cur=0;}
@@ -4898,7 +4974,7 @@ function posOfM(list,r){const l=list.slice().sort(bCmp()),t=bTied(),out=[];l.for
 const posOf=(list,r)=>{const i=list.indexOf(r);return i<0?0:posList(list)[i];};
 function computeBoard(period,withBots,gid){
   const allWods=Object.values(S.wods).sort((a,b)=>a.date<b.date?-1:1);
-  const wods=Object.values(S.wods).filter(w=>inP(w.date,period)).sort((a,b)=>a.date<b.date?-1:1);
+  const wods=Object.values(S.wods).filter(w=>inP(w.date,period)&&(BONUS_PAST_POINTS||!bonusHidden(w))).sort((a,b)=>a.date<b.date?-1:1);
   const metconCount=wods.filter(metconOf).length;
   const catCount={cardio:0,gym:0,haltero:0};
   for(const w of wods){const m=metconOf(w);if(m&&catCount[m.focus]!==undefined)catCount[m.focus]++;}
@@ -4968,12 +5044,12 @@ function computeBoard(period,withBots,gid){
         if(mon>t)break;
         const days=weeks[mon].slice().sort(),closed=addDays(mon,6)<t;
         const okN=days.filter(d=>{const e=lg.entries&&lg.entries[d];return e&&onTime(d,e);}).length;
-        const need=goalS>0?Math.min(goalS,days.length):days.length;
+        const need=goalS>0?Math.min(goalS,days.length):days.filter(d=>!isBonusDate(d)).length; /* la séance bonus n'est jamais obligatoire : non faite, elle ne casse pas la flamme */
         const kept=goalS>0&&closed&&okN+redoWk(mon)>=need;
         for(const d of days){
           const e=lg.entries&&lg.entries[d];
           if(e&&onTime(d,e)){cur++;curBest=Math.max(curBest,cur);}
-          else if(!e&&!closed)continue;
+          else if((!e&&!closed)||isBonusDate(d))continue;
           else if(kept)continue;
           else cur=0;
         }
@@ -5492,7 +5568,7 @@ function botRow(b,period,wods){
   const r={uid:'bot:'+b.id,pseudo:b.name,bot:true,promo:!!b.promo,sessions:0,base:0,perf:0,perfN:0,redo:0,redoN:0,lvlSum:0,lvlN:0,items:[],streak:0,tonnage:0,strength:0,ratio:0,flameCur:0,flameTopCur:0,
     cat:{cardio:{sum:0,n:0},gym:{sum:0,n:0},haltero:{sum:0,n:0}}};
   for(const w of wods){
-    if(w.date>t)continue;
+    if(w.date>t||w.bonus)continue; /* les bots ne font pas les séances bonus */
     const x=botPts(b,w,period);
     r.sessions++;r.base+=x.base;r.perf+=x.perf;
     if(x.lv!==null){r.perfN++;r.lvlSum+=x.lv;r.lvlN++;}
@@ -5647,6 +5723,20 @@ function saveLog(patch,msg,uid){
     if(typeof gw==='string'&&gw)data.groupWish=gw; /* souhait de groupe : 'any' (indifférent) ou id du groupe */
     return clampLogData(data);
     };
+    /* Champs « simples » (récompense vue, message vu…) : écriture ciblée (merge) qui ne touche à rien d'autre. Une écriture du document ENTIER est refusée par le verrou des coins
+       (firestore.rules : coinGot/shopBuy ne peuvent ni changer ni disparaître) dès que la copie du téléphone est en retard sur le serveur (ex. coins crédités par le coach) : la fenêtre de récompense bouclait. */
+    const SAFE_KEYS=['rewardSeen','rewardOwned','annSeen','avSeen','mvSeen','recapSeen'];
+    const pks=Object.keys(patch).filter(k=>k!=='_retried');
+    if(pks.length&&pks.every(k=>SAFE_KEYS.includes(k))&&S.logs[uid]&&S.logs[uid].pseudo){
+      const part={};pks.forEach(k=>{part[k]=patch[k];});clampLogData(part);
+      try{
+        await S.db.doc('logs/'+uid).set(part,{merge:true},{onLateError:e=>logLateError(e,patch,msg,uid)});
+        S.logs[uid]=Object.assign({},S.logs[uid],part);
+        if(msg)toast(msg);
+        if(uid===S.uid)render();
+        return;
+      }catch(e){/* refus : on retombe sur l'écriture complète ci-dessous */}
+    }
     let cur=S.logs[uid]||{},data=build(cur,patch);
     try{
       await S.db.doc('logs/'+uid).set(data,undefined,{onLateError:e=>logLateError(e,patch,msg,uid)});
@@ -6295,6 +6385,7 @@ const TAB_ICO={feed:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" 
  today:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8.5 9V8a3.5 3.5 0 0 1 7 0v1"/><circle cx="12" cy="14.5" r="5.5"/></svg>',
  board:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 4h9v5a4.5 4.5 0 0 1-9 0z"/><path d="M7.5 6h-3c0 3 1.2 4.6 3.2 5M16.5 6h3c0 3-1.2 4.6-3.2 5M12 13.8V17M8.5 20h7M9.8 17h4.4"/></svg>'};
 function render(force){
+  bonusSync();
   if(force!==true&&S.rankAnim&&S.rankAnim.busy){S.rankAnim.dirty=true;return;} /* animation du classement en cours : on ne reconstruit pas les éléments animés */
   planHide();updateCoinChip();
   pending=false;S._un=null;S._aw=null;S._ob=null;if(!(S.tab==='profile'&&S.profView==='infos')){S.infDraft=null;S.infWarn=false;S.infLeave=null;}applyTheme();if(document.body.dataset.tab!==(S.tab||''))document.body.dataset.tab=S.tab||'';{const pv=(S.tab==='profile'&&S.uid&&!S.profView)?'1':'';if((document.body.dataset.pv||'')!==pv){if(pv)document.body.dataset.pv=pv;else delete document.body.dataset.pv;}}document.body.classList.remove('modal-open');document.body.classList.remove('board-lock');
@@ -8255,6 +8346,7 @@ function viewFeed(){
 const CARD_PAL=[['#FF5A36','#C81E5A'],['#1F55D6','#5B2BD6'],['#1E9B4A','#0E6B6B'],['#E07B00','#C2341A'],['#7B3FC4','#C2368F'],['#0E8A8A','#1F55D6'],['#D92B1F','#7A1020'],['#2B3A67','#1F6FD6'],['#B5179E','#5C2BD6'],['#4E8A2E','#0E7A5A']];
 S.cardCol=S.cardCol||{};
 function cardColor(date,prev,next){
+  if(isBonusDate(date))return BONUS_COL;
   if(S.cardCol[date]===undefined){
     const bad=[prev,next].map(d=>d&&S.cardCol[d]).filter(x=>x!==undefined&&x!==null);
     const ok=CARD_PAL.map((_,i)=>i).filter(i=>!bad.includes(i));
@@ -8405,11 +8497,11 @@ function sessionCard(w,i,n,mine,prev,next){
   /* REDO possible : séance validée, metcon avec REDO actif, pas verrouillée, pas le jour du 1er résultat (mêmes règles que redoBlock) */
   const mE=metconOf(wE),redoDone=!!(((S.logs[S.uid]||{}).redos||{})[date]);
   const rpt=!!(done&&sw&&isSubRepeat(S.uid,date)),rptNew=!!(!done&&sw&&subRepeat(S.logs[S.uid],date,{sw,at:new Date().toISOString()}));
-  const ribbon=!!(done&&!rpt&&mE&&mE.redo!==false&&!redoDone&&!pastS&&!lockedDate(date)&&!lockedDate(todayStr())&&!wodPending(date)&&(mine[date].at?dfmt(new Date(mine[date].at)):date)<todayStr());
+  const ribbon=!!(done&&!rpt&&!isBonus(w)&&mE&&mE.redo!==false&&!redoDone&&!pastS&&!lockedDate(date)&&!lockedDate(todayStr())&&!wodPending(date)&&(mine[date].at?dfmt(new Date(mine[date].at)):date)<todayStr());
   const shown=parts.length>4?parts.filter((p,k)=>k<3||p.kind==='metcon').slice(0,4):parts;
   const open=()=>{S.viewDate=date;S.entry=null;S.redo=null;S.tip=null;render();window.scrollTo(0,0);};
   const subs=subsOf();
-  const canSub=!!S.uid&&!!S.db&&!S.snapMode&&ready()&&!done&&!lockedDate(date)&&!pastS&&subs.some(Boolean);
+  const canSub=!isBonus(w)&&!!S.uid&&!!S.db&&!S.snapMode&&ready()&&!done&&!lockedDate(date)&&!pastS&&subs.some(Boolean);
   let slot=null,card=null,back=null;
   const flip=on=>{
     if(!slot)return;
@@ -8417,11 +8509,12 @@ function sessionCard(w,i,n,mine,prev,next){
     card.inert=on;card.setAttribute('aria-hidden',on?'true':'false');
     if(back){back.inert=!on;back.setAttribute('aria-hidden',on?'false':'true');}
   };
-  card=h('div',{class:'car-card face front'+(done?' done':''),role:'button',tabindex:'0','aria-label':'Ouvrir la séance du '+fmtDate(date)+' : '+wE.title,
+  card=h('div',{class:'car-card face front'+(done?' done':'')+(isBonus(w)?' bonus':''),role:'button',tabindex:'0','aria-label':'Ouvrir la séance du '+fmtDate(date)+' : '+wE.title,
       style:'--c1:'+col[0]+';--c2:'+col[1],onclick:open,onkeydown:e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();open();}}},
     wE.deload?h('div',{class:'cc-flags'},h('span',{class:'cc-tag deload'},'DELOAD')):null,
+    isBonus(w)?h('div',{class:'cc-flags'},h('span',{class:'cc-tag bonus'},'★ BONUS'),h('span',{class:'cc-tag bonus'},'½ points')):null,
     h('div',{class:'cc-top'},
-      h('span',{class:'cc-n'},'Séance '+(i+1)+' / '+n),
+      h('span',{class:'cc-n'},isBonus(w)?'Séance bonus · 4e de la semaine':'Séance '+(i+1)+' / '+n),
       done?h('span',{class:'cc-done'},'✓ Faite'):null),
     h('h2',{class:'cc-title'},wE.title),
     (()=>{const m=metconOf(wE),tags=[];if(pastS)tags.push(h('span',{class:'cc-tag'},'SAISON TERMINÉE'));if(sw)tags.push(h('span',{class:'cc-tag'},'🏠 Remplacement'));if(m&&m.test)tags.push(h('span',{class:'cc-tag'},'TEST'));if(m&&m.redo!==false&&!lockedDate(date)&&!ribbon&&!redoDone&&!rpt)tags.push(h('span',{class:'cc-tag'},'RE DO'));if(rpt||rptNew)tags.push(h('span',{class:'cc-tag'},'↩ REDO du remplacement'));if(redoDone)tags.push(h('span',{class:'cc-tag'},'✓ REDO fait'));return tags.length?h('div',{class:'cc-flags'},tags):null;})(),
@@ -8560,8 +8653,8 @@ function viewCards(){
   const ctrls=h('div',{style:'display:flex;gap:8px;align-items:center;flex:none'},tg,gear);
   /* séances des 4 dernières semaines et à venir, par semaine puis par date ; avec « saisons passées » : on ajoute celles des saisons terminées */
   const from=addDays(mondayOf(t),-28),past=!!S.showPast;
-  const pastList=Object.values(S.wods).filter(w=>pastSeasonDate(w.date)).sort((a,b)=>a.date<b.date?-1:1);
-  const ws0=Object.values(S.wods).filter(w=>(past&&pastSeasonDate(w.date))||(w.date>=from&&!wodInDoneSeason(w.date))).sort((a,b)=>a.date<b.date?-1:1);
+  const pastList=Object.values(S.wods).filter(w=>pastSeasonDate(w.date)&&!bonusHidden(w)).sort((a,b)=>a.date<b.date?-1:1);
+  const ws0=Object.values(S.wods).filter(w=>(past&&pastSeasonDate(w.date)&&!bonusHidden(w))||(w.date>=from&&!wodInDoneSeason(w.date))).sort((a,b)=>a.date<b.date?-1:1);
   /* filtre matériel : une séance déjà validée reste visible ; sinon on regarde le matériel de la séance (ou de son remplacement choisi) */
   const okEq=w=>{if(!fOn||mine[w.date])return true;const ch=subChoice(S.uid,w.date),sw=ch&&ch.sw;return eqMissing(sw?wodFor(w,{sw}):w).length===0;};
   const ws=ws0.filter(okEq),hidden=ws0.length-ws.length;
@@ -8578,7 +8671,7 @@ function viewCards(){
     return el;
   }
   /* numéro de la séance dans sa semaine */
-  const byWeek={};ws.forEach(w=>{(byWeek[mondayOf(w.date)]=byWeek[mondayOf(w.date)]||[]).push(w.date);});
+  const byWeek={};ws.forEach(w=>{if(isBonus(w))return;(byWeek[mondayOf(w.date)]=byWeek[mondayOf(w.date)]||[]).push(w.date);});
   let cur=S.carDate&&ws.some(w=>w.date===S.carDate)?S.carDate:defaultDate();
   if(!ws.some(w=>w.date===cur))cur=(ws.find(w=>w.date>=t)||ws[ws.length-1]).date;
   S.carDate=cur;
@@ -8601,7 +8694,7 @@ function viewCards(){
         render();window.scrollTo(0,0);}},past?'Masquer les saisons passées':'Voir les saisons passées'))):null;
   const track=h('div',{class:'car-track',role:'list','aria-label':'Séances, fais glisser pour changer'},
     pastBtn,
-    ws.map((w,k)=>{const wk=byWeek[mondayOf(w.date)];return sessionCard(w,wk.indexOf(w.date),wk.length,mine,ws[k-1]&&ws[k-1].date,ws[k+1]&&ws[k+1].date);}));
+    ws.map((w,k)=>{const wk=byWeek[mondayOf(w.date)]||[];return sessionCard(w,wk.indexOf(w.date),wk.length,mine,ws[k-1]&&ws[k-1].date,ws[k+1]&&ws[k+1].date);}));
   const dots=h('div',{class:'car-dots','aria-hidden':'true'},ws.map(w=>h('i',{'data-d':w.date})));
   el.append(track,dots);
   const slots=[...track.children].filter(x=>x.hasAttribute('data-date'));
@@ -8705,7 +8798,7 @@ function viewToday(){
   const el=h('div',{class:'stack'+(col?' themed':'')});
   if(col)el.setAttribute('style','--c1:'+col[0]+';--c2:'+col[1]+';--accent:'+col[0]+';--accent-ink:#fff;--tint:color-mix(in srgb,'+col[0]+' 16%,var(--surface))');
   el.append(h('div',{class:'row back-row'},h('button',{class:'btn sm back-btn',type:'button',onclick:backToCards},'← Retour aux séances')));
-  el.append(h('div',{class:col?'sess-hero':''},h('p',{class:'eyebrow'},date===t?'Aujourd’hui':date<t?'Séance passée':'Séance à venir'),w&&w.deload?h('div',{class:'row'},h('span',{class:'chip live'},'DELOAD')):null,h('h1',{class:'day'},cap(fmtDate(date)))));
+  el.append(h('div',{class:col?'sess-hero':''},h('p',{class:'eyebrow'},date===t?'Aujourd’hui':date<t?'Séance passée':'Séance à venir'),w&&w.deload?h('div',{class:'row'},h('span',{class:'chip live'},'DELOAD')):null,w&&isBonus(w)?h('div',{class:'row'},h('span',{class:'chip live'},'★ SÉANCE BONUS')):null,h('h1',{class:'day'},cap(fmtDate(date)))));
   el.append(warmupCard());
   if(!ready()&&!S.pre){el.append(h('p',{class:'muted'},'Chargement…'));return el;}
   if(!w){
@@ -8715,6 +8808,7 @@ function viewToday(){
     const per=periodFor(date);
     el.append(h('h2',{class:'wtitle'},w.title),h('p',{class:'eyebrow'},'Séance à '+basePts(w,per)+' pts'+(metconOf(w)?' + points du metcon selon ton niveau':'')),h('p',{class:'hint'},'À faire n’importe quel jour de la semaine, du '+fmtShort(mondayOf(date))+' au '+fmtShort(addDays(mondayOf(date),6))+'.'));
     if(pastSeasonDate(date))el.append(h('div',{class:'banner warn',id:'past-season-note'},h('p',{},h('b',{},'Saison terminée : '),'tu peux faire cette séance pour t’entraîner, mais elle ne rapporte aucun point.')));
+    if(isBonus(w))el.append(h('div',{class:'banner',id:'bonus-note'},h('p',{},h('b',{},'★ Séance bonus : '),'publiée chaque semaine, à faire n’importe quel jour de la semaine. Elle rapporte la moitié des points d’une séance normale ('+basePts(w,per)+' pts de séance, points du metcon divisés par 2) et '+coinPerBonus()+' coins. C’est la 4e séance de ta semaine (objectif de 4 séances) ; pas de REDO ni de séance de remplacement.')));
     if(w.isSub)el.append(h('div',{class:'sub-banner'},h('b',{},'🏠 Séance de remplacement (pas ou peu de matériel)'),h('div',{},'Elle remplace « '+w.subFrom+' » : la séance d’origine ne sera plus réalisable une fois ton résultat enregistré. Points normaux (séance et metcon) une seule fois par saison pour ce remplacement : refait, il compte comme un REDO. Flamme maintenue.'),(!(S.logs[S.uid]&&S.logs[S.uid].entries&&S.logs[S.uid].entries[date]))?h('div',{class:'hint'},'Tant que ton résultat n’est pas enregistré, tu peux en choisir un autre depuis la carte (bouton ↻) ou revenir à la séance d’origine.'):null,
       (!(S.logs[S.uid]&&S.logs[S.uid].entries&&S.logs[S.uid].entries[date]))?h('div',{class:'row'},h('button',{type:'button',class:'btn sm',onclick:()=>unchooseSub(date)},'Revenir à la séance d’origine')):null));
     (w.parts||[]).forEach(p=>el.append(partCard(p,w,date)));
@@ -9089,7 +9183,10 @@ function removeSession(date,uid){
   delete en[date];delete rd[date];S.confirm=null;
   const after=coinEarned(lg,en,rd)-spent; /* les coins de cette séance partent avec elle : le solde peut devenir négatif s'ils étaient déjà dépensés */
   const warn=uid===S.uid&&after<0&&after<before,alertCoach=warn&&!S.owner;
-  saveLog({entries:en,redos:rd},tid?null:'Séance retirée',uid).then(()=>{
+  const sp={entries:en,redos:rd};
+  /* retrait fait par le coach pour l'athlète (séance saisie à sa place, doublon, erreur) : ce n'est pas de la triche, on compense le solde pour qu'il ne passe jamais en négatif */
+  if(S.owner&&uid!==S.uid&&after<0&&after<before)sp.coinAdj=(Number(lg.coinAdj)||0)+Math.min(-after,before-after);
+  saveLog(sp,tid?null:'Séance retirée',uid).then(()=>{
     if(tid)toastUndo('Résultat retiré',tid);
     if(warn)coinCheatPop(after,alertCoach);
     if(alertCoach)coinCheatAlert(uid,date,after);
@@ -9511,14 +9608,14 @@ function submitEntryNow(w){
   }
   const early=!coach&&wodPending(date);
   const rk=(!coach&&uid===S.uid&&!early)?rankSnap(date):null; /* classement d'avant, pour l'animation qui suit la validation */
-  const coinCg=coinPatch(uid,date),coinTx=coinCg?' · +'+coinPerSession()+' coin'+(coinPerSession()>1?'s':''):'';
+  const coinCg=coinPatch(uid,date),coinTx=coinCg?' · +'+coinForDate(date)+' coin'+(coinForDate(date)>1?'s':''):'';
   const sv=saveLog(Object.assign({entries:Object.assign({},cur.entries||{},{[date]:e})},coinCg||{}),(coach?'Résultats enregistrés':(early?'Séance enregistrée en avance : tes points seront ajoutés le lundi '+fmtShort(mondayOf(date))+'.':'Séance enregistrée'))+coinTx,uid);
   render();
   /* après l'enregistrement : d'abord la fenêtre des coins (athlète qui valide sa propre séance, première fois pour cette date), puis l'animation du classement */
   /* plusieurs séances validées le même jour par l'athlète lui-même : message au coach (pseudo + nombre), une fois par nouvelle séance au-delà de la 1re */
   const multiD=(!coach&&uid===S.uid&&!S.owner&&!prevE)?sameDayValidated(Object.assign({},cur.entries||{},{[date]:e})):[];
   if(multiD.length>=2)sv.then(()=>multiSessionAlert(uid,multiD)).catch(()=>{});
-  const coinWon=(coinCg&&!coach&&uid===S.uid)?coinPerSession():0;
+  const coinWon=(coinCg&&!coach&&uid===S.uid)?coinForDate(date):0;
   if(rk||coinWon){S._rankPend=true;sv.then(()=>coinWon?coinWin(coinWon):null).then(()=>rk?rankAnimStart(rk):null).catch(()=>{}).finally(()=>{S._rankPend=false;if(!S.rankAnim)rankFlush();});}
 }
 function recentList(t,current){
@@ -12005,10 +12102,10 @@ function goalCard(p){
   const editable=p.virtual||todayStr()<=addDays(p.start,6);
   const card=h('section',{class:'card'},h('h2',{class:'h2'},'Objectif de séances'));
   if(editable){
-    const s=sel([['','Choisir']].concat([1,2,3].map(n=>[String(n),n+' séance'+(n>1?'s':'')+' par semaine'])),cur?String(cur):'',()=>{},{id:'goal-select'});
-  card.append(h('p',{class:'muted'},'Choisis combien de séances tu veux faire chaque semaine pendant la '+(p.virtual?'saison':seasonLabel(p).toLowerCase())+'. Si tu tiens ton objectif toutes les semaines, tu gagnes le trophée, et tu gardes ta flamme même si tu ne fais pas toutes les séances proposées. Si tu choisis 1 ou 2 séances, tu concours aussi au trophée Solo gagnant ou Duo gagnant : seules tes meilleures séances comptent (1 ou 2 par semaine de la saison), donc en faire plus que prévu ne te pénalise pas. Le choix se fait la première semaine de la saison.'),
+    const s=sel([['','Choisir']].concat([1,2,3,4].map(n=>[String(n),n+' séance'+(n>1?'s':'')+' par semaine'])),cur?String(cur):'',()=>{},{id:'goal-select'});
+  card.append(h('p',{class:'muted'},'Choisis combien de séances tu veux faire chaque semaine pendant la '+(p.virtual?'saison':seasonLabel(p).toLowerCase())+'. Si tu tiens ton objectif toutes les semaines, tu gagnes le trophée, et tu gardes ta flamme même si tu ne fais pas toutes les séances proposées. Si tu choisis 1 ou 2 séances, tu concours aussi au trophée Solo gagnant ou Duo gagnant : seules tes meilleures séances comptent (1 ou 2 par semaine de la saison), donc en faire plus que prévu ne te pénalise pas. Le choix se fait la première semaine de la saison. 4 séances par semaine = les séances de la semaine + la séance bonus du samedi.'),
       field('Mon objectif',s),
-      h('div',{class:'row'},h('button',{class:'btn primary',type:'button',onclick:()=>{const n=parseInt(s.value,10);if(!(n>=1&&n<=3)){toast('Choisis un nombre de séances',true);return;}saveLog({goals:Object.assign({},lg.goals||{},{[p.id]:n})},'Objectif enregistré');}},'Enregistrer mon objectif')));
+      h('div',{class:'row'},h('button',{class:'btn primary',type:'button',onclick:()=>{const n=parseInt(s.value,10);if(!(n>=1&&n<=4)){toast('Choisis un nombre de séances',true);return;}saveLog({goals:Object.assign({},lg.goals||{},{[p.id]:n})},'Objectif enregistré');}},'Enregistrer mon objectif')));
   }else{
     card.append(h('p',{class:'muted'},cur?'Ton objectif de la '+seasonLabel(p).toLowerCase()+' : '+cur+' séance'+(cur>1?'s':'')+' par semaine. Il est verrouillé.':'Les objectifs se choisissent la première semaine de la saison.'));
   }
@@ -12747,7 +12844,7 @@ function viewProfile(){
   const tallyRow=me.sessions>0?h('div',{class:'tally-row'},h('span',{class:'flabel'},'Séances de la saison'),tally(me.sessions)):null;
   const gc=goalCard(p);gc.setAttribute('data-tour','goal');if(goalMissingFor(p))blinkEl(gc);
   /* dernières séances */
-  const items=me.items.slice().reverse().slice(0,15);
+  const items=me.items.filter(it=>!bonusHidden(it.w)).reverse().slice(0,15);
   const lastCard=(h('section',{class:'card'},h('h2',{class:'h2'},'Mes dernières séances'),
     items.length?h('ul',{class:'list'},items.map(it=>{const m=metconOf(it.w);return h('li',{},
       h('div',{class:'l'},h('div',{class:'nm'},(it.redo?'REDO · '+cap(fmtShort(it.on)):cap(fmtShort(it.w.date)))+' · '+it.w.title),
@@ -13761,7 +13858,7 @@ function fixDraft(d){
 const blankPart=k=>({kind:k,name:'',content:'',movement:'',format:'FT',detail:'',repsRound:'',dur:'',interval:'1',deadBy:false,focus:'',intensity:'',syncTiers:true,word:'',lineRounds:false,redo:true,test:false,levels:blankLevels()});
 function blankWod(){return {date:todayStr(),title:'',base:'',deload:false,parts:[Object.assign(blankPart('force'),{name:'Force'}),Object.assign(blankPart('renfo'),{name:'Renforcement'}),Object.assign(blankPart('metcon'),{name:'Metcon'})]};}
 function wodToDraft(w){
-  return {date:w.date,title:w.title||'',base:(w.base!==undefined&&w.base!==null)?String(w.base):'',deload:!!w.deload,
+  return {date:w.date,title:w.title||'',base:(w.base!==undefined&&w.base!==null)?String(w.base):'',deload:!!w.deload,bonus:!!w.bonus,
     parts:(w.parts||[]).map(p=>{
       const fmt=p.format||'FT';const cm={format:fmt,content:p.content||'',repsRound:p.repsRound||0,lineRounds:!!p.lineRounds};
       const L0=(p.kind==='metcon'?levelsOf(p):blankLevels()).slice(-4),pad=4-L0.length; /* ancien metcon à 3 niveaux : Découverte est ajoutée en tête, désactivée */
@@ -13798,7 +13895,7 @@ function draftToWod(d){
       if(!FOCUS[p.focus])throw new Error('Choisis le type de metcon ('+o.label+') : il sert aux trophées par catégorie.');
       if(String(p.dur||'').trim()!==''){const dn=parseNum(p.dur);if(dn===null||dn<=0)throw new Error('Durée / time cap illisible ('+o.label+').');o.dur=dn;}
       if(String(p.word||'').trim())o.word=p.word.trim();
-      if(p.redo===false)o.redo=false;
+      if(p.redo===false||d.bonus)o.redo=false;
       if(p.test)o.test=true;
       if(p.customLvl===false)o.customLvl=false;
       if(p.format==='FT'&&p.lineRounds)o.lineRounds=true;
@@ -13865,7 +13962,9 @@ function draftToWod(d){
   });
   const out={date:d.date,title:d.title.trim(),parts};
   if(d.deload)out.deload=true;
+  if(d.bonus)out.bonus=true;
   if(String(d.base).trim()!==''){const b=parseNum(d.base);if(b===null||b<0)throw new Error('Points de la séance illisibles.');out.base=b;}
+  if(d.bonus&&out.base===undefined)out.base=BONUS_BASE;
   return out;
 }
 /* page coach : ce que l'encart « objectifs de la saison » affiche à chaque athlète (calculé en direct, rien n'est stocké) */
@@ -14789,6 +14888,7 @@ function wodEditor(modal){
     field('Points de la séance',tin(d,'base',{id:'w-base',inputmode:'numeric',placeholder:'par défaut : '+(SUBM?Math.max(1,Math.round(Number(per.base)*SUB_F)):per.base)}),SUBM?'Séance de remplacement : par défaut les points de la saison. Les points du metcon comptent en entier.':'Une séance plus dure peut rapporter plus. Les points du metcon s’y ajoutent.')));
   if(!SUBM)sec.append(h('label',{class:'chk'},h('input',{type:'checkbox',id:'w-deload',checked:!!d.deload,onchange:e=>{d.deload=e.target.checked;}}),h('span',{},'Séance DELOAD (semaine allégée)')),
     h('p',{class:'hint'},'La mention DELOAD apparaît en haut de la carte de la séance chez les athlètes.'));
+  if(!SUBM&&d.bonus)sec.append(h('p',{class:'hint'},'★ Séance bonus : générée automatiquement (renforcement et metcon tirés au hasard dans les saisons précédentes, hors TEST et DELOAD). Les points du metcon sont déjà divisés par 2, la séance rapporte '+BONUS_BASE+' pts, le REDO est désactivé. Tu peux tout modifier ici.'));
   if(!SUBM&&!S.coach.editing&&S.wods[d.date])sec.append(h('p',{class:'hint'},'Une séance existe déjà à cette date : elle sera remplacée.'));
   const ld=loadOfPend(S.coach.pendId); /* séance venue du planificateur : on rappelle sa charge avant d'écrire le metcon */
   if(ld)sec.append(loadCard(ld));
@@ -14831,7 +14931,7 @@ function wodEditor(modal){
         h('p',{class:'hint'},p.deadBy?'Dead by : indique le time cap dans « Durée / time cap (min) ». Le score de l’athlète est le temps tenu (intervalles réussis × durée de l’intervalle). Les paliers se règlent en temps tenu : tenir tout le time cap = palier maximum, tenir moins = moins de points.':'Ancien EMOM (score en tours réussis). Choisis « EMOM Dead by » pour noter au temps tenu.'));
       if(p.format==='FT')box.append(h('label',{class:'chk'},h('input',{type:'checkbox',id:'p'+i+'-lr',checked:!!p.lineRounds,onchange:e=>{p.lineRounds=e.target.checked;render();}}),h('span',{},'Chaque ligne = 1 tour')),
         h('p',{class:'hint'},'Chaque ligne d’exercice compte pour un tour (ex. demi Murph = 5 tours). Paliers time cap : « 4+60 » = 4 lignes terminées + 60 reps équivalentes sur la ligne suivante (600 m avec {10=1}).'));
-      box.append(h('label',{class:'chk'},h('input',{type:'checkbox',id:'p'+i+'-redo',checked:p.redo!==false,onchange:e=>{p.redo=e.target.checked;}}),h('span',{},'Le REDO rapporte des points sur ce metcon')),
+      if(d.bonus)box.append(h('p',{class:'hint'},'Séance bonus : le REDO est toujours désactivé.'));else box.append(h('label',{class:'chk'},h('input',{type:'checkbox',id:'p'+i+'-redo',checked:p.redo!==false,onchange:e=>{p.redo=e.target.checked;}}),h('span',{},'Le REDO rapporte des points sur ce metcon')),
         h('p',{class:'hint'},'À décocher pour un metcon court ou volontairement léger (gestion, récupération) qu’on ne veut pas voir refaire pour entasser des points : le REDO n’est alors plus proposé. Coché : un REDO rapporte 1 point s’il est moins bon que le premier résultat, 2 s’il marque autant de points, 3 s’il l’améliore (niveau et points de metcon).'));
       box.append(h('label',{class:'chk'},h('input',{type:'checkbox',id:'p'+i+'-test',checked:!!p.test,onchange:e=>{p.test=e.target.checked;}}),h('span',{},'Metcon TEST')),
         h('p',{class:'hint'},'Coché : la mention TEST apparaît sur la carte de la séance et sur le metcon, pour signaler un metcon test de la saison.'));
@@ -14917,7 +15017,7 @@ function wodRow(w){
     h('div',{class:'l'},h('div',{class:'nm'},cap(fmtShort(w.date))+' · '+w.title),h('div',{class:'sub'},(w.parts||[]).length+' parties · '+n+' athlète'+(n>1?'s':'')+' ont validé')),
     h('div',{class:'row'},
       h('button',{class:'btn sm',onclick:()=>{S.coach.wod=wodToDraft(w);S.coach.editing=true;S.coach.wodOpen=true;render();}},'Modifier'),
-      S.confirm==='wod-'+w.date?h('button',{class:'btn sm danger',onclick:()=>{S.confirm=null;const tid=trashPush('wod','Séance du '+fmtShort(w.date)+' · '+w.title,{date:w.date,wod:S.wods[w.date]});run(async()=>{await S.db.doc('wods/'+w.date).delete();if(tid)toastUndo('Séance supprimée',tid);else toast('Séance supprimée');});}},'Confirmer')
+      S.confirm==='wod-'+w.date?h('button',{class:'btn sm danger',onclick:()=>{S.confirm=null;const tid=trashPush('wod','Séance du '+fmtShort(w.date)+' · '+w.title,{date:w.date,wod:S.wods[w.date]});run(async()=>{await S.db.doc('wods/'+w.date).delete();if(w.bonus)await S.db.doc('config/features').set(Object.assign({},S.feat||{},{bonusOff:Object.assign({},(S.feat&&S.feat.bonusOff)||{},{[mondayOf(w.date)]:true})}));if(tid)toastUndo('Séance supprimée',tid);else toast('Séance supprimée');});}},'Confirmer')
                                 :h('button',{class:'btn sm danger',onclick:()=>{S.confirm='wod-'+w.date;render();}},'Supprimer')));
 }
 /* séances par semaine : la semaine en cours est dépliée, les autres repliées ; point rouge = moins de séances publiées que prévu
@@ -15028,8 +15128,8 @@ function wodWeeks(){
     h('p',{class:'hint'},'Un point rouge indique une semaine où il manque une séance'+(per?' ('+per+' séances publiées prévues par semaine)':'')+'. Les séances envoyées par le planificateur y sont marquées « En attente » : complète le metcon, puis publie.'),
     h('div',{class:'wkacc'},list.length?list.map(x=>{
       const isOpen=x.mon in S.coach.wkOpen?!!S.coach.wkOpen[x.mon]:x.mon===cur;
-      const missing=per>0&&x.pub.length<per&&(x.mon>=cur||inSeason(x.mon));
-      const sub=(per?x.pub.length+'/'+per+' publiée'+(x.pub.length>1?'s':''):pl_(x.pub.length,'séance')+' publiée'+(x.pub.length>1?'s':''))+(x.pend.length?' · '+x.pend.length+' en attente':'');
+      const nReg=x.pub.filter(w=>!w.bonus).length,missing=per>0&&nReg<per&&(x.mon>=cur||inSeason(x.mon));
+      const sub=(per?nReg+'/'+per+' publiée'+(nReg>1?'s':'')+(x.pub.some(w=>w.bonus)?' + bonus':''):pl_(x.pub.length,'séance')+' publiée'+(x.pub.length>1?'s':''))+(x.pend.length?' · '+x.pend.length+' en attente':'');
       const rows=x.pend.map(pendRow).concat(x.pub.map(wodRow));
       return h('div',{class:'wk'},
         h('button',{class:'wk-h',type:'button','aria-expanded':isOpen?'true':'false',onclick:()=>{S.coach.wkOpen[x.mon]=!isOpen;render();}},
@@ -15316,11 +15416,15 @@ function coinWin(n){
     setTimeout(()=>{try{card.querySelector('.btn').focus({preventScroll:true});}catch(e){}},50);
   });
 }
+/* récompenses déjà vues, retenues aussi dans le téléphone : si le serveur refuse l'écriture (rewardSeen), la fenêtre ne doit PAS se rouvrir en boucle */
+const rwLocalKey=()=>'bs-rwseen-'+S.uid;
+const rwLocalGet=()=>{try{const a=JSON.parse(localStorage.getItem(rwLocalKey())||'[]');return Array.isArray(a)?a:[];}catch(e){return [];}};
+const rwLocalAdd=k=>{try{const a=rwLocalGet();if(!a.includes(k)){a.push(k);localStorage.setItem(rwLocalKey(),JSON.stringify(a.slice(-200)));}}catch(e){}};
 function maybeRewardPopup(){
   if(!S.uid||!ready()||S._rewardPopupOpen||rankHold())return;
   const per=periodFor(todayStr())||activePeriod();
   if(!per||per.virtual||periodState(per)==='soon'||!Array.isArray(per.rewards)||!per.rewards.length)return;
-  const xp=seasonXp(S.uid,per),lg=S.logs[S.uid]||{},seen=new Set(lg.rewardSeen||[]);
+  const xp=seasonXp(S.uid,per),lg=S.logs[S.uid]||{},seen=new Set([...(lg.rewardSeen||[]),...rwLocalGet()]);
   const rw=per.rewards.find(r=>Number(r.xp)>=0&&xp>=Number(r.xp)&&!seen.has(per.id+':'+r.id)&&rwFits(r,S.uid));
   if(!rw)return;
   S._rewardPopupOpen=true;
@@ -15331,6 +15435,7 @@ function maybeRewardPopup(){
     // pour empêcher un autre rendu de rouvrir la même récompense.
     pop.remove();
     const key=per.id+':'+rw.id;
+    rwLocalAdd(key); /* retenue dans le téléphone avant même la sauvegarde */
     const curLog=S.logs[S.uid]||{};
     const next=[...new Set([...(curLog.rewardSeen||[]),key])];
     const owned=[...new Set([...(curLog.rewardOwned||[]),key])];
@@ -16433,6 +16538,8 @@ const coinPerSession=()=>{const c=shopCfg();if(c.coin===undefined||c.coin===null
 const salePrice=(base,pct)=>{pct=Math.floor(Number(pct));return (pct>=1&&pct<=99)?Math.max(1,Math.round(base*(100-pct)/100)):base;};
 const shopEntry=id=>{const x=(shopCfg().items||{})[id],cmi=CM_BY[id];let p=x?Math.floor(Number(x.price)):0;if(cmi){if(cmi.free||cmi.avail===false)return null;if(x&&x.on&&!(p>=1))p=cmPrice(cmi);} /* objet modulaire : prix vide = prix de la rareté */
   if(!(x&&x.on&&p>=1&&shopItem(id)))return null;const pct=Math.floor(Number(x.sale))||0,pr=salePrice(p,pct);return {price:pr,base:p,pct:pr<p?pct:0,fav:!!x.fav};};
+const coinPerBonus=()=>{const c=shopCfg();if(c.coinBonus===undefined||c.coinBonus===null||c.coinBonus==='')return BONUS_COIN_DEFAULT;const v=Math.floor(Number(c.coinBonus));return (Number.isFinite(v)&&v>=0)?v:BONUS_COIN_DEFAULT;};
+const coinForDate=d=>isBonusDate(d)?coinPerBonus():coinPerSession();
 const coinSum=o=>Object.values(o||{}).reduce((a,v)=>a+(Number(v)||0),0);
 /* coins gagnés : les coins d'une séance (clé = date) ne comptent QUE tant que la séance est enregistrée ; retirer la séance retire ses coins.
    Les autres clés (récompenses « rw:… ») et l'ajustement du coach comptent toujours. en = entrées à utiliser à la place de lg.entries (simulation d'un retrait). */
@@ -16441,7 +16548,7 @@ const coinEarned=(lg,en,rd)=>{const cg=(lg&&lg.coinGot)||{},E=en||(lg&&lg.entrie
 const coinBal=uid=>{const lg=S.logs[uid]||{};return coinEarned(lg)-coinSum(lg.shopBuy);};
 /* coins d'une séance : une seule fois par date, au moment où le résultat est enregistré */
 const coinRedoPatch=(uid,date)=>{const lg=S.logs[uid]||{},k='redo:'+date;if(lg.coinGot&&lg.coinGot[k]!==undefined)return null;return {coinGot:Object.assign({},lg.coinGot||{},{[k]:COIN_REDO})};};
-const coinPatch=(uid,date)=>{const lg=S.logs[uid]||{},n=coinPerSession();if(!n||(lg.coinGot&&lg.coinGot[date]!==undefined))return null;return {coinGot:Object.assign({},lg.coinGot||{},{[date]:n})};};
+const coinPatch=(uid,date)=>{const lg=S.logs[uid]||{},n=coinForDate(date);if(!n||(lg.coinGot&&lg.coinGot[date]!==undefined))return null;return {coinGot:Object.assign({},lg.coinGot||{},{[date]:n})};};
 /* un objet du catalogue sans condition d'obtention (ajouté pour le shop) : jamais gagné par la progression */
 for(const it of AV_ITEMS)if(!AV_OBJ[it.id])AV_OBJ[it.id]={d:'À acheter dans le Shop, avec des coins.',test:()=>false};
 /* pastille de l'en-tête : solde de coins */
@@ -16662,7 +16769,7 @@ function viewShop(){
     const fav=all.filter(x=>shopEntry(x.id).fav);
     el.append(h('div',{class:'sh-h'},h('h2',{},'Coups de cœur')),fav.length?shopFavStrip(fav,own,bal):h('p',{class:'sh-note'},coach?'Aucun coup de cœur pour l’instant : coche « Coup de cœur » sur un article en vente dans Coach › Shop et coins, puis enregistre.':'Aucun coup de cœur pour l’instant.'));
   }
-  el.append(h('p',{class:'sh-note'},(per?'Tu gagnes '+per+' coin'+(per>1?'s':'')+' à chaque séance enregistrée. ':'')+'Un objet acheté est à toi pour toujours : équipe-le depuis ton avatar ou ta bannière (Profil).'));
+  el.append(h('p',{class:'sh-note'},(per?'Tu gagnes '+per+' coin'+(per>1?'s':'')+' à chaque séance enregistrée'+(coinPerBonus()?' ('+coinPerBonus()+' pour la séance bonus)':'')+'. ':'')+'Un objet acheté est à toi pour toujours : équipe-le depuis ton avatar ou ta bannière (Profil).'));
   return el;
 }
 /* ---- espace coach : Shop et coins ---- */
@@ -16672,13 +16779,15 @@ function shopDraft(){
     const cfg=shopCfg(),it={};
     for(const x of AV_ITEMS.concat(shopAll())){const e=(cfg.items||{})[x.id];it[x.id]={on:!!(e&&e.on),fav:!!(e&&e.fav),price:(e&&Number(e.price)>0)?String(e.price):'',sale:(e&&Number(e.sale)>0)?String(e.sale):'',rar:(e&&CM_RARITY[e.rar])?e.rar:''};}
     const hid={};for(const k of Object.keys(cfg.hidden||{}))if(cfg.hidden[k])hid[k]=true; /* éléments masqués de la liste du coach (rangement) */
-    c.shopDraft={coin:String(coinPerSession()),items:it,hidden:hid};
+    c.shopDraft={coin:String(coinPerSession()),coinBonus:String(coinPerBonus()),items:it,hidden:hid};
   }
   return c.shopDraft;
 }
 function saveShop(){
   const d=shopDraft(),coin=Math.floor(Number(String(d.coin).replace(',','.')));
   if(!Number.isFinite(coin)||coin<0){toast('Coins par séance : entre un nombre entier, 0 ou plus.',true);return;}
+  const coinBonus=Math.floor(Number(String(d.coinBonus===undefined?BONUS_COIN_DEFAULT:d.coinBonus).replace(',','.')));
+  if(!Number.isFinite(coinBonus)||coinBonus<0){toast('Coins par séance bonus : entre un nombre entier, 0 ou plus.',true);return;}
   const items={};
   for(const it of AV_ITEMS.concat(shopAll())){
     const x=d.items[it.id];if(!x)continue;
@@ -16692,7 +16801,7 @@ function saveShop(){
   const cleanHid={};for(const it of AV_ITEMS.concat(shopAll()))if(d.hidden&&d.hidden[it.id])cleanHid[it.id]=true;
   if(!S.db||S.snapMode){toast('Connexion nécessaire pour enregistrer.',true);return;}
   run(async()=>{
-    await S.db.doc('config/features').set(Object.assign({},S.feat||{},{shop:{coin,items,hidden:cleanHid,at:new Date().toISOString()}}));
+    await S.db.doc('config/features').set(Object.assign({},S.feat||{},{shop:{coin,coinBonus,items,hidden:cleanHid,at:new Date().toISOString()}}));
     S.coach.shopDraft=null;toast('Shop enregistré');render();
   });
 }
@@ -16709,12 +16818,12 @@ const shopCount=()=>AV_ITEMS.concat(shopAll()).filter(x=>shopEntry(x.id)).length
 /* coins des séances déjà enregistrées : une seule fois par date et par athlète (les dates qui ont déjà leurs coins sont ignorées) */
 function coinBackfillPlan(){
   const n=coinPerSession(),plan=[];let tot=0,ses=0;
-  if(!n)return {plan,tot,ses,n};
+  if(!n&&!coinPerBonus())return {plan,tot,ses,n};
   for(const [uid,lg] of Object.entries(S.logs)){
     if(!lg||!lg.pseudo)continue;
-    const miss=Object.keys(lg.entries||{}).filter(d=>(lg.coinGot||{})[d]===undefined);
+    const miss=Object.keys(lg.entries||{}).filter(d=>(lg.coinGot||{})[d]===undefined&&coinForDate(d)>0);
     if(!miss.length)continue;
-    plan.push({uid,lg,miss});ses+=miss.length;tot+=miss.length*n;
+    plan.push({uid,lg,miss});ses+=miss.length;tot+=miss.reduce((a,d)=>a+coinForDate(d),0);
   }
   return {plan,tot,ses,n};
 }
@@ -16727,7 +16836,7 @@ function coinBackfill(){
   (async()=>{
     for(const a of p.plan){
       const cur=S.logs[a.uid]||{},cg=Object.assign({},cur.coinGot||{});
-      for(const d of a.miss)if(cg[d]===undefined)cg[d]=p.n;
+      for(const d of a.miss)if(cg[d]===undefined)cg[d]=coinForDate(d);
       await saveLog({coinGot:cg},null,a.uid);
     }
     S.coach.bfBusy=false;
@@ -16755,7 +16864,10 @@ function coachShop(){
   el.append(h('section',{class:'card'},h('h2',{class:'h2'},'Coins'),
     field('Coins gagnés par séance enregistrée',
       h('input',{type:'number',min:'0',step:'1',inputmode:'numeric',id:'shop-coin',value:d.coin,oninput:e=>{d.coin=e.target.value;}}),
-      'Attribués une seule fois par séance, au moment où le résultat est enregistré (par l’athlète ou par toi). 0 = plus de coins gagnés. Les séances déjà enregistrées se créditent avec « Séances passées » plus bas.')));
+      'Attribués une seule fois par séance, au moment où le résultat est enregistré (par l’athlète ou par toi). 0 = plus de coins gagnés. Les séances déjà enregistrées se créditent avec « Séances passées » plus bas.'),
+    field('Coins gagnés par séance bonus',
+      h('input',{type:'number',min:'0',step:'1',inputmode:'numeric',id:'shop-coin-bonus',value:d.coinBonus,oninput:e=>{d.coinBonus=e.target.value;}}),
+      'Même règle que ci-dessus, pour la séance bonus du samedi (par défaut 5). 0 = la séance bonus ne rapporte pas de coins.')));
   el.append(coinBackfillCard());
   const sec=h('section',{class:'card'},h('h2',{class:'h2'},'Articles du shop'),
     h('p',{class:'hint'},'Coche « En vente », fixe un prix en coins (vide = prix de la rareté) et une rareté (Standard, Rare, Épique, Légendaire : elle donne l’éclat de l’objet dans le shop et la personnalisation) ; « Coup de cœur » met l’objet en avant en haut du shop ; « % de réduc. » (1 à 99) affiche une réduction sur l’objet dans le shop, avec l’ancien prix barré. Puis enregistre. Un objet déjà acheté reste à l’athlète même si tu le retires. Pour ajouter un skin : dépose son image dans assets/embedded et ajoute une ligne dans AV_ITEMS ; il apparaît ici.'));
