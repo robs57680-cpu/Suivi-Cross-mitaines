@@ -4269,7 +4269,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-08.14';
+const APP_VERSION='2026-11-08.15';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -5026,7 +5026,8 @@ function computeBoard(period,withBots,gid){
     r.strengthRel=relL.reduce((a,x)=>a+x[1],0);r.ratioN=relL.length;
     /* saison terminée : tout le monde (y compris soi-même) est comparé sur le rapport PUBLIÉ, pour que le trophée Poids / puissance et son badge soient les mêmes sur tous les téléphones (sinon chacun voit son propre ratio exact et celui des autres publié, d'où des gagnants différents selon l'appareil) */
     const pubRatio=(r.ratioN>0&&lg.ratios&&Number(lg.ratios[period.id])>0)?Number(lg.ratios[period.id]):0;
-    r.ratio=(!period.virtual&&periodState(period)==='done'&&pubRatio>0)?pubRatio:((r.weight>0&&r.ratioN>0)?Math.round(r.strengthRel/r.ratioN/r.weight*100)/100:pubRatio);
+    r.ratioLocal=(r.weight>0&&r.ratioN>0)?Math.round(r.strengthRel/r.ratioN/r.weight*100)/100:0; /* calcul exact avec le poids privé : sert à (re)publier */
+    r.ratio=(!period.virtual&&periodState(period)==='done'&&pubRatio>0)?pubRatio:(r.ratioLocal>0?r.ratioLocal:pubRatio);
     r.perfAvg=r.perfN?r.perf/r.perfN:0;
     r.lvlAvg=r.lvlN?r.lvlSum/r.lvlN:0;
     r.mult=r.lvlN?r.lvlAvg/LEVEL_DIV:1;
@@ -5593,7 +5594,7 @@ function myRatios(){
   if(!S.uid||!(Number(S.prof.weight)>0))return out;
   for(const p of [...Object.values(S.periods),ALL]){
     const row=computeBoard(p).rows.find(r=>r.uid===S.uid);
-    if(row&&row.weight>0&&row.ratio>0)out[p.id]=Math.round(row.ratio*100)/100;
+    if(row&&row.weight>0&&row.ratioLocal>0)out[p.id]=Math.round(row.ratioLocal*100)/100;
   }
   return out;
 }
