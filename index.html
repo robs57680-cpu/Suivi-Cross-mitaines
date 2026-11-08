@@ -4269,7 +4269,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-08.11';
+const APP_VERSION='2026-11-08.14';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -5024,7 +5024,9 @@ function computeBoard(period,withBots,gid){
     r.weight=(uid===S.uid&&Number(S.prof.weight)>0)?Number(S.prof.weight):0; /* le poids reste privé : seul le rapport charge ÷ poids est publié (logs/{uid}.ratios) */
     const relL=Object.entries(best).filter(([k])=>!SIGNED.some(s=>norm(s)===k));
     r.strengthRel=relL.reduce((a,x)=>a+x[1],0);r.ratioN=relL.length;
-    r.ratio=(r.weight>0&&r.ratioN>0)?Math.round(r.strengthRel/r.ratioN/r.weight*100)/100:((r.ratioN>0&&lg.ratios&&Number(lg.ratios[period.id])>0)?Number(lg.ratios[period.id]):0);
+    /* saison terminée : tout le monde (y compris soi-même) est comparé sur le rapport PUBLIÉ, pour que le trophée Poids / puissance et son badge soient les mêmes sur tous les téléphones (sinon chacun voit son propre ratio exact et celui des autres publié, d'où des gagnants différents selon l'appareil) */
+    const pubRatio=(r.ratioN>0&&lg.ratios&&Number(lg.ratios[period.id])>0)?Number(lg.ratios[period.id]):0;
+    r.ratio=(!period.virtual&&periodState(period)==='done'&&pubRatio>0)?pubRatio:((r.weight>0&&r.ratioN>0)?Math.round(r.strengthRel/r.ratioN/r.weight*100)/100:pubRatio);
     r.perfAvg=r.perfN?r.perf/r.perfN:0;
     r.lvlAvg=r.lvlN?r.lvlSum/r.lvlN:0;
     r.mult=r.lvlN?r.lvlAvg/LEVEL_DIV:1;
@@ -5726,16 +5728,45 @@ function saveLog(patch,msg,uid){
     /* Champs « simples » (récompense vue, message vu…) : écriture ciblée (merge) qui ne touche à rien d'autre. Une écriture du document ENTIER est refusée par le verrou des coins
        (firestore.rules : coinGot/shopBuy ne peuvent ni changer ni disparaître) dès que la copie du téléphone est en retard sur le serveur (ex. coins crédités par le coach) : la fenêtre de récompense bouclait. */
     const SAFE_KEYS=['rewardSeen','rewardOwned','annSeen','avSeen','mvSeen','recapSeen'];
+    const MAP_KEYS=['entries','redos','coinGot','shopBuy'];
+    const OPT_KEYS=['motto','focus','troph','badge']; /* valeurs simples : en écriture ciblée seulement si non vides (une valeur vide = champ à retirer, ce que seule l'écriture complète sait faire) */
     const pks=Object.keys(patch).filter(k=>k!=='_retried');
-    if(pks.length&&pks.every(k=>SAFE_KEYS.includes(k))&&S.logs[uid]&&S.logs[uid].pseudo){
-      const part={};pks.forEach(k=>{part[k]=patch[k];});clampLogData(part);
-      try{
-        await S.db.doc('logs/'+uid).set(part,{merge:true},{onLateError:e=>logLateError(e,patch,msg,uid)});
-        S.logs[uid]=Object.assign({},S.logs[uid],part);
-        if(msg)toast(msg);
-        if(uid===S.uid)render();
-        return;
-      }catch(e){/* refus : on retombe sur l'écriture complète ci-dessous */}
+    const base=S.logs[uid];
+    if(pks.length&&base&&base.pseudo&&pks.every(k=>SAFE_KEYS.includes(k)||MAP_KEYS.includes(k)||OPT_KEYS.includes(k))){
+      /* cartes (séances, coins…) : on n'envoie QUE les clés nouvelles. Si une clé existante est modifiée ou retirée (modification / suppression de séance), on garde l'écriture complète. */
+      const part={};let ok=true;
+      for(const k of pks){
+        if(SAFE_KEYS.includes(k)){part[k]=patch[k];continue;}
+        if(OPT_KEYS.includes(k)){
+          const v=patch[k];
+          if(k==='motto'){if(typeof v==='string'&&v.trim())part[k]=v.trim().slice(0,60);else ok=false;}
+          else if(k==='badge'){if(typeof v==='string'&&v&&v.length<=80)part[k]=v;else ok=false;}
+          else{
+            const l=Array.isArray(v)?v.filter(x=>typeof x==='string'&&(k==='focus'||x.length<=80)).slice(0,k==='troph'?4:7):[];
+            if(l.length)part[k]=l;else ok=false;
+          }
+          continue;
+        }
+        const loc=base[k]||{},nw=patch[k]||{},add={};
+        for(const lk of Object.keys(loc))if(!(lk in nw))ok=false;
+        for(const nk of Object.keys(nw)){
+          if(nk in loc){if(JSON.stringify(loc[nk])!==JSON.stringify(nw[nk]))ok=false;}
+          else add[nk]=nw[nk];
+        }
+        if(Object.keys(add).length)part[k]=add;
+      }
+      if(ok&&Object.keys(part).length){
+        clampLogData(part);
+        try{
+          await S.db.doc('logs/'+uid).set(part,{merge:true},{onLateError:e=>logLateError(e,patch,msg,uid)});
+          const nx=Object.assign({},base);
+          for(const k of Object.keys(part))nx[k]=MAP_KEYS.includes(k)?Object.assign({},base[k]||{},part[k]):part[k];
+          S.logs[uid]=nx;
+          if(msg)toast(msg);
+          if(uid===S.uid)render();
+          return;
+        }catch(e){/* refus : on retombe sur l'écriture complète ci-dessous */}
+      }
     }
     let cur=S.logs[uid]||{},data=build(cur,patch);
     try{
