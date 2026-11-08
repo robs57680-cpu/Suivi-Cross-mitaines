@@ -912,6 +912,10 @@ body:has(.bnx){overflow:hidden}
 .feed-card.th-cm{gap:0;padding:0;overflow:visible}
 .feed-card.th-cm>.bn{margin:0;width:100%;max-width:none;border-radius:2px}
 .feed-card.th-cm>.cm-foot{display:grid;gap:8px;padding:12px 16px 14px}
+/* 🚨 signalement : petit rond en bas à droite de n'importe quelle carte du fil, sans prendre de place (quel que soit le thème, la bannière ou le cadre) */
+section.feed-card>.rep-btn{position:absolute!important;left:auto!important;top:auto!important;right:6px!important;bottom:6px!important;width:30px!important;height:30px!important;min-height:0!important;max-width:none!important;margin:0!important;padding:0!important;display:flex!important;align-items:center;justify-content:center;border:0!important;border-radius:50%!important;background:rgba(0,0,0,.5)!important;box-shadow:none!important;color:#fff;font-size:15px;line-height:1;opacity:.75;cursor:pointer;z-index:9;text-shadow:none!important;-webkit-tap-highlight-color:transparent}
+section.feed-card>.rep-btn:hover,section.feed-card>.rep-btn:focus-visible{opacity:1}
+section.feed-card>.rep-btn.done{opacity:.4;filter:grayscale(.7)}
 /* avec un cadre, le cadre EST le contour : pas de trait gris de la carte autour */
 body section.feed-card.th-cm:has(>.bn.has-frame){border:0;background:none;box-shadow:none;border-radius:0}
 /* bannière modulaire plus haute : tout est dedans (avatar, nom, plaque, résultats, réactions, points, titre de la séance et date) */
@@ -2245,6 +2249,48 @@ body[data-tab=profile] .bb{width:42px;height:14px}
 .pf2-xp .xl{font:700 11px var(--f-mono,monospace);letter-spacing:.06em;color:#2ad4ff}
 .pf2-xp .pf2-bar{flex:1;height:8px}
 .pf2-xp .xv{font:700 11px var(--f-mono,monospace);color:var(--muted);white-space:nowrap}
+button.pf2-xp{width:calc(100% - 8px);background:none;border-left:0;border-right:0;border-bottom:0;padding:6px 0 0;color:inherit;font:inherit;cursor:pointer;text-align:left;-webkit-tap-highlight-color:transparent}
+.pf2-barw{position:relative;flex:1;display:flex;align-items:center;height:14px}
+.pf2-barw .pf2-bar{flex:1}
+.pf2-dot{position:absolute;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:var(--surface,#fff);border:1.5px solid #8b8fa0;box-sizing:border-box;pointer-events:none}
+.pf2-dot.on{background:#fff;border-color:#ff2d6f}
+.pf2-xp .xv i{font-style:normal;color:#2ad4ff;margin-left:3px}
+/* passe d'XP */
+.reward-pop.bp-ov{display:flex;flex-direction:column;justify-content:center;align-items:stretch;place-items:stretch;padding:max(12px,env(safe-area-inset-top)) 0 max(12px,env(safe-area-inset-bottom));overflow:hidden;overscroll-behavior:contain;background:radial-gradient(circle at 0 0,#ff1f7acc 0,transparent 34%),radial-gradient(circle at 100% 0,#ff6a1fcc 0,transparent 30%),radial-gradient(circle at 100% 100%,#19d3ffaa 0,transparent 34%),radial-gradient(circle at 0 100%,#ff1f7a88 0,transparent 30%),#0d0e12;color:#fff;z-index:90}
+.reward-pop.bp-ov>*{width:100%;max-width:760px;margin-left:auto;margin-right:auto;box-sizing:border-box}
+.bp-top{display:flex;align-items:center;gap:12px;padding:0 14px 10px}
+.bp-hex{flex:none;width:52px;height:58px;display:grid;place-items:center}
+.bp-hex svg{grid-area:1/1;width:100%;height:100%}
+.bp-hex b{grid-area:1/1;font:italic 800 20px var(--f-display,sans-serif);color:#fff;text-shadow:0 2px 0 #0006}
+.bp-val{flex:1;min-width:0;font:italic 800 clamp(24px,8vw,38px) var(--f-display,sans-serif);letter-spacing:.01em;white-space:nowrap}
+.bp-val small{font-size:.6em;opacity:.85;margin-left:4px}
+.bp-x{flex:none;width:40px;height:40px;border-radius:50%;border:1px solid #fff4;background:#0008;color:#fff;font-size:20px;cursor:pointer;display:grid;place-items:center}
+.bp-track{width:100%;min-width:0;--bpw:64px;--bpg:10px;--bpp:12px;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none;overscroll-behavior-x:contain}
+.bp-track::-webkit-scrollbar{display:none}
+.bp-in{position:relative;display:flex;align-items:flex-start;width:max-content;padding:34px var(--bpp) 8px}
+.bp-me{position:absolute;top:4px;transform:translateX(-50%);z-index:3;display:grid;justify-items:center;pointer-events:none}
+.bp-me span{background:linear-gradient(90deg,#ff2d6f,#ff6a1f);color:#fff;font:700 10px var(--f-mono,monospace);padding:3px 7px;border-radius:99px;white-space:nowrap;box-shadow:0 2px 8px #0008}
+.bp-me i{width:0;height:0;border:5px solid transparent;border-top-color:#ff4d4d;border-bottom:0}
+.bp-c{flex:none;width:var(--bpw);background:none;border:0;padding:0;color:inherit;font:inherit;cursor:pointer;display:grid;gap:6px;justify-items:center;-webkit-tap-highlight-color:transparent}
+.bp-box{position:relative;width:var(--bpw);height:var(--bpw);box-sizing:border-box;border:2px solid #4a4e60;border-radius:10px;background:linear-gradient(160deg,#2b2e3b,#1b1d27);display:grid;place-items:center;overflow:hidden;clip-path:polygon(9px 0,calc(100% - 9px) 0,100% 9px,100% calc(100% - 9px),calc(100% - 9px) 100%,9px 100%,0 calc(100% - 9px),0 9px)}
+.bp-box.got{border-color:#ff4d8d;background:linear-gradient(160deg,#4a2240,#241a2e)}
+.bp-box.lock .bp-art{filter:grayscale(.75) brightness(.7)}
+.bp-art{width:78%;height:78%;display:grid;place-items:center}
+.bp-art .reward-art{width:100%;height:100%;border:0;border-radius:6px;background:none;font-size:clamp(20px,7vw,30px)}
+.bp-art img,.bp-art video{width:100%;height:100%;object-fit:contain;max-height:none;display:block;border-radius:4px}
+.bp-gift{width:56%;height:56%;color:#59607a;opacity:.8}
+.bp-st{position:absolute;right:3px;bottom:2px;font-size:11px;line-height:1}
+.bp-n{position:absolute;left:3px;top:2px;font:700 10px var(--f-mono,monospace);color:#fff;background:#000a;border-radius:6px;padding:1px 4px}
+.bp-xp{font:italic 800 11px var(--f-display,sans-serif);color:#e8eaf2;background:#14151c;border:1px solid #4a4e60;border-radius:6px;padding:3px 0;width:100%;text-align:center;box-sizing:border-box;white-space:nowrap}
+.bp-c.sel .bp-box{outline:2px solid #19d3ff;outline-offset:2px}
+.bp-c.sel .bp-xp{border-color:#19d3ff;color:#19d3ff}
+.bp-cn{flex:none;width:var(--bpg);height:8px;margin-top:calc(var(--bpw)/2 - 4px);background:#3a3e4e;position:relative;overflow:hidden}
+.bp-cn i{display:block;height:100%;background:linear-gradient(90deg,#ff2d6f,#ff6a1f)}
+.bp-det{margin:6px 14px 0;padding:12px 14px;border:1px solid #fff3;border-radius:10px;background:#0009;display:grid;gap:8px;min-height:56px}
+.bp-dr{display:grid;gap:2px}
+.bp-dr b{font-size:15px}
+.bp-dr span{font-size:12px;color:#b9bdcc}
+.bp-hint{margin:8px 14px 0;font-size:11px;color:#9aa0b4;text-align:center}
 .pf2 .pf2-tab{padding:6px 2px 5px;font-size:10px;gap:2px}
 .pf2 .pf2-tab .pf2-ico{font-size:17px}
 .pf2-ch{margin-bottom:4px;gap:8px}
@@ -4154,17 +4200,17 @@ bWw+Cg==
 <script type="module">
 /* Le SDK Firebase est chargé en dynamique : la page s'affiche tout de suite, même si le réseau est lent.
    Au bout de 3 s sans réponse, l'appli bascule en mode cache (dernières données enregistrées sur l'appareil). */
-let firebaseConfig=null,appCheckSiteKey=null,initializeAppCheck=null,ReCaptchaEnterpriseProvider=null,initializeApp,getAuth,initializeAuth,indexedDBLocalPersistence,browserLocalPersistence,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup,signInWithCredential,deleteUser,EmailAuthProvider,reauthenticateWithCredential,OAuthProvider,reauthenticateWithPopup,revokeAccessToken,getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc,disableNetwork,enableNetwork,query,orderBy,limit,where,getDocs;
+let firebaseConfig=null,appCheckSiteKey=null,initializeAppCheck=null,ReCaptchaEnterpriseProvider=null,CustomProvider=null,initializeApp,getAuth,initializeAuth,indexedDBLocalPersistence,browserLocalPersistence,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup,signInWithCredential,deleteUser,EmailAuthProvider,reauthenticateWithCredential,OAuthProvider,reauthenticateWithPopup,revokeAccessToken,getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc,disableNetwork,enableNetwork,query,orderBy,limit,where,getDocs,getDoc;
 const FB_URL='https://www.gstatic.com/firebasejs/10.14.1/';
 const sdkPromise=(async()=>{
   const [cfg,a,u,f,ac]=await Promise.all([import('./firebase-config.js').catch(()=>({})),import(FB_URL+'firebase-app.js'),import(FB_URL+'firebase-auth.js'),import(FB_URL+'firebase-firestore.js'),import(FB_URL+'firebase-app-check.js').catch(()=>({}))]);
   firebaseConfig=cfg.firebaseConfig||null;
   window.__fbState='sdk chargé';window.__dbg&&window.__dbg('SDK Firebase chargé ; firebase-config.js '+(cfg.firebaseConfig?'trouvé':'ABSENT ou vide')+' ; clé App Check '+(cfg.appCheckSiteKey?'oui':'non'));
   /* App Check (anti-abus) : actif seulement si firebase-config.js exporte appCheckSiteKey ; sans clé, l'appli fonctionne comme avant */
-  appCheckSiteKey=cfg.appCheckSiteKey||null;initializeAppCheck=ac.initializeAppCheck||null;ReCaptchaEnterpriseProvider=ac.ReCaptchaEnterpriseProvider||null;
+  appCheckSiteKey=cfg.appCheckSiteKey||null;initializeAppCheck=ac.initializeAppCheck||null;ReCaptchaEnterpriseProvider=ac.ReCaptchaEnterpriseProvider||null;CustomProvider=ac.CustomProvider||null;
   ({initializeApp}=a);
   ({getAuth,initializeAuth,indexedDBLocalPersistence,browserLocalPersistence,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup,signInWithCredential,deleteUser,EmailAuthProvider,reauthenticateWithCredential,OAuthProvider,reauthenticateWithPopup,revokeAccessToken}=u);
-  ({getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc,disableNetwork,enableNetwork,query,orderBy,limit,where,getDocs}=f);
+  ({getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc,disableNetwork,enableNetwork,query,orderBy,limit,where,getDocs,getDoc}=f);
 })();
 sdkPromise.catch(e=>{window.__fbState='SDK ÉCHEC';window.__dbg&&window.__dbg('SDK Firebase ÉCHEC',e);});
 
@@ -4174,17 +4220,17 @@ let auth=null;
    qu'une fois le serveur joint. Sans précaution, la file d'attente de run() resterait bloquée. softWrite rend donc la main tout de
    suite hors ligne, et au plus tard après 2,5 s en connexion lente ; si le serveur refuse la saisie plus tard, onLateError prévient. */
 const netState={shown:0,onChange:null,onLateError:null};
-function softWrite(p){
+function softWrite(p,meta){
   const offline=navigator.onLine===false;
   let shown=false,late=false;
   const t=setTimeout(()=>{shown=true;netState.shown++;if(netState.onChange)netState.onChange();},800);
   p.then(()=>{clearTimeout(t);if(shown){netState.shown--;if(netState.onChange)netState.onChange();}},
-         e=>{clearTimeout(t);if(shown){netState.shown--;if(netState.onChange)netState.onChange();}if(late&&netState.onLateError)netState.onLateError(e);});
+         e=>{clearTimeout(t);if(shown){netState.shown--;if(netState.onChange)netState.onChange();}if(late){if(meta&&meta.onLateError)meta.onLateError(e);else if(netState.onLateError)netState.onLateError(e);}});
   if(offline){late=true;return Promise.resolve();}
   return Promise.race([p,new Promise(res=>setTimeout(()=>{late=true;res();},2500))]);
 }
 function makeDb(fdb){
-  const wrapDoc=r=>({id:r.id,set:(d,o)=>softWrite(o&&o.merge?setDoc(r,d,{merge:true}):setDoc(r,d)),delete:()=>softWrite(deleteDoc(r)),
+  const wrapDoc=r=>({id:r.id,set:(d,o,m)=>softWrite(o&&o.merge?setDoc(r,d,{merge:true}):setDoc(r,d),m),delete:()=>softWrite(deleteDoc(r)),get:()=>getDoc(r).then(x=>({exists:x.exists(),data:()=>x.data()})),
     onSnapshot:(n,e)=>onSnapshot(r,s=>n({exists:s.exists(),data:()=>s.data(),fromCache:!!(s.metadata&&s.metadata.fromCache)}),e)});
   return {
     doc:p=>wrapDoc(doc(fdb,p)),
@@ -4207,7 +4253,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-07.6';
+const APP_VERSION='2026-11-08.3';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -4270,9 +4316,9 @@ function errMsg(e){
       dbg=' [coach] '+(pb.length?'Données refusées par les règles du fichier : '+pb.join(' ; ')+'.':'Ces données sont acceptées par le fichier firestore.rules : les règles publiées dans Firebase ne sont sans doute pas à jour (republie-les).')+' Avatar : '+JSON.stringify(av).replace(/,/g,', ').slice(0,400);
       console.warn('Écriture refusée',e&&e.code,e&&e.message,av);
     }}catch(x){}
-    return 'Écriture refusée. Vérifie que tu es connecté et que les règles de sécurité sont publiées.'+dbg;
+    return S.owner?'Écriture refusée. Vérifie que tu es connecté et que les règles de sécurité sont publiées.'+dbg:'Enregistrement refusé par le serveur. Ferme puis rouvre l’appli, et réessaie. Si ça recommence, préviens le coach avec « Signaler un bug ».';
   }
-  if(c==='unavailable')return 'Pas de connexion. Réessaie dans un instant.';
+  if(c==='unavailable')return 'Pas de connexion. Ta saisie est gardée sur ton téléphone et sera envoyée au retour du réseau.';
   return 'Enregistrement impossible, réessaie.';
 }
 
@@ -5294,7 +5340,7 @@ function movBackGo(){
 
 /* ---------- écritures ---------- */
 let chain=Promise.resolve();
-function run(fn){chain=chain.then(fn).catch(e=>{toast(errMsg(e),true);});return chain;}
+function run(fn){chain=chain.then(fn).catch(e=>{S._runErr=e;toast(errMsg(e),true);});return chain;}
 const saveProf=()=>run(async()=>{await S.db.doc('users/'+S.uid+'/private/profile').set({prs:S.prof.prs||{},sex:S.prof.sex||'',birth:S.prof.birth||'',health:S.prof.health||null,consent:S.prof.consent||null,terms:S.prof.terms||null,genEx:S.prof.genEx||null,genAll:S.prof.genAll||null,words:S.prof.words||[],mvcfg:S.prof.mvcfg||{},revd:S.prof.revd||{},intf:S.prof.intf||{},intn:S.prof.intn||{},intCustom:Array.isArray(S.prof.intCustom)?S.prof.intCustom:[],pace:S.prof.pace||{},spread:S.prof.spread||{},weight:Number(S.prof.weight)>0?Number(S.prof.weight):0,plan:S.prof.plan||null,pend:S.prof.pend||{},rewardDraft:String(S.prof.rewardDraft||''),rewardPlan:S.prof.rewardPlan||null,pf:S.prof.pf||{},trash:Array.isArray(S.prof.trash)?S.prof.trash:[],blocked:Array.isArray(S.prof.blocked)?S.prof.blocked.slice(0,200):[]});});
 const needPseudo=()=>S.uid&&S.loaded.logs&&!(S.logs[S.uid]&&S.logs[S.uid].pseudo);
 /* groupes : un seul document config/groups {list:[{id,name}], of:{uid:idDuGroupe}}, écrit par le coach seul */
@@ -5494,6 +5540,23 @@ function avClean(uid,av){
   return out;
 }
 /* uid facultatif : le coach peut écrire dans le journal d'un autre athlète (règles Firestore à adapter, voir README) */
+/* Une saisie faite hors ligne (ou en connexion lente) est refusée par le serveur au retour du réseau : le plus souvent, la copie gardée sur le téléphone était
+   en retard sur le serveur (autre appareil, coins ou objets ajoutés entre-temps) et le document complet réécrit ne respecte plus les règles.
+   On relit alors la version du serveur et on ré-applique la saisie UNE fois ; le coach reçoit une alerte pour comprendre si ça se répète. */
+async function logLateError(e,patch,msg,uid){
+  const code=e&&e.code;
+  if(!S.owner&&(Date.now()-(S._lateAlertAt||0))>3e5){S._lateAlertAt=Date.now();coachAlert(uid,'Saisie refusée','Saisie hors ligne ou lente refusée par le serveur ('+(code||'?')+'). '+(patch&&patch._retried?'Après une nouvelle tentative. ':'Nouvelle tentative automatique. ')+'Version '+APP_VERSION+'.');}
+  if(code!=='permission-denied'||(patch&&patch._retried)){if(netState.onLateError)netState.onLateError(e);return;}
+  let srv={};
+  try{const sn=await S.db.doc('logs/'+uid).get();if(sn.exists){srv=sn.data()||{};S.logs[uid]=Object.assign({},srv);}}catch(x){}
+  const p=Object.assign({},patch,{_retried:true});
+  delete p.coinAdj; /* réglé par le coach uniquement */
+  if(p.coinGot)p.coinGot=Object.assign({},srv.coinGot||{},p.coinGot);
+  if(p.shopBuy)p.shopBuy=Object.assign({},srv.shopBuy||{},p.shopBuy);
+  S._runErr=null;
+  await saveLog(p,null,uid);
+  if(!S._runErr)toast('Ta saisie faite hors ligne a bien été enregistrée.');
+}
 function saveLog(patch,msg,uid){
   uid=uid||S.uid;
   return run(async()=>{
@@ -5547,7 +5610,7 @@ function saveLog(patch,msg,uid){
     if(sbu&&typeof sbu==='object'&&Object.keys(sbu).length)data.shopBuy=sbu; /* objets achetés au shop : {idObjet: prix payé} */
     const gw=patch.groupWish!==undefined?patch.groupWish:cur.groupWish;
     if(typeof gw==='string'&&gw)data.groupWish=gw; /* souhait de groupe : 'any' (indifférent) ou id du groupe */
-    await S.db.doc('logs/'+uid).set(data);
+    await S.db.doc('logs/'+uid).set(data,undefined,{onLateError:e=>logLateError(e,patch,msg,uid)});
     // Keep the local log synchronized so the reward popup does not reopen.
     S.logs[uid]=Object.assign({},cur,data);delete S.logs[uid].weight;if(!data.avatar)delete S.logs[uid].avatar;if(!data.groupWish)delete S.logs[uid].groupWish;if(!data.motto)delete S.logs[uid].motto;if(!data.troph)delete S.logs[uid].troph;if(!data.focus)delete S.logs[uid].focus;
     if(msg)toast(msg);
@@ -5879,18 +5942,38 @@ function reportPost(uid,date){
   const id=uid+'__'+date+'__'+S.uid,d={to:uid,date,by:S.uid,at:new Date().toISOString()};
   S.reports[id]=d;S.confirm=null;run(async()=>{await S.db.doc('reports/'+id).set(d);toast('Merci, la publication a été signalée au coach.');});render();
 }
+/* signalement : un petit 🚨 posé en bas à droite de la carte (il ne prend pas de place et n'agrandit pas la bannière) ; le choix (signaler / masquer) s'ouvre dans une fenêtre */
 function repLink(uid,date){
   if(uid===S.uid)return null;
-  const kb='bl-'+uid,k='rl-'+uid+date,done=!!S.reports[uid+'__'+date+'__'+S.uid];
-  const cancel=h('button',{class:'btn sm',type:'button',onclick:()=>{S.confirm=null;render();}},'Annuler');
-  if(S.confirm===kb)return h('div',{class:'row',style:'justify-content:flex-end'},h('span',{class:'hint'},'Masquer cet athlète ? Ses publications et ses réactions ne s’afficheront plus chez toi. Tu pourras le réafficher depuis ton profil, section « Athlètes masqués ».'),h('button',{class:'btn sm danger',type:'button',onclick:()=>blockAthlete(uid,true)},'Masquer'),cancel);
-  if(S.confirm===k)return h('div',{style:'display:grid;gap:8px;justify-items:end'},
-    done?h('p',{class:'hint',style:'margin:0'},'Publication signalée, merci.'):h('span',{class:'hint'},'Que veux-tu faire ?'),
-    h('div',{class:'row',style:'justify-content:flex-end;flex-wrap:wrap'},
-      done?null:h('button',{class:'btn sm danger',type:'button',onclick:()=>reportPost(uid,date)},'⚑ Signaler la publication'),
-      h('button',{class:'btn sm',type:'button',onclick:()=>{S.confirm=kb;render();}},'🚫 Masquer cet athlète'),
-      cancel));
-  return h('div',{style:'display:flex;justify-content:flex-end'},h('button',{class:'link',type:'button','aria-label':done?'Publication signalée : options':'Signaler cette publication ou masquer cet athlète',onclick:()=>{S.confirm=k;render();}},done?'⚑ Signalée':'⚑ Signaler'));
+  const done=!!S.reports[uid+'__'+date+'__'+S.uid];
+  return h('button',{class:'rep-btn'+(done?' done':''),type:'button',title:done?'Publication signalée':'Signaler ou masquer','aria-label':done?'Publication signalée : options':'Signaler cette publication ou masquer cet athlète',onclick:e=>{e.stopPropagation();openReport(uid,date);}},'🚨');
+}
+function openReport(uid,date){
+  if(document.getElementById('rep-ov'))return;
+  const done=!!S.reports[uid+'__'+date+'__'+S.uid];
+  const esc=e=>{if(e.key==='Escape')close();};
+  const close=()=>{ov.remove();document.removeEventListener('keydown',esc);};
+  let ask=false;
+  const body=h('div',{class:'stack'});
+  const ov=h('div',{class:'ov',id:'rep-ov',style:'z-index:70',onclick:e=>{if(e.target===ov)close();}},
+    h('div',{class:'sheet',role:'dialog','aria-modal':'true','aria-label':'Signaler ou masquer'},body));
+  const draw=()=>{
+    if(ask){
+      body.replaceChildren(h('p',{class:'eyebrow'},'Fil d’actualité'),h('h2',{class:'wtitle'},'Masquer cet athlète ?'),
+        h('p',{class:'hint'},'Ses publications et ses réactions ne s’afficheront plus chez toi. Tu pourras le réafficher depuis ton profil, section « Athlètes masqués ».'),
+        h('div',{class:'row',style:'justify-content:flex-end'},
+          h('button',{class:'btn sm',type:'button',onclick:()=>{ask=false;draw();}},'Retour'),
+          h('button',{class:'btn sm danger',type:'button',onclick:()=>{close();blockAthlete(uid,true);}},'Masquer')));
+      return;
+    }
+    body.replaceChildren(...[h('p',{class:'eyebrow'},'Fil d’actualité'),h('h2',{class:'wtitle'},'Un souci avec cette publication ?'),
+      done?h('p',{class:'hint',style:'margin:0'},'Publication signalée, merci.'):null,
+      h('div',{class:'stack'},
+        done?null:h('button',{class:'btn danger',type:'button',onclick:()=>{close();reportPost(uid,date);}},'🚨 Signaler la publication'),
+        h('button',{class:'btn',type:'button',onclick:()=>{ask=true;draw();}},'🚫 Masquer cet athlète'),
+        h('button',{class:'btn',type:'button',onclick:close},'Annuler'))].filter(Boolean));
+  };
+  draw();document.body.append(ov);document.addEventListener('keydown',esc);
 }
 function reportsPanel(){
   const ps=repPosts(),wrap=h('div',{class:'stack'},h('b',{},'Signalements à vérifier'+(ps.length?' ('+ps.length+')':'')));
@@ -8092,7 +8175,7 @@ function viewFeed(){
       const pts=feedPts(w,e,lg);
       const cmHead=cmEl(uid,{avatar:avwrap,open:()=>openAthlete(uid),res:results.length?h('div',{class:'feed-result'},results):h('p',{class:'muted'},'Résultat non renseigné.'),rx,pts:pts?pts.textContent:null,msg:e.message||'',ses:[h('h2',{class:'wtitle'},w.title,feedLvBadge(m,e)),h('span',{class:'sub feed-wod-date'},'Réalisée le '+cap(fmtShort(dfmt(new Date(e.at)))))]});
       const rl=repLink(uid,date);
-      el.append(h('section',{class:'card feed-card th-cm'},cmHead,rl?h('div',{class:'cm-foot'},rl):null));
+      el.append(h('section',{class:'card feed-card th-cm'},cmHead,rl));
       return;
     }
     el.append(h('section',{class:'card feed-card'+cardTheme(uid)+(fb?' feed-has-badge':'')},head,fbEl,h('div',{class:'feed-wod-head'},h('h2',{class:'wtitle',style:'font-size:24px;margin:0'},w.title,feedLvBadge(m,e)),h('span',{class:'sub feed-wod-date'},'Réalisée le '+cap(fmtShort(dfmt(new Date(e.at)))))),results.length?h('div',{class:'feed-result'},results):h('p',{class:'muted'},'Résultat détaillé non renseigné.'),e.message?h('p',{class:'feed-message',style:'white-space:pre-wrap;overflow-wrap:anywhere;margin:0'},e.message):null,h('div',{class:'rxwrap'},rx,feedPts(w,e,lg)),repLink(uid,date)));
@@ -9457,7 +9540,7 @@ function viewAthlete(uid){
   if(!me){el.append(h('div',{class:'empty'},h('p',{},'Athlète introuvable.')));return el;}
   /* haut de page identique à « Mon profil » : avatar, pseudo, groupe, titre, badge, puis la ligne de chiffres et la barre d'XP */
   const xp=Number(me.weighted)||0,nextReward=(p.rewards||[]).filter(r=>Number(r.xp)>xp&&rwFits(r,uid)).sort((a,b)=>Number(a.xp)-Number(b.xp))[0];
-  el.append(pf2HeadOther(uid,me.pseudo),pf2Stats(me,board,rank,xp,nextReward));
+  el.append(pf2HeadOther(uid,me.pseudo),pf2Stats(me,board,rank,xp,nextReward,uid));
   if(S.owner&&uid!==S.uid)el.append(h('div',{class:'row'},h('button',{class:'btn primary',type:'button',id:'dm-start',onclick:()=>dmOpenWith(uid)},'Envoyer un message')));
   if(uid!==S.uid&&isBlocked(uid))el.append(h('div',{class:'row'},h('button',{class:'btn sm',type:'button',id:'blk-toggle',onclick:()=>blockAthlete(uid,false)},'Réafficher cet athlète')));
   /* objectifs choisis : priorités + nombre de séances par semaine */
@@ -12064,14 +12147,110 @@ function pf2Head(pseudo,pf){
   return h('section',{class:'card pf2-head','data-tour':'profhead'},pfAvBox(av),
     h('div',{class:'pf2-meta'},h('div',{class:'pf2-name'},h('h1',{},pseudo||'Mon profil'),edit),logo,l2,motto,pinRow));
 }
-function pf2Stats(me,board,rank,xp,nr){
+/* ---------- barre d'XP + passe d'XP ---------- */
+const XP_BAR_MAX=1150; /* fin de la barre quand la saison n'a aucune récompense ; sinon la barre va jusqu'à la récompense la plus haute */
+const BP_TYPE={title:'Titre',frame:'Encadré de bannière',bg:'Fond de bannière',avatar:'Cosmétique avatar',avframe:'Cadre d’avatar',joker:'Joker',coins:'Coins'};
+function bpRewards(uid){
+  const p=selPeriod();
+  return ((p&&p.rewards)||[]).filter(r=>Number.isFinite(Number(r.xp))&&Number(r.xp)>=0&&rwFits(r,uid)).sort((a,b)=>Number(a.xp)-Number(b.xp));
+}
+const bpMaxOf=rw=>rw.length?Math.max(1,Number(rw[rw.length-1].xp)):XP_BAR_MAX;
+/* une carte par tranche de 20 XP, plus une carte à l'XP exacte de chaque récompense qui tombe entre deux tranches */
+function bpSlots(rw,mx){
+  const step=20*Math.max(1,Math.ceil(mx/20/300)),set=new Set();
+  for(let x=step;x<=mx;x+=step)set.add(x);
+  rw.forEach(r=>set.add(Number(r.xp)));
+  return [...set].sort((a,b)=>a-b).map(x=>({x,rs:rw.filter(r=>Number(r.xp)===x)}));
+}
+function bpGift(){
+  const e=h('div',{class:'bp-gift','aria-hidden':'true'});
+  e.innerHTML='<svg viewBox="0 0 48 48" width="100%" height="100%" fill="currentColor"><path d="M10 22h28v20a2 2 0 0 1-2 2H12a2 2 0 0 1-2-2z"/><path d="M8 15h32a2 2 0 0 1 2 2v4a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-4a2 2 0 0 1 2-2z"/><path d="M24 15c-3-6-10-8-11-4s5 4 11 4zm0 0c3-6 10-8 11-4s-5 4-11 4z" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linejoin="round"/><rect x="22" y="15" width="4" height="29" fill="#1b1d27" opacity=".55"/></svg>';
+  return e;
+}
+function bpArt(r){
+  const w=h('div',{class:'bp-art'});
+  if(r.type==='coins'&&!r.image){
+    /* image de l'animation « coins gagnés » : première image de la vidéo, sinon la pièce de l'appli */
+    const fb=()=>h('img',{src:'assets/embedded/coin-cm.webp',alt:'Coins',draggable:'false'});
+    const v=document.createElement('video');
+    v.muted=true;v.defaultMuted=true;v.playsInline=true;v.preload='metadata';v.tabIndex=-1;
+    v.setAttribute('playsinline','');v.setAttribute('aria-hidden','true');v.setAttribute('muted','');
+    v.src=COIN_VIDEO+'#t=0.5';
+    v.onerror=()=>{if(v.parentNode)v.replaceWith(fb());};
+    w.append(v);
+    return w;
+  }
+  const art=rewardImage(r);
+  if(r.type==='joker'&&!r.image)art.textContent='🃏';
+  w.append(art);
+  return w;
+}
+function openXpPass(uid,xp){
+  if(document.querySelector('.bp-ov'))return;
+  const rw=bpRewards(uid),mx=bpMaxOf(rw),sl=bpSlots(rw,mx),PAD=12,G=10;
+  if(!sl.length)return;
+  let sel=sl.findIndex(s=>s.rs.length&&s.x>xp);if(sel<0)sel=sl.length-1;
+  const prevOv=document.body.style.overflow;
+  const ov=h('div',{class:'reward-pop bp-ov',role:'dialog','aria-modal':'true','aria-label':'Passe d’XP'});
+  const onKey=e=>{if(e.key==='Escape')close();};
+  const close=()=>{document.removeEventListener('keydown',onKey);window.removeEventListener('resize',onResize);document.body.style.overflow=prevOv;ov.remove();};
+  const hex=h('div',{class:'bp-hex','aria-hidden':'true'});
+  hex.innerHTML='<svg viewBox="0 0 52 58"><defs><linearGradient id="bphg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4d8d"/><stop offset="1" stop-color="#c2145c"/></linearGradient></defs><path d="M26 2l22 13v28L26 56 4 43V15z" fill="url(#bphg)" stroke="#ffd0e2" stroke-width="2.5" stroke-linejoin="round"/></svg>';
+  hex.append(h('b',{},'XP'));
+  const closeBtn=h('button',{type:'button',class:'bp-x','aria-label':'Fermer',onclick:close},'✕');
+  const top=h('div',{class:'bp-top'},hex,h('div',{class:'bp-val'},fmtN(xp)+' / '+fmtN(mx),h('small',{},'XP')),closeBtn);
+  const me=h('div',{class:'bp-me'},h('span',{},fmtN(xp)+' XP'),h('i',{}));
+  const cards=[],inner=h('div',{class:'bp-in'},me);
+  const det=h('div',{class:'bp-det','aria-live':'polite'});
+  const showDet=()=>{
+    const s=sl[sel],got=xp>=s.x;
+    if(!s.rs.length){det.replaceChildren(h('div',{class:'bp-dr'},h('b',{},fmtN(s.x)+' XP'),h('span',{},got?'Palier atteint.':'Encore '+fmtN(s.x-xp)+' XP pour atteindre ce palier.')),h('span',{class:'bp-hint',style:'margin:0;text-align:left'},'Pas de récompense à ce palier.'));return;}
+    det.replaceChildren(...s.rs.map(r=>{
+      const n=Math.max(0,Math.floor(Number(r.coins))||0);
+      const name=r.type==='coins'?(r.name||'Coins')+(n?' · +'+n+' coin'+(n>1?'s':''):''):(r.name||'Récompense');
+      return h('div',{class:'bp-dr'},h('b',{},name),h('span',{},(BP_TYPE[r.type]||'Récompense')+' · '+fmtN(s.x)+' XP · '+(got?'Débloquée ✓':'Encore '+fmtN(s.x-xp)+' XP')));
+    }));
+  };
+  const pick=i=>{sel=i;cards.forEach((c,k)=>c.classList.toggle('sel',k===i));showDet();};
+  sl.forEach((s,i)=>{
+    const got=xp>=s.x,has=s.rs.length>0;
+    const box=h('div',{class:'bp-box '+(got?'got':'lock')+(has?'':' empty')},has?bpArt(s.rs[0]):bpGift(),
+      s.rs.length>1?h('span',{class:'bp-n'},'×'+s.rs.length):null,
+      has?h('span',{class:'bp-st'},got?'✅':'🔒'):(got?h('span',{class:'bp-st'},'✔'):null));
+    const c=h('button',{type:'button',class:'bp-c'+(i===sel?' sel':''),'aria-label':fmtN(s.x)+' XP'+(has?' : '+(s.rs[0].name||'récompense'):''),onclick:()=>pick(i)},box,h('span',{class:'bp-xp'},fmtN(s.x)+' XP'));
+    cards.push(c);inner.append(c);
+    if(i<sl.length-1){const nx=sl[i+1].x,fr=Math.max(0,Math.min(1,(xp-s.x)/Math.max(0.0001,nx-s.x)));inner.append(h('div',{class:'bp-cn'},h('i',{style:'width:'+(fr*100)+'%'})));}
+  });
+  const track=h('div',{class:'bp-track'},inner);
+  ov.append(top,track,det,h('p',{class:'bp-hint'},'Fais défiler vers la droite pour voir les prochaines récompenses.'));
+  const lay=first=>{
+    const W=track.clientWidth||360,cw=Math.max(44,Math.floor((W-2*PAD-4*G)/5));
+    track.style.setProperty('--bpw',cw+'px');track.style.setProperty('--bpg',G+'px');track.style.setProperty('--bpp',PAD+'px');
+    const cx=i=>PAD+i*(cw+G)+cw/2;let x;
+    if(xp<sl[0].x)x=PAD+(sl[0].x>0?Math.max(0,xp)/sl[0].x:0)*(cw/2);
+    else{let i=sl.length-1;while(i>0&&sl[i].x>xp)i--;x=i>=sl.length-1?cx(sl.length-1):cx(i)+(xp-sl[i].x)/Math.max(0.0001,sl[i+1].x-sl[i].x)*(cw+G);}
+    me.style.left=x+'px';
+    if(first)track.scrollLeft=Math.max(0,x-W/2);
+  };
+  const onResize=()=>lay(false);
+  ov.addEventListener('click',e=>{if(e.target===ov)close();});
+  document.addEventListener('keydown',onKey);window.addEventListener('resize',onResize);
+  document.body.style.overflow='hidden';
+  document.body.append(ov);
+  showDet();lay(true);
+  requestAnimationFrame(()=>lay(true));
+  setTimeout(()=>{try{closeBtn.focus({preventScroll:true});}catch(e){}},50);
+}
+function pf2Stats(me,board,rank,xp,nr,uid){
+  uid=uid||S.uid;
   const st=(v,l,ico)=>h('div',{class:'pf2-st'},h('div',{class:'pf2-sv'},h('b',{},v),pfIco(ico)),h('span',{class:'lab'},l));
-  const pct=nr?Math.max(0,Math.min(100,xp/Math.max(1,Number(nr.xp))*100)):100;
+  const rw=bpRewards(uid),mx=bpMaxOf(rw),pct=Math.max(0,Math.min(100,xp/mx*100));
+  const dots=[...new Set(rw.map(r=>Number(r.xp)))].filter(x=>x>0&&x<=mx).map(x=>h('em',{class:'pf2-dot'+(xp>=x?' on':''),style:'left:'+(x/mx*100)+'%'}));
   return h('section',{class:'card pf2-stats'},
     h('div',{class:'pf2-sg'},st(fmtN(me.total),'points',PF_IC.crown),st(rank>=0&&me.sessions>0?posOfM(board.rows,me):'–','rang sur '+board.rows.filter(r=>r.sessions>0).length,PF_IC.trophy),st(me.sessions,'séances',PF_IC.cal),st(fmtN(me.perfAvg),'pts / metcon',PF_IC.bolt)),
-    h('div',{class:'pf2-xp',title:nr?'Prochaine récompense : '+(nr.name||'Récompense'):null},h('span',{class:'xl'},'XP'),
-      h('div',{class:'pf2-bar',role:'img','aria-label':nr?fmtN(Math.max(0,Number(nr.xp)-xp))+' XP avant la prochaine récompense':fmtN(xp)+' XP'},h('i',{style:'width:'+pct+'%'})),
-      h('span',{class:'xv'},nr?fmtN(xp)+' / '+fmtN(Number(nr.xp)):fmtN(xp)+' XP')));
+    h('button',{type:'button',class:'pf2-xp',id:'xp-open',title:nr?'Prochaine récompense : '+(nr.name||'Récompense'):'Voir le passe d’XP','aria-label':'Ouvrir le passe d’XP : '+fmtN(xp)+' sur '+fmtN(mx)+' XP',onclick:()=>openXpPass(uid,xp)},h('span',{class:'xl'},'XP'),
+      h('div',{class:'pf2-barw'},h('div',{class:'pf2-bar',role:'img','aria-label':fmtN(xp)+' XP sur '+fmtN(mx)},h('i',{style:'width:'+pct+'%'})),dots),
+      h('span',{class:'xv'},fmtN(xp)+' / '+fmtN(mx),h('i',{},'›'))));
 }
 function pf2Tabs(cur){
   const bs=PF_TABS.map(([k,l,ico])=>{
@@ -13212,6 +13391,37 @@ function metEstimate(p){
   return {T,R,roundTime,roundReps,rounds,unknown};
 }
 /* remplit les paliers du metcon (Rx, puis les autres niveaux adaptés) à partir de l'intensité choisie */
+/* le niveau change-t-il quelque chose qui joue sur le temps : reps, tours ou exercice remplacé par une variante ? */
+const lvAdapted=(p,lv)=>!!(rpOf(lv)||rdOf(lv)||mvVariantsOut(p,lv).length);
+/* copie du metcon avec les reps par exercice et le nombre de tours d'un niveau adapté (pour estimer SES paliers) */
+function lvEstP(p,lv){
+  const lines=String(p.content||'').split('\n').map(x=>x.trim()).filter(Boolean),dR=rdOf(lv),vars=mvVariantsOut(p,lv);
+  let so=0,sn=0;
+  /* exercice remplacé par sa variante cochée (la première, s'il y en a plusieurs) : le temps par rep de la variante sert au calcul */
+  const swap=t=>{
+    if(!vars.length)return t;
+    const tg=t.match(WTAG),base=t.replace(WTAG,'').trim();
+    const sp=mvSpans(base).filter(x=>vars.some(v=>v.from===x.name));
+    if(!sp.length)return t;
+    let o='',c=0;
+    for(const x of sp){const v=vars.find(y=>y.from===x.name);o+=base.slice(c,x.s)+v.to[0];c=x.e;}
+    return o+base.slice(c)+(tg?' '+tg[0].trim():'');
+  };
+  const out=lines.map((t,j)=>{
+    const n=repsN(t);
+    if(n!==null){
+      const d=Number((lv.dReps||{})[j])||0,k=Math.max(1,n+d);
+      so+=n;sn+=k;
+      if(d)t=t.replace(/^\d+/,String(k));
+    }
+    if(dR){const m=t.match(/^(\d+)(\s*(?:rounds?|tours?|rft)\b)/i);if(m)return swap(String(Math.max(1,+m[1]+dR))+t.slice(m[1].length));}
+    return swap(t);
+  });
+  const q=Object.assign({},p,{content:out.join('\n')});
+  const rr=Number(p.repsRound)||0;
+  if(rr>0&&so>0&&sn!==so)q.repsRound=String(Math.max(1,Math.round(rr*sn/so)));
+  return q;
+}
 function calcTiers(p){
   /* case « 20 paliers » : deux fois plus de paliers (20 à 1 pt) et la moitié de l'écart réglé dans « Configurer les mouvements » */
   const fine=!!p.fine,N=fine?20:10,mul=fine?0.5:1;
@@ -13230,46 +13440,55 @@ function calcTiers(p){
   if(!e||!(e.T>0)){toast('Je ne trouve pas de reps ni de mouvement dans le contenu.',true);return;}
   const ft=p.format==='FT',dur=parseNum(p.dur||'');
   if(!ft&&!(dur>0)){toast('Indique la durée de l’AMRAP (min) pour calculer les paliers.',true);return;}
-  /* mêmes paliers pour tous les niveaux : ce sont les variantes d'exercices qui font la différence */
-  /* For Time : les paliers se calculent comme s'il n'y avait pas de time cap. Un palier qui dépasse le time cap s'écrit en reps (ou tours + reps) atteintes au time cap. */
-  const ftOut={tiers:[],capTiers:[]};
-  if(ft){
-    const capS=dur>0?dur*60:0,times=spreadTimesPct(e.T*I.f,spreadPct('FT')*mul,0,N);
-    const cm={format:p.format,content:p.content,repsRound:Number(p.repsRound)||0,lineRounds:p.format==='FT'&&!!p.lineRounds};
-    const bnd=capBoundaries(cm,e),total=bnd.length?bnd[bnd.length-1]:e.R;
-    let prev=Infinity;
-    times.forEach((t,j)=>{
-      if(!(capS>0)||t<=capS){ftOut.tiers.push({t:fmtTime(t),p:tierPts(j,fine)});return;}
-      let v=capRepsAtFrac(cm,e,capS/t);
-      if(v===null)v=Math.floor(total*capS/t+1e-9);
-      if(v>=prev)v=prev-1;
-      if(v<1)return;
-      prev=v;ftOut.capTiers.push({t:capInput(cm,v),p:tierPts(j,fine)});
-    });
-  }
-  const build=k=>{
-    const out=[];
+  /* For Time : les paliers se calculent comme s'il n'y avait pas de time cap. Un palier qui dépasse le time cap s'écrit en reps (ou tours + reps) atteintes au time cap.
+     Un niveau « Adapté » dont les reps par exercice ou le nombre de tours changent reçoit SES paliers, calculés sur son propre contenu ; les autres niveaux reprennent ceux de Rx. */
+  const compute=(pp,e)=>{
+    const out={tiers:[],capTiers:[]};
     if(ft){
-      ftOut.tiers.forEach(x=>out.push({...x}));
+      const capS=dur>0?dur*60:0,times=spreadTimesPct(e.T*I.f,spreadPct('FT')*mul,0,N);
+      const cm={format:pp.format,content:pp.content,repsRound:Number(pp.repsRound)||0,lineRounds:pp.format==='FT'&&!!pp.lineRounds};
+      const bnd=capBoundaries(cm,e),total=bnd.length?bnd[bnd.length-1]:e.R;
+      let prev=Infinity,lastT=0;
+      times.forEach((t,j)=>{
+        if(!(capS>0)||t<=capS){out.tiers.push({t:fmtTime(t),p:tierPts(j,fine)});lastT=t;return;}
+        let v=capRepsAtFrac(cm,e,capS/t);
+        if(v===null)v=Math.floor(total*capS/t+1e-9);
+        if(v>=prev)v=prev-1;
+        if(v<1)return;
+        prev=v;out.capTiers.push({t:capInput(cm,v),p:tierPts(j,fine)});
+      });
+      /* pas de zone morte avant le time cap : quand des paliers existent au-delà du time cap, le dernier palier en temps est repoussé jusqu'au time cap
+         (ex. time cap 10:00 : 9:47 devient 10:00), sinon un athlète qui finit entre 9:47 et 10:00 ne marquerait rien */
+      if(capS>0&&out.capTiers.length&&out.tiers.length&&lastT<capS)out.tiers[out.tiers.length-1].t=fmtTime(capS);
     }else{
       const est=dur*60/(e.roundTime*I.f);
-      const tot=eqTotal(amrapModel(p)),rr=(tot>0)?tot:e.roundReps;
+      const tot=eqTotal(amrapModel(pp)),rr=(tot>0)?tot:e.roundReps;
       if(rr>0&&Number.isInteger(rr)){ /* paliers calculés en reps entières : même écart en % entre chaque palier, arrondi à la rep près */
-        amrapRepTiers(est,spreadPct('AMRAP')*mul,rr,N).forEach((v,j)=>out.push({t:(tot>0&&Number.isInteger(tot))?repsTxt(v,tot):tourTxt(Math.round(v/rr*100)/100),p:tierPts(j,fine)}));
-      }else spreadRounds(est,est*(1-(N-1)*spreadPct('AMRAP')*mul/100),spreadPct('AMRAP')*mul,N).forEach((v,j)=>out.push({t:tourTxt(v),p:tierPts(j,fine)}));
+        amrapRepTiers(est,spreadPct('AMRAP')*mul,rr,N).forEach((v,j)=>out.tiers.push({t:(tot>0&&Number.isInteger(tot))?repsTxt(v,tot):tourTxt(Math.round(v/rr*100)/100),p:tierPts(j,fine)}));
+      }else spreadRounds(est,est*(1-(N-1)*spreadPct('AMRAP')*mul/100),spreadPct('AMRAP')*mul,N).forEach((v,j)=>out.tiers.push({t:tourTxt(v),p:tierPts(j,fine)}));
     }
     return out;
   };
+  /* un niveau adapté (reps ou tours changés) ne peut avoir ses propres paliers que si « Mêmes paliers pour les 4 niveaux » est décochée : on la décoche */
+  let unsynced=false;
+  if(p.syncTiers&&p.levels.some((lv,k)=>k<3&&lv.mode==='custom'&&lvAdapted(p,lv))){p.syncTiers=false;unsynced=true;}
+  const rx=compute(p,e),res=[],own=[];
+  p.levels.forEach((lv,k)=>{
+    res[k]=rx;
+    if(k<3&&lv.mode==='custom'&&!p.syncTiers&&lvAdapted(p,lv)){
+      const pk=lvEstP(p,lv),ek=metEstimate(pk);
+      if(ek&&ek.T>0){res[k]=compute(pk,ek);own.push((lv.name||'').trim()||LEVEL_NAMES[k]);}
+    }
+  });
   p.levels.forEach((lv,k)=>{
     if(k<3&&(lv.mode==='off'||lv.mode==='same'||p.syncTiers))return;
-    lv.tiers=build(k);lv.pend=null;
+    lv.tiers=res[k].tiers.map(x=>({...x}));lv.pend=null;
   });
-  p.levels[3].tiers=build(3);p.levels[3].pend=null;
   if(ft){ /* paliers au-delà du time cap : reps réelles cumulées au time cap (affichées en tours + reps si le WOD a des tours) */
-    p.levels.forEach((lv,k)=>{if(k===3||(lv.mode==='custom'&&!p.syncTiers))lv.capTiers=ftOut.capTiers.length?ftOut.capTiers.map(c=>({...c})):blankCapTiers();});
+    p.levels.forEach((lv,k)=>{if(k===3||(lv.mode==='custom'&&!p.syncTiers))lv.capTiers=res[k].capTiers.length?res[k].capTiers.map(c=>({...c})):blankCapTiers();});
   }
-  const top=p.levels[3].tiers[0]||(ft&&ftOut.capTiers[0]?{t:ftOut.capTiers[0].t+' au time cap'}:{t:'—'});
-  p.estInfo=(ft?'Palier max ('+(fine?20:10)+' pts) : '+top.t+' pour tous les niveaux, '+I.l.toLowerCase()+'.'+(ftOut.capTiers.length?' '+ftOut.capTiers.length+' palier'+(ftOut.capTiers.length>1?'s':'')+' au-delà du time cap, écrit'+(ftOut.capTiers.length>1?'s':'')+' en reps (ou tours + reps) atteintes au time cap.':''):'Palier max ('+(fine?20:10)+' pts) : '+top.t+' tours pour tous les niveaux, '+I.l.toLowerCase()+'.')
+  const top=p.levels[3].tiers[0]||(ft&&rx.capTiers[0]?{t:rx.capTiers[0].t+' au time cap'}:{t:'—'});
+  p.estInfo=(ft?'Palier max ('+(fine?20:10)+' pts) : '+top.t+' pour Rx'+(own.length?'':' et tous les niveaux')+', '+I.l.toLowerCase()+'.'+(rx.capTiers.length?' '+rx.capTiers.length+' palier'+(rx.capTiers.length>1?'s':'')+' au-delà du time cap, écrit'+(rx.capTiers.length>1?'s':'')+' en reps (ou tours + reps) atteintes au time cap. Le dernier palier en temps va jusqu’au time cap.':'')+(own.length?' Paliers propres à '+own.join(', ')+' (reps, tours ou variantes adaptés)'+(unsynced?' : « Mêmes paliers pour les 4 niveaux » a été décochée.':'.'):''):'Palier max ('+(fine?20:10)+' pts) : '+top.t+' tours pour Rx'+(own.length?'':' et tous les niveaux')+', '+I.l.toLowerCase()+'.'+(own.length?' Paliers propres à '+own.join(', ')+' (reps, tours ou variantes adaptés)'+(unsynced?' : « Mêmes paliers pour les 4 niveaux » a été décochée.':'.'):''))
     +' Temps pur estimé '+fmtTime(Math.round(e.T))+' ('+fmtN(Math.round(e.R))+' reps)'+(ft?'':' par tour : '+fmtTime(Math.round(e.roundTime)))
     +(e.unknown.length?' · Mouvement non reconnu (3 s par rep supposées) : '+e.unknown.join(', '):'')+'. À ajuster à ta façon de coacher.'+(fine?' Mode 20 paliers : écart entre paliers divisé par 2, points de 20 à 1.':'');
   render();
@@ -14474,14 +14693,14 @@ function repsEditor(p,lv){
     const label=t.replace(WTAG,'').replace(/^\d+/,'').trim();
     rows.push(h('div',{class:'row',style:'align-items:center;gap:10px;flex-wrap:nowrap'},
       h('button',{type:'button',class:'btn sm','aria-label':'Moins de reps : '+label,disabled:cur<=1,onclick:()=>set(cur-st)},'−'),
-      h('b',{style:'min-width:40px;text-align:center'},String(cur)),
+      h('b',{style:'min-width:40px;text-align:center'},d?h('mark',{class:'varmk'},String(cur)):String(cur)),
       h('button',{type:'button',class:'btn sm','aria-label':'Plus de reps : '+label,onclick:()=>set(cur+st)},'+'),
-      h('span',{style:'flex:1;min-width:0;overflow-wrap:anywhere'},label+(d?' (Rx : '+n+')':''))));
+      h('span',{style:'flex:1;min-width:0;overflow-wrap:anywhere'},d?[h('mark',{class:'varmk',title:'Variante : '+n+' → '+cur+' reps'},String(cur)),' '+label,h('span',{class:'hint'},' (Rx : '+n+')')]:[String(n)+' '+label])));
   });
   if(!rows.length)return null;
   return h('div',{class:'field'},h('span',{class:'flabel'},'Reps par exercice'),
     h('div',{class:'stack',style:'gap:8px'},rows),
-    h('p',{class:'hint'},'Change le nombre de reps de chaque exercice pour ce niveau (le pas est de 1 jusqu’à 30, 5 jusqu’à 100, puis 25). Le nombre modifié passe en orange chez l’athlète, comme une variante d’exercice. Les paliers de points restent à régler pour ce niveau.'));
+    h('p',{class:'hint'},'Change le nombre de reps de chaque exercice pour ce niveau (le pas est de 1 jusqu’à 30, 5 jusqu’à 100, puis 25). Le nombre modifié passe en orange ici et chez l’athlète, comme une variante d’exercice. « Calculer les paliers » en tient compte : ce niveau reçoit ses propres paliers.'));
 }
 function wodEditor(modal){
   const d=S.coach.wod;
@@ -17028,9 +17247,22 @@ function startFirebase(){
   const bad=!firebaseConfig||!firebaseConfig.apiKey||String(firebaseConfig.apiKey).indexOf('COLLE')===0;
   if(bad){S.cacheMode=false;S.authReady=true;render();return;}
   const app=initializeApp(firebaseConfig);
-  /* appli native Capacitor : App Check (reCAPTCHA) ne fonctionne pas dans capacitor://localhost */
+  /* appli native Capacitor : reCAPTCHA ne fonctionne pas dans capacitor://localhost, d'où App Attest ci-dessous */
   const __native=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
-  /* App Check est en « Surveillance » côté Firebase : on l'ignore dans l'appli native (ne pas passer en « Appliquer » sans App Attest) */
+  /* appli iPhone : App Check passe par App Attest (Apple), grâce au plugin natif @capacitor-firebase/app-check. Le jeton natif est transmis au SDK web
+     (Firestore, Authentication) par un CustomProvider. Sans le plugin, ou en cas d'échec, l'appli fonctionne comme avant (App Check reste en « Surveillance » côté Firebase). */
+  if(__native&&initializeAppCheck&&CustomProvider){
+    try{
+      const CAP=window.Capacitor;
+      const AC=(typeof CAP.registerPlugin==='function')?CAP.registerPlugin('FirebaseAppCheck'):(CAP.Plugins&&CAP.Plugins.FirebaseAppCheck);
+      if(AC&&typeof AC.getToken==='function'){
+        let acInit=null;
+        const acReady=()=>acInit||(acInit=AC.initialize({isTokenAutoRefreshEnabled:true}).catch(()=>{}));
+        initializeAppCheck(app,{provider:new CustomProvider({getToken:async()=>{await acReady();const r=await AC.getToken({forceRefresh:false});return{token:r.token,expireTimeMillis:r.expireTimeMillis||(Date.now()+30*60*1000)};}}),isTokenAutoRefreshEnabled:true});
+      }
+    }catch(e){}
+  }
+  /* navigateur : reCAPTCHA Enterprise */
   if(!__native&&appCheckSiteKey&&initializeAppCheck&&ReCaptchaEnterpriseProvider){try{initializeAppCheck(app,{provider:new ReCaptchaEnterpriseProvider(appCheckSiteKey),isTokenAutoRefreshEnabled:true});}catch(e){}}
   auth=null;
   if(__native&&initializeAuth&&indexedDBLocalPersistence){
