@@ -4269,7 +4269,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-08.19';
+const APP_VERSION='2026-11-08.20';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -5643,9 +5643,36 @@ function avClean(uid,av){
 /* Une saisie faite hors ligne (ou en connexion lente) est refusée par le serveur au retour du réseau : le plus souvent, la copie gardée sur le téléphone était
    en retard sur le serveur (autre appareil, coins ou objets ajoutés entre-temps) et le document complet réécrit ne respecte plus les règles.
    On relit alors la version du serveur et on ré-applique la saisie UNE fois ; le coach reçoit une alerte pour comprendre si ça se répète. */
+/* Contrôle un document logs/{uid} comme le font les règles Firestore : renvoie la liste de ce qui serait refusé (pour l'alerte au coach). */
+function logRuleProblems(d){
+  const pb=[],OK=['pseudo','entries','goals','redos','ratios','sex','ageCat','badge','avatar','rewardSeen','rewardOwned','banner','annSeen','avSeen','jokers','recapSeen','mvSeen','subs','groupWish','motto','focus','troph','coinGot','coinAdj','shopBuy'];
+  const isMap=v=>!!v&&typeof v==='object'&&!Array.isArray(v),isStr=(v,a,b)=>typeof v==='string'&&v.length>=a&&v.length<=b;
+  try{
+    Object.keys(d).forEach(k=>{if(!OK.includes(k))pb.push('clé inconnue « '+k+' »');});
+    ['pseudo','entries','goals'].forEach(k=>{if(d[k]===undefined)pb.push('« '+k+' » manque');});
+    if(d.pseudo!==undefined&&!isStr(d.pseudo,1,24))pb.push('pseudo hors 1-24 caractères');
+    [['entries',2000],['goals',500],['ratios',60],['subs',300],['coinGot',2000],['shopBuy',300]].forEach(([k,n])=>{if(d[k]!==undefined&&(!isMap(d[k])||Object.keys(d[k]).length>n))pb.push(k+' : pas une carte ou plus de '+n+' entrées');});
+    if(d.redos!==undefined&&!isMap(d.redos))pb.push('redos : pas une carte');
+    [['rewardSeen',200],['rewardOwned',200],['annSeen',30],['avSeen',100],['mvSeen',200]].forEach(([k,n])=>{if(d[k]!==undefined&&(!Array.isArray(d[k])||d[k].length>n))pb.push(k+' : pas une liste ou plus de '+n);});
+    if(d.focus!==undefined&&(!Array.isArray(d.focus)||d.focus.length<1||d.focus.length>7))pb.push('focus hors 1-7');
+    if(d.troph!==undefined&&(!Array.isArray(d.troph)||d.troph.length<1||d.troph.length>4))pb.push('troph hors 1-4');
+    if(d.jokers!==undefined){if(!isMap(d.jokers)||Object.keys(d.jokers).some(k=>k!=='fire'&&k!=='top')||['fire','top'].some(k=>d.jokers[k]!==undefined&&(!Array.isArray(d.jokers[k])||d.jokers[k].length>200)))pb.push('jokers invalide');}
+    if(d.sex!==undefined&&d.sex!=='F'&&d.sex!=='H')pb.push('sex = « '+d.sex+' » (F ou H attendu)');
+    if(d.ageCat!==undefined&&d.ageCat!=='S'&&d.ageCat!=='V')pb.push('ageCat = « '+d.ageCat+' » (S ou V attendu)');
+    if(d.badge!==undefined&&!isStr(d.badge,0,80))pb.push('badge invalide');
+    if(d.groupWish!==undefined&&!isStr(d.groupWish,1,30))pb.push('groupWish hors 1-30');
+    if(d.motto!==undefined&&!isStr(d.motto,1,60))pb.push('motto hors 1-60');
+    if(d.recapSeen!==undefined&&!isStr(d.recapSeen,0,10))pb.push('recapSeen invalide');
+    if(d.coinAdj!==undefined&&(typeof d.coinAdj!=='number'||Math.abs(d.coinAdj)>100000))pb.push('coinAdj invalide');
+    const SL=['skin','hat','crown','shirt','pants','tattoo','hand','wrist','costume','theme'];
+    if(d.avatar!==undefined){if(!isMap(d.avatar))pb.push('avatar invalide');else Object.keys(d.avatar).forEach(k=>{if(k==='_preview'){const pr=d.avatar._preview;if(!isMap(pr)||Object.keys(pr).some(x=>!SL.includes(x)||!isMap(pr[x])||typeof pr[x].id!=='string'||pr[x].id.length>30||typeof pr[x].until!=='number'||Object.keys(pr[x]).sort().join()!=='id,until'))pb.push('avatar._preview invalide');}else if(!SL.includes(k))pb.push('avatar : clé inconnue « '+k+' »');else if(!isStr(d.avatar[k],0,30))pb.push('avatar.'+k+' invalide');});}
+    if(d.banner!==undefined){if(!isMap(d.banner))pb.push('banner invalide');else Object.keys(d.banner).forEach(k=>{if(!['title','frame','bg','avframe','cm'].includes(k))pb.push('banner : clé inconnue « '+k+' »');else if(k==='cm'){const c=d.banner.cm,L=['background','effect','logo','badge','frame','plate'];if(!isMap(c)||Object.keys(c).some(x=>!L.includes(x)||!isStr(c[x],0,80)))pb.push('banner.cm invalide');}else if(!isStr(d.banner[k],0,80))pb.push('banner.'+k+' invalide');});}
+  }catch(x){pb.push('contrôle impossible : '+x.message);}
+  return pb.length?pb:['aucun problème repéré dans le document (voir les règles publiées dans Firebase)'];
+}
 async function logLateError(e,patch,msg,uid){
   const code=e&&e.code;
-  if(!S.owner&&(Date.now()-(S._lateAlertAt||0))>3e5){S._lateAlertAt=Date.now();coachAlert(uid,'Saisie refusée','Saisie hors ligne ou lente refusée par le serveur ('+(code||'?')+'). '+(patch&&patch._retried?'Après une nouvelle tentative. ':'Nouvelle tentative automatique. ')+'Version '+APP_VERSION+'.');}
+  if(!S.owner&&(Date.now()-(S._lateAlertAt||0))>3e5){S._lateAlertAt=Date.now();coachAlert(uid,'Saisie refusée','Saisie hors ligne ou lente refusée par le serveur ('+(code||'?')+'). '+(patch&&patch._retried?'Après une nouvelle tentative. ':'Nouvelle tentative automatique. ')+'Version '+APP_VERSION+'. Champs écrits : '+Object.keys(patch||{}).filter(k=>k[0]!=='_').join(', ')+'. Document : '+logRuleProblems(S.logs[uid]||{}).join(' ; ').slice(0,500)+'.');}
   if(code!=='permission-denied'||(patch&&patch._retried)){if(netState.onLateError)netState.onLateError(e);return;}
   let srv={};
   try{const sn=await S.db.doc('logs/'+uid).get();if(sn.exists){srv=sn.data()||{};S.logs[uid]=Object.assign({},srv);}}catch(x){}
