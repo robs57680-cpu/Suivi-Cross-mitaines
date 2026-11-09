@@ -4710,6 +4710,18 @@ function bonusMetcon(p){
 }
 /* saison 1 (Bêta) : ses séances ne sont pas remplies correctement, elles ne servent jamais de source à une séance bonus */
 const bonusBetaSeason=q=>/beta/.test(norm(q.name||''))||seasonNum(q)===1;
+/* mouvements d'une partie (renforcement ou metcon) : ceux écrits dans le descriptif + les variantes (« OU ») qu'ils ont pour les niveaux.
+   Catalogue de base, sans le réglage de l'athlète, pour que la séance soit la même chez tout le monde. */
+function bonusMoves(p){
+  const base=mvDetect(p.content,true),out=new Set(base);
+  const vs=[].concat(Array.isArray(p.variants)?p.variants:[],...levelsOf(p).map(l=>Array.isArray(l.variants)?l.variants:[]));
+  for(const v of vs){
+    if(!v||!base.includes(v.from))continue;
+    (v.to||[]).forEach(n=>{const sp=mvSpans(String(n),true);if(sp.length)sp.forEach(x=>out.add(x.name));else out.add(norm(n).trim());});
+  }
+  return out;
+}
+const bonusClash=(a,b)=>{const sa=bonusMoves(a);for(const n of bonusMoves(b))if(sa.has(n))return true;return false;};
 function bonusBuild(day){
   const per=periodFor(day),mon=mondayOf(day);
   if(!per||per.virtual)return null;
@@ -4726,8 +4738,19 @@ function bonusBuild(day){
   if(!mets.length)return null;
   const rnd=bonusRng('bonus|'+day),pick=a=>a[Math.min(a.length-1,Math.floor(rnd()*a.length))];
   const parts=[];
-  if(renfos.length){const o=JSON.parse(JSON.stringify(pick(renfos)));o.label='P1';parts.push(o);}
-  const mo=bonusMetcon(pick(mets));mo.label='P'+(parts.length+1);parts.push(mo);
+  /* jamais le même exercice dans le renforcement et dans le metcon (variantes des niveaux comprises) : on tire le renforcement, puis un metcon qui n'a aucun mouvement en commun avec lui ;
+     si aucun metcon ne convient, on essaie le renforcement suivant ; si rien ne convient du tout, la séance n'a que le metcon */
+  let ro=null,mp=null;
+  if(renfos.length){
+    const i0=Math.min(renfos.length-1,Math.floor(rnd()*renfos.length));
+    for(let k=0;k<renfos.length&&!mp;k++){
+      const r=renfos[(i0+k)%renfos.length],ok=mets.filter(m=>!bonusClash(r,m));
+      if(ok.length){ro=r;mp=pick(ok);}
+    }
+  }
+  if(!mp)mp=pick(mets);
+  if(ro){const o=JSON.parse(JSON.stringify(ro));o.label='P1';parts.push(o);}
+  const mo=bonusMetcon(mp);mo.label='P'+(parts.length+1);parts.push(mo);
   return {date:day,title:'Séance bonus',base:BONUS_BASE,bonus:true,parts};
 }
 /* Pourquoi la séance bonus de la semaine n'existe pas (affiché au coach seul, dans l'onglet Séance) ; chaîne vide si elle existe ou si rien ne l'empêche. */
@@ -14416,10 +14439,12 @@ function mvGroup(name){
   return 'gym';
 }
 /* catalogue des mouvements reconnus : GLOSS + EXTRA + exercices du générateur + mouvements ajoutés par le coach */
-let _mvCat=null,_mvKey='';
-function mvCatalog(){
-  const key=Object.keys(mvCfg()).sort().join('|');
-  if(_mvCat&&_mvKey===key)return _mvCat;
+let _mvCat=null,_mvKey='',_mvCat0=null;
+/* plain=true : catalogue de base (sans les mouvements ajoutés par le réglage de l'athlète), identique chez tout le monde : sert à fabriquer la séance bonus */
+function mvCatalog(plain){
+  if(plain&&_mvCat0)return _mvCat0;
+  const key=plain?'':Object.keys(mvCfg()).sort().join('|');
+  if(!plain&&_mvCat&&_mvKey===key)return _mvCat;
   const names=new Map();
   const owned=a=>{for(const set of names.values())if(set.has(a))return true;return false;};
   const add=(name,al,strict)=>{
@@ -14431,17 +14456,18 @@ function mvCatalog(){
   GLOSS.forEach(g=>add(g[0],g[1].concat([g[0]]),false));
   EXTRA.forEach(x=>add(x[0],x[1].concat([x[0]]),true));
   GEN.forEach(x=>add(x[0],[x[0]],true));
-  Object.keys(mvCfg()).forEach(n=>{if(!names.has(n))add(n,[n],false);});
+  if(!plain)Object.keys(mvCfg()).forEach(n=>{if(!names.has(n))add(n,[n],false);});
   const list=[];
   names.forEach((set,name)=>{const forms=new Set();set.forEach(a=>{[a,a.replace(/-/g,' '),a.replace(/-/g,'')].forEach(v=>{forms.add(v);if(!v.endsWith('s'))forms.add(v+'s');});});forms.forEach(f=>list.push([f,name]));});
   list.sort((a,b)=>b[0].length-a[0].length);
+  if(plain){_mvCat0={names,list};return _mvCat0;}
   _mvCat={names,list};_mvKey=key;return _mvCat;
 }
 /* mouvements reconnus dans une ligne (le plus long alias gagne : « ring row » avant « row ») */
-function mvSpans(text){
+function mvSpans(text,plain){
   const t=norm(text);if(t.length!==text.length)return [];
   const out=[];
-  for(const [al,name] of mvCatalog().list){
+  for(const [al,name] of mvCatalog(plain).list){
     for(let i=t.indexOf(al);i>=0;i=t.indexOf(al,i+1)){
       const e=i+al.length;
       if((i>0&&/[a-z0-9]/.test(t[i-1]))||(e<t.length&&/[a-z0-9]/.test(t[e])))continue;
@@ -14451,9 +14477,9 @@ function mvSpans(text){
   }
   return out.sort((a,b)=>a.s-b.s);
 }
-function mvDetect(content){
+function mvDetect(content,plain){
   const seen=[];
-  for(const raw of String(content||'').split('\n'))for(const sp of mvSpans(raw.replace(WTAG,'')))if(!seen.includes(sp.name))seen.push(sp.name);
+  for(const raw of String(content||'').split('\n'))for(const sp of mvSpans(raw.replace(WTAG,''),plain))if(!seen.includes(sp.name))seen.push(sp.name);
   return seen;
 }
 /* ligne du descriptif avec les variantes d'un niveau à la place du mouvement d'origine (en surbrillance) */
