@@ -4266,7 +4266,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-09.24';
+const APP_VERSION='2026-11-09.25';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -5648,6 +5648,22 @@ function myRatios(){
   }
   return out;
 }
+/* Diagnostic « poids / puissance » : une seule fois par athlète et par appareil, l'appli dépose une alerte au coach (Signalements) qui dit pourquoi un rapport est publié ou non.
+   Le poids lui-même n'est JAMAIS envoyé : seulement « renseigné : oui / non ». */
+function ratioDiag(pub,wr){
+  try{
+    if(S.owner||S.snapMode||!S.uid||!S.db)return;
+    const key='bs-ratdiag1-'+S.uid;
+    if(localStorage.getItem(key))return;
+    const ps=Object.values(S.periods).filter(p=>!p.virtual).sort((a,b)=>a.start<b.start?-1:1).slice(-2);
+    const rows=ps.map(p=>{
+      const r=computeBoard(p).rows.find(x=>x.uid===S.uid),st=periodState(p);
+      return (p.name||p.id)+' ('+(st==='done'?'terminée':st==='live'?'en cours':'à venir')+') : mouvements de force avec charge '+(r?r.ratioN:0)+', rapport calculable '+(r&&r.ratioLocal>0?'oui':'non')+', rapport publié '+(Number(pub[p.id])>0?'oui':'non');
+    });
+    coachAlert(S.uid,'Diag poids / puissance','Poids renseigné : '+(Number(S.prof.weight)>0?'oui':'non')+'. '+rows.join(' ; ')+'. Écriture du rapport : '+wr+'. Version '+APP_VERSION+'.');
+    localStorage.setItem(key,'1');
+  }catch(e){}
+}
 function selfSync(){
   clearTimeout(S._sst);
   S._sst=setTimeout(async()=>{
@@ -5663,7 +5679,14 @@ function selfSync(){
       const mine=myRatios(),pub=lg.ratios||{};
       let diff=false;
       for(const k of new Set([...Object.keys(mine),...Object.keys(pub)])){if(Math.abs((mine[k]||0)-(Number(pub[k])||0))>0.004){diff=true;break;}}
-      if(diff)await saveLog({ratios:mine});
+      let wr='aucune écriture nécessaire';
+      if(diff){
+        const rem=Object.keys(pub).some(k=>!(k in mine)); /* une saison à retirer : seule l'écriture complète sait retirer une clé */
+        S._runErr=null;
+        await saveLog({ratios:mine,_full:rem});
+        wr=S._runErr?('refusée ('+((S._runErr&&S._runErr.code)||'?')+')'):'envoyée';
+      }
+      ratioDiag(pub,wr);
     }catch(e){}finally{S._sy=false;}
   },1500);
 }
@@ -5838,11 +5861,14 @@ function saveLog(patch,msg,uid){
     const OPT_KEYS=['motto','focus','troph','badge']; /* valeurs simples : en écriture ciblée seulement si non vides (une valeur vide = champ à retirer, ce que seule l'écriture complète sait faire) */
     const pks=Object.keys(patch).filter(k=>k!=='_retried'&&k!=='_full');
     const base=S.logs[uid];
-    if(pks.length&&base&&base.pseudo&&!patch._full&&pks.every(k=>SAFE_KEYS.includes(k)||MAP_KEYS.includes(k)||OPT_KEYS.includes(k))){
+    if(pks.length&&base&&base.pseudo&&!patch._full&&pks.every(k=>SAFE_KEYS.includes(k)||MAP_KEYS.includes(k)||OPT_KEYS.includes(k)||k==='ratios')){
       /* cartes (séances, coins…) : on n'envoie QUE les clés nouvelles. Si une clé existante est modifiée ou retirée (modification / suppression de séance), on garde l'écriture complète. */
       const part={};let ok=true;
       for(const k of pks){
         if(SAFE_KEYS.includes(k)){part[k]=patch[k];continue;}
+        /* rapport charge ÷ poids : écriture ciblée (fusion carte par carte), donc jamais refusée par le verrou des coins quand la copie du téléphone est en retard ;
+           la fusion ne retire aucune clé : un retrait de saison passe par l'écriture complète (_full, voir selfSync) */
+        if(k==='ratios'){const v=patch[k];if(v&&typeof v==='object'&&Object.keys(v).length)part[k]=v;else ok=false;continue;}
         if(OPT_KEYS.includes(k)){
           const v=patch[k];
           if(k==='motto'){if(typeof v==='string'&&v.trim())part[k]=v.trim().slice(0,60);else ok=false;}
@@ -5866,7 +5892,7 @@ function saveLog(patch,msg,uid){
         try{
           await S.db.doc('logs/'+uid).set(part,{merge:true},{onLateError:e=>logLateError(e,patch,msg,uid)});
           const nx=Object.assign({},base);
-          for(const k of Object.keys(part))nx[k]=MAP_KEYS.includes(k)?Object.assign({},base[k]||{},part[k]):part[k];
+          for(const k of Object.keys(part))nx[k]=(MAP_KEYS.includes(k)||k==='ratios')?Object.assign({},base[k]||{},part[k]):part[k];
           S.logs[uid]=nx;
           if(msg)toast(msg);
           if(uid===S.uid)render();
