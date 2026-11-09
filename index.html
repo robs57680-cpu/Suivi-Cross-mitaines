@@ -752,7 +752,7 @@ input[type=checkbox]{width:24px;height:24px;padding:0;accent-color:var(--accent)
 /* avatar et objets secrets */
 .av{position:relative;flex:none;border:2px solid var(--edge);border-radius:4px;overflow:hidden;aspect-ratio:480/968;background:#15171B;padding:0;display:block}
 .av canvas,.av svg{position:absolute;inset:0;width:100%;height:100%;display:block}
-.av.tap{cursor:zoom-in}
+.av.tap{cursor:pointer}
 .avrow{display:flex;gap:16px;align-items:center}
 .avobj{display:flex;gap:14px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
 .avobj:last-child{border-bottom:0}
@@ -1148,10 +1148,7 @@ input[type=date]{inline-size:100%;max-inline-size:100%;box-sizing:border-box;ove
 /* bulles de réactions flottant sur toutes les pages */
 .bubs.rxfloat{position:fixed;inset:0;z-index:8}
 .av-stage{position:relative;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
-.av-stage .av{transform-origin:50% 50%;will-change:transform;cursor:grab}
-.zbar{position:absolute;right:6px;bottom:6px;z-index:3;display:flex;align-items:center;gap:6px}
-.zbar .btn{color:var(--panel-ink);border-color:var(--panel-muted);background:rgba(0,0,0,.45);min-width:44px}
-.zlab{font:600 11px var(--f-mono);color:var(--panel-ink);background:rgba(0,0,0,.45);padding:4px 6px;border-radius:2px;min-width:48px;text-align:center}
+.av-stage .av{transform-origin:50% 50%}
 
 /* ===== écran « Mon avatar » : néon orange ===== */
 .avfs{overflow-y:auto;grid-template-rows:auto auto auto auto;align-content:start;gap:14px;background:radial-gradient(120% 45% at 100% 0,rgba(255,106,0,.30),transparent 60%),radial-gradient(110% 40% at 0 100%,rgba(255,106,0,.24),transparent 60%),#090606;color:#fff}
@@ -1164,9 +1161,6 @@ input[type=date]{inline-size:100%;max-inline-size:100%;box-sizing:border-box;ove
 .avfs .av-x .av-svg,.avfs .av-ib .av-svg{color:#ff9a3d}
 .avfs .av-stage{height:min(calc(100vw - 24px),52dvh);max-width:720px;margin:0 auto;width:100%;overflow:visible}
 .avfs .av-world{border:2.5px solid #ff7a1a;border-radius:22px;box-shadow:0 0 18px rgba(255,122,26,.55),inset 0 0 10px rgba(255,122,26,.3)}
-.avfs .zbar{right:10px;bottom:10px;gap:8px}
-.avfs .zbar .btn{min-height:46px;min-width:46px;border:2px solid #ff7a1a;border-radius:12px;background:rgba(10,6,4,.8);color:#fff;font-weight:700}
-.avfs .zlab{min-height:46px;display:inline-flex;align-items:center;justify-content:center;padding:0 12px;border:2px solid rgba(255,122,26,.7);border-radius:12px;background:rgba(10,6,4,.8);font:700 15px var(--f-body)}
 .avfs .av-inv{max-height:none;overflow:visible;border:2px solid #ff7a1a;border-radius:24px;padding:16px 14px;background:linear-gradient(rgba(255,122,26,.07),rgba(10,6,4,.92));color:#fff;box-shadow:0 0 18px rgba(255,122,26,.45),inset 0 0 12px rgba(255,122,26,.15);gap:14px}
 .avfs .av-ih{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .avfs .av-ihl{display:inline-flex;align-items:center;gap:8px;font:600 21px var(--f-body)}
@@ -1723,6 +1717,11 @@ body.board-lock .top{position:relative;top:0}
 .car-card.bonus{outline:3px solid #FFD54A;outline-offset:-3px}
 .car-card.bonus .cc-title::before{content:'★ ';color:#FFD54A}
 .cc-redo{display:grid;gap:1px;margin:2px -18px 0 -18px;padding:8px 40px 8px 18px;color:#14161A;background:linear-gradient(90deg,#FFC857,#FF9A3C);clip-path:polygon(0 0,100% 0,calc(100% - 16px) 50%,100% 100%,0 100%);border-left:6px solid #14161A}
+.cc-prev{display:grid;gap:3px;padding:8px 12px;border-radius:10px;background:rgba(0,0,0,.34);border:1px solid rgba(255,255,255,.22);border-left:4px solid #FFD54A}
+.cc-prev b{font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#FFD54A;line-height:1.2}
+.cc-prev span{font-size:13px;font-weight:600;line-height:1.3}
+.cc-prev em{font-style:normal;font-weight:800}
+.cc-prev .cc-prev-more{font-size:12px;font-weight:500;opacity:.75}
 .cc-redo b{font-family:var(--f-mono);font-size:13px;letter-spacing:.08em;text-transform:uppercase;line-height:1.2}
 .cc-redo span{font-size:12px;font-weight:600;line-height:1.25}
 .car-card.done .cc-redo{filter:saturate(1.45)}
@@ -2732,8 +2731,6 @@ section.feed-card.th-neonviolet>.feed-badge{position:absolute!important;left:aut
 .avfs .av-ttl{font-size:22px;padding-bottom:2px}
 .avfs .av-stage{height:auto;min-height:0}
 .avfs .av-world{border-radius:18px}
-.avfs .zbar{right:8px;bottom:8px;gap:6px}
-.avfs .zbar .btn,.avfs .zlab{min-height:36px;min-width:36px;font-size:13px;border-radius:10px}
 .avfs .av-inv{max-height:46dvh;overflow-y:auto;padding:10px;gap:8px;border-radius:20px}
 .avfs .av-ihl{font-size:17px;gap:6px}
 .avfs .av-ihl .av-svg svg{width:24px;height:24px}
@@ -4269,7 +4266,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-08.22';
+const APP_VERSION='2026-11-09.23';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -8650,6 +8647,7 @@ function sessionCard(w,i,n,mine,prev,next){
     (()=>{const m=metconOf(wE),tags=[];if(pastS)tags.push(h('span',{class:'cc-tag'},'SAISON TERMINÉE'));if(sw)tags.push(h('span',{class:'cc-tag'},'🏠 Remplacement'));if(m&&m.test)tags.push(h('span',{class:'cc-tag'},'TEST'));if(m&&m.redo!==false&&!lockedDate(date)&&!ribbon&&!redoDone&&!rpt)tags.push(h('span',{class:'cc-tag'},'RE DO'));if(rpt||rptNew)tags.push(h('span',{class:'cc-tag'},'↩ REDO du remplacement'));if(redoDone)tags.push(h('span',{class:'cc-tag'},'✓ REDO fait'));return tags.length?h('div',{class:'cc-flags'},tags):null;})(),
     h('div',{class:'cc-meta'},h('span',{},cap(fmtShort(date))),h('span',{},pastS?'0 pt · saison terminée':((rpt||rptNew)?'REDO · 1 à 3 pts':basePts(wE,per)+' pts'+(metconOf(wE)?' + metcon':'')))),
     ribbon?h('div',{class:'cc-redo',role:'note'},h('b',{},'RE DO · jusqu’à +3 pts'),h('span',{},'Refais ton metcon pour marquer des points')):null,
+    prevCard(wE,date),
     h('div',{class:'cc-parts'},shown.map(cardPart)),
     equipRow(wE),
     h('div',{class:'cc-go'},ribbon?'Touche pour refaire et marquer des points ':'Touche pour ouvrir ',h('b',{},'→')));
@@ -9281,7 +9279,8 @@ function metSig(m){
   const c=String(m.content||'').split('\n').map(x=>norm(x).trim()).filter(Boolean).join('|');
   return c?m.format+'|'+c:'';
 }
-function prevBlock(w,date,cur){
+/* tentatives précédentes du même metcon (autres dates, REDO compris), de la plus récente à la plus ancienne */
+function prevRows(w,date){
   const m=metconOf(w),sig=m&&metSig(m);
   if(!sig)return null;
   const lg=S.logs[S.uid]||{},en=lg.entries||{},rows=[];
@@ -9293,6 +9292,12 @@ function prevBlock(w,date,cur){
   }
   if(!rows.length)return null;
   rows.sort((a,b)=>a.d<b.d?1:-1);
+  return {m,rows};
+}
+function prevBlock(w,date,cur){
+  const pr=prevRows(w,date);
+  if(!pr)return null;
+  const m=pr.m,rows=pr.rows;
   const delta=pv=>{
     if(!cur||cur.cap||pv.cap||cur.score===undefined||(cur.level||0)!==(pv.level||0))return '';
     const d=cur.score-pv.score;
@@ -9302,6 +9307,16 @@ function prevBlock(w,date,cur){
   return h('div',{class:'lines'},h('span',{class:'flabel'},'Déjà fait sur ce metcon'),
     h('ul',{class:'list'},rows.map(r=>h('li',{},h('div',{class:'l'},h('div',{class:'nm'},cap(fmtShort(r.d))+r.tag),
       h('div',{class:'sub'},lvlLab(m,r.e)+' · '+scoreText(m,r.e.score,r.e)+delta(r.e)))))));
+}
+/* même information, en version compacte, sur la carte de la séance (aperçu) : on voit tout de suite qu'on a déjà fait ce metcon et avec quel résultat */
+function prevCard(w,date){
+  const pr=prevRows(w,date);
+  if(!pr)return null;
+  const m=pr.m,rows=pr.rows,show=rows.slice(0,3),more=rows.length-show.length;
+  return h('div',{class:'cc-prev',role:'note','aria-label':'Metcon déjà fait'},
+    h('b',{},'Metcon déjà fait · '+rows.length+' fois'),
+    show.map(r=>h('span',{},cap(fmtShort(r.d))+r.tag+' · '+lvlLab(m,r.e)+' · ',h('em',{},scoreText(m,r.e.score,r.e)))),
+    more>0?h('span',{class:'cc-prev-more'},'+ '+more+' autre'+(more>1?'s':'')):null);
 }
 function removeSession(date,uid){
   if(!uid&&lockedDate(date)){toast(LOCKMSG,true);return;}
@@ -9929,7 +9944,7 @@ function arAvatar(uid,rk,eager,size){
   const build=()=>sexKnown(uid)?avatarEl(lg.sex==='F'?'f':'h',avEq(uid),size,null,'Avatar de '+pseudo):noAvatarEl(uid,0,true,null);
   if(eager)circle.append(build());else arLazy(circle,build);
   return h('div',{class:'pav'+(rk?' r'+rk:'')+(fr?' has-frame':'')},rk?h('span',{class:'aura'}):null,circle,fr?null:h('span',{class:'ring'}),
-    fr?h('img',{class:'avf-img'+(AVF_GLOW[fr.src]?' avf-glow':''),src:fr.src,alt:'',draggable:'false',decoding:'async'}):null);
+    fr?(keepImg(fr.src),h('img',{class:'avf-img'+(AVF_GLOW[fr.src]?' avf-glow':''),src:fr.src,alt:'',draggable:'false',decoding:'sync'})):null);
 }
 function fitArena(){
   const a=document.querySelector('.arena');
@@ -11552,51 +11567,6 @@ function avatarCard(){
       h('p',{class:'muted'},own.size?own.size+' objet'+(own.size>1?'s':'')+' débloqué'+(own.size>1?'s':'')+'. Touche ton avatar pour le voir en grand et l’habiller.':'Des objets secrets se débloquent au fil des saisons. Touche ton avatar pour le voir en grand.'),
       h('div',{class:'row'},h('button',{class:'btn sm',type:'button',onclick:open},'Voir et personnaliser')))));
 }
-/* zoom de l'avatar : pincer, molette, double-tap ou boutons + / − ; un doigt déplace l'image quand elle est agrandie */
-function addZoom(stage,el){
-  let sc=1,tx=0,ty=0,d0=0,sc0=1,lastTap=0,moved=0;
-  const ptr=new Map();
-  const lab=h('span',{class:'zlab'},'100 %');
-  const apply=()=>{
-    sc=Math.max(1,Math.min(6,sc));
-    const mx=el.offsetWidth*(sc-1)/2,my=el.offsetHeight*(sc-1)/2;
-    tx=Math.max(-mx,Math.min(mx,tx));ty=Math.max(-my,Math.min(my,ty));
-    el.style.transform='translate('+tx+'px,'+ty+'px) scale('+sc+')';
-    lab.textContent=Math.round(sc*100)+' %';
-  };
-  const zoomAt=(ns,cx,cy)=>{
-    ns=Math.max(1,Math.min(6,ns));
-    const r=stage.getBoundingClientRect(),px=cx-(r.left+r.width/2),py=cy-(r.top+r.height/2);
-    tx=px-(px-tx)*ns/sc;ty=py-(py-ty)*ns/sc;sc=ns;apply();
-  };
-  const mid=()=>{const r=stage.getBoundingClientRect();return [r.left+r.width/2,r.top+r.height/2];};
-  const dist=()=>{const a=[...ptr.values()];return Math.hypot(a[0].x-a[1].x,a[0].y-a[1].y)||1;};
-  stage.addEventListener('pointerdown',e=>{
-    if(e.target.closest&&e.target.closest('.zbar'))return;
-    try{stage.setPointerCapture(e.pointerId);}catch(_){}
-    ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});moved=0;
-    if(ptr.size===2){d0=dist();sc0=sc;}
-  });
-  stage.addEventListener('pointermove',e=>{
-    const p=ptr.get(e.pointerId);if(!p)return;
-    const dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;moved+=Math.abs(dx)+Math.abs(dy);
-    if(ptr.size===2){const a=[...ptr.values()];zoomAt(sc0*dist()/d0,(a[0].x+a[1].x)/2,(a[0].y+a[1].y)/2);}
-    else if(sc>1){tx+=dx;ty+=dy;apply();}
-  });
-  const up=e=>{
-    if(!ptr.has(e.pointerId))return;
-    const single=ptr.size===1;ptr.delete(e.pointerId);
-    if(single&&moved<8&&e.type==='pointerup'){
-      const now=Date.now();
-      if(now-lastTap<320){lastTap=0;if(sc>1){sc=1;tx=0;ty=0;apply();}else zoomAt(2.6,e.clientX,e.clientY);}else lastTap=now;
-    }
-    if(ptr.size===1){sc0=sc;d0=0;}
-  };
-  stage.addEventListener('pointerup',up);stage.addEventListener('pointercancel',up);
-  stage.addEventListener('wheel',e=>{e.preventDefault();zoomAt(sc*(e.deltaY<0?1.2:1/1.2),e.clientX,e.clientY);},{passive:false});
-  const bt=(t,l,fn)=>h('button',{class:'btn sm',type:'button','aria-label':l,onclick:fn},t);
-  stage.append(h('div',{class:'zbar'},bt('−','Dézoomer',()=>{const c=mid();zoomAt(sc/1.5,c[0],c[1]);}),lab,bt('+','Zoomer',()=>{const c=mid();zoomAt(sc*1.5,c[0],c[1]);}),bt('1×','Taille normale',()=>{sc=1;tx=0;ty=0;apply();})));
-}
 /* écran « Mon avatar » façon néon orange : icônes des catégories */
 const AVSVG=(d,sz)=>{const e=document.createElement('span');e.className='av-svg';e.innerHTML='<svg viewBox="0 0 24 24" width="'+(sz||26)+'" height="'+(sz||26)+'" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+d+'</svg>';return e;};
 const AV_SLOT_ICO={
@@ -11626,7 +11596,7 @@ function openAvatar(uid){
   const scene=h('div',{class:'av-scene'}),world=h('div',{class:'av-world'},scene,big);
   const drawScene=()=>{scene.innerHTML=sceneSVG(eq.theme);world.classList.toggle('hal',eq.theme==='theme_halloween');world.classList.toggle('noel',eq.theme==='theme_noel');};drawScene();
   const inv=h('div',{class:'av-inv'}),tipbox=h('div',{class:'av-hintbox'});
-  const stage=h('div',{class:'av-stage'},world);addZoom(stage,world);
+  const stage=h('div',{class:'av-stage'},world);
   const ov=h('div',{class:'avfs',id:'av-ov',role:'dialog','aria-modal':'true','aria-label':mine?'Mon avatar':'Avatar de '+pseudo},
     h('div',{class:'av-top'},h('button',{class:'av-ib',type:'button',id:'av-back','aria-label':'Retour',onclick:()=>{if(slot){slot=null;info=null;drawInv();}else close();}},AVSVG(AV_ICO_BACK,22)),
       h('div',{class:'av-ttl'},mine?['Mon ',h('span',{},'avatar')]:[pseudo]),
@@ -11702,8 +11672,7 @@ function openAvatar(uid){
     tipbox.hidden=true;
     const worn=AV_SLOTS.filter(([k])=>eq[k]).map(([k,l])=>l+' : '+AV_BY[eq[k]].name);
     inv.replaceChildren(h('b',{},pseudo),
-      h('p',{class:'sub'},worn.length?worn.join(' · '):'Aucun objet équipé.'),
-      h('p',{class:'hint'},'Pince l’avatar, double-touche-le ou utilise + / − pour zoomer sur les détails.'));
+      h('p',{class:'sub'},worn.length?worn.join(' · '):'Aucun objet équipé.'));
   }
   if(mine)drawInv();else drawView();
   document.body.append(ov);document.addEventListener('keydown',esc);
@@ -11746,6 +11715,15 @@ const AVF={gold:{name:'Cadre doré',src:'assets/embedded/cadre-avatar-dore.webp'
 /* cadres sombres : léger halo clair pour rester visibles par-dessus un fond de bannière foncé */
 const AVF_GLOW={'assets/embedded/cadre-avatar-fumee-noire.webp':1,'assets/embedded/cadre-avatar-metal-sombre.webp':1};
 const avfSrc=r=>(AVF[r.asset]||AVF.gold).src;
+/* Cadres d'avatar sans clignotement : l'appli reconstruit l'écran à chaque donnée reçue au démarrage, et chaque <img> neuf restait transparent le temps d'être
+   décodé (d'où le clignotement). On garde donc en mémoire une copie déjà décodée de chaque cadre ; un <img> neuf de la même adresse s'affiche aussitôt. */
+const _imgKeep=new Map();
+function keepImg(src){
+  if(!src||_imgKeep.has(src))return;
+  const im=new Image();im.decoding='sync';im.src=src;_imgKeep.set(src,im);
+  if(im.decode)im.decode().catch(()=>{});
+}
+Object.keys(AVF).forEach(k=>keepImg(AVF[k].src));
 /* fonds de bannière à image (dossier assets/embedded). Pour en ajouter : déposer l'image, ajouter une ligne ici et le CSS .bn-bg-<id> */
 const BG_ASSETS={
   neonviolet:{name:'Néon Violet',cls:'bn-bg-neonviolet',src:'assets/embedded/banniere-neon-violet.webp'}
@@ -12004,7 +11982,7 @@ function bannerOf(uid){
     if(r.type==='bg'&&!bgRemoved(r))BN.bg[r.id]={name:r.name||'Fond de bannière',cls:bgRewardClass(r)};
     if(r.type==='avframe')BN.avframe[r.id]={name:r.name||'Cadre d’avatar',src:avfSrc(r)};
   }
-  for(const b of shopBanners()){if(b.kind==='bg')BN.bg[b.id]={name:b.name,cls:b.cls};else BN.avframe[b.id]={name:b.name,src:b.src};} /* éléments vendus au shop */
+  for(const b of shopBanners()){if(b.kind==='bg')BN.bg[b.id]={name:b.name,cls:b.cls};else{BN.avframe[b.id]={name:b.name,src:b.src};keepImg(b.src);}} /* éléments vendus au shop */
   const b=bnMerged(uid);
   const pick=k=>(b[k]&&BN[k][b[k]])?b[k]:BN_DEFAULT[k];
   return {bg:pick('bg'),frame:pick('frame'),title:pick('title'),avframe:pick('avframe'),cm:(b.cm&&typeof b.cm==='object')?b.cm:null};
@@ -12021,7 +11999,8 @@ function bannerEl(uid,kids,editable=false,withAvf=false){
 function avatarFramed(uid,onclick,big=false){
   const circle=avatarCircle(uid,big,onclick),fid=bannerOf(uid).avframe;
   if(!fid||!BN.avframe[fid])return circle;
-  return h('div',{class:'avf'+(big?' lg':'')},circle,h('img',{class:'avf-img'+(AVF_GLOW[BN.avframe[fid].src]?' avf-glow':''),src:BN.avframe[fid].src,alt:'',draggable:'false',loading:'lazy',decoding:'async'}));
+  keepImg(BN.avframe[fid].src);
+  return h('div',{class:'avf'+(big?' lg':'')},circle,h('img',{class:'avf-img'+(AVF_GLOW[BN.avframe[fid].src]?' avf-glow':''),src:BN.avframe[fid].src,alt:'',draggable:'false',decoding:'sync'}));
 }
 const bannerTitle=uid=>{const t=bannerOf(uid).title;return t?h('div',{class:'bn-title'},BN.title[t].text):null;};
 function avatarCircle(uid,big,onclick){
