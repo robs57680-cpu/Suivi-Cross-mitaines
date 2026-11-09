@@ -4266,7 +4266,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-09.23';
+const APP_VERSION='2026-11-09.24';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -4729,6 +4729,28 @@ function bonusBuild(day){
   if(renfos.length){const o=JSON.parse(JSON.stringify(pick(renfos)));o.label='P1';parts.push(o);}
   const mo=bonusMetcon(pick(mets));mo.label='P'+(parts.length+1);parts.push(mo);
   return {date:day,title:'Séance bonus',base:BONUS_BASE,bonus:true,parts};
+}
+/* Pourquoi la séance bonus de la semaine n'existe pas (affiché au coach seul, dans l'onglet Séance) ; chaîne vide si elle existe ou si rien ne l'empêche. */
+function bonusWhy(){
+  try{
+    const t=todayStr(),mon=mondayOf(t),sat=addDays(mon,5),sun=addDays(mon,6);
+    for(let i=0;i<7;i++){const x=S.wods[addDays(mon,i)];if(x&&x.bonus)return '';}
+    if(S.feat===undefined)return 'les réglages du coach ne sont pas encore chargés.';
+    if(S.feat&&S.feat.bonusOff&&S.feat.bonusOff[mon])return 'la séance bonus de cette semaine a été supprimée (Coach › Entrer un WOD).';
+    const day=!S.wods[sat]?sat:(!S.wods[sun]?sun:null);
+    if(!day)return 'une séance est déjà publiée le samedi et le dimanche.';
+    const per=periodFor(day);
+    if(!per)return 'aucune saison ne couvre le samedi '+fmtShort(day)+' (entre deux saisons).';
+    if(per.virtual)return 'aucune saison n’est définie.';
+    if(per.locked)return 'la saison « '+per.name+' » est verrouillée.';
+    if(periodState(per)==='done')return 'la saison « '+per.name+' » est terminée.';
+    const prev=plist().filter(q=>!q.virtual&&q.id!==per.id&&q.end<per.start);
+    if(!prev.length)return 'aucune saison terminée avant « '+per.name+' » (début '+fmtShort(per.start)+').';
+    const ok=prev.filter(q=>!bonusBetaSeason(q));
+    if(!ok.length)return 'les saisons précédentes ('+prev.map(q=>q.name).join(', ')+') sont toutes comptées comme la saison 1 / Bêta, exclue.';
+    if(!bonusBuild(day))return 'aucun metcon avec paliers (hors TEST) trouvé dans '+ok.map(q=>'« '+q.name+' »').join(', ')+'.';
+    return 'elle est prête mais n’a pas pu être ajoutée à la semaine.';
+  }catch(e){return 'erreur : '+e.message;}
 }
 /* appelée à chaque rendu : ajoute (sans l'enregistrer) la séance bonus de la semaine si elle n'existe pas encore ; le coach, lui, l'enregistre */
 function bonusSync(){
@@ -6627,11 +6649,11 @@ function badgeHTML(tid,label,size){
 }
 /* ---- badges illustrés (saisons suivantes) ----
    Images dans assets/embedded/badge-<trophée>.webp (280 x 300, plaque du bas vide). Le nom de la saison s'écrit sur la plaque ;
-   le badge est trop petit pour le lire sous ~100 px : il reste alors dans l'info-bulle. Les saisons Alpha et Bêta gardent les anciens badges dessinés. */
+   le badge est trop petit pour le lire sous ~100 px : il reste alors dans l'info-bulle. Seule la saison Bêta garde les anciens badges dessinés. */
 const BADGE_IMG_Y={senior:0.8793,veteran:0.8793,goat:0.9167,lagoat:0.9167,points:0.92,regulier:0.9167,serie:0.9167,top:0.9167,perf:0.9133,lafort:0.92,fort:0.9325,mcardio:0.9183,mgym:0.9167,mhaltero:0.9167,tonnage:0.955,latonnage:0.955,gduo:0.9067,gsolo:0.9083,bdeb:0.9083,binter:0.9083,objectif:0.9083,ratio:0.9183}; /* hauteur du centre de la plaque, en fraction de l'image */
 const BADGE_IMG_FILE={}; /* correspondances trophée -> fichier quand ils diffèrent (ex. {ratio:'fort'}) ; chaque trophée a son image badge-<id>.webp */
-const BADGE_LEGACY_RX=/alpha|b[eé]ta/i; /* saisons dont les badges restent inchangés */
-/* saison Alpha/Bêta terminée = anciens badges dessinés ; saison pas encore terminée (aperçu coach de la remise) = badges illustrés actuels, aucun badge n'y ayant été remis */
+const BADGE_LEGACY_RX=/b[eé]ta/i; /* saisons dont les badges restent inchangés (Bêta seulement : la saison Alpha reçoit les badges illustrés) */
+/* saison Bêta terminée = anciens badges dessinés ; saison pas encore terminée (aperçu coach de la remise) = badges illustrés actuels, aucun badge n'y ayant été remis */
 const badgeImgOn=(per,tid)=>!!per&&!!BADGE_IMG_Y[BADGE_IMG_FILE[tid]||tid]&&(periodState(per)!=='done'||!BADGE_LEGACY_RX.test(String(per.name||'')));
 function badgeImgHTML(tid,label,size){
   const key=BADGE_IMG_FILE[tid]||tid,ty=BADGE_IMG_Y[key];
@@ -8810,6 +8832,7 @@ function viewCards(){
   };
   paint(cur);
   el.append(h('div',{style:'display:flex;justify-content:space-between;align-items:flex-start;gap:12px'},h('div',{},eb,day,sub),ctrls));
+  {const bw=S.owner?bonusWhy():'';if(bw)el.append(h('p',{class:'hint',id:'bonus-why'},'★ Pas de séance bonus cette semaine (message visible par toi seul) : '+bw));}
   if(fOn)el.append(h('p',{class:'hint',id:'eq-filter-note'},'Filtre matériel actif : '+(hidden?hidden+' séance'+(hidden>1?'s':'')+' masquée'+(hidden>1?'s':''):'aucune séance masquée')+'. Les séances déjà faites restent visibles pour pouvoir faire le REDO.'),hidden?remind():null);
   /* bouton à l'extrémité gauche du carrousel : afficher / masquer les séances des saisons terminées */
   const pastBtn=(pastList.length||past)?h('div',{class:'car-slot car-past'},
