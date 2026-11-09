@@ -2308,12 +2308,14 @@ button.pf2-xp{width:calc(100% - 8px);background:none;border-left:0;border-right:
 .bp-claim{justify-self:start;margin-top:6px}
 .bp-all{display:block;margin:8px 14px 0;width:calc(100% - 28px)}
 .bp-all[hidden]{display:none}
-.sh-hero-pass{display:grid;gap:6px}
+.sh-hero-pass{display:grid;gap:6px;min-width:0;max-width:100%;overflow:hidden}
+.sh-pass{display:grid;gap:6px;min-width:0;max-width:100%}
+.sh-pass>*{min-width:0;max-width:100%;box-sizing:border-box}
 .sh-hero-pass .bp-top{padding:8px 0 4px}
 .sh-hero-pass .bp-det{margin:6px 0 0}
 .sh-hero-pass .bp-hint{margin:8px 0 0;max-width:none;font-size:11px;color:#9aa0b4;text-align:center}
 .sh-hero-pass .bp-all{margin:6px 0 0;width:100%}
-.sh-hero-pass .bp-track{margin:0 -6px;width:calc(100% + 12px)}
+.sh-hero-pass .bp-track{margin:0;width:100%;max-width:100%}
 .sh-pass-n{margin:10px 0 0;font-size:14px;color:#ddd}
 .xpp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 @media (min-width:560px){.xpp-grid{grid-template-columns:repeat(6,1fr)}}
@@ -4296,7 +4298,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-09.29';
+const APP_VERSION='2026-11-09.30';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -4740,7 +4742,7 @@ function bonusMetcon(p){
 }
 /* saison 1 (Bêta) : ses séances ne sont pas remplies correctement, elles ne servent jamais de source à une séance bonus */
 const bonusBetaSeason=q=>/beta/.test(norm(q.name||''))||seasonNum(q)===1;
-function bonusBuild(day){
+function bonusBuild(day,salt){
   const per=periodFor(day),mon=mondayOf(day);
   if(!per||per.virtual)return null;
   const srcs=Object.values(S.wods).filter(w=>{
@@ -4754,11 +4756,31 @@ function bonusBuild(day){
     else if(p.kind==='metcon'&&!p.test&&levelsOf(p).some(l=>(l.tiers||[]).length))mets.push(p);
   }
   if(!mets.length)return null;
-  const rnd=bonusRng('bonus|'+day),pick=a=>a[Math.min(a.length-1,Math.floor(rnd()*a.length))];
+  const rnd=bonusRng('bonus|'+day+(salt?'|'+salt:'')),pick=a=>a[Math.min(a.length-1,Math.floor(rnd()*a.length))];
+  /* un même mouvement ne revient jamais deux fois dans la séance (ex. Rameur en renfo ET en metcon) : on tire un metcon, puis un renfo qui n'a aucun mouvement en commun avec lui */
+  const mvs=p=>new Set(mvDetect(p.content||''));
+  const clash=(a,b)=>{const A=mvs(a);for(const n of mvs(b))if(A.has(n))return true;return false;};
+  let met=null,ren=null;
+  for(let i=0;i<60&&!met;i++){
+    const m=pick(mets),ok=renfos.filter(r=>!clash(r,m));
+    if(ok.length||!renfos.length){met=m;ren=ok.length?pick(ok):null;}
+  }
+  if(!met)met=pick(mets); /* aucun renfo compatible : metcon seul plutôt qu'un doublon */
   const parts=[];
-  if(renfos.length){const o=JSON.parse(JSON.stringify(pick(renfos)));o.label='P1';parts.push(o);}
-  const mo=bonusMetcon(pick(mets));mo.label='P'+(parts.length+1);parts.push(mo);
+  if(ren){const o=JSON.parse(JSON.stringify(ren));o.label='P1';parts.push(o);}
+  const mo=bonusMetcon(met);mo.label='P'+(parts.length+1);parts.push(mo);
   return {date:day,title:'Séance bonus',base:BONUS_BASE,bonus:true,parts};
+}
+/* Coach : nouveau tirage de la séance bonus d'une semaine (même règles : pas deux fois le même mouvement) */
+function bonusRegen(w){
+  if(!S.owner||!S.db||S.snapMode){toast('Connexion nécessaire.',true);return;}
+  const n=Object.values(S.logs).filter(l=>l.entries&&l.entries[w.date]).length;
+  if(!confirm('Régénérer la séance bonus du '+fmtShort(w.date)+' ? Le renforcement et le metcon actuels seront remplacés par un nouveau tirage.'+(n?'\n\n'+n+' athlète'+(n>1?'s ont':' a')+' déjà validé cette séance : leurs résultats restent enregistrés mais ne correspondront plus au nouveau contenu.':'')))return;
+  const cur=JSON.stringify((w.parts||[]).map(p=>p.content));
+  let nw=null;
+  for(let i=0;i<12;i++){const c=bonusBuild(w.date,Date.now().toString(36)+i);if(!c)break;nw=c;if(JSON.stringify(c.parts.map(p=>p.content))!==cur)break;}
+  if(!nw){toast('Impossible de générer une séance bonus (aucun metcon disponible dans les saisons précédentes).',true);return;}
+  run(async()=>{await S.db.doc('wods/'+w.date).set(nw);toast('Séance bonus régénérée');});
 }
 /* Pourquoi la séance bonus de la semaine n'existe pas (affiché au coach seul, dans l'onglet Séance) ; chaîne vide si elle existe ou si rien ne l'empêche. */
 function bonusWhy(){
@@ -12631,7 +12653,7 @@ function xpPassPanel(o){
   if(embed)track.addEventListener('scroll',()=>memo({x:track.scrollLeft}),{passive:true});
   const hint=h('p',{class:'bp-hint'},(can?'Touche un palier atteint pour récupérer ses '+XP_TIER_COINS+' coins. ':'')+'Fais défiler vers la droite pour voir les prochaines récompenses.');
   const lay=first=>{
-    const W=track.clientWidth||360,cw=Math.max(70,Math.floor((W-2*PAD-2*G)/3)); /* 3 cartes visibles */
+    const W=Math.min(track.clientWidth||360,window.innerWidth||360),cw=Math.max(70,Math.min(150,Math.floor((W-2*PAD-2*G)/3))); /* 3 cartes visibles (jamais plus de 150 px : la piste ne doit pas s'élargir avec son contenu) */
     track.style.setProperty('--bpw',cw+'px');track.style.setProperty('--bpg',G+'px');track.style.setProperty('--bpp',PAD+'px');
     const cx=i=>PAD+i*(cw+G)+cw/2;let x;
     if(xp<sl[0].x)x=PAD+(sl[0].x>0?Math.max(0,xp)/sl[0].x:0)*(cw/2);
@@ -15335,6 +15357,7 @@ function wodRow(w){
     h('div',{class:'l'},h('div',{class:'nm'},cap(fmtShort(w.date))+' · '+w.title),h('div',{class:'sub'},(w.parts||[]).length+' parties · '+n+' athlète'+(n>1?'s':'')+' ont validé')),
     h('div',{class:'row'},
       h('button',{class:'btn sm',onclick:()=>{S.coach.wod=wodToDraft(w);S.coach.editing=true;S.coach.wodOpen=true;render();}},'Modifier'),
+      w.bonus?h('button',{class:'btn sm',type:'button',onclick:()=>bonusRegen(w)},'Régénérer'):null,
       S.confirm==='wod-'+w.date?h('button',{class:'btn sm danger',onclick:()=>{S.confirm=null;const tid=trashPush('wod','Séance du '+fmtShort(w.date)+' · '+w.title,{date:w.date,wod:S.wods[w.date]});run(async()=>{await S.db.doc('wods/'+w.date).delete();if(w.bonus)await S.db.doc('config/features').set(Object.assign({},S.feat||{},{bonusOff:Object.assign({},(S.feat&&S.feat.bonusOff)||{},{[mondayOf(w.date)]:true})}));if(tid)toastUndo('Séance supprimée',tid);else toast('Séance supprimée');});}},'Confirmer')
                                 :h('button',{class:'btn sm danger',onclick:()=>{S.confirm='wod-'+w.date;render();}},'Supprimer')));
 }
