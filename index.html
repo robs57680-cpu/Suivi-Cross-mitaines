@@ -2279,7 +2279,7 @@ button.pf2-xp{width:calc(100% - 8px);background:none;border-left:0;border-right:
 .bp-me i{width:0;height:0;border:5px solid transparent;border-top-color:#ff4d4d;border-bottom:0}
 .bp-c{flex:none;width:var(--bpw);background:none;border:0;padding:0;color:inherit;font:inherit;cursor:pointer;display:grid;gap:6px;justify-items:center;-webkit-tap-highlight-color:transparent}
 .bp-box{position:relative;width:var(--bpw);height:var(--bpw);box-sizing:border-box;border:3px solid #4a4e60;border-radius:14px;background:linear-gradient(160deg,#2b2e3b,#1b1d27);display:grid;place-items:center;overflow:hidden;clip-path:polygon(14px 0,calc(100% - 14px) 0,100% 14px,100% calc(100% - 14px),calc(100% - 14px) 100%,14px 100%,0 calc(100% - 14px),0 14px)}
-.bp-box.got{border-color:#2ee66b;background:linear-gradient(160deg,#17502e,#0f2a1b);box-shadow:inset 0 0 14px #2ee66b44}
+.bp-box.got{border-color:#7dffa8;background:linear-gradient(160deg,#2ee66b,#13923f);box-shadow:inset 0 0 14px #ffffff33}
 .bp-box.lock .bp-art{filter:grayscale(.75) brightness(.7)}
 .bp-art{width:78%;height:78%;display:grid;place-items:center}
 .bp-art .reward-art{width:100%;height:100%;border:0;border-radius:6px;background:none;font-size:clamp(34px,12vw,56px)}
@@ -2287,7 +2287,7 @@ button.pf2-xp{width:calc(100% - 8px);background:none;border-left:0;border-right:
 .bp-gift{width:56%;height:56%;color:#59607a;opacity:.8}
 .bp-st{position:absolute;right:6px;bottom:5px;font-size:18px;line-height:1}
 .bp-n{position:absolute;left:6px;top:5px;font:700 13px var(--f-mono,monospace);color:#fff;background:#000a;border-radius:8px;padding:2px 6px}
-.bp-c.got .bp-xp{border-color:#2ee66b;color:#9bffbd}
+.bp-c.got .bp-xp{border-color:#7dffa8;background:linear-gradient(160deg,#2ee66b,#13923f);color:#fff}
 .bp-xp{font:italic 800 16px var(--f-display,sans-serif);color:#e8eaf2;background:#14151c;border:1px solid #4a4e60;border-radius:8px;padding:5px 0;width:100%;text-align:center;box-sizing:border-box;white-space:nowrap}
 .bp-c.sel .bp-box{outline:2px solid #19d3ff;outline-offset:2px}
 .bp-c.sel .bp-xp{border-color:#19d3ff;color:#19d3ff}
@@ -2298,6 +2298,36 @@ button.pf2-xp{width:calc(100% - 8px);background:none;border-left:0;border-right:
 .bp-dr b{font-size:15px}
 .bp-dr span{font-size:12px;color:#b9bdcc}
 .bp-hint{margin:8px 14px 0;font-size:11px;color:#9aa0b4;text-align:center}
+.bp-coin{position:absolute;left:5px;bottom:4px;display:inline-flex;align-items:center;gap:2px;font:700 11px var(--f-mono,monospace);color:#ffe08a;background:#000b;border-radius:99px;padding:2px 6px 2px 3px}
+.bp-coin .coin{display:inline-flex}
+.bp-coin.ready{background:linear-gradient(90deg,#ff2d6f,#ff6a1f);color:#fff;animation:bpPulse 1.4s ease-in-out infinite}
+.bp-coin.done{opacity:.6}
+@keyframes bpPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+@media (prefers-reduced-motion:reduce){.bp-coin.ready{animation:none}}
+.bp-claim,.bp-all{border:0;border-radius:999px;background:linear-gradient(90deg,#ff2d6f,#ff6a1f);color:#fff;font:700 14px var(--f-body);padding:9px 16px;cursor:pointer}
+.bp-claim{justify-self:start;margin-top:6px}
+.bp-all{display:block;margin:8px 14px 0;width:calc(100% - 28px)}
+.bp-all[hidden]{display:none}
+.sh-hero-pass{display:grid;gap:6px}
+.sh-hero-pass .bp-top{padding:8px 0 4px}
+.sh-hero-pass .bp-det{margin:6px 0 0}
+.sh-hero-pass .bp-hint{margin:8px 0 0;max-width:none;font-size:11px;color:#9aa0b4;text-align:center}
+.sh-hero-pass .bp-all{margin:6px 0 0;width:100%}
+.sh-hero-pass .bp-track{margin:0 -6px;width:calc(100% + 12px)}
+.sh-pass-n{margin:10px 0 0;font-size:14px;color:#ddd}
+.xpp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media (min-width:560px){.xpp-grid{grid-template-columns:repeat(6,1fr)}}
+.xpp-c{position:relative;display:grid;gap:4px;justify-items:center;padding:8px 4px 6px;background:var(--surface);border:2px solid var(--edge);border-radius:10px;color:inherit;font:inherit;cursor:pointer;min-width:0}
+.xpp-c.has{border-color:var(--accent)}
+.xpp-c.sel{outline:2px solid #19d3ff;outline-offset:1px}
+.xpp-art{width:48px;height:48px;display:grid;place-items:center}
+.xpp-art .reward-art{width:100%;height:100%;border-width:1px;font-size:22px}
+.xpp-art .bp-gift{width:70%;height:70%}
+.xpp-plus{font-size:24px;opacity:.35}
+.xpp-x{font:700 12px var(--f-mono,monospace);white-space:nowrap}
+.xpp-n{position:absolute;top:3px;left:4px;font:700 11px var(--f-mono,monospace);background:#000a;color:#fff;border-radius:8px;padding:1px 5px}
+.xpp-ov{position:fixed;inset:0;z-index:85;background:rgba(0,0,0,.72);display:flex;align-items:flex-end;justify-content:center;overscroll-behavior:contain}
+.xpp-sheet{width:100%;max-width:560px;max-height:88vh;overflow:auto;box-sizing:border-box;background:var(--surface);border:2px solid var(--edge);border-radius:16px 16px 0 0;padding:16px 16px max(16px,env(safe-area-inset-bottom));display:grid;gap:12px}
 .pf2 .pf2-tab{padding:6px 2px 5px;font-size:10px;gap:2px}
 .pf2 .pf2-tab .pf2-ico{font-size:17px}
 .pf2-ch{margin-bottom:4px;gap:8px}
@@ -4266,7 +4296,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-09.25';
+const APP_VERSION='2026-11-09.29';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -4710,18 +4740,6 @@ function bonusMetcon(p){
 }
 /* saison 1 (Bêta) : ses séances ne sont pas remplies correctement, elles ne servent jamais de source à une séance bonus */
 const bonusBetaSeason=q=>/beta/.test(norm(q.name||''))||seasonNum(q)===1;
-/* mouvements d'une partie (renforcement ou metcon) : ceux écrits dans le descriptif + les variantes (« OU ») qu'ils ont pour les niveaux.
-   Catalogue de base, sans le réglage de l'athlète, pour que la séance soit la même chez tout le monde. */
-function bonusMoves(p){
-  const base=mvDetect(p.content,true),out=new Set(base);
-  const vs=[].concat(Array.isArray(p.variants)?p.variants:[],...levelsOf(p).map(l=>Array.isArray(l.variants)?l.variants:[]));
-  for(const v of vs){
-    if(!v||!base.includes(v.from))continue;
-    (v.to||[]).forEach(n=>{const sp=mvSpans(String(n),true);if(sp.length)sp.forEach(x=>out.add(x.name));else out.add(norm(n).trim());});
-  }
-  return out;
-}
-const bonusClash=(a,b)=>{const sa=bonusMoves(a);for(const n of bonusMoves(b))if(sa.has(n))return true;return false;};
 function bonusBuild(day){
   const per=periodFor(day),mon=mondayOf(day);
   if(!per||per.virtual)return null;
@@ -4738,19 +4756,8 @@ function bonusBuild(day){
   if(!mets.length)return null;
   const rnd=bonusRng('bonus|'+day),pick=a=>a[Math.min(a.length-1,Math.floor(rnd()*a.length))];
   const parts=[];
-  /* jamais le même exercice dans le renforcement et dans le metcon (variantes des niveaux comprises) : on tire le renforcement, puis un metcon qui n'a aucun mouvement en commun avec lui ;
-     si aucun metcon ne convient, on essaie le renforcement suivant ; si rien ne convient du tout, la séance n'a que le metcon */
-  let ro=null,mp=null;
-  if(renfos.length){
-    const i0=Math.min(renfos.length-1,Math.floor(rnd()*renfos.length));
-    for(let k=0;k<renfos.length&&!mp;k++){
-      const r=renfos[(i0+k)%renfos.length],ok=mets.filter(m=>!bonusClash(r,m));
-      if(ok.length){ro=r;mp=pick(ok);}
-    }
-  }
-  if(!mp)mp=pick(mets);
-  if(ro){const o=JSON.parse(JSON.stringify(ro));o.label='P1';parts.push(o);}
-  const mo=bonusMetcon(mp);mo.label='P'+(parts.length+1);parts.push(mo);
+  if(renfos.length){const o=JSON.parse(JSON.stringify(pick(renfos)));o.label='P1';parts.push(o);}
+  const mo=bonusMetcon(pick(mets));mo.label='P'+(parts.length+1);parts.push(mo);
   return {date:day,title:'Séance bonus',base:BONUS_BASE,bonus:true,parts};
 }
 /* Pourquoi la séance bonus de la semaine n'existe pas (affiché au coach seul, dans l'onglet Séance) ; chaîne vide si elle existe ou si rien ne l'empêche. */
@@ -5229,20 +5236,20 @@ function findMove(text){
   return null;
 }
 const PU_STEP=0.5;
-function pullupCalc(bw,rm,pct){
+function pullupCalc(bw,rm,pct,tm){
   /* charge totale du 1 RM = poids de corps + lest (négatif = déleste) ; lest conseillé = charge totale × % − poids de corps.
      Un résultat négatif est un déleste (assistance), pas « sans lest ». */
-  const total1=bw+rm,target=total1*pct/100,lest=target-bw,r=Math.round(lest/PU_STEP)*PU_STEP,rounded=r===0?0:r;
+  const total1=bw+rm,target=total1*(tm>0?tm/100:1)*pct/100,lest=target-bw,r=Math.round(lest/PU_STEP)*PU_STEP,rounded=r===0?0:r;
   return {total1,target,lest,rounded};
 }
-function pullupBlock(text,nums){
+function pullupBlock(text,nums,part){
   const bw=parseNum(S.prof&&S.prof.weight);
   const pr=prFor('Traction lestée');
   if(!(bw>0))return h('div',{class:'chips'},h('span',{class:'chip miss'},'Renseigne ton poids de corps dans ton profil pour calculer le lest'));
   if(!pr||!isFinite(pr.kg))return h('div',{class:'chips'},h('span',{class:'chip miss'},'Enregistre ton 1 RM de Traction lestée dans ton profil'));
   /* lest = (poids de corps + 1 RM lesté) × % − poids de corps ; affichage : seulement le lest conseillé, comme les autres mouvements de force */
-  return h('div',{class:'chips'},nums.map(n=>{const c=pullupCalc(bw,pr.kg,n);
-    return h('span',{class:'chip load'},n+' % = '+(c.rounded>0?'lest +'+fmtN(c.rounded)+' kg':c.rounded<0?'déleste −'+fmtN(-c.rounded)+' kg':'sans lest'));}));
+  return h('div',{class:'chips'},nums.map(n=>{const c=pullupCalc(bw,pr.kg,n,tmPctFor(part,text,n));
+    return h('span',{class:'chip load'},n+' % '+(tmPctFor(part,text,n)===null?'':'du TM ')+'= '+(c.rounded>0?'lest +'+fmtN(c.rounded)+' kg':c.rounded<0?'déleste −'+fmtN(-c.rounded)+' kg':'sans lest'));}));
 }
 /* renforcement : après chaque mouvement qui a des variantes réglées par le coach (p.variants = [{from,to:[…]}]), on ajoute « OU variante »
    (ex. « 10 Tractions OU rowing TRX »). Rien n'est ajouté si le coach l'a déjà écrit dans la ligne. */
@@ -5262,16 +5269,39 @@ function renfoSegs(text,vars){
   if(c<text.length)out.push(glossSegs(text.slice(c)));
   return out;
 }
-function renderLine(text,vars){
+/* base de calcul des % d'une ligne de force : 1RM par défaut ; TM (Training Max = % du 1RM) pour les méthodes Wendler
+   (5/3/1, Wendler 3 phases) ou quand la ligne parle du TM. Une ligne qui cite le 1RM sans parler du TM reste calculée sur le 1RM.
+   Retourne le % du 1RM que vaut le TM (ex. 90), ou null = calcul sur le 1RM.
+   TM sans valeur indiquée = 90 %. TM en fourchette (ex. « TM 92-95 % ») : extrémité basse pour la série à 75 %, haute pour 95 %, proportionnel entre les deux. */
+function tmPctFor(part,text,n){
+  const t=FM_NORM(text);
+  const tmWord=/\btm\b|training\s*max/.test(t),rmWord=/\b(?:1\s*-?\s*)?rm\b/.test(t);
+  if(rmWord&&!tmWord)return null;
+  if(!tmWord){const m=(part&&part.kind==='force')?forceMethodOf(part):null;if(!(m&&m.tm))return null;}
+  let lo=90,hi=90;
+  const x=t.match(/(?:\btm\b|training\s*max)[^0-9%]{0,12}(\d{1,3}(?:[.,]\d+)?)(?:\s*[-–\/]\s*(\d{1,3}(?:[.,]\d+)?))?\s*%/);
+  if(x){lo=parseFloat(x[1].replace(',','.'));hi=x[2]?parseFloat(x[2].replace(',','.')):lo;}
+  if(!(lo>0&&hi>0))return null;
+  const k=hi>lo?Math.max(0,Math.min(1,((+n||75)-75)/20)):0;
+  return Math.round((lo+(hi-lo)*k)*10)/10;
+}
+/* pastilles de charge d'une ligne : « 75 % du TM = … » (ou « 75 % = … » sur le 1RM) + rappel du TM */
+function tmChips(part,text,nums,pr){
+  const tp0=tmPctFor(part,text,nums[0]);
+  const chips=nums.map(n=>{const tp=tmPctFor(part,text,n);return h('span',{class:'chip load'},n+' % '+(tp===null?'':'du TM ')+'= '+fmtKg(pr.kg*(tp===null?1:tp/100)*n/100));});
+  if(tp0!==null)chips.push(h('span',{class:'chip'},'TM '+fmtN(tp0)+' % du 1RM = '+fmtKg(pr.kg*tp0/100)));
+  return h('div',{class:'chips'},chips);
+}
+function renderLine(text,vars,part){
   const line=h('div',{class:'line'},h('span',{},vars&&vars.length?renfoSegs(text,vars):glossSegs(text)));
   const m=text.match(PCT_RE);
   if(m){
     const nums=m[1].split(/\s*[\/–-]\s*/).map(Number).filter(n=>n>0&&n<=200);
     const canon=findMove(text);
     if(canon&&nums.length){
-      if(SIGNED.includes(canon)){line.append(pullupBlock(text,nums));return line;}
+      if(SIGNED.includes(canon)){line.append(pullupBlock(text,nums,part));return line;}
       const pr=prFor(canon);
-      if(!(pr&&pr.kg<=0))line.append(pr?h('div',{class:'chips'},nums.map(n=>h('span',{class:'chip load'},n+' % = '+fmtKg(pr.kg*n/100))))
+      if(!(pr&&pr.kg<=0))line.append(pr?tmChips(part,text,nums,pr)
                     :h('div',{class:'chips'},h('span',{class:'chip miss'},'Renseigne ton PR de '+canon+' dans ton profil')));
     }
   }
@@ -5303,8 +5333,8 @@ function forceDefault(p){
     const nums=m[1].split(/\s*[\/–-]\s*/).map(Number).filter(n=>n>0&&n<=200);
     for(const n of nums){
       let v;
-      if(SIGNED.includes(canon)){if(!(bw>0))continue;v=pullupCalc(bw,pr.kg,n).rounded;}
-      else{if(!(pr.kg>0))continue;v=Math.round(pr.kg*n/100*2)/2;}
+      if(SIGNED.includes(canon)){if(!(bw>0))continue;v=pullupCalc(bw,pr.kg,n,tmPctFor(p,text,n)).rounded;}
+      else{if(!(pr.kg>0))continue;{const tp=tmPctFor(p,text,n);v=Math.round(pr.kg*(tp===null?1:tp/100)*n/100*2)/2;}}
       cands.push({canon,v});
     }
   }
@@ -5648,22 +5678,6 @@ function myRatios(){
   }
   return out;
 }
-/* Diagnostic « poids / puissance » : une seule fois par athlète et par appareil, l'appli dépose une alerte au coach (Signalements) qui dit pourquoi un rapport est publié ou non.
-   Le poids lui-même n'est JAMAIS envoyé : seulement « renseigné : oui / non ». */
-function ratioDiag(pub,wr){
-  try{
-    if(S.owner||S.snapMode||!S.uid||!S.db)return;
-    const key='bs-ratdiag1-'+S.uid;
-    if(localStorage.getItem(key))return;
-    const ps=Object.values(S.periods).filter(p=>!p.virtual).sort((a,b)=>a.start<b.start?-1:1).slice(-2);
-    const rows=ps.map(p=>{
-      const r=computeBoard(p).rows.find(x=>x.uid===S.uid),st=periodState(p);
-      return (p.name||p.id)+' ('+(st==='done'?'terminée':st==='live'?'en cours':'à venir')+') : mouvements de force avec charge '+(r?r.ratioN:0)+', rapport calculable '+(r&&r.ratioLocal>0?'oui':'non')+', rapport publié '+(Number(pub[p.id])>0?'oui':'non');
-    });
-    coachAlert(S.uid,'Diag poids / puissance','Poids renseigné : '+(Number(S.prof.weight)>0?'oui':'non')+'. '+rows.join(' ; ')+'. Écriture du rapport : '+wr+'. Version '+APP_VERSION+'.');
-    localStorage.setItem(key,'1');
-  }catch(e){}
-}
 function selfSync(){
   clearTimeout(S._sst);
   S._sst=setTimeout(async()=>{
@@ -5679,14 +5693,7 @@ function selfSync(){
       const mine=myRatios(),pub=lg.ratios||{};
       let diff=false;
       for(const k of new Set([...Object.keys(mine),...Object.keys(pub)])){if(Math.abs((mine[k]||0)-(Number(pub[k])||0))>0.004){diff=true;break;}}
-      let wr='aucune écriture nécessaire';
-      if(diff){
-        const rem=Object.keys(pub).some(k=>!(k in mine)); /* une saison à retirer : seule l'écriture complète sait retirer une clé */
-        S._runErr=null;
-        await saveLog({ratios:mine,_full:rem});
-        wr=S._runErr?('refusée ('+((S._runErr&&S._runErr.code)||'?')+')'):'envoyée';
-      }
-      ratioDiag(pub,wr);
+      if(diff)await saveLog({ratios:mine});
     }catch(e){}finally{S._sy=false;}
   },1500);
 }
@@ -5861,14 +5868,11 @@ function saveLog(patch,msg,uid){
     const OPT_KEYS=['motto','focus','troph','badge']; /* valeurs simples : en écriture ciblée seulement si non vides (une valeur vide = champ à retirer, ce que seule l'écriture complète sait faire) */
     const pks=Object.keys(patch).filter(k=>k!=='_retried'&&k!=='_full');
     const base=S.logs[uid];
-    if(pks.length&&base&&base.pseudo&&!patch._full&&pks.every(k=>SAFE_KEYS.includes(k)||MAP_KEYS.includes(k)||OPT_KEYS.includes(k)||k==='ratios')){
+    if(pks.length&&base&&base.pseudo&&!patch._full&&pks.every(k=>SAFE_KEYS.includes(k)||MAP_KEYS.includes(k)||OPT_KEYS.includes(k))){
       /* cartes (séances, coins…) : on n'envoie QUE les clés nouvelles. Si une clé existante est modifiée ou retirée (modification / suppression de séance), on garde l'écriture complète. */
       const part={};let ok=true;
       for(const k of pks){
         if(SAFE_KEYS.includes(k)){part[k]=patch[k];continue;}
-        /* rapport charge ÷ poids : écriture ciblée (fusion carte par carte), donc jamais refusée par le verrou des coins quand la copie du téléphone est en retard ;
-           la fusion ne retire aucune clé : un retrait de saison passe par l'écriture complète (_full, voir selfSync) */
-        if(k==='ratios'){const v=patch[k];if(v&&typeof v==='object'&&Object.keys(v).length)part[k]=v;else ok=false;continue;}
         if(OPT_KEYS.includes(k)){
           const v=patch[k];
           if(k==='motto'){if(typeof v==='string'&&v.trim())part[k]=v.trim().slice(0,60);else ok=false;}
@@ -5892,7 +5896,7 @@ function saveLog(patch,msg,uid){
         try{
           await S.db.doc('logs/'+uid).set(part,{merge:true},{onLateError:e=>logLateError(e,patch,msg,uid)});
           const nx=Object.assign({},base);
-          for(const k of Object.keys(part))nx[k]=(MAP_KEYS.includes(k)||k==='ratios')?Object.assign({},base[k]||{},part[k]):part[k];
+          for(const k of Object.keys(part))nx[k]=MAP_KEYS.includes(k)?Object.assign({},base[k]||{},part[k]):part[k];
           S.logs[uid]=nx;
           if(msg)toast(msg);
           if(uid===S.uid)render();
@@ -7791,7 +7795,7 @@ function openTimer(w,date,m,lvIdx){
         const tmp=pl?{capped:true,rounds:ri.value,reps:pi.value}:{capped:true,creps:pi.value};
         const r=readScore(m,tmp);
         if(r.empty||r.bad||r.over||r.many){toast(r.empty?'Indique ton score.':scoreErr(m,r),true);return;}
-        finish(pl?{capped:true,score:'',rounds:String(r.rounds),reps:String(r.reps),creps:'',laps:lapsOut()}:{capped:true,score:'',rounds:'',reps:'',creps:String(r.v),laps:lapsOut()});
+        finish(pl?{capped:true,score:'',rounds:String(r.rounds),reps:(String(pi.value||'').trim()===''?'0':String(parseNum(pi.value))),creps:'',laps:lapsOut()}:{capped:true,score:'',rounds:'',reps:'',creps:String(r.v),laps:lapsOut()});
       }},saveLabel),h('div',{class:'row'},discard()));
     }else if(fmt==='AMRAP'){
       const rIn=bigIn(String(st.laps.length),{inputmode:'numeric','aria-label':'Tours complets'});
@@ -7912,23 +7916,13 @@ function levelDetail(m,lv,i){
     (ft&&lv.capTiers&&lv.capTiers.length)?h('div',{class:'tiers'},lv.capTiers.map(t=>h('span',{class:'tier'},'Time cap ≥ '+capLabel(m,tierCum(m,t.t),true)+' → '+fmtN(t.p)+' pts'))):null,
     S.prof.sex?null:h('p',{class:'sub'},'Renseigne ton sexe dans ton profil pour voir directement ta charge.')];
 }
-function customDetail(m){
-  const lo=lowLvl(m),rows=[];
-  const mk=(base,kg)=>{const lv=levelsOf(m)[base]||{},ld=loadsText({loadF:addKg(lv.loadF,kg),loadH:addKg(lv.loadH,kg)});
-    return h('div',{class:'lvl-head'},h('span',{class:'nm'},levelName(m,base)+' '+(kg>0?'+':'−')+Math.abs(kg)+' kg'),h('span',{class:'lvl-load'},'niveau '+fmt2(Math.max(LV_MIN,Math.min(LV_MAX,LV_VAL[lvRank(m,base)]+kg/KG_STEP*KG_LV)))+(ld?' · '+ld:'')));};
-  [5,10].forEach(k=>rows.push(mk(lvTop(m),k)));
-  return [h('div',{class:'sub'},'Ajoute des kilos à la charge du niveau Rx : ton niveau monte de 0,25 par tranche de 5 kg (Rx +10 kg = 3,5). Tes points ne changent pas.'),
-    ...rows,S.prof.sex?null:h('p',{class:'sub'},'Renseigne ton sexe dans ton profil pour voir directement ta charge.')];
-}
 function levelsBlock(m){
   const lv=activeLevels(m).slice().reverse(); /* Rx, Intermédiaire, Débutant */
-  const open=lv.find(x=>S.tip==='lv-'+m.label+x[1]),cOpen=m.customLvl!==false&&S.tip==='lv-'+m.label+'custom';
+  const open=lv.find(x=>S.tip==='lv-'+m.label+x[1]);
   return h('div',{class:'levels'},
     h('div',{class:'flabel'},'Niveaux de pratique · touche un niveau pour le détail'),
-    h('div',{class:'seg'+(lv.length>3?' s4':'')},lv.map(([l,i])=>h('button',{type:'button',class:'btn sm tipbtn','aria-pressed':S.tip==='lv-'+m.label+i?'true':'false',onclick:()=>toggleTip('lv-'+m.label+i)},levelName(m,i))),
-      m.customLvl!==false?h('button',{type:'button',class:'btn sm tipbtn',style:'grid-column:1/-1','aria-pressed':cOpen?'true':'false',onclick:()=>toggleTip('lv-'+m.label+'custom')},'Niveau personnalisé'):null),
-    open?h('div',{class:'tip',role:'dialog'},levelDetail(m,open[0],open[1])):null,
-    cOpen?h('div',{class:'tip',role:'dialog'},customDetail(m)):null);
+    h('div',{class:'seg'+(lv.length>3?' s4':'')},lv.map(([l,i])=>h('button',{type:'button',class:'btn sm tipbtn','aria-pressed':S.tip==='lv-'+m.label+i?'true':'false',onclick:()=>toggleTip('lv-'+m.label+i)},levelName(m,i)))),
+    open?h('div',{class:'tip',role:'dialog'},levelDetail(m,open[0],open[1])):null);
 }
 /* chronomètre des parties force / renfo : 1er appui = lance, 2e = arrête, appui suivant = repart de 0.
    L'état vit hors du DOM (la page se redessine souvent) et se calcule avec l'heure réelle : il continue même écran éteint. */
@@ -8039,7 +8033,7 @@ function openEmomTimer(p){
   /* rappel des exercices de la partie, comme sur la fiche */
   const reminder=()=>{
     const lines=String(p.content||'').split('\n').map(x=>x.trim()).filter(Boolean);
-    return lines.length?h('div',{class:'tm-sum'},h('span',{class:'flabel tm-eb'},'Rappel'),h('div',{class:'lines'},lines.map(t=>renderLine(t,p.variants)))):null;
+    return lines.length?h('div',{class:'tm-sum'},h('span',{class:'flabel tm-eb'},'Rappel'),h('div',{class:'lines'},lines.map(t=>renderLine(t,p.variants,p)))):null;
   };
   function showPrep(){
     numEl=h('div',{class:'tm-time'},String(PREP));
@@ -8181,7 +8175,7 @@ function partCard(p,w,date){
     (fmtId&&S.tip===fmtId)?h('div',{class:'tip',role:'dialog'},fmtExplain(p).map((t,k)=>k===0?h('b',{},t):h('p',{},t))):null,
     lvOpen?h('div',{class:'varnote'},'Version '+levelName(p,lvOpen[1])+' : '+[(lvOpen[0].variants||[]).length?'les variantes remplacent les mouvements':'',rdOf(lvOpen[0])?'le nombre de tours est adapté':'',rpOf(lvOpen[0])?'les reps sont adaptées':''].filter(Boolean).join(' · ')+' (en surbrillance).'):null,
     p.kind==='force'?forceInfo(p):null,
-    h('div',{class:'lines'},lines.map(metcon?metL:(t=>renderLine(t,(p.kind==='renfo'||p.kind==='autre')?p.variants:null)))),
+    h('div',{class:'lines'},lines.map(metcon?metL:(t=>renderLine(t,(p.kind==='renfo'||p.kind==='autre')?p.variants:null,p)))),
     (metcon&&p.word)?h('div',{class:'cword'},h('span',{class:'flabel'},'Mot du coach'),h('p',{},linkText(p.word))):null,
     metcon?levelsBlock(p):null,
     (metcon&&w&&timerOk(date))?h('div',{class:'row'},h('button',{class:'btn primary btn-block',type:'button','data-tour':'start-metcon',onclick:()=>{const lo=activeLevels(p).find(x=>S.tip==='lv-'+p.label+x[1]);openTimer(w,date,p,lo?lo[1]:null);}},'Démarrer le metcon')):null);
@@ -9223,29 +9217,48 @@ function capTools(m,get){
 const scaleKg=(t,f)=>String(t||'').replace(/(\d+(?:[.,]\d+)?)(\s*(?:kg|lb)s?)/gi,(x,n,u)=>fmtN(Math.round(parseNum(n)*f*2)/2)+u);
 const addKg=(t,kg)=>String(t||'').replace(/(\d+(?:[.,]\d+)?)(\s*kgs?)/gi,(x,n,u)=>fmtN(Math.max(0,Math.round((parseNum(n)+kg)*2)/2))+u);
 function customLoad(m,st){const lv=levelsOf(m)[st.level]||{},k=kgOf(st);return {loadF:addKg(lv.loadF,k),loadH:addKg(lv.loadH,k)};}
-function adjPicker(m,st){
-  const lo=lowLvl(m),opts=[['0','Choisir…']];
-  [5,10].forEach(n=>opts.push([String(n),levelName(m,lvTop(m))+' +'+n+' kg']));
-  const a=kgOf(st);
-  if(a<0)opts.push([String(a),levelName(m,lo)+' −'+Math.abs(a)+' kg']); /* ancien résultat en −5 / −10 kg : affiché tel quel, plus proposé aux nouveaux */
-  let hint='Ajoute 5 ou 10 kg à la charge du niveau Rx. Chaque tranche de 5 kg change ton niveau de 0,25 (10 kg = 0,5). Tes points ne changent pas : seul ton niveau est ajusté. Pour un niveau plus accessible, choisis Découverte ou Débutant.';
-  if(a){const ld=loadsText(customLoad(m,st));hint='Ton niveau compte pour '+fmt2(lvVal(st,m))+'.'+(ld?' '+(S.prof.sex?'Ta charge recalculée : ':'Charge recalculée : ')+ld+'.':' Pas de charge indiquée pour ce niveau.')+' Tes points ne changent pas.';}
-  return field('Choix du niveau personnalisé',sel(opts,String(a),v=>{const n=parseInt(v,10)||0;st.kg=n;if(n>0)st.level=lvTop(m);else if(n<0)st.level=lo;render();},{id:'adj-select','aria-label':'Niveau personnalisé'}),hint);
+/* guide du choix de niveau : s'affiche la première fois qu'un athlète touche un niveau dans un metcon.
+   Mémorisé dans le téléphone (bs-lvg-{uid}) et dans logs/{uid}.avSeen (marqueur « guide-niveau », aucun nouveau champ Firestore). */
+const LVG_ID='guide-niveau';
+function lvgSeen(){
+  try{if(localStorage.getItem('bs-lvg-'+S.uid))return true;}catch(e){}
+  const lg=S.logs[S.uid];return !!(lg&&Array.isArray(lg.avSeen)&&lg.avSeen.includes(LVG_ID));
+}
+function lvgMark(){
+  try{localStorage.setItem('bs-lvg-'+S.uid,'1');}catch(e){}
+  const lg=S.logs[S.uid];
+  if(S.owner||!S.db||S.snapMode||!lg||!lg.pseudo)return;
+  const l=[...new Set([...(lg.avSeen||[]),LVG_ID])].slice(-100);
+  S.logs[S.uid]=Object.assign({},lg,{avSeen:l});
+  saveLog({avSeen:l});
+}
+function lvgShow(){
+  if(!S.uid||document.getElementById('lvg-ov')||lvgSeen())return;
+  lvgMark();
+  const pop=h('div',{class:'reward-pop',id:'lvg-ov',role:'dialog','aria-modal':'true','aria-label':'Guide du choix de niveau',style:'z-index:95'});
+  const close=()=>{pop.remove();};
+  pop.append(h('div',{class:'rp-card'},
+    h('p',{class:'eyebrow'},'Guide du choix de niveau'),
+    h('h2',{class:'wtitle'},'Choisis TON niveau'),
+    h('p',{},'Le niveau à choisir est celui qui correspond à tes capacités du moment : ni celui que tu aimerais avoir, ni celui des autres. Un bon niveau, c’est un metcon que tu peux faire proprement, du début à la fin, en poussant fort.'),
+    h('p',{},'Ton résultat est ensuite coefficienté selon le niveau choisi : plus le niveau est élevé, plus ton score pèse dans tes points et ton classement. Choisir trop haut ne rapporte rien si tu ne tiens pas la séance, et choisir trop bas sous-évalue ton résultat.'),
+    h('p',{class:'muted'},'Tu peux changer de niveau d’un metcon à l’autre, selon la forme et les mouvements.'),
+    h('div',{class:'row',style:'justify-content:center'},h('button',{class:'btn primary',type:'button',id:'lvg-ok',onclick:close},'J’ai compris'))));
+  pop.addEventListener('click',e=>{if(e.target===pop)close();});
+  document.body.append(pop);
+  setTimeout(()=>{try{document.getElementById('lvg-ok').focus({preventScroll:true});}catch(e){}},50);
 }
 function levelField(m,st,label){
-  const cust=!!st.custom||!!kgOf(st),lvl=levelsOf(m)[st.level]||{},canCust=m.customLvl!==false||cust;
+  /* 4 niveaux au plus : Découverte, Débutant, Intermédiaire, Rx (selon ceux activés par le coach) */
   const box=h('div',{class:'field'},h('span',{class:'flabel'},label),
     h('div',{class:'seg'+(activeLevels(m).length>3?' s4':''),role:'group','aria-label':'Niveau de pratique'},
-      activeLevels(m).map(([lv,i])=>h('button',{type:'button',class:'btn sm','aria-pressed':(!cust&&st.level===i)?'true':'false',onclick:()=>{st.level=i;st.kg=0;st.custom=false;render();}},dispLvl(lv.name||('Niveau '+(i+1))))),
-      canCust?h('button',{type:'button',class:'btn sm',id:'lvl-custom',style:'grid-column:1/-1','aria-pressed':cust?'true':'false',onclick:()=>{st.custom=true;render();}},'Niveau personnalisé'):null));
-  if(cust)box.append(adjPicker(m,st));
+      activeLevels(m).map(([lv,i])=>h('button',{type:'button',class:'btn sm','aria-pressed':st.level===i?'true':'false',onclick:()=>{st.level=i;st.kg=0;st.custom=false;render();lvgShow();}},dispLvl(lv.name||('Niveau '+(i+1)))))));
   box.append(lvlBanner(m,st));
   return box;
 }
 /* résumé du niveau choisi (nom, couleur, charge, variante) : sert au bandeau de saisie et à la fenêtre de confirmation */
 function lvlInfo(m,st){
-  const cust=!!st.custom||!!kgOf(st),k=kgOf(st),lv=levelsOf(m)[st.level]||{};
-  if(cust&&!k)return {pending:true,cls:'lv-c'};
+  const k=kgOf(st),lv=levelsOf(m)[st.level]||{};
   if(!Number.isInteger(st.level))return {none:true};
   const rank=lvRank(m,st.level),base=levelName(m,st.level);
   return {cls:k?'lv-c':'lv-'+rank,label:k?base+' '+(k>0?'+':'−')+Math.abs(k)+' kg':base,
@@ -9254,7 +9267,6 @@ function lvlInfo(m,st){
 function lvlBanner(m,st){
   const i=lvlInfo(m,st);
   if(i.none)return h('div',{class:'hint',role:'status'},'Aucun niveau sélectionné. Touche un niveau pour voir la charge et les variantes.');
-  if(i.pending)return h('div',{class:'lvl-ban lv-c',role:'status'},h('div',{class:'lb-t'},'Choisis ton niveau personnalisé'),h('div',{class:'lb-d'},'Par exemple Rx +10 kg.'));
   return h('div',{class:'lvl-ban '+i.cls,role:'status','aria-live':'polite'},
     h('div',{class:'lb-k'},'Tu saisis un score en'),
     h('div',{class:'lb-t'},i.label),
@@ -9291,7 +9303,6 @@ function confirmLevel(m,st,go){
 /* ouvre la confirmation seulement si une saisie valide de metcon va être enregistrée ; sinon la validation normale affiche son message d'erreur */
 function needConfirm(m,st){
   if(!m||st.skip||st.coach)return false;
-  if((st.custom||kgOf(st))&&!kgOf(st))return false;
   if(!Number.isInteger(st.level))return false; /* pas de niveau : la validation affiche l'erreur */
   const r=readScore(m,st);
   return !(r.bad||r.over||r.many||r.empty);
@@ -9482,7 +9493,7 @@ function openRedo(w,date){
   if(mine&&isSubRepeat(S.uid,date)){toast('Ce remplacement a déjà été fait cette saison : cette séance compte déjà comme un REDO.',true);return;}
   S.entry=null;S.entryGlowUntil=Date.now()+2900;
   const src=rd||mine||{};
-  S.redo={date,score:'',rounds:'',reps:'',level:(rd&&rd.level!==undefined)?okLvl(m,rd.level):null,kg:kgOf(rd),custom:!!kgOf(rd)};
+  S.redo={date,score:'',rounds:'',reps:'',level:(rd&&rd.level!==undefined)?okLvl(m,rd.level):null,kg:0,custom:false};
   fillState(m,S.redo,rd);
   render();
 }
@@ -9515,7 +9526,6 @@ function submitRedo(w){
 function submitRedoNow(w){
   if(lockedDate(S.redo.date)||lockedDate(todayStr())){toast(LOCKMSG,true);return;}
   const m=metconOf(w),ft=m.format==='FT';
-  if(S.redo.custom&&!kgOf(S.redo)){toast('Choisis ton niveau personnalisé (par exemple Rx +10 kg).',true);return;}
   if(!Number.isInteger(S.redo.level)){toast('Sélectionnez un niveau pour le metcon.',true);return;}
   const r=readScore(m,S.redo);
   if(r.empty||r.bad||r.over||r.many){toast(r.empty?'Indique ton résultat.':scoreErr(m,r),true);return;}
@@ -9545,7 +9555,7 @@ function openEntry(w,date,uid,coach){
   w=myWod(w,uid);
   const mine=S.logs[uid]&&S.logs[uid].entries&&S.logs[uid].entries[date];const m=metconOf(w);
   if(!coach)S.entryGlowUntil=Date.now()+2900;
-  S.entry={date,uid,coach:!!coach,score:'',rounds:'',reps:'',message:(mine&&mine.message)||'',level:m?((mine&&mine.level!==undefined)?okLvl(m,mine.level):null):0,kg:kgOf(mine),custom:!!kgOf(mine),loads:{},sets:{},prs:{},skip:!!(mine&&mine.noMetcon&&!hasScore(mine)),only:!!(mine&&mine.metconOnly)};
+  S.entry={date,uid,coach:!!coach,score:'',rounds:'',reps:'',message:(mine&&mine.message)||'',level:m?((mine&&mine.level!==undefined)?okLvl(m,mine.level):null):0,kg:0,custom:false,loads:{},sets:{},prs:{},skip:!!(mine&&mine.noMetcon&&!hasScore(mine)),only:!!(mine&&mine.metconOnly)};
   if(mine){
     fillState(m,S.entry,mine);
     for(const [k,v] of Object.entries(mine.loads||{}))S.entry.loads[k]=String(v).replace('.',',');
@@ -9760,7 +9770,6 @@ function submitEntryNow(w){
   if(w.isSub&&w.subSw)e.sw=w.subSw; /* séance de remplacement : la copie suit le résultat */
   if(m){
     if(!S.entry.skip){
-      if(S.entry.custom&&!kgOf(S.entry)){toast('Choisis ton niveau personnalisé (par exemple Rx +10 kg).',true);return;}
       if(!Number.isInteger(S.entry.level)){toast('Sélectionnez un niveau pour le metcon.',true);return;} /* aucun niveau par défaut */
     }
     if(Number.isInteger(S.entry.level)){S.entry.level=okLvl(m,S.entry.level);e.level=S.entry.level;if(kgOf(S.entry))e.kg=kgOf(S.entry);}
@@ -11156,10 +11165,19 @@ const NOEL_BG='assets/embedded/decor-noel-salle.webp';
 const BASE_BG='assets/embedded/image_08.png';
 const imgScene=src=>'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice"><image href="'+src+'" xlink:href="'+src+'" width="1000" height="1000"/></svg>';
 const halScene=()=>'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice"><image href="'+HAL_BG+'" xlink:href="'+HAL_BG+'" width="1000" height="1000"/></svg>';
+/* Images sans clignotement (cadres d'avatar, décors derrière l'avatar) : l'appli reconstruit l'écran à chaque donnée reçue au démarrage, et chaque <img> neuf restait transparent le temps d'être
+   décodé (d'où le clignotement). On garde donc en mémoire une copie déjà décodée de chaque cadre ; un <img> neuf de la même adresse s'affiche aussitôt. */
+const _imgKeep=new Map();
+function keepImg(src){
+  if(!src||_imgKeep.has(src))return;
+  const im=new Image();im.decoding='sync';im.src=src;_imgKeep.set(src,im);
+  if(im.decode)im.decode().catch(()=>{});
+}
 const sceneURLc={};
 /* décor en fond CSS : on pointe directement l'image (un SVG en data-URI ne peut pas charger d'image externe, d'où un décor vide derrière un déguisement transparent) */
 const THEME_BG={theme_halloween:HAL_BG,theme_noel:NOEL_BG,theme_salle:SALLE_BG};
 const sceneURL=th=>THEME_BG[th]||BASE_BG;
+keepImg(BASE_BG);Object.keys(THEME_BG).forEach(k=>keepImg(THEME_BG[k]));
 const HAL_DECO='<svg class="hd-web" viewBox="0 0 110 110" aria-hidden="true">'+webG(110,0,-1,1,105)+'</svg>'+
   '<svg class="hd-sp" viewBox="-20 -2 40 100" aria-hidden="true">'+spiderG(0,74,.9,74/.9)+'</svg>'+
   '<svg class="hd-pm" viewBox="-60 -72 120 120" aria-hidden="true">'+pmp(0,0,50,false)+'</svg>';
@@ -11572,7 +11590,7 @@ function avPaint(cv,A,eq,key){
 function avOverlay(sx,eq){
   let g='';
   const co=avFull(eq);
-  if(co)return '<svg viewBox="0 0 '+AV_W+' '+AV_H+'" aria-hidden="true">'+avBaseImg(co.img,co.slot==='skin'&&avCut(eq))+(co.slot==='skin'?avOvl(eq):'')+'</svg>';
+  if(co){keepImg(co.img);return '<svg viewBox="0 0 '+AV_W+' '+AV_H+'" aria-hidden="true">'+avBaseImg(co.img,co.slot==='skin'&&avCut(eq))+(co.slot==='skin'?avOvl(eq):'')+'</svg>';}
   const sh=AV_BY[eq.shirt];
   if(sh&&sh.emb)g+='<g transform="translate('+AV_CHEST[sx].x+' '+AV_CHEST[sx].y+')">'+sh.emb(sx)+'</g>';
   const hd=AV_BY[eq.hand];
@@ -11602,7 +11620,7 @@ function avatarEl(sx,eq,width,onclick,label,world){
   const cv=h('canvas',{width:AV_W,height:AV_H});wrap.append(cv);
   let cur=eq,seq=0;
   wrap.set=e=>{
-    cur=e;const my=++seq;wrap.style.backgroundImage=!world?'url("'+sceneURL(e.theme)+'")':'';
+    cur=e;const my=++seq;if(!world)keepImg(sceneURL(e.theme));wrap.style.backgroundImage=!world?'url("'+sceneURL(e.theme)+'")':'';
     const old=wrap.querySelector('svg');if(old)old.remove();
     wrap.insertAdjacentHTML('beforeend',avOverlay(sx,e));
     if(avFull(e)){cv.getContext('2d').clearRect(0,0,AV_W,AV_H);return;} /* avatar à gagner ou déguisement : l'avatar de base n'est pas dessiné */
@@ -11787,14 +11805,6 @@ const AVF={gold:{name:'Cadre doré',src:'assets/embedded/cadre-avatar-dore.webp'
 /* cadres sombres : léger halo clair pour rester visibles par-dessus un fond de bannière foncé */
 const AVF_GLOW={'assets/embedded/cadre-avatar-fumee-noire.webp':1,'assets/embedded/cadre-avatar-metal-sombre.webp':1};
 const avfSrc=r=>(AVF[r.asset]||AVF.gold).src;
-/* Cadres d'avatar sans clignotement : l'appli reconstruit l'écran à chaque donnée reçue au démarrage, et chaque <img> neuf restait transparent le temps d'être
-   décodé (d'où le clignotement). On garde donc en mémoire une copie déjà décodée de chaque cadre ; un <img> neuf de la même adresse s'affiche aussitôt. */
-const _imgKeep=new Map();
-function keepImg(src){
-  if(!src||_imgKeep.has(src))return;
-  const im=new Image();im.decoding='sync';im.src=src;_imgKeep.set(src,im);
-  if(im.decode)im.decode().catch(()=>{});
-}
 Object.keys(AVF).forEach(k=>keepImg(AVF[k].src));
 /* fonds de bannière à image (dossier assets/embedded). Pour en ajouter : déposer l'image, ajouter une ligne ici et le CSS .bn-bg-<id> */
 const BG_ASSETS={
@@ -12499,16 +12509,18 @@ function pf2Head(pseudo,pf){
     h('div',{class:'pf2-meta'},h('div',{class:'pf2-name'},h('h1',{},pseudo||'Mon profil'),edit),logo,l2,motto,pinRow));
 }
 /* ---------- barre d'XP + passe d'XP ---------- */
+const XP_STEP=25; /* un palier tous les 25 XP */
+const XP_TIER_COINS=5; /* coins à récupérer sur chaque palier (en touchant le palier dans le pass) */
 const XP_BAR_MAX=1150; /* total d'XP possible sur une saison : fin de la barre et du passe (à changer ici) */
 const BP_TYPE={title:'Titre',frame:'Encadré de bannière',bg:'Fond de bannière',avatar:'Cosmétique avatar',avframe:'Cadre d’avatar',joker:'Joker',coins:'Coins'};
-function bpRewards(uid){
-  const p=selPeriod();
+function bpRewards(uid,per){
+  const p=per||selPeriod();
   return ((p&&p.rewards)||[]).filter(r=>Number.isFinite(Number(r.xp))&&Number(r.xp)>=0&&rwFits(r,uid)).sort((a,b)=>Number(a.xp)-Number(b.xp));
 }
 const bpMaxOf=rw=>Math.max(XP_BAR_MAX,rw.length?Number(rw[rw.length-1].xp):0); /* la barre va toujours jusqu'au total possible de la saison (1150), même si la dernière récompense est plus bas */
-/* une carte par tranche de 20 XP, plus une carte à l'XP exacte de chaque récompense qui tombe entre deux tranches */
+/* une carte par tranche de 25 XP (XP_STEP), plus une carte à l'XP exacte de chaque récompense qui tombe entre deux tranches */
 function bpSlots(rw,mx){
-  const step=20*Math.max(1,Math.ceil(mx/20/300)),set=new Set();
+  const step=XP_STEP*Math.max(1,Math.ceil(mx/XP_STEP/300)),set=new Set();
   for(let x=step;x<=mx;x+=step)set.add(x);
   rw.forEach(r=>set.add(Number(r.xp)));
   return [...set].sort((a,b)=>a-b).map(x=>({x,rs:rw.filter(r=>Number(r.xp)===x)}));
@@ -12536,44 +12548,88 @@ function bpArt(r){
   w.append(art);
   return w;
 }
-function openXpPass(uid,xp){
-  if(document.querySelector('.bp-ov'))return;
-  const rw=bpRewards(uid),mx=bpMaxOf(rw),sl=bpSlots(rw,mx),PAD=14,G=12;
-  if(!sl.length)return;
-  let sel=sl.findIndex(s=>s.rs.length&&s.x>xp);if(sel<0)sel=sl.length-1;
-  const prevOv=document.body.style.overflow;
-  const ov=h('div',{class:'reward-pop bp-ov',role:'dialog','aria-modal':'true','aria-label':'Passe d’XP'});
-  const onKey=e=>{if(e.key==='Escape')close();};
-  const close=()=>{document.removeEventListener('keydown',onKey);window.removeEventListener('resize',onResize);document.body.style.overflow=prevOv;ov.remove();};
+/* ---------- coins des paliers : 5 coins par palier de 25 XP, à récupérer en touchant le palier ----------
+   Stockés dans logs/{uid}.coinGot sous la clé « rw:{saison}:xp{XP} » (même forme que les récompenses « Coins » : le solde les additionne). Une seule fois par palier. */
+const xpTierKey=(per,x)=>'rw:'+per.id+':xp'+x;
+const xpTierCoins=(per,x)=>(per&&!per.virtual&&per.id&&Number.isInteger(x)&&x>0&&x%XP_STEP===0)?XP_TIER_COINS:0;
+function xpTierCan(uid,per){const lg=S.logs[S.uid];return !!(S.uid&&uid===S.uid&&lg&&lg.pseudo&&S.db&&!S.snapMode&&per&&!per.virtual&&per.id);}
+const xpTierDone=(per,x)=>{const lg=S.logs[S.uid];return !!(lg&&lg.coinGot&&lg.coinGot[xpTierKey(per,x)]!==undefined);};
+function xpTierClaim(per,xs,xp){
+  const lg=S.logs[S.uid]||{},base=Object.assign({},lg.coinGot||{}),ks=[];
+  for(const x of xs){if(!xpTierCoins(per,x)||xp<x)continue;const k=xpTierKey(per,x);if(base[k]!==undefined||ks.includes(k))continue;ks.push(k);}
+  if(!ks.length)return 0;
+  const all=Object.assign({},base);ks.forEach(k=>{all[k]=XP_TIER_COINS;});
+  S.logs[S.uid]=Object.assign({},lg,{coinGot:all});
+  /* les règles Firestore n'acceptent que 3 nouvelles clés de coinGot par écriture : on envoie par paquets de 3, l'un après l'autre */
+  const cum=Object.assign({},base),msg='+'+(ks.length*XP_TIER_COINS)+' coins récupérés.';
+  for(let i=0;i<ks.length;i+=3){
+    ks.slice(i,i+3).forEach(k=>{cum[k]=XP_TIER_COINS;});
+    saveLog({coinGot:Object.assign({},cum)},i+3>=ks.length?msg:undefined);
+  }
+  return ks.length;
+}
+/* le pass d'XP : utilisé en fenêtre plein écran (profil) et intégré au Shop (embed) */
+function xpPassPanel(o){
+  const uid=o.uid,xp=o.xp,per=o.per,embed=!!o.embed,PAD=14,G=12;
+  const rw=bpRewards(uid,per),mx=bpMaxOf(rw),sl=bpSlots(rw,mx),can=xpTierCan(uid,per);
+  const keep=(embed&&S._bpK&&S._bpK.id===per.id)?Object.assign({},S._bpK):null;
+  let cur=sl.findIndex(s=>s.rs.length&&s.x>xp);if(cur<0)cur=sl.length-1;
+  if(keep&&keep.sel>=0&&keep.sel<sl.length)cur=keep.sel;
+  const memo=d=>{if(embed)S._bpK=Object.assign(S._bpK&&S._bpK.id===per.id?S._bpK:{id:per.id},d);};
   const hex=h('div',{class:'bp-hex','aria-hidden':'true'});
-  hex.innerHTML='<svg viewBox="0 0 52 58"><defs><linearGradient id="bphg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4d8d"/><stop offset="1" stop-color="#c2145c"/></linearGradient></defs><path d="M26 2l22 13v28L26 56 4 43V15z" fill="url(#bphg)" stroke="#ffd0e2" stroke-width="2.5" stroke-linejoin="round"/></svg>';
+  hex.innerHTML='<svg viewBox="0 0 52 58"><defs><linearGradient id="bphg'+(embed?'s':'')+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4d8d"/><stop offset="1" stop-color="#c2145c"/></linearGradient></defs><path d="M26 2l22 13v28L26 56 4 43V15z" fill="url(#bphg'+(embed?'s':'')+')" stroke="#ffd0e2" stroke-width="2.5" stroke-linejoin="round"/></svg>';
   hex.append(h('b',{},'XP'));
-  const closeBtn=h('button',{type:'button',class:'bp-x','aria-label':'Fermer',onclick:close},'✕');
+  const closeBtn=o.onClose?h('button',{type:'button',class:'bp-x','aria-label':'Fermer',onclick:o.onClose},'✕'):null;
   const top=h('div',{class:'bp-top'},hex,h('div',{class:'bp-val'},fmtN(xp)+' / '+fmtN(mx),h('small',{},'XP')),closeBtn);
+  const allBtn=h('button',{type:'button',class:'bp-all',hidden:true,onclick:()=>claim(pend())});
   const me=h('div',{class:'bp-me'},h('span',{},fmtN(xp)+' XP'),h('i',{}));
-  const cards=[],inner=h('div',{class:'bp-in'},me);
+  const cards=[],coinEls=[],inner=h('div',{class:'bp-in'},me);
   const det=h('div',{class:'bp-det','aria-live':'polite'});
+  const pend=()=>can?sl.filter(s=>xp>=s.x&&xpTierCoins(per,s.x)>0&&!xpTierDone(per,s.x)).map(s=>s.x):[];
+  const sync=()=>{const n=pend().length;allBtn.hidden=!n;if(n)allBtn.textContent='Tout récupérer · +'+(n*XP_TIER_COINS)+' coins';};
+  const paint=i=>{
+    const e=coinEls[i];if(!e)return;
+    const s=sl[i],c=xpTierCoins(per,s.x),got=xp>=s.x,done=xpTierDone(per,s.x);
+    e.className='bp-coin'+(done?' done':(got&&can)?' ready':'');
+    e.replaceChildren(coinIco(13),document.createTextNode(done?'✓':'+'+c));
+  };
   const showDet=()=>{
-    const s=sl[sel],got=xp>=s.x;
-    if(!s.rs.length){det.replaceChildren(h('div',{class:'bp-dr'},h('b',{},fmtN(s.x)+' XP'),h('span',{},got?'Palier atteint.':'Encore '+fmtN(s.x-xp)+' XP pour atteindre ce palier.')),h('span',{class:'bp-hint',style:'margin:0;text-align:left'},'Pas de récompense à ce palier.'));return;}
-    det.replaceChildren(...s.rs.map(r=>{
+    const s=sl[cur],got=xp>=s.x,coin=xpTierCoins(per,s.x),done=coin>0&&xpTierDone(per,s.x),rows=[];
+    if(coin){
+      const stt=done?'Récupérés ✓':got?(can?'À récupérer':'Atteint'):'Encore '+fmtN(s.x-xp)+' XP';
+      const r=h('div',{class:'bp-dr'},h('b',{},'+'+coin+' coins'),h('span',{},'Palier · '+fmtN(s.x)+' XP · '+stt));
+      if(got&&can&&!done)r.append(h('button',{type:'button',class:'bp-claim',onclick:()=>claim([s.x])},'Récupérer '+coin+' coins'));
+      rows.push(r);
+    }
+    s.rs.forEach(r=>{
       const n=Math.max(0,Math.floor(Number(r.coins))||0);
       const name=r.type==='coins'?(r.name||'Coins')+(n?' · +'+n+' coin'+(n>1?'s':''):''):(r.name||'Récompense');
-      return h('div',{class:'bp-dr'},h('b',{},name),h('span',{},(BP_TYPE[r.type]||'Récompense')+' · '+fmtN(s.x)+' XP · '+(got?'Débloquée ✓':'Encore '+fmtN(s.x-xp)+' XP')));
-    }));
+      rows.push(h('div',{class:'bp-dr'},h('b',{},name),h('span',{},(BP_TYPE[r.type]||'Récompense')+' · '+fmtN(s.x)+' XP · '+(got?'Débloquée ✓':'Encore '+fmtN(s.x-xp)+' XP'))));
+    });
+    if(!rows.length)rows.push(h('div',{class:'bp-dr'},h('b',{},fmtN(s.x)+' XP'),h('span',{},got?'Palier atteint.':'Encore '+fmtN(s.x-xp)+' XP pour atteindre ce palier.')),h('span',{class:'bp-hint',style:'margin:0;text-align:left'},'Pas de récompense à ce palier.'));
+    det.replaceChildren(...rows);
   };
-  const pick=i=>{sel=i;cards.forEach((c,k)=>c.classList.toggle('sel',k===i));showDet();};
+  const claim=xs=>{
+    const n=xpTierClaim(per,xs,xp);
+    if(!n)return;
+    sl.forEach((s,i)=>paint(i));showDet();sync();
+  };
+  const pick=i=>{cur=i;cards.forEach((c,k)=>c.classList.toggle('sel',k===i));memo({sel:i});showDet();};
   sl.forEach((s,i)=>{
-    const got=xp>=s.x,has=s.rs.length>0;
-    const box=h('div',{class:'bp-box '+(got?'got':'lock')+(has?'':' empty')},has?bpArt(s.rs[0]):bpGift(),
-      s.rs.length>1?h('span',{class:'bp-n'},'×'+s.rs.length):null,
+    const got=xp>=s.x,has=s.rs.length>0,coin=xpTierCoins(per,s.x);
+    const art=has?bpArt(s.rs[0]):coin?(()=>{const a=h('div',{class:'bp-art'});a.append(coinIco(44));return a;})():bpGift();
+    let pill=null;if(coin){pill=h('span',{class:'bp-coin'});coinEls[i]=pill;}
+    const box=h('div',{class:'bp-box '+(got?'got':'lock')+(has?'':' empty')},art,
+      s.rs.length>1?h('span',{class:'bp-n'},'×'+s.rs.length):null,pill,
       has?h('span',{class:'bp-st'},got?'✅':'🔒'):(got?h('span',{class:'bp-st'},'✔'):null));
-    const c=h('button',{type:'button',class:'bp-c'+(got?' got':'')+(i===sel?' sel':''),'aria-label':fmtN(s.x)+' XP'+(has?' : '+(s.rs[0].name||'récompense'):''),onclick:()=>pick(i)},box,h('span',{class:'bp-xp'},fmtN(s.x)+' XP'));
-    cards.push(c);inner.append(c);
+    const c=h('button',{type:'button',class:'bp-c'+(got?' got':'')+(i===cur?' sel':''),'aria-label':fmtN(s.x)+' XP'+(coin?' : +'+coin+' coins':'')+(has?' : '+(s.rs[0].name||'récompense'):''),
+      onclick:()=>{pick(i);if(can&&xp>=s.x&&coin&&!xpTierDone(per,s.x))claim([s.x]);}},box,h('span',{class:'bp-xp'},fmtN(s.x)+' XP'));
+    cards.push(c);inner.append(c);paint(i);
     if(i<sl.length-1){const nx=sl[i+1].x,fr=Math.max(0,Math.min(1,(xp-s.x)/Math.max(0.0001,nx-s.x)));inner.append(h('div',{class:'bp-cn'},h('i',{style:'width:'+(fr*100)+'%'})));}
   });
   const track=h('div',{class:'bp-track'},inner);
-  ov.append(top,track,det,h('p',{class:'bp-hint'},'Fais défiler vers la droite pour voir les prochaines récompenses.'));
+  if(embed)track.addEventListener('scroll',()=>memo({x:track.scrollLeft}),{passive:true});
+  const hint=h('p',{class:'bp-hint'},(can?'Touche un palier atteint pour récupérer ses '+XP_TIER_COINS+' coins. ':'')+'Fais défiler vers la droite pour voir les prochaines récompenses.');
   const lay=first=>{
     const W=track.clientWidth||360,cw=Math.max(70,Math.floor((W-2*PAD-2*G)/3)); /* 3 cartes visibles */
     track.style.setProperty('--bpw',cw+'px');track.style.setProperty('--bpg',G+'px');track.style.setProperty('--bpp',PAD+'px');
@@ -12581,19 +12637,43 @@ function openXpPass(uid,xp){
     if(xp<sl[0].x)x=PAD+(sl[0].x>0?Math.max(0,xp)/sl[0].x:0)*(cw/2);
     else{let i=sl.length-1;while(i>0&&sl[i].x>xp)i--;x=i>=sl.length-1?cx(sl.length-1):cx(i)+(xp-sl[i].x)/Math.max(0.0001,sl[i+1].x-sl[i].x)*(cw+G);}
     me.style.left=x+'px';
-    if(first){ /* on centre la carte la plus proche de l'XP actuelle : 3 cartes entières visibles */
-      let k=0;for(let i=1;i<sl.length;i++)if(Math.abs(sl[i].x-xp)<Math.abs(sl[k].x-xp))k=i;
-      track.scrollLeft=Math.max(0,cx(k)-W/2);
+    if(first){
+      if(keep&&keep.x!=null)track.scrollLeft=keep.x;
+      else{let k=0;for(let i=1;i<sl.length;i++)if(Math.abs(sl[i].x-xp)<Math.abs(sl[k].x-xp))k=i;track.scrollLeft=Math.max(0,cx(k)-W/2);}
     }
   };
-  const onResize=()=>lay(false);
+  showDet();sync();
+  if(embed){
+    const go=n=>{if(!track.isConnected){if(n<40)requestAnimationFrame(()=>go(n+1));return;}lay(true);if(window.ResizeObserver)new ResizeObserver(()=>lay(false)).observe(track);};
+    requestAnimationFrame(()=>go(0));
+  }
+  return {els:[top,allBtn,track,det,hint],lay,closeBtn};
+}
+function openXpPass(uid,xp,per0){
+  if(document.querySelector('.bp-ov'))return;
+  const per=per0||selPeriod();
+  const prevOv=document.body.style.overflow;
+  const ov=h('div',{class:'reward-pop bp-ov',role:'dialog','aria-modal':'true','aria-label':'Passe d’XP'});
+  const onKey=e=>{if(e.key==='Escape')close();};
+  const close=()=>{document.removeEventListener('keydown',onKey);window.removeEventListener('resize',onResize);document.body.style.overflow=prevOv;ov.remove();};
+  const P=xpPassPanel({uid,xp,per,embed:false,onClose:close});
+  ov.append(...P.els);
+  const onResize=()=>P.lay(false);
   ov.addEventListener('click',e=>{if(e.target===ov)close();});
   document.addEventListener('keydown',onKey);window.addEventListener('resize',onResize);
   document.body.style.overflow='hidden';
   document.body.append(ov);
-  showDet();lay(true);
-  requestAnimationFrame(()=>lay(true));
-  setTimeout(()=>{try{closeBtn.focus({preventScroll:true});}catch(e){}},50);
+  P.lay(true);
+  requestAnimationFrame(()=>P.lay(true));
+  setTimeout(()=>{try{P.closeBtn.focus({preventScroll:true});}catch(e){}},50);
+}
+/* le pass d'XP dans le Shop (saison en cours), à la place du texte et du bouton « Découvrir » */
+function shopPassBlock(){
+  const per=activePeriod(),wrap=h('div',{class:'sh-pass'});
+  if(!per||per.virtual||!S.uid){wrap.append(h('p',{class:'sh-pass-n'},'Le pass d’XP apparaît dès qu’une saison est programmée.'));return wrap;}
+  const row=computeBoard(per,true).rows.find(r=>r.uid===S.uid),xp=row?Number(row.weighted)||0:0;
+  wrap.append(...xpPassPanel({uid:S.uid,xp,per,embed:true}).els);
+  return wrap;
 }
 function pf2Stats(me,board,rank,xp,nr,uid){
   uid=uid||S.uid;
@@ -13987,6 +14067,7 @@ function coachMenu(){
   const nP=pendCount();
   const items=[['wod','Entrer un WOD',pl_(Object.keys(S.wods).length,'séance')+' publiée'+(Object.keys(S.wods).length>1?'s':'')+(nP?' · '+nP+' en attente':'')],
     ['plan','Planificateur de saison','Force, renfo et méthodes sur toute la saison'],
+    ['xpp','Pass de saison','Un palier tous les '+XP_STEP+' XP · '+XP_TIER_COINS+' coins par palier · récompense au choix'],
     ['rwp','Récompenses de saison','Ordre des items, seuils d’XP et suivi de création'],
     ['groups','Gérer les groupes',pl_(groupsList().length,'groupe')],
     ['bots','Gérer les bots',pl_(botsOn().length,'bot')+' actif'+(botsOn().length>1?'s':'')+' sur '+BOT_DEFS.length],
@@ -13999,7 +14080,7 @@ function coachMenu(){
     ['feat','Fonctionnalités','Vérification de la connaissance des mouvements : '+(featOn('mvCheck')?'activée':'désactivée')],
     ['seen','Dernières connexions',pl_(nA,'adhérent')],
     ['trash','Corbeille',(S.prof.trash||[]).length?pl_((S.prof.trash||[]).length,'élément')+' récupérable'+((S.prof.trash||[]).length>1?'s':''):'Rétablir une suppression par erreur']];
-  return h('div',{class:'stack'},items.map(([k,t,sub])=>h('button',{class:'mbtn',type:'button',id:'cm-'+k,onclick:()=>{if(k==='warmup'){openWarmupEdit();return;}if(k==='message'){go('msgs');return;}S.coach.view=k;render();window.scrollTo(0,0);}},h('div',{},h('b',{},t),h('span',{},sub)),((k==='results'&&unusualAll().length)||(k==='wod'&&nP))?h('span',{class:'ibdot','aria-hidden':'true'}):null,h('i',{},'›'))));
+  return h('div',{class:'stack'},items.map(([k,t,sub])=>h('button',{class:'mbtn',type:'button',id:'cm-'+k,onclick:()=>{if(k==='xpp')S.coach.xpp=null;if(k==='warmup'){openWarmupEdit();return;}if(k==='message'){go('msgs');return;}S.coach.view=k;render();window.scrollTo(0,0);}},h('div',{},h('b',{},t),h('span',{},sub)),((k==='results'&&unusualAll().length)||(k==='wod'&&nP))?h('span',{class:'ibdot','aria-hidden':'true'}):null,h('i',{},'›'))));
 }
 
 /* ---------- coach ---------- */
@@ -14419,11 +14500,68 @@ function pendRow(p){
 }
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&S.coach&&S.coach.pendId&&S.coach.wodOpen)pendKeep();});
 
+/* ---------- Coach › Pass de saison : une récompense au choix sur chaque palier d'XP ---------- */
+function xppClean(list){return (list||[]).map(r=>({id:r.id||('rw'+Date.now().toString(36)),type:r.type||'title',name:String(r.name||'').trim(),xp:Math.max(0,Number(r.xp)||0),asset:r.asset||'',image:String(r.image||'').trim(),...(r.type==='coins'?{coins:Math.max(0,Math.floor(Number(r.coins)||0))}:{})}));}
+function xppSave(per,list,msg){
+  if(!S.db||S.snapMode){toast('Connexion nécessaire pour enregistrer.',true);return;}
+  const d=Object.assign({},S.periods[per.id],{rewards:xppClean(list)});
+  S.periods[per.id]=d;S.coach.xpp.draft=null;render();
+  run(async()=>{await S.db.doc('periods/'+per.id).set(d);toast(msg);});
+}
+function xpPassCoach(){
+  const l=plist();
+  if(!l.length)return h('section',{class:'card'},h('p',{class:'muted'},'Programme d’abord une saison dans « Gérer les saisons » : le pass d’XP est rattaché à une saison.'));
+  const st=S.coach.xpp=S.coach.xpp||{pid:null,sel:null,draft:null};
+  let per=l.find(p=>p.id===st.pid);
+  if(!per){const a=activePeriod();per=(a&&!a.virtual&&l.find(p=>p.id===a.id))||l[l.length-1];}
+  if(st.pid!==per.id){st.pid=per.id;st.sel=null;st.draft=null;}
+  const list=Array.isArray(per.rewards)?per.rewards:[];
+  const rw=bpRewards(S.uid,per),mx=bpMaxOf(rw),sl=bpSlots(rw,mx),items=AV_ITEMS.filter(x=>!avOff(x));
+  const typeName={title:'Titre',frame:'Encadré de bannière',bg:'Fond de bannière',avatar:'Cosmétique avatar',avframe:'Cadre d’avatar (fil)',joker:'Joker',coins:'Coins'};
+  const cur=st.sel!=null?sl.find(s=>s.x===st.sel):null;
+  const seasonSel=sel(l.slice().reverse().map(p=>[p.id,seasonLabel(p)+' · '+p.name]),per.id,v=>{st.pid=v;st.sel=null;st.draft=null;render();},{'aria-label':'Saison'});
+  const head=h('section',{class:'card'},h('h2',{class:'h2'},'Pass de la saison'),
+    h('p',{class:'hint'},'Un palier tous les '+XP_STEP+' XP. Chaque palier donne '+XP_TIER_COINS+' coins que l’athlète récupère en le touchant dans son pass (profil ou Shop). Touche un palier pour y mettre ce que tu veux : titre, cadre, fond, cosmétique, joker, coins… Les récompenses réglées dans « Gérer les saisons » apparaissent aussi ici. Chaque changement est enregistré tout de suite.'),
+    field('Saison',seasonSel),
+    h('p',{class:'hint'},pl_(rw.length,'récompense')+' sur '+pl_(sl.length,'palier')+' · la barre va jusqu’à '+fmtN(mx)+' XP'),
+    h('div',{class:'row'},h('button',{class:'btn sm',type:'button',onclick:()=>openXpPass(S.uid,seasonXp(S.uid,per),per)},'Voir le pass comme un athlète')));
+  const grid=h('section',{class:'card'},h('div',{class:'xpp-grid',role:'list'},sl.map(s=>{
+    const has=s.rs.length>0,art=h('div',{class:'xpp-art'});
+    if(has){const r=s.rs[0];art.append((r.type==='coins'&&!r.image)?coinIco(30):rewardImage(r));}else art.append(h('span',{class:'xpp-plus'},'＋'));
+    return h('button',{type:'button',role:'listitem',class:'xpp-c'+(has?' has':'')+(cur&&cur.x===s.x?' sel':''),'aria-label':fmtN(s.x)+' XP'+(has?' : '+s.rs.map(r=>r.name||'récompense').join(', '):' : aucune récompense'),
+      onclick:()=>{st.sel=s.x;st.draft=null;render();}},art,s.rs.length>1?h('span',{class:'xpp-n'},'×'+s.rs.length):null,h('span',{class:'xpp-x'},fmtN(s.x)+' XP'));
+  })));
+  let sheet=null;
+  if(cur){
+    const here=list.filter(r=>Number(r.xp)===cur.x),dr=st.draft,coin=xpTierCoins(per,cur.x);
+    const close=()=>{st.sel=null;st.draft=null;render();};
+    const rows=here.map(r=>h('div',{class:'reward-edit'},
+      h('div',{class:'wide'},h('b',{},r.name||'Récompense sans nom'),h('div',{class:'sub'},(typeName[r.type]||'Récompense')+(r.type==='coins'?' · '+(Number(r.coins)||0)+' coin'+((Number(r.coins)||0)>1?'s':''):''))),
+      h('button',{class:'btn sm',type:'button',onclick:()=>{st.draft=Object.assign({},r);render();}},'Modifier'),
+      h('button',{class:'btn sm danger',type:'button',onclick:()=>{if(!confirm('Retirer « '+(r.name||'cette récompense')+' » du palier '+fmtN(cur.x)+' XP ?'))return;xppSave(per,list.filter(x=>x.id!==r.id),'Récompense retirée');}},'Supprimer')));
+    const confirmDraft=()=>{
+      const r=Object.assign({},dr);
+      if(r.type==='coins'){const c=Math.floor(Number(String(r.coins).replace(',','.')));if(!Number.isFinite(c)||c<1){toast('Indique un nombre de coins à gagner (1 ou plus).',true);return;}r.coins=String(c);if(!String(r.name||'').trim())r.name=c+' coin'+(c>1?'s':'');}
+      if(!String(r.name||'').trim()){toast('Donne un nom à la récompense avant de confirmer.',true);return;}
+      r.name=r.name.trim();r.xp=String(cur.x);
+      xppSave(per,list.filter(x=>x.id!==r.id).concat([r]),'Récompense enregistrée sur le palier '+fmtN(cur.x)+' XP');
+    };
+    const draftBox=dr?h('div',{class:'stack',style:'border:1px solid var(--line);border-radius:12px;padding:12px'},h('div',{class:'flabel'},list.some(x=>x.id===dr.id)?'Modifier la récompense':'Nouvelle récompense'),rwFields(dr,items,true),
+      h('div',{class:'row'},h('button',{class:'btn primary',type:'button',onclick:confirmDraft},'Confirmer'),h('button',{class:'btn',type:'button',onclick:()=>{st.draft=null;render();}},'Annuler'))):null;
+    sheet=h('div',{class:'xpp-ov',onclick:e=>{if(e.target===e.currentTarget)close();}},h('div',{class:'xpp-sheet',role:'dialog','aria-modal':'true','aria-label':'Palier '+fmtN(cur.x)+' XP'},
+      h('div',{class:'row',style:'justify-content:space-between;flex-wrap:nowrap'},h('h2',{class:'h2',style:'margin:0'},'Palier '+fmtN(cur.x)+' XP'),h('button',{class:'btn sm',type:'button','aria-label':'Fermer',onclick:close},'✕')),
+      h('p',{class:'hint'},coin?'Ce palier donne '+XP_TIER_COINS+' coins, récupérés par l’athlète en touchant le palier. La récompense ci-dessous s’y ajoute.':'Ce palier n’est pas dans le rythme de '+XP_STEP+' XP : il n’y a pas de coins à récupérer, seulement la récompense ci-dessous.'),
+      rows.length?h('div',{class:'stack'},...rows):h('p',{class:'muted'},'Aucune récompense sur ce palier pour le moment.'),
+      draftBox,
+      !dr?h('button',{class:'btn',type:'button',onclick:()=>{const r=blankSeasonReward();r.xp=String(cur.x);st.draft=r;render();}},'＋ Mettre une récompense sur ce palier'):null));
+  }
+  return h('div',{class:'stack'},head,grid,sheet);
+}
 function viewCoach(){
   const el=h('div',{class:'stack'});
   if(!S.owner){el.append(h('div',{class:'empty'},h('p',{},'Cet espace est réservé au coach.')));return el;}
   if(!S.coach.wod)S.coach.wod=blankWod();
-  const v=S.coach.view,titles={wod:'Entrer un WOD',groups:'Gérer les groupes',bots:'Gérer les bots',results:'Gérer les résultats',seasons:'Gérer les saisons',avatar:'Objets secrets',shop:'Shop et coins',rivals:'Messages du fil',message:'Message aux athlètes',trash:'Corbeille',feat:'Fonctionnalités',seen:'Dernières connexions',mvcfg:'Configurer les mouvements',plan:'Planificateur de saison',draft:'Récompenses brouillon'};
+  const v=S.coach.view,titles={wod:'Entrer un WOD',groups:'Gérer les groupes',bots:'Gérer les bots',results:'Gérer les résultats',seasons:'Gérer les saisons',avatar:'Objets secrets',shop:'Shop et coins',rivals:'Messages du fil',message:'Message aux athlètes',trash:'Corbeille',feat:'Fonctionnalités',seen:'Dernières connexions',mvcfg:'Configurer les mouvements',plan:'Planificateur de saison',draft:'Récompenses brouillon',xpp:'Pass de saison'};
   if(v==='rwp'){el.append(rwpView());return el;} /* plein écran : voir rwpPlace */
   if(v==='plan'){el.append(planView());return el;} /* plein écran, sans la ligne de retour ni le titre : voir planPlace */
   if(titles[v])el.append(h('div',{class:'row'},h('button',{class:'btn sm',type:'button',onclick:()=>{S.coach.view=null;S.entry=null;S.confirm=null;render();window.scrollTo(0,0);}},'← Coach')));
@@ -14442,6 +14580,7 @@ function viewCoach(){
   else if(v==='feat')el.append(featuresCard());
   else if(v==='seen')el.append(lastSeenCard());
   else if(v==='draft')el.append(rewardDraftCard());
+  else if(v==='xpp')el.append(xpPassCoach());
   else el.append(periodEditor(),periodList());
   return el;
 }
@@ -14465,12 +14604,10 @@ function mvGroup(name){
   return 'gym';
 }
 /* catalogue des mouvements reconnus : GLOSS + EXTRA + exercices du générateur + mouvements ajoutés par le coach */
-let _mvCat=null,_mvKey='',_mvCat0=null;
-/* plain=true : catalogue de base (sans les mouvements ajoutés par le réglage de l'athlète), identique chez tout le monde : sert à fabriquer la séance bonus */
-function mvCatalog(plain){
-  if(plain&&_mvCat0)return _mvCat0;
-  const key=plain?'':Object.keys(mvCfg()).sort().join('|');
-  if(!plain&&_mvCat&&_mvKey===key)return _mvCat;
+let _mvCat=null,_mvKey='';
+function mvCatalog(){
+  const key=Object.keys(mvCfg()).sort().join('|');
+  if(_mvCat&&_mvKey===key)return _mvCat;
   const names=new Map();
   const owned=a=>{for(const set of names.values())if(set.has(a))return true;return false;};
   const add=(name,al,strict)=>{
@@ -14482,18 +14619,17 @@ function mvCatalog(plain){
   GLOSS.forEach(g=>add(g[0],g[1].concat([g[0]]),false));
   EXTRA.forEach(x=>add(x[0],x[1].concat([x[0]]),true));
   GEN.forEach(x=>add(x[0],[x[0]],true));
-  if(!plain)Object.keys(mvCfg()).forEach(n=>{if(!names.has(n))add(n,[n],false);});
+  Object.keys(mvCfg()).forEach(n=>{if(!names.has(n))add(n,[n],false);});
   const list=[];
   names.forEach((set,name)=>{const forms=new Set();set.forEach(a=>{[a,a.replace(/-/g,' '),a.replace(/-/g,'')].forEach(v=>{forms.add(v);if(!v.endsWith('s'))forms.add(v+'s');});});forms.forEach(f=>list.push([f,name]));});
   list.sort((a,b)=>b[0].length-a[0].length);
-  if(plain){_mvCat0={names,list};return _mvCat0;}
   _mvCat={names,list};_mvKey=key;return _mvCat;
 }
 /* mouvements reconnus dans une ligne (le plus long alias gagne : « ring row » avant « row ») */
-function mvSpans(text,plain){
+function mvSpans(text){
   const t=norm(text);if(t.length!==text.length)return [];
   const out=[];
-  for(const [al,name] of mvCatalog(plain).list){
+  for(const [al,name] of mvCatalog().list){
     for(let i=t.indexOf(al);i>=0;i=t.indexOf(al,i+1)){
       const e=i+al.length;
       if((i>0&&/[a-z0-9]/.test(t[i-1]))||(e<t.length&&/[a-z0-9]/.test(t[e])))continue;
@@ -14503,9 +14639,9 @@ function mvSpans(text,plain){
   }
   return out.sort((a,b)=>a.s-b.s);
 }
-function mvDetect(content,plain){
+function mvDetect(content){
   const seen=[];
-  for(const raw of String(content||'').split('\n'))for(const sp of mvSpans(raw.replace(WTAG,''),plain))if(!seen.includes(sp.name))seen.push(sp.name);
+  for(const raw of String(content||'').split('\n'))for(const sp of mvSpans(raw.replace(WTAG,'')))if(!seen.includes(sp.name))seen.push(sp.name);
   return seen;
 }
 /* ligne du descriptif avec les variantes d'un niveau à la place du mouvement d'origine (en surbrillance) */
@@ -15119,8 +15255,6 @@ function wodEditor(modal){
         h('p',{class:'hint'},'À décocher pour un metcon court ou volontairement léger (gestion, récupération) qu’on ne veut pas voir refaire pour entasser des points : le REDO n’est alors plus proposé. Coché : un REDO rapporte 1 point s’il est moins bon que le premier résultat, 2 s’il marque autant de points, 3 s’il l’améliore (niveau et points de metcon).'));
       box.append(h('label',{class:'chk'},h('input',{type:'checkbox',id:'p'+i+'-test',checked:!!p.test,onchange:e=>{p.test=e.target.checked;}}),h('span',{},'Metcon TEST')),
         h('p',{class:'hint'},'Coché : la mention TEST apparaît sur la carte de la séance et sur le metcon, pour signaler un metcon test de la saison.'));
-      box.append(h('label',{class:'chk'},h('input',{type:'checkbox',id:'p'+i+'-custlvl',checked:p.customLvl!==false,onchange:e=>{p.customLvl=e.target.checked;}}),h('span',{},'Autoriser le niveau personnalisé sur ce metcon')),
-        h('p',{class:'hint'},'Coché : les athlètes peuvent choisir un niveau personnalisé (Rx +5 kg ou Rx +10 kg). Décoché : seuls les niveaux prévus (Découverte, Débutant, Intermédiaire, Rx, selon ceux que tu actives) sont proposés, et le bouton « Niveau personnalisé » disparaît pour ce metcon. Les résultats déjà saisis avec un niveau personnalisé sont conservés.'));
       {const words=S.prof.words||[];
         const wta=h('textarea',{id:'p'+i+'-word',rows:'2',maxlength:'200',placeholder:'Ex : Reste régulier sur les premiers tours !',value:p.word||'',oninput:e=>{p.word=e.target.value;}});
         box.append(field('Mot du coach (affiché près du metcon et pendant les 10 s de préparation)',wta),
@@ -15532,17 +15666,21 @@ function rwdPeek(){
     h('div',{class:'row'},h('button',{class:'btn sm',type:'button','aria-expanded':open?'true':'false',id:'rwd-toggle',onclick:()=>{rwdFlush();S.coach.rdOpen=!open;render();}},(open?'Masquer':'Afficher')+' mon brouillon de récompenses'+(n?' ('+n+' ligne'+(n>1?'s':'')+')':''))),
     open?rwdArea(8,'rwd-peek'):null);
 }
-function rewardEditor(d){
-  if(!Array.isArray(d.rewards))d.rewards=[];
-  const items=AV_ITEMS.filter(x=>!avOff(x));
-  const typeName={title:'Titre',frame:'Encadré de bannière',bg:'Fond de bannière',avatar:'Cosmétique avatar',avframe:'Cadre d’avatar (fil)',joker:'Joker (sauve une flamme)',coins:'Coins'};
-  const editor=r=>h('div',{class:'reward-edit'},
+/* champs d'une récompense de saison (type, XP, nom, visuel) : éditeur de saison et Coach › Pass de saison (noXp : l'XP est celui du palier) */
+function rwFields(r,items,noXp){
+  return h('div',{class:'reward-edit'},
     field('Type',sel([['title','Titre'],['frame','Encadré de bannière'],['bg','Fond de bannière'],['avatar','Cosmétique avatar'],['avframe','Cadre d’avatar (fil)'],['joker','Joker (sauve une flamme)'],['coins','Coins (monnaie du Shop)']],r.type,v=>{r.type=v;if(v==='coins'&&!r.coins)r.coins='10';if(v==='avframe'&&!AVF[r.asset])r.asset='gold';if(v==='avatar'&&!r.asset)r.asset=items[0]?.id||'';if(v==='bg'&&r.asset!=='base'&&!BG_ASSETS[r.asset])r.asset='base';render();})),
-    field('XP requis',h('input',{type:'number',min:'0',step:'1',value:r.xp,oninput:e=>r.xp=e.target.value,placeholder:'100'})),
+    noXp?null:field('XP requis',h('input',{type:'number',min:'0',step:'1',value:r.xp,oninput:e=>r.xp=e.target.value,placeholder:'100'})),
     r.type==='coins'?field('Coins à gagner',h('input',{type:'number',min:'1',step:'1',inputmode:'numeric',value:r.coins||'',oninput:e=>r.coins=e.target.value,placeholder:'10'}),'Nombre de coins ajoutés au solde de l’athlète quand il atteint le seuil d’XP (une seule fois). Il les dépense dans le Shop.'):null,
     field('Nom de la récompense',h('input',{class:'wide',value:r.name||'',oninput:e=>r.name=e.target.value,placeholder:r.type==='coins'?'Ex. Prime de 50 coins (facultatif)':'Ex. Athlète Alpha'}),null),
     r.type==='avatar'?field('Cosmétique',sel(items.map(x=>[x.id,x.name]),r.asset,v=>{r.asset=v;},{class:'wide'})):r.type==='avframe'?field('Visuel du cadre',sel(Object.entries(AVF).map(([k,v])=>[k,v.name]),AVF[r.asset]?r.asset:'gold',v=>{r.asset=v;},{class:'wide'}),'Affiché autour de l’avatar dans le fil. L’athlète le choisit dans « Ma bannière ».'):r.type==='bg'?field('Visuel du fond',sel([['base','Box Score classique']].concat(Object.entries(BG_ASSETS).map(([k,v])=>[k,v.name])),r.asset||'base',v=>{r.asset=v;},{class:'wide'}),'Les fonds spéciaux (Alpha, Angry Pumpkin, Crimson Crown, Néon Violet) sont disponibles uniquement après avoir remporté cette récompense.'):null,
     field('URL de l’image (facultatif)',h('input',{class:'wide',type:'url',value:r.image||'',oninput:e=>r.image=e.target.value,placeholder:'https://…'}),null));
+}
+function rewardEditor(d){
+  if(!Array.isArray(d.rewards))d.rewards=[];
+  const items=AV_ITEMS.filter(x=>!avOff(x));
+  const typeName={title:'Titre',frame:'Encadré de bannière',bg:'Fond de bannière',avatar:'Cosmétique avatar',avframe:'Cadre d’avatar (fil)',joker:'Joker (sauve une flamme)',coins:'Coins'};
+  const editor=r=>rwFields(r,items);
   const rows=d.rewards.filter(r=>r.id!=='rat-laboratoire').map((r)=>h('div',{class:'reward-edit'},
     h('div',{class:'wide'},h('b',{},r.name||'Récompense sans nom'),h('div',{class:'sub'},(typeName[r.type]||'Récompense')+(r.type==='coins'?' · '+(Number(r.coins)||0)+' coin'+((Number(r.coins)||0)>1?'s':''):'')+' · '+(Number(r.xp)||0)+' XP requis')),
     h('button',{class:'btn sm',type:'button',onclick:()=>{d.rewardDraft=Object.assign({},r);d.rewards=d.rewards.filter(x=>x.id!==r.id);render();}},'Modifier'),
@@ -15551,6 +15689,7 @@ function rewardEditor(d){
     h('button',{class:'btn primary',type:'button',onclick:()=>{const r=d.rewardDraft;if(r.type==='coins'){const c=Math.floor(Number(String(r.coins).replace(',','.')));if(!Number.isFinite(c)||c<1){toast('Indique un nombre de coins à gagner (1 ou plus).',true);return;}r.coins=String(c);if(!String(r.name||'').trim())r.name=c+' coin'+(c>1?'s':'');}if(!String(r.name||'').trim()){toast('Donne un nom à la récompense avant de confirmer.',true);return;}if(r.xp===''||!Number.isFinite(Number(r.xp))||Number(r.xp)<0){toast('Indique un seuil d’XP valide.',true);return;}d.rewards.push(Object.assign({},r,{name:r.name.trim(),xp:String(Number(r.xp))}));d.rewardDraft=null;render();toast('Récompense ajoutée à la saison');}},'Confirmer l’ajout'),
     h('button',{class:'btn',type:'button',onclick:()=>{d.rewardDraft=null;render();}},'Annuler'))):null;
   return h('div',{class:'stack'},h('div',{class:'flabel'},'Récompenses débloquées avec l’XP'),rwdPeek(),
+    h('p',{class:'hint'},'Astuce : tu peux aussi régler les récompenses palier par palier dans Coach › Pass de saison. '),
     h('p',{class:'hint'},'Configure une récompense puis clique sur « Confirmer l’ajout ». Les récompenses confirmées sont listées ci-dessous. L’XP correspond au score pondéré de la saison.'),
     rows.length?h('div',{class:'stack'},...rows):h('p',{class:'muted'},'Aucune récompense personnalisée ajoutée pour le moment.'),
     draft,
@@ -16196,7 +16335,7 @@ const RULES=[
   '**Avant-dernière semaine :** on refait les metcons tests pour voir si on a progressé.',
   '**Dernière semaine :** semaine de deload (allégée, pour récupérer).',
   'Une séance peut être réalisée n’importe quel jour de la semaine, du lundi au dimanche. Une séance rattrapée après sa semaine rapporte ses points, mais ne compte pas pour les flammes.','Chaque athlète saisit lui-même son résultat dans l’appli.']},
- {t:'Niveaux',p:['Pour chaque metcon, tu choisis le niveau auquel tu l’as réalisé : Découverte, Débutant, Intermédiaire, Rx ou personnalisé (Rx +5 kg ou +10 kg). Choisis le niveau que tu as réellement fait, charges et mouvements compris. Un niveau plus élevé valorise davantage tes points de metcon dans certains classements.']},
+ {t:'Niveaux',p:['Pour chaque metcon, tu choisis le niveau auquel tu l’as réalisé : Découverte, Débutant, Intermédiaire ou Rx. Choisis le niveau que tu as réellement fait, charges et mouvements compris. Un niveau plus élevé valorise davantage tes points de metcon dans certains classements.']},
  {t:'Points',b:['Chaque séance rapporte des points de séance, auxquels s’ajoutent les points de ton ou tes metcons.','Les points de metcon dépendent de ta performance, selon des paliers fixés par le coach.','Les paliers sont fixés dès la création du metcon mais peuvent évoluer légèrement en fonction des résultats observés pour que la compétition reste cohérente et attractive.','Si le time cap t’arrête, ton score est le nombre de répétitions réalisées, converti en points selon les paliers prévus pour ce cas.','**EMOM / E2MOM / E3MOM :** les exercices se font au début de chaque intervalle (toutes les minutes, toutes les 2 minutes…). En renforcement, un EMOM ne rapporte pas de points. En metcon, seul le **Dead by** existe : tu continues jusqu’au time cap ou jusqu’à ne plus réussir dans le temps imparti : ton score est le temps tenu, et celui qui tient le plus longtemps marque le plus de points.','**REDO :** si le coach l’autorise sur le metcon, tu peux refaire la séance. Un REDO rapporte 3 points s’il améliore ton premier résultat, 2 points s’il l’égale et 1 point s’il fait moins bien. Il compte aussi pour ton objectif de séances.']},
  {t:'Santé et responsabilité',p:['**Le programme est intense.** Avant de commencer, consulte un médecin ; au-delà de 35 ans, une visite chez le cardiologue est fortement recommandée.'],
   b:['**Box Score est un outil de suivi** : il ne remplace pas un avis médical et n’engage pas la responsabilité de l’éditeur ni du coach en cas de blessure ou de dommage.','**Tu t’entraînes sous ta propre responsabilité** et tu choisis un niveau adapté à ton état du jour.','**Les moins de 16 ans** ne peuvent pas utiliser l’appli. **Les 16-17 ans** ne peuvent participer qu’avec l’accord d’un responsable légal, déclaré avant la première séance.']},
@@ -16957,9 +17096,7 @@ function viewShop(){
       its0.some(x=>rarOf(x))?h('div',{class:'sh-rf',role:'group','aria-label':'Filtrer par rareté'},[['','Toutes']].concat(Object.entries(CM_RARITY).map(([k,v])=>[k,v.name])).map(([k,t])=>h('button',{class:'sh-rfb'+((S.shopRar||'')===k?' on':''),type:'button',id:'sh-rar-'+(k||'all'),'aria-pressed':(S.shopRar||'')===k?'true':'false',onclick:()=>{S.shopRar=k;render();}},t))):null,
       its.length?grid(its):h('section',{class:'sh-box'},h('p',{class:'muted'},'Rien dans cette catégorie pour l’instant. Reviens bientôt : de nouveaux objets arrivent !')));
   }else{
-    el.append(h('section',{class:'sh-hero'},h('div',{class:'sh-hero-t'},'Personnalise',h('br'),h('span',{},'ton univers')),
-      h('p',{},'Des items exclusifs pour te démarquer et vivre l’expérience à ta façon.'),
-      h('button',{class:'sh-ghost',type:'button',onclick:()=>open('all')},'Découvrir ›')));
+    el.append(h('section',{class:'sh-hero sh-hero-pass'},h('div',{class:'sh-hero-t'},'Personnalise',h('br'),h('span',{},'ton univers')),shopPassBlock()));
     el.append(h('div',{class:'sh-h',id:'sh-cats'},h('h2',{},'Catégories'),h('button',{class:'sh-link',type:'button',onclick:()=>open('all')},'Tout voir →')),
       shopCatsStrip(all,open));
     const fav=all.filter(x=>shopEntry(x.id).fav);
@@ -17385,7 +17522,7 @@ const TOURS={
     {sel:'.mv',title:'Touche un mouvement',text:'Le nom d’un mouvement (avec la petite main) ouvre sa fiche : rep valide, no rep, image ou vidéo. Le bouton « Retour à la séance » te ramène là où tu étais.'},
     {sel:'.sw',title:'Le chronomètre',text:'Sur la force et le renforcement, ce chronomètre t’aide à gérer tes temps de travail et de repos.'},
     {sel:'.fmtbtn',title:'Le format du metcon',text:'Touche le format (For Time, AMRAP, EMOM…) pour une explication de son fonctionnement.'},
-    {sel:'.levels',title:'Les niveaux',text:'Choisis Découverte, Débutant, Intermédiaire ou Rx : tu vois le record du niveau et tu peux aussi personnaliser ton niveau si tu adaptes la séance.'},
+    {sel:'.levels',title:'Les niveaux',text:'Choisis Découverte, Débutant, Intermédiaire ou Rx : tu vois le record du niveau.'},
     {sel:'[data-tour=start-metcon]',title:'Démarrer le metcon',text:'Lance le minuteur en plein écran : 10 secondes de préparation, puis le chrono qui monte (For Time, avec le time cap), le compte à rebours et le bouton +1 à côté du nombre de tours (AMRAP) ou un bip chaque minute (EMOM). À l’arrêt, tu peux corriger ton résultat : il est prérempli dans le formulaire.'},
     {sel:'[data-tour=entry]',title:'Enregistre ton résultat',text:'Une fois la séance terminée, touche « Entrer mes résultats » : un encart s’ouvre (il s’ouvre aussi tout seul quand tu valides le minuteur). Les cases à remplir brillent un instant : choisis ton niveau, entre tes charges et ton score, puis valide. Tes points arrivent dans le classement. Tu peux aussi indiquer « Je n’ai pas fait le metcon » ou « Je n’ai fait que le metcon », refaire une séance passée (REDO) et laisser un message dans le fil.'},
     {sel:'[data-tour=tab-board]',title:'Et ensuite ?',text:'Tes points apparaissent dans l’onglet Classement.'}],
