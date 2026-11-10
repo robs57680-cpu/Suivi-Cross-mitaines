@@ -688,6 +688,23 @@ section.feed-card>.feed-badge{position:absolute!important;top:8px;right:12px;z-i
 .tm.wu.wu-live .tm-bot .btn{min-height:40px;font-size:14px}
 .tm.wu.wu-live .tm-bot .wu-main{min-height:46px;font-size:15px}
 .tm.wu .tm-bot .wu-nx{position:absolute;left:0;right:0;bottom:100%;margin-bottom:8px;z-index:3;padding:8px 12px;font-size:clamp(20px,6vw,28px);background:color-mix(in srgb,var(--panel) 85%,#fff)}
+button.chip-link{font-family:var(--f-mono);font-size:11px;font-weight:600;letter-spacing:.02em;cursor:pointer;color:var(--accent);border-color:var(--accent);border-style:solid;background:transparent;text-decoration:underline;text-underline-offset:2px;white-space:normal;text-align:left}
+.prp-info .tm-mid{align-content:start;justify-items:stretch;text-align:left;overflow:visible;gap:12px}
+.prp-info .tm-bot{position:sticky;bottom:0;padding-top:8px;background:var(--panel)}
+.prp-info .field select{color:var(--ink);background:var(--surface)}
+.prp-info .flabel,.prp-info .field .hint{color:var(--panel-muted)}
+.prp-info .tm-sub{text-align:left}
+.prp-sec{padding:12px 14px;border-radius:12px;border:1px solid var(--panel-muted);background:rgba(255,255,255,.05);display:grid;gap:8px}
+.prp-sec h2{margin:0;font-family:var(--f-display);font-size:20px;letter-spacing:.04em;text-transform:uppercase;color:var(--panel-accent)}
+.prp-sec p{margin:0;line-height:1.45}
+.prp-ol,.prp-ul{margin:0;padding-left:20px;display:grid;gap:8px;line-height:1.4}
+.prp-d{display:block;font-size:13px;color:var(--panel-muted)}
+.prp-tm .tm-bot{position:relative}
+.tm.wu .tm-bot .prp-nx{position:absolute;left:0;right:0;bottom:100%;margin-bottom:8px;z-index:3;display:grid;gap:2px;padding:10px 14px;border-radius:14px;background:color-mix(in srgb,var(--panel) 85%,#fff);border:2px solid var(--panel-accent,#FFB703);text-align:left;visibility:hidden}
+.tm.wu .tm-bot .prp-nx.on{visibility:visible;animation:wuNx .35s ease-out}
+.prp-nx small{font:700 12px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--panel-accent,#FFB703)}
+.prp-nx b{font-family:var(--f-display);font-size:clamp(20px,6vw,26px);text-transform:uppercase;line-height:1.1;font-weight:400}
+.prp-nx span{font-size:15px;color:var(--panel-ink)}
 .wu-check{width:96px;height:96px;border-radius:50%;background:var(--panel-accent);color:var(--panel);display:grid;place-items:center;font-family:var(--f-display);font-size:64px;line-height:1}
 .wu-tip{max-width:34ch;margin-top:4px;padding:12px 16px;border-radius:12px;border:1px solid var(--panel-accent);background:color-mix(in srgb,var(--panel-accent) 14%,transparent);color:var(--panel-ink);font-size:16px;line-height:1.4;text-align:center;text-wrap:balance}
 .wu-tip b{display:block;margin-bottom:2px;text-transform:uppercase;letter-spacing:.04em;font-size:13px;color:var(--panel-accent)}
@@ -4298,7 +4315,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-09.30';
+const APP_VERSION='2026-11-10.1';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -5257,6 +5274,16 @@ function findMove(text){
   }
   return null;
 }
+/* ---------- PR manquant : le message de la séance mène à « Mes PR » ---------- */
+function goPrs(mv){
+  if(document.getElementById('tm-ov')||document.getElementById('prp-tm'))return; /* pas pendant un chrono */
+  if((S.entry||S.redo)&&!confirm('Quitter la saisie de résultats en cours ? Ce que tu as entré ne sera pas gardé.'))return;
+  go('profile');
+  S.profView='prs';S.prFocus=mv||null;
+  render();window.scrollTo(0,0);
+  setTimeout(()=>{const k=document.getElementById('pr-new-kg');if(k&&mv){try{k.scrollIntoView({block:'center'});}catch(e){}}},80);
+}
+const prMissChip=(mv,text)=>h('button',{type:'button',class:'chip miss chip-link','aria-label':text+' (ouvre Mes PR)',onclick:()=>goPrs(mv)},text+' ›');
 const PU_STEP=0.5;
 function pullupCalc(bw,rm,pct,tm){
   /* charge totale du 1 RM = poids de corps + lest (négatif = déleste) ; lest conseillé = charge totale × % − poids de corps.
@@ -5268,7 +5295,7 @@ function pullupBlock(text,nums,part){
   const bw=parseNum(S.prof&&S.prof.weight);
   const pr=prFor('Traction lestée');
   if(!(bw>0))return h('div',{class:'chips'},h('span',{class:'chip miss'},'Renseigne ton poids de corps dans ton profil pour calculer le lest'));
-  if(!pr||!isFinite(pr.kg))return h('div',{class:'chips'},h('span',{class:'chip miss'},'Enregistre ton 1 RM de Traction lestée dans ton profil'));
+  if(!pr||!isFinite(pr.kg))return h('div',{class:'chips'},prMissChip('Traction lestée','Enregistre ton 1 RM de Traction lestée dans ton profil'));
   /* lest = (poids de corps + 1 RM lesté) × % − poids de corps ; affichage : seulement le lest conseillé, comme les autres mouvements de force */
   return h('div',{class:'chips'},nums.map(n=>{const c=pullupCalc(bw,pr.kg,n,tmPctFor(part,text,n));
     return h('span',{class:'chip load'},n+' % '+(tmPctFor(part,text,n)===null?'':'du TM ')+'= '+(c.rounded>0?'lest +'+fmtN(c.rounded)+' kg':c.rounded<0?'déleste −'+fmtN(-c.rounded)+' kg':'sans lest'));}));
@@ -5324,7 +5351,7 @@ function renderLine(text,vars,part){
       if(SIGNED.includes(canon)){line.append(pullupBlock(text,nums,part));return line;}
       const pr=prFor(canon);
       if(!(pr&&pr.kg<=0))line.append(pr?tmChips(part,text,nums,pr)
-                    :h('div',{class:'chips'},h('span',{class:'chip miss'},'Renseigne ton PR de '+canon+' dans ton profil')));
+                    :h('div',{class:'chips'},prMissChip(canon,'Renseigne ton PR de '+canon+' dans ton profil')));
     }
   }
   return line;
@@ -6590,7 +6617,7 @@ const typing=()=>{const a=document.activeElement;return a&&main.contains(a)&&/^(
 function scheduleRender(){if(typing()){pending=true;return;}render();}
 document.addEventListener('focusout',()=>{if(!pending)return;setTimeout(()=>{if(!typing()){pending=false;render();}},0);});
 
-function go(tab){S._bnDraft=null;S._cmPrev=null;S._cmAsk=null;if(tab!=='profile'&&infosGuard(()=>go(tab)))return;closeDrawer(true);S._bk=null;S._gk=null;S.movBack=null;S.movFocus=null;if(S.coach){if(S.coach.subEdit)closeSubEditor(true);S.coach.wodOpen=false;}if(tab==='coach'&&S.tab==='coach')S.coach.view=null;S.profView=null;S.viewUser=null;S.tip=null;S.trophOpen='';S.trophSeason='';if(tab==='today'){if(S.tab==='today'&&S.viewDate)S.carDate=S.viewDate;S.viewDate=null;}S.tab=tab;S.boardDetail=false;S.confirm=null;if(S.entry&&S.entry.coach)S.entry=null;if(S.tab!=='today'){S.entry=null;S.redo=null;}render();window.scrollTo(0,0);}
+function go(tab){S._bnDraft=null;S._cmPrev=null;S._cmAsk=null;if(tab!=='profile'&&infosGuard(()=>go(tab)))return;closeDrawer(true);S._bk=null;S._gk=null;S.movBack=null;S.movFocus=null;if(S.coach){if(S.coach.subEdit)closeSubEditor(true);S.coach.wodOpen=false;}if(tab==='coach'&&S.tab==='coach')S.coach.view=null;S.profView=null;S.prFocus=null;S.viewUser=null;S.tip=null;S.trophOpen='';S.trophSeason='';if(tab==='today'){if(S.tab==='today'&&S.viewDate)S.carDate=S.viewDate;S.viewDate=null;}S.tab=tab;S.boardDetail=false;S.confirm=null;if(S.entry&&S.entry.coach)S.entry=null;if(S.tab!=='today'){S.entry=null;S.redo=null;}render();window.scrollTo(0,0);}
 const TAB_ICO={feed:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 5h16M4 10h10M4 15h16M4 20h8"/></svg>',
  today:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8.5 9V8a3.5 3.5 0 0 1 7 0v1"/><circle cx="12" cy="14.5" r="5.5"/></svg>',
  board:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 4h9v5a4.5 4.5 0 0 1-9 0z"/><path d="M7.5 6h-3c0 3 1.2 4.6 3.2 5M16.5 6h3c0 3-1.2 4.6-3.2 5M12 13.8V17M8.5 20h7M9.8 17h4.4"/></svg>'};
@@ -7549,6 +7576,191 @@ function openWarmup(mode,start){
   if(mode==='guided')beep(880,150);
 }
 
+/* ---------- PROTOCOLE PR : montée progressive, puis 3 vraies tentatives à 1 rep ----------
+   Page d'explication (openPrProtocol) puis minuteur guidé (openPrTimer). Un seul « Démarrer » : le temps passe tout seul d'une étape à la suivante.
+   La consigne de l'étape suivante apparaît 30 s avant la fin (« Ensuite »). Dernière étape : pas de chrono. */
+const PRP_STEPS=[
+  {t:'Échauffement spécifique',n:'8',u:'répétitions',c:'8 reps du mouvement avec un poids léger.',d:120},
+  {t:'Montée en charge',n:'5',u:'répétitions',c:'5 reps avec un poids un peu plus lourd.',d:120},
+  {t:'Série lourde',n:'3',u:'répétitions',c:'3 reps avec un poids lourd.',d:180},
+  {t:'Recherche du 1RM',n:'1',u:'répétition',c:'1 rep : tu cherches ton 1RM.',d:180,att:1},
+  {t:'Encore plus lourd',n:'1',u:'répétition',c:'1 rep encore plus lourd, seulement si la précédente est réussie.',d:180,att:2},
+  {t:'Dernier essai',n:'1',u:'répétition',c:'1 rep encore plus lourd si possible. C’est ton dernier essai.',d:0,att:3}];
+const PRP_PREVIEW=30; /* secondes avant la fin d'une étape où la consigne suivante s'affiche */
+const prpDur=d=>d>=60?(d%60?Math.floor(d/60)+' min '+(d%60)+' s':Math.floor(d/60)+' min'):d+' s';
+function openPrProtocol(mv0){
+  if(document.getElementById('prp-info'))return;
+  let mv=mv0||'';
+  const ov=h('div',{class:'tm prp-info',id:'prp-info',role:'dialog','aria-modal':'true','aria-label':'Protocole PR'});
+  const close=()=>ov.remove();
+  const sec=(t,...kids)=>h('section',{class:'prp-sec'},h('h2',{},t),...kids);
+  const li=(...k)=>h('li',{},...k);
+  const mvSel=sel([['','Choisir un mouvement']].concat(MOVES.map(m=>[m[0],m[0]])),mv,v=>{mv=v;S.prFocus=v||null;},{id:'prp-mv'});
+  const mid=h('div',{class:'tm-mid'},
+    h('p',{class:'eyebrow tm-eb'},'Protocole PR'),
+    h('h1',{class:'wu-name',style:'font-size:clamp(30px,9vw,44px)'},'Trouve ton vrai 1RM'),
+    h('p',{class:'tm-sub'},'Un protocole guidé pour monter en charge progressivement, puis tenter ton record sans t’être fatigué avant les essais qui comptent.'),
+    field('Mouvement',mvSel,'Sert à enregistrer ton PR à la fin du protocole.'),
+    sec('Le principe',
+      h('p',{},'Tu montes d’abord en charge avec 3 séries de préparation (8, 5 puis 3 reps) : elles chauffent le mouvement et règlent ta technique.'),
+      h('p',{},h('b',{},'Ensuite seulement, tu as 3 vraies tentatives à 1 rep. Pas une de plus.'),' Ce sont les étapes 4, 5 et 6. Les limiter à 3 te permet de donner le meilleur de toi-même à chaque essai, sans t’épuiser ni te mettre en danger.')),
+    sec('Les 6 étapes',h('ol',{class:'prp-ol'},PRP_STEPS.map(x=>li(h('b',{},x.t),' · ',x.c,h('span',{class:'prp-d'},x.d?'Durée : '+prpDur(x.d):'Pas de chrono'))))),
+    sec('Comment fonctionne le minuteur',
+      h('p',{},'Tu appuies une seule fois sur « Démarrer ». Le temps défile comme un temps de récup et passe tout seul d’une étape à l’autre : ',h('b',{},'tu n’as plus besoin d’arrêter le chrono.')),
+      h('p',{},'30 secondes avant la fin d’une étape, la consigne suivante apparaît en bas de l’écran avec la mention « Ensuite » : profites-en pour préparer ta barre. La dernière étape n’a pas de chrono, tu prends le temps qu’il te faut.')),
+    sec('Conseils',h('ul',{class:'prp-ul'},[
+      'Fais ton échauffement général avant de lancer le protocole.',
+      'Léger : tu pourrais faire bien plus de reps. Un peu plus lourd : ça commence à piquer. Lourd : 3 reps difficiles mais propres, avec encore une ou deux reps en réserve.',
+      'Une rep ne compte que si la technique est propre et l’amplitude complète. Une rep bâclée n’est pas un PR.',
+      'Augmente la charge d’un essai à l’autre sans faire un trop gros saut.',
+      'Étapes 4, 5 et 6 : tes 3 seules tentatives. Si tu rates, ne multiplie pas les essais : arrête-toi ou retente un peu moins lourd, toujours dans la limite des 3.',
+      'Sécurité : pareur ou barres de sécurité pour le squat et le développé couché. Ne tente jamais un record seul sans sécurité.',
+      'Note la charge de ta meilleure rep réussie : c’est ton PR.'].map(t=>li(t)))));
+  ov.append(h('div',{class:'tm-top'},h('span',{class:'chip live'},'Protocole PR'),h('button',{type:'button',class:'btn sm','aria-label':'Fermer',onclick:close},'✕')),mid,
+    h('div',{class:'tm-bot'},h('button',{class:'btn primary wu-main',type:'button',id:'prp-go',onclick:()=>openPrTimer(mv,close)},'Démarrer le protocole'),h('button',{class:'btn wu-main',type:'button',onclick:close},'Plus tard')));
+  document.body.append(ov);
+}
+function openPrTimer(mv,onSaved){
+  if(document.getElementById('prp-tm'))return;
+  const items=PRP_STEPS,n=items.length;
+  /* phase : wait (avant « Démarrer », ou dernière étape sans chrono) · run · paused · done · closed */
+  const st={idx:0,phase:'wait',endAt:0,rem:0,tid:null,gen:0,muted:tmMuted(),ac:null,wake:null,vid:null,lastK:-1,shown:-1};
+  try{st.ac=new (window.AudioContext||window.webkitAudioContext)();if(st.ac.resume)st.ac.resume();}catch(e){}
+  const beep=(f,ms)=>{
+    if(!st.muted&&st.ac){try{const o=st.ac.createOscillator(),g=st.ac.createGain();o.type='sine';o.frequency.value=f;g.gain.value=.25;o.connect(g);g.connect(st.ac.destination);o.start();o.stop(st.ac.currentTime+ms/1000);}catch(e){}}
+    try{if(navigator.vibrate)navigator.vibrate(ms>300?[200,80,200]:ms>150?120:40);}catch(e){}
+  };
+  const lock=async()=>{
+    try{if(navigator.wakeLock&&!st.wake){st.wake=await navigator.wakeLock.request('screen');st.wake.addEventListener('release',()=>{st.wake=null;});}}catch(e){}
+    if(!st.wake&&!st.vid){
+      try{
+        const v=document.createElement('video');
+        v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline','');v.setAttribute('muted','');v.muted=true;v.loop=true;
+        v.style.cssText='position:fixed;left:0;top:0;width:2px;height:2px;opacity:.02;pointer-events:none';
+        v.src=NOSLEEP_MP4;document.body.append(v);st.vid=v;
+        const pr=v.play();if(pr&&pr.catch)pr.catch(()=>{});
+      }catch(e){}
+    }
+  };
+  const release=()=>{try{if(st.wake)st.wake.release();}catch(e){}st.wake=null;if(st.vid){try{st.vid.pause();st.vid.remove();}catch(e){}st.vid=null;}};
+  const cur=()=>items[st.idx];
+  const clearT=()=>{clearTimeout(st.tid);st.tid=null;st.gen++;};
+  const ov=h('div',{class:'tm wu prp-tm',id:'prp-tm',style:'z-index:46',role:'dialog','aria-modal':'true','aria-label':'Protocole PR'});
+  let timeEl=null,barEl=null,nextEl=null;
+  /* le temps restant est toujours recalculé à partir de l'heure réelle (st.endAt) : l'appli peut passer en arrière-plan */
+  function schedule(){
+    clearTimeout(st.tid);st.tid=null;
+    if(st.phase!=='run')return;
+    const g=st.gen,left=st.endAt-Date.now();
+    const delay=left<=0?0:left-(Math.ceil(left/1000)-1)*1000+15;
+    st.tid=setTimeout(()=>{if(g===st.gen&&st.phase==='run')sync();},delay);
+  }
+  function sync(){
+    if(st.phase!=='run')return;
+    const now=Date.now();let moved=false;
+    while(st.phase==='run'&&now>=st.endAt){
+      st.idx++;moved=true;st.lastK=-1;
+      const d=items[st.idx].d;
+      if(d>0)st.endAt+=d*1000;else st.phase='wait'; /* dernière étape : pas de chrono */
+    }
+    if(moved){beep(880,st.phase==='wait'?500:250);draw();}else upd();
+    schedule();
+  }
+  function runStep(){
+    st.lastK=-1;
+    if(cur().d>0){st.phase='run';st.endAt=Date.now()+cur().d*1000;}else st.phase='wait';
+    draw();schedule();
+  }
+  function start(){lock();beep(880,200);runStep();}
+  function skip(){if(st.idx>=n-1)return;clearT();st.idx++;beep(660,150);runStep();}
+  function prev(){if(st.idx<=0)return;clearT();st.idx--;runStep();}
+  function pause(){if(st.phase!=='run')return;st.rem=Math.max(0,st.endAt-Date.now());st.phase='paused';clearT();draw();}
+  function resume(){if(st.phase!=='paused')return;st.endAt=Date.now()+st.rem;st.phase='run';lock();draw();schedule();}
+  function finish(){clearT();st.phase='done';beep(880,700);release();drawDone();}
+  const onVis=()=>{
+    if(document.hidden||st.phase==='closed')return;
+    if(st.phase!=='done')lock();
+    try{if(st.ac&&st.ac.state==='suspended'&&st.ac.resume)st.ac.resume();}catch(e){}
+    if(st.phase==='run')sync();
+  };
+  function close(){
+    st.phase='closed';clearT();
+    document.removeEventListener('visibilitychange',onVis);window.removeEventListener('pageshow',onVis);window.removeEventListener('focus',onVis);
+    release();try{if(st.ac&&st.ac.close)st.ac.close();}catch(e){}
+    ov.remove();
+  }
+  const top=()=>{
+    const mute=h('button',{type:'button',class:'btn sm'},st.muted?'Son coupé':'Son activé');
+    mute.addEventListener('click',()=>{st.muted=!st.muted;setTmMuted(st.muted);mute.textContent=st.muted?'Son coupé':'Son activé';});
+    const q=h('button',{type:'button',class:'btn sm','aria-label':'Quitter le protocole'},'✕');
+    q.addEventListener('click',st.phase==='done'?close:wuArmed(q,'Quitter ?',close));
+    return h('div',{class:'tm-top'},h('span',{class:'chip live'},mv||'Protocole PR'),h('div',{class:'row'},mute,q));
+  };
+  function upd(){
+    if(!timeEl)return;
+    const x=cur(),left=st.phase==='run'?Math.max(0,st.endAt-Date.now()):st.rem,k=Math.ceil(left/1000);
+    timeEl.textContent=wuMMSS(k);
+    barEl.style.width=Math.max(0,Math.min(100,100*(1-left/(x.d*1000))))+'%';
+    ov.classList.toggle('alert',st.phase==='run'&&k>0&&k<=3);
+    if(nextEl)nextEl.classList.toggle('on',k>0&&k<=PRP_PREVIEW); /* la consigne suivante apparaît 30 s avant la fin */
+    if(st.phase==='run'&&k!==st.lastK){st.lastK=k;if(!document.hidden){if(k>0&&k<=3)beep(660,120);else if(k===PRP_PREVIEW)beep(520,90);}}
+  }
+  function draw(){
+    if(st.phase==='done'||st.phase==='closed')return;
+    const x=cur(),paused=st.phase==='paused',running=st.phase==='run'||paused,last=st.idx>=n-1,intro=st.idx===0&&st.phase==='wait';
+    ov.className='tm wu wu-live prp-tm'+(paused?' prep':'');
+    const anim=st.shown!==st.idx;st.shown=st.idx;
+    timeEl=null;barEl=null;nextEl=null;
+    const mid=h('div',{class:'tm-mid'+(anim?' wu-anim':'')},
+      h('p',{class:'eyebrow tm-eb','aria-live':'polite'},'Étape '+(st.idx+1)+' / '+n+(x.att?' · Tentative '+x.att+' sur 3':'')),
+      h('div',{class:'wu-seg',role:'img','aria-label':'Progression : étape '+(st.idx+1)+' sur '+n},items.map((_,i)=>h('i',{class:i<st.idx?'on':i===st.idx?'cur':''}))),
+      h('h1',{class:'wu-name'},x.t),
+      h('div',{class:'wu-obj'},x.n,h('small',{},x.u)),
+      h('p',{class:'wu-note'},x.c));
+    if(running){
+      timeEl=h('div',{class:'tm-time wu-time'},'');barEl=h('i',{});
+      mid.append(timeEl,h('div',{class:'bar wu-bar'},barEl));
+      mid.append(h('p',{class:'tm-sub'},paused?'En pause':'Le chrono passe tout seul à l’étape suivante : pas besoin de l’arrêter.'));
+    }else if(intro){
+      mid.append(h('p',{class:'wu-tip',role:'note'},h('b',{},'Comment ça marche'),'Appuie une seule fois sur « Démarrer ». Le temps défile comme une récup et passe tout seul d’une étape à l’autre : tu n’as plus besoin d’arrêter le chrono. Cette étape dure '+prpDur(x.d)+'.'));
+    }else if(last){
+      mid.append(h('p',{class:'wu-tip',role:'note'},h('b',{},'Pas de chrono'),'Prends le temps de te concentrer. Après cet essai, le protocole est terminé : pas de tentative supplémentaire.'));
+    }
+    let bot;
+    if(intro)bot=[h('button',{class:'btn primary wu-main',type:'button',id:'prp-start',onclick:start},'Démarrer')];
+    else if(running)bot=[h('button',{class:'btn primary wu-main',type:'button',id:'prp-pause',onclick:paused?resume:pause},paused?'Reprendre':'Pause'),
+      h('div',{class:'wu-two'},h('button',{class:'btn',type:'button',disabled:st.idx===0,onclick:prev},'← Précédent'),h('button',{class:'btn',type:'button',id:'prp-next',onclick:skip},'Étape suivante →'))];
+    else bot=[h('button',{class:'btn primary wu-main',type:'button',id:'prp-end',onclick:finish},'Terminer le protocole'),
+      h('div',{class:'wu-two'},h('button',{class:'btn',type:'button',onclick:prev},'← Précédent'),h('span',{}))];
+    const nx=(running&&!last)?items[st.idx+1]:null;
+    if(nx)nextEl=h('div',{class:'prp-nx',role:'status','aria-label':'Ensuite : '+nx.t},h('small',{},'Ensuite'),h('b',{},nx.t+' · '+nx.n+(nx.n==='1'?' rep':' reps')),h('span',{},nx.c));
+    ov.replaceChildren(top(),mid,h('div',{class:'tm-bot'},nextEl?[nextEl].concat(bot):bot));
+    upd();
+  }
+  function drawDone(){
+    ov.className='tm wu prp-tm';timeEl=null;barEl=null;nextEl=null;
+    const kg=h('input',{type:'text',inputmode:SIGNED.includes(mv)?'text':'decimal',id:'prp-kg',placeholder:'Charge de ta meilleure rep réussie (kg)','aria-label':'Charge de ta meilleure rep réussie en kg'});
+    const save=()=>{
+      const v=parseNum(kg.value);
+      if(!mv||!prOk(mv,v)){toast('Indique une charge en kg.',true);return;}
+      const old=prFor(mv);
+      if(old&&old.kg>v&&!confirm('Ton PR actuel de '+mv+' est de '+fmtKg(old.kg)+', plus élevé. Le remplacer par '+fmtKg(v)+' ?'))return;
+      S.prof.prs=Object.assign({},S.prof.prs,{[mv]:{kg:v,at:todayStr()}});saveProf();toast('PR enregistré');
+      close();if(onSaved)onSaved();render();
+    };
+    ov.replaceChildren(top(),
+      h('div',{class:'tm-mid wu-end wu-anim'},
+        h('div',{class:'wu-check','aria-hidden':'true'},'✓'),
+        h('p',{class:'eyebrow tm-eb'},'Protocole terminé'),
+        h('h1',{class:'wu-name'},'Bien joué !'),
+        h('p',{class:'tm-sub'},'Tes 3 tentatives sont faites : on s’arrête là. Note la charge de ta meilleure répétition réussie.'),
+        mv?h('div',{class:'stack',style:'width:100%;max-width:360px'},kg,h('p',{class:'hint',style:'color:var(--panel-muted)'},'Mouvement : '+mv)):h('p',{class:'wu-tip',role:'note'},h('b',{},'Mouvement non choisi'),'Choisis le mouvement dans « Mes PR » pour y noter ta charge.')),
+      h('div',{class:'tm-bot'},mv?h('button',{class:'btn primary wu-main',type:'button',id:'prp-save',onclick:save},'Enregistrer ce PR'):null,h('button',{class:'btn wu-main',type:'button',onclick:close},'Fermer')));
+  }
+  document.body.append(ov);
+  document.addEventListener('visibilitychange',onVis);window.addEventListener('pageshow',onVis);window.addEventListener('focus',onVis);
+  draw();
+}
 /* gestion de l'échauffement par le coach */
 function openWarmupEdit(){
   if(!S.owner||document.getElementById('wu-edit'))return;
@@ -11883,7 +12095,9 @@ const CM_BY=Object.fromEntries(CM_LIST.map(x=>[x.id,x]));
 const cmLayer=id=>CM_LAYERS.find(l=>l.id===id)||CM_LAYERS[0];
 /* rareté effective : celle fixée par le coach dans Coach › Shop et coins (config.shop.items[id].rar), sinon celle du catalogue, sinon '' (aucune) */
 const rarOf=it=>{const x=((((S.feat||{}).shop)||{}).items||{})[it.id];return (x&&CM_RARITY[x.rar])?x.rar:(CM_RARITY[it.rarity]?it.rarity:'');};
-const cmPrice=it=>{const p=Math.floor(Number(it.price));return p>=1?p:(CM_RARITY[rarOf(it)]||CM_RARITY.standard).price;};
+/* prix par qualité (rareté) réglés par le coach : config.shop.items._rarPrice = { standard, rare, epique, legendaire } (clé réservée dans « items » : aucun nouveau champ pour les règles Firestore) ; sans réglage, prix du catalogue CM_RARITY */
+const rarPrice=k=>{const t=((((S.feat||{}).shop)||{}).items||{})._rarPrice,v=Math.floor(Number(t&&t[k]));return v>=1?v:((CM_RARITY[k]||CM_RARITY.standard).price);};
+const cmPrice=it=>{const p=Math.floor(Number(it.price));return p>=1?p:rarPrice(CM_RARITY[rarOf(it)]?rarOf(it):'standard');};
 /* possédé : gratuit, acheté au shop (shopBuy), ou condition de déblocage remplie */
 /* mode test coach : tout est équipable gratuitement pendant 2 minutes (rien n'est enregistré) */
 function coachTestOn(uid){return !!(S.owner&&(uid===undefined||uid===S.uid)&&S._coachTest&&Number(S._coachTest.until)>Date.now());}
@@ -13410,9 +13624,11 @@ function progSection(){
   return el;
 }
 function prSection(){
+  let nIn=null;
   const prs=S.prof.prs||{};const names=Object.keys(prs).sort((a,b)=>a.localeCompare(b));
   const sec=h('section',{class:'card'},h('h2',{class:'h2'},'Mes PR'),
     h('p',{class:'muted'},'Dès qu’une partie force indique un pourcentage sur un mouvement dont tu as le PR, la charge s’affiche dans l’entraînement.'));
+  sec.append(h('div',{class:'row'},h('button',{class:'btn',type:'button',id:'pr-proto',onclick:()=>openPrProtocol((nIn&&nIn.value)||S.prFocus||'')},'Protocole PR'),h('span',{class:'hint'},'Un minuteur guidé pour trouver ton 1RM en 6 étapes.')));
   if(!names.length)sec.append(h('p',{class:'muted'},'Aucun PR enregistré.'));
   names.forEach((n,i)=>{
     const kgIn=h('input',{id:'pr-'+i,type:'text',inputmode:SIGNED.includes(n)?'text':'decimal','aria-label':'PR '+n+' en kg',value:String(prs[n].kg).replace('.',','),
@@ -13423,8 +13639,9 @@ function prSection(){
                           :h('button',{class:'btn sm',onclick:()=>{S.confirm='pr-'+n;render();}},'Supprimer')),
       SIGNED.includes(n)?h('div',{class:'hint'},prs[n].kg<0?'Déleste de '+fmtKg(-prs[n].kg):prs[n].kg===0?'Sans charge':'Lestée de '+fmtKg(prs[n].kg)):h('div',{class:'pct'},PCTS.map(x=>h('span',{},x+' % · '+fmtKg(prs[n].kg*x/100))))));
   });
-  const nIn=sel([['','Choisir un mouvement']].concat(MOVES.map(m=>[m[0],m[0]])),'',v=>{kIn.setAttribute('inputmode',SIGNED.includes(v)?'text':'decimal');},{id:'pr-new-name'});
-  const kIn=h('input',{id:'pr-new-kg',type:'text',inputmode:'decimal',placeholder:'100'});
+  const foc=(S.prFocus&&MOVES.some(m=>m[0]===S.prFocus))?S.prFocus:'';
+  nIn=sel([['','Choisir un mouvement']].concat(MOVES.map(m=>[m[0],m[0]])),foc,v=>{S.prFocus=v||null;kIn.setAttribute('inputmode',SIGNED.includes(v)?'text':'decimal');},{id:'pr-new-name'});
+  const kIn=h('input',{id:'pr-new-kg',type:'text',inputmode:SIGNED.includes(foc)?'text':'decimal',placeholder:'100'});
   sec.append(h('form',{class:'grid2',onsubmit:e=>{e.preventDefault();const n=nIn.value.trim(),v=parseNum(kIn.value);
       if(!n||!prOk(n,v)){toast('Choisis un mouvement et indique une charge en kg',true);return;}
       S.prof.prs=Object.assign({},S.prof.prs,{[n]:{kg:v,at:todayStr()}});saveProf();render();}},
@@ -16886,6 +17103,7 @@ const coinPerSession=()=>{const c=shopCfg();if(c.coin===undefined||c.coin===null
 /* réduction du coach : pourcentage (1 à 99) ; price = prix réellement payé, base = prix normal */
 const salePrice=(base,pct)=>{pct=Math.floor(Number(pct));return (pct>=1&&pct<=99)?Math.max(1,Math.round(base*(100-pct)/100)):base;};
 const shopEntry=id=>{const x=(shopCfg().items||{})[id],cmi=CM_BY[id];let p=x?Math.floor(Number(x.price)):0;if(cmi){if(cmi.free||cmi.avail===false)return null;if(x&&x.on&&!(p>=1))p=cmPrice(cmi);} /* objet modulaire : prix vide = prix de la rareté */
+  else if(x&&x.on&&!(p>=1)){const rk=rarOf(shopItem(id)||{id});if(rk)p=rarPrice(rk);} /* autre objet : prix vide = prix de sa qualité */
   if(!(x&&x.on&&p>=1&&shopItem(id)))return null;const pct=Math.floor(Number(x.sale))||0,pr=salePrice(p,pct);return {price:pr,base:p,pct:pr<p?pct:0,fav:!!x.fav};};
 const coinPerBonus=()=>{const c=shopCfg();if(c.coinBonus===undefined||c.coinBonus===null||c.coinBonus==='')return BONUS_COIN_DEFAULT;const v=Math.floor(Number(c.coinBonus));return (Number.isFinite(v)&&v>=0)?v:BONUS_COIN_DEFAULT;};
 const coinForDate=d=>isBonusDate(d)?coinPerBonus():coinPerSession();
@@ -17135,7 +17353,8 @@ function shopDraft(){
     const cfg=shopCfg(),it={};
     for(const x of AV_ITEMS.concat(shopAll())){const e=(cfg.items||{})[x.id];it[x.id]={on:!!(e&&e.on),fav:!!(e&&e.fav),price:(e&&Number(e.price)>0)?String(e.price):'',sale:(e&&Number(e.sale)>0)?String(e.sale):'',rar:(e&&CM_RARITY[e.rar])?e.rar:''};}
     const hid={};for(const k of Object.keys(cfg.hidden||{}))if(cfg.hidden[k])hid[k]=true; /* éléments masqués de la liste du coach (rangement) */
-    c.shopDraft={coin:String(coinPerSession()),coinBonus:String(coinPerBonus()),items:it,hidden:hid};
+    const rp={};for(const k of Object.keys(CM_RARITY))rp[k]=String(rarPrice(k));
+    c.shopDraft={coin:String(coinPerSession()),coinBonus:String(coinPerBonus()),items:it,hidden:hid,rarPrice:rp};
   }
   return c.shopDraft;
 }
@@ -17148,12 +17367,15 @@ function saveShop(){
   for(const it of AV_ITEMS.concat(shopAll())){
     const x=d.items[it.id];if(!x)continue;
     const p=Math.floor(Number(String(x.price).replace(',','.')));
-    if(x.on&&!(p>=1)&&!it.cm){toast('« '+it.name+' » : entre un prix d’au moins 1 coin, ou retire-le de la vente.',true);return;}
+    if(x.on&&!(p>=1)&&!it.cm&&!CM_RARITY[x.rar||it.rarity]){toast('« '+it.name+' » : choisis une qualité, entre un prix d’au moins 1 coin, ou retire-le de la vente.',true);return;}
     const sl=x.sale===''||x.sale==null?0:Math.floor(Number(String(x.sale).replace(',','.')));
     if(x.on&&!(Number.isFinite(sl)&&sl>=0&&sl<=99)){toast('« '+it.name+' » : la réduction doit être entre 1 et 99 %, ou vide.',true);return;}
     const rr=CM_RARITY[x.rar]?x.rar:'';
     if(x.on||p>=1||rr){items[it.id]={on:!!x.on,price:p>=1?p:0,fav:!!(x.on&&x.fav),sale:(x.on&&sl>=1)?sl:0};if(rr)items[it.id].rar=rr;}
   }
+  const rpOut={};
+  for(const k of Object.keys(CM_RARITY)){const v=Math.floor(Number(String((d.rarPrice||{})[k]).replace(',','.')));if(!(v>=1)){toast('Prix « '+CM_RARITY[k].name+' » : entre un nombre entier d’au moins 1 coin.',true);return;}rpOut[k]=v;}
+  items._rarPrice=rpOut;
   const cleanHid={};for(const it of AV_ITEMS.concat(shopAll()))if(d.hidden&&d.hidden[it.id])cleanHid[it.id]=true;
   if(!S.db||S.snapMode){toast('Connexion nécessaire pour enregistrer.',true);return;}
   run(async()=>{
@@ -17225,8 +17447,12 @@ function coachShop(){
       h('input',{type:'number',min:'0',step:'1',inputmode:'numeric',id:'shop-coin-bonus',value:d.coinBonus,oninput:e=>{d.coinBonus=e.target.value;}}),
       'Même règle que ci-dessus, pour la séance bonus du samedi (par défaut 5). 0 = la séance bonus ne rapporte pas de coins.')));
   el.append(coinBackfillCard());
+  el.append(h('section',{class:'card'},h('h2',{class:'h2'},'Prix par qualité'),
+    h('p',{class:'hint'},'Règle le prix de chaque qualité une seule fois : un objet dont tu choisis la qualité prend automatiquement ce prix, sans le saisir. Un prix écrit sur un objet reste prioritaire (prix spécial). Change un prix ici puis enregistre le shop : tous les objets de cette qualité (sans prix spécial) suivent.'),
+    h('div',{class:'grid2'},Object.entries(CM_RARITY).map(([k,v])=>field(v.name,h('span',{class:'row',style:'flex-wrap:nowrap;align-items:center'},
+      h('input',{type:'number',min:'1',step:'1',inputmode:'numeric',id:'shop-rarprice-'+k,'aria-label':'Prix de la qualité '+v.name,value:d.rarPrice[k],oninput:e=>{d.rarPrice[k]=e.target.value;},onchange:()=>render()}),coinIco(20)))))));
   const sec=h('section',{class:'card'},h('h2',{class:'h2'},'Articles du shop'),
-    h('p',{class:'hint'},'Coche « En vente », fixe un prix en coins (vide = prix de la rareté) et une rareté (Standard, Rare, Épique, Légendaire : elle donne l’éclat de l’objet dans le shop et la personnalisation) ; « Coup de cœur » met l’objet en avant en haut du shop ; « % de réduc. » (1 à 99) affiche une réduction sur l’objet dans le shop, avec l’ancien prix barré. Puis enregistre. Un objet déjà acheté reste à l’athlète même si tu le retires. Pour ajouter un skin : dépose son image dans assets/embedded et ajoute une ligne dans AV_ITEMS ; il apparaît ici.'));
+    h('p',{class:'hint'},'Coche « En vente », choisis une qualité (elle fixe le prix toute seule, voir « Prix par qualité » plus haut) ou écris un prix spécial en coins, et une rareté (Standard, Rare, Épique, Légendaire : elle donne l’éclat de l’objet dans le shop et la personnalisation) ; « Coup de cœur » met l’objet en avant en haut du shop ; « % de réduc. » (1 à 99) affiche une réduction sur l’objet dans le shop, avec l’ancien prix barré. Puis enregistre. Un objet déjà acheté reste à l’athlète même si tu le retires. Pour ajouter un skin : dépose son image dans assets/embedded et ajoute une ligne dans AV_ITEMS ; il apparaît ici.'));
   AV_SLOTS.map(([sl,label])=>[label,AV_ITEMS.filter(x=>x.slot===sl)]).concat([['Fonds de bannière',shopBanners().filter(b=>b.kind==='bg')],['Cadres d’avatar (fil)',shopBanners().filter(b=>b.kind==='avframe')]].concat(CM_LAYERS.filter(L=>L.shop).map(L=>['Bannière modulaire · '+L.name,CM_LIST.filter(x=>x.layer===L.id&&!x.free)]))).forEach(([label,its])=>{
     const vis=its.filter(x=>!(d.hidden&&d.hidden[x.id]));
     if(!vis.length)return;
@@ -17236,8 +17462,10 @@ function coachShop(){
         ic.append(shopIcon(it));
         const fin=h('span',{class:'shop-fin',id:'shopc-fin-'+it.id});
         const pin=h('input',{type:'number',min:'1',step:'1',inputmode:'numeric','aria-label':'Prix en coins : '+it.name,value:x.price,oninput:e=>{x.price=e.target.value;upd();}});
-        const setPh=()=>{pin.placeholder=it.cm?String((CM_RARITY[x.rar||it.rarity]||CM_RARITY.standard).price):'Prix';};setPh();
-        const upd=()=>{const b=Math.floor(Number(String(x.price).replace(',','.'))),pc=Math.floor(Number(String(x.sale).replace(',','.')));fin.textContent=(b>=1&&pc>=1&&pc<=99)?'→ '+salePrice(b,pc)+' coins':'';};upd();
+        const rpD=k=>{const v=Math.floor(Number(String((d.rarPrice||{})[k]).replace(',','.')));return v>=1?v:CM_RARITY[k].price;};
+        const qk=()=>CM_RARITY[x.rar||it.rarity]?(x.rar||it.rarity):(it.cm?'standard':'');
+        const setPh=()=>{const k=qk();pin.placeholder=k?String(rpD(k)):'Prix';};setPh();
+        const upd=()=>{const t=Math.floor(Number(String(x.price).replace(',','.'))),k=qk(),b=t>=1?t:(k?rpD(k):0),pc=Math.floor(Number(String(x.sale).replace(',','.')));fin.textContent=(b>=1&&pc>=1&&pc<=99)?'→ '+salePrice(b,pc)+' coins':((!(t>=1)&&b>=1)?'= '+b+' coins (qualité)':'');};upd();
         const who=[(it.sex==='f'?'filles':it.sex==='h'?'garçons':''),(it.skin&&AV_BY[it.skin])?'avatar '+AV_BY[it.skin].name:''].filter(Boolean).join(' · ');
         return h('li',{id:'shopc-'+it.id},ic,
           h('div',{class:'l',style:'flex:1;min-width:120px'},h('div',{class:'nm'},it.name),who?h('div',{class:'sub'},who):null),
@@ -17247,7 +17475,7 @@ function coachShop(){
             pin,
             coinIco(20),
             h('label',{class:'shop-sale shop-rar'},h('span',{},'Rareté'),
-              sel([['',it.cm?'Défaut ('+(CM_RARITY[it.rarity]||CM_RARITY.standard).name+')':'Aucune']].concat(Object.entries(CM_RARITY).map(([k,v])=>[k,v.name])),x.rar||'',v=>{x.rar=v;setPh();},{id:'shopc-rar-'+it.id,'aria-label':'Rareté : '+it.name})),
+              sel([['',it.cm?'Défaut ('+(CM_RARITY[it.rarity]||CM_RARITY.standard).name+')':'Aucune']].concat(Object.entries(CM_RARITY).map(([k,v])=>[k,v.name])),x.rar||'',v=>{x.rar=v;setPh();upd();},{id:'shopc-rar-'+it.id,'aria-label':'Rareté : '+it.name})),
             h('span',{class:'shop-sale'},
               h('input',{type:'number',min:'0',max:'99',step:'1',inputmode:'numeric',placeholder:'0','aria-label':'Réduction en pourcentage : '+it.name,id:'shopc-sale-'+it.id,value:x.sale||'',oninput:e=>{x.sale=e.target.value;upd();}}),
               h('span',{},'% de réduc.')),
