@@ -12362,13 +12362,13 @@ function avMeasure(sx,full){
       const sc=Math.min(AV_W/im.naturalWidth,AV_H/im.naturalHeight),w=im.naturalWidth*sc,hh=im.naturalHeight*sc;
       const cv=document.createElement('canvas');cv.width=AV_W;cv.height=AV_H;const g=cv.getContext('2d',{willReadFrequently:true});
       g.drawImage(im,(AV_W-w)/2,AV_H-hh,w,hh);const d=g.getImageData(0,0,AV_W,AV_H).data;
-      res(avHeadBox((x,y)=>d[(y*AV_W+x)*4+3]>40));}catch(e){res(null);}};im.onerror=()=>res(null);im.src=full.img;});
+      res(avHeadBox((x,y)=>d[(y*AV_W+x)*4+3]>40));}catch(e){res(undefined);}};im.onerror=()=>res(undefined);im.src=full.img;});
   }
-  return avLoad(sx).then(A=>A&&A.bgm?avHeadBox((x,y)=>A.bgm[y*AV_W+x]!==1):null).catch(()=>null);
+  return avLoad(sx).then(A=>A&&A.bgm?avHeadBox((x,y)=>A.bgm[y*AV_W+x]!==1):undefined).catch(()=>undefined); /* undefined = mesure impossible (image pas prête) : on ne la mémorise pas */
 }
 const AV_TOP_MAX=70; /* haut de la tête le plus bas toléré dans le cadrage (= plan large standard) */
-function avApplyFrame(div,box){
-  if(!box)box={cx:AV_W/2,top:AV_TOP_MAX,hw:0}; /* pas de mesure : plan large standard */
+function avApplyFrame(div,box,full){
+  if(!box)box={cx:AV_W/2,top:full?0:AV_TOP_MAX,hw:0}; /* pas de mesure : plan large standard ; avatar à gagner (image pleine) : haut de l'image au bord du cercle, la tête n'est jamais coupée */
   /* le cadrage ne doit jamais dépendre de l'ordre de chargement au démarrage : une mesure tardive ou fausse (tête mangée par le détourage, image pas encore prête) remontait l'avatar et coupait le haut de la tête.
      On borne donc la mesure : la tête ne peut pas être placée plus haut que le plan large standard. */
   box={cx:isFinite(box.cx)?box.cx:AV_W/2,top:Math.max(0,Math.min(isFinite(box.top)?box.top:AV_TOP_MAX,AV_TOP_MAX)),hw:box.hw||0};
@@ -12382,9 +12382,14 @@ function avFrameAuto(uid,div){
   const av0=div.querySelector('.av'),fa0=div.querySelector('.feed-av');
   if(av0&&fa0&&av0.style.backgroundImage){fa0.style.backgroundImage=av0.style.backgroundImage;fa0.style.backgroundSize='cover';fa0.style.backgroundPosition='center';}
   const f=avFrameKey(uid);
-  avApplyFrame(div,AVF_RES[f.key]||null); /* cadrage standard posé tout de suite : plus de saut quand la mesure arrive plus tard */
+  avApplyFrame(div,AVF_RES[f.key]||null,f.full); /* cadrage standard posé tout de suite : plus de saut quand la mesure arrive plus tard */
   if(AVF_RES[f.key]!==undefined)return;
-  avMeasure(f.sx,f.full).then(b=>{AVF_RES[f.key]=b||null;avApplyFrame(div,b);});
+  let tries=0;
+  const go=()=>avMeasure(f.sx,f.full).then(b=>{
+    if(b===undefined){ /* image pas encore prête à l'ouverture : on réessaie au lieu de mémoriser un échec (cadrage resté trop bas = tête coupée) */
+      if(++tries<5)setTimeout(go,400*tries);return;}
+    AVF_RES[f.key]=b||null;avApplyFrame(div,b,f.full);});
+  go();
 }
 /* cadre de bannière : le CADRE est la limite réelle. On mesure l'image (fenêtre transparente intérieure) puis on la place pour que le bord intérieur
    du cadre tombe pile sur le bord de la bannière : le fond et le contenu s'arrêtent sous le cadre, jamais de bord de fond visible, et tout ce qui dépasse
