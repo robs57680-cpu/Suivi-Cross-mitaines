@@ -689,8 +689,10 @@ section.feed-card>.feed-badge{position:absolute!important;top:8px;right:12px;z-i
 .tm.wu.wu-live .tm-bot .wu-main{min-height:46px;font-size:15px}
 .tm.wu .tm-bot .wu-nx{position:absolute;left:0;right:0;bottom:100%;margin-bottom:8px;z-index:3;padding:8px 12px;font-size:clamp(20px,6vw,28px);background:color-mix(in srgb,var(--panel) 85%,#fff)}
 button.chip-link{font-family:var(--f-mono);font-size:11px;font-weight:600;letter-spacing:.02em;cursor:pointer;color:var(--accent);border-color:var(--accent);border-style:solid;background:transparent;text-decoration:underline;text-underline-offset:2px;white-space:normal;text-align:left}
-.prp-info .tm-mid{align-content:start;justify-items:stretch;text-align:left;overflow:visible;gap:12px}
-.prp-info .tm-bot{position:sticky;bottom:0;padding-top:8px;background:var(--panel)}
+.prp-info{display:flex;flex-direction:column;overflow:hidden}
+.prp-info .tm-top,.prp-info .tm-bot{flex:none}
+.prp-info .tm-mid{flex:1 1 auto;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;align-content:start;justify-items:stretch;text-align:left;gap:12px;padding-bottom:12px}
+.prp-info .tm-bot{position:static;padding-top:8px}
 .prp-info .field select{color:var(--ink);background:var(--surface)}
 .prp-info .flabel,.prp-info .field .hint{color:var(--panel-muted)}
 .prp-info .tm-sub{text-align:left}
@@ -1393,6 +1395,10 @@ section.feed-card.th-crimson>.feed-badge{position:absolute!important;left:2cqw;r
 .bn.bn-editable:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .feed-av.lg{width:64px;height:64px}
 .feed-av.lg .av{width:64px!important;height:129px!important;min-width:64px!important}
+/* plan large dans le rond : on voit l'avatar au moins jusqu'aux hanches. Le dessin occupe 82 % du cadre (collé en haut, centré) ; le décor reste en plein cadre, donc aucun bord vide */
+.feed-av .av canvas,.feed-av .av svg{inset:0 auto auto 9%!important;width:82%!important;height:82%!important}
+.bn.bnm .bnm-av .feed-av .av canvas,.bn.bnm .bnm-av .feed-av .av svg{inset:0!important;width:100%!important;height:100%!important}
+.bn.bnm .bnm-av .feed-av{background:#15171B}
 
 /* cadre d'avatar (récompense de saison) : affiché dans le fil uniquement.
    Le cadre est plus grand que l'avatar (68px pour 44px) et déborde sans changer la place prise dans la ligne. */
@@ -4260,6 +4266,30 @@ c2V0U2F2ZSgnU3VyIGNldCBhcHBhcmVpbCBzZXVsZW1lbnQnKTsgfSk7CiAgfSBlbHNlIHNldFNhdmUo
 bWw+Cg==
 </script>
 <script type="module">
+/* ---------- garde-fou « null » ----------
+   Les méthodes natives append / prepend / replaceChildren / before / after / replaceWith transforment null et undefined en TEXTE (« null » affiché à l'écran),
+   alors que l'aide h() les ignore. On aligne les méthodes natives sur h() : null, undefined et false sont ignorés partout dans l'appli. */
+(()=>{
+  const skip=x=>x!==null&&x!==undefined&&x!==false;
+  const patch=(proto,names)=>names.forEach(m=>{
+    const o=proto&&proto[m];if(typeof o!=='function')return;
+    Object.defineProperty(proto,m,{configurable:true,writable:true,value:function(...a){return o.apply(this,a.filter(skip));}});
+  });
+  patch(Element.prototype,['append','prepend','replaceChildren','before','after','replaceWith']);
+  patch(DocumentFragment.prototype,['append','prepend','replaceChildren']);
+  patch(CharacterData.prototype,['before','after','replaceWith']);
+})();
+/* filet de sécurité après chaque rendu : un morceau de texte qui ne contient QUE « null » / « undefined » (ex. « nullnull ») est retiré */
+function cleanNullText(root){
+  try{
+    const w=document.createTreeWalker(root||document.body,NodeFilter.SHOW_TEXT),bad=[];
+    for(let n=w.nextNode();n;n=w.nextNode()){
+      const t=n.nodeValue;
+      if(t&&t.length<40&&/^\s*(?:null|undefined)(?:\s*(?:null|undefined))*\s*$/.test(t)){const pe=n.parentNode;if(pe&&!/^(SCRIPT|STYLE|TEXTAREA|OPTION)$/.test(pe.nodeName))bad.push(n);}
+    }
+    bad.forEach(n=>n.remove());
+  }catch(e){}
+}
 /* Le SDK Firebase est chargé en dynamique : la page s'affiche tout de suite, même si le réseau est lent.
    Au bout de 3 s sans réponse, l'appli bascule en mode cache (dernières données enregistrées sur l'appareil). */
 let firebaseConfig=null,appCheckSiteKey=null,initializeAppCheck=null,ReCaptchaEnterpriseProvider=null,CustomProvider=null,initializeApp,getAuth,initializeAuth,indexedDBLocalPersistence,browserLocalPersistence,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup,signInWithCredential,deleteUser,EmailAuthProvider,reauthenticateWithCredential,OAuthProvider,reauthenticateWithPopup,revokeAccessToken,getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc,disableNetwork,enableNetwork,query,orderBy,limit,where,getDocs,getDoc;
@@ -4315,7 +4345,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-10.1';
+const APP_VERSION='2026-11-10.5';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -6614,7 +6644,13 @@ const main=$('#main');
 let pending=false;
 let feedShown=10;
 const typing=()=>{const a=document.activeElement;return a&&main.contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName);};
-function scheduleRender(){if(typing()){pending=true;return;}render();}
+let renderTimer=null;
+/* les données arrivent en rafale à l'ouverture de l'appli : on regroupe les mises à jour en un seul rendu (sinon l'écran est reconstruit à chaque message et le décor / l'avatar clignotent) */
+function scheduleRender(){
+  if(typing()){pending=true;return;}
+  if(renderTimer)return;
+  renderTimer=setTimeout(()=>{renderTimer=null;if(typing()){pending=true;return;}render();},120);
+}
 document.addEventListener('focusout',()=>{if(!pending)return;setTimeout(()=>{if(!typing()){pending=false;render();}},0);});
 
 function go(tab){S._bnDraft=null;S._cmPrev=null;S._cmAsk=null;if(tab!=='profile'&&infosGuard(()=>go(tab)))return;closeDrawer(true);S._bk=null;S._gk=null;S.movBack=null;S.movFocus=null;if(S.coach){if(S.coach.subEdit)closeSubEditor(true);S.coach.wodOpen=false;}if(tab==='coach'&&S.tab==='coach')S.coach.view=null;S.profView=null;S.prFocus=null;S.viewUser=null;S.tip=null;S.trophOpen='';S.trophSeason='';if(tab==='today'){if(S.tab==='today'&&S.viewDate)S.carDate=S.viewDate;S.viewDate=null;}S.tab=tab;S.boardDetail=false;S.confirm=null;if(S.entry&&S.entry.coach)S.entry=null;if(S.tab!=='today'){S.entry=null;S.redo=null;}render();window.scrollTo(0,0);}
@@ -6622,6 +6658,11 @@ const TAB_ICO={feed:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" 
  today:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8.5 9V8a3.5 3.5 0 0 1 7 0v1"/><circle cx="12" cy="14.5" r="5.5"/></svg>',
  board:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.5 4h9v5a4.5 4.5 0 0 1-9 0z"/><path d="M7.5 6h-3c0 3 1.2 4.6 3.2 5M16.5 6h3c0 3-1.2 4.6-3.2 5M12 13.8V17M8.5 20h7M9.8 17h4.4"/></svg>'};
 function render(force){
+  if(renderTimer){clearTimeout(renderTimer);renderTimer=null;}
+  avPoolBegin();
+  try{return renderInner(force);}finally{avPoolEnd();cleanNullText(document.body);}
+}
+function renderInner(force){
   bonusSync();
   if(force!==true&&S.rankAnim&&S.rankAnim.busy){S.rankAnim.dirty=true;return;} /* animation du classement en cours : on ne reconstruit pas les éléments animés */
   planHide();updateCoinChip();
@@ -7586,7 +7627,7 @@ const PRP_STEPS=[
   {t:'Recherche du 1RM',n:'1',u:'répétition',c:'1 rep : tu cherches ton 1RM.',d:180,att:1},
   {t:'Encore plus lourd',n:'1',u:'répétition',c:'1 rep encore plus lourd, seulement si la précédente est réussie.',d:180,att:2},
   {t:'Dernier essai',n:'1',u:'répétition',c:'1 rep encore plus lourd si possible. C’est ton dernier essai.',d:0,att:3}];
-const PRP_PREVIEW=30; /* secondes avant la fin d'une étape où la consigne suivante s'affiche */
+const PRP_PREVIEW=30; /* la consigne suivante s'affiche 30 s APRÈS le début de l'étape en cours */
 const prpDur=d=>d>=60?(d%60?Math.floor(d/60)+' min '+(d%60)+' s':Math.floor(d/60)+' min'):d+' s';
 function openPrProtocol(mv0){
   if(document.getElementById('prp-info'))return;
@@ -7607,7 +7648,7 @@ function openPrProtocol(mv0){
     sec('Les 6 étapes',h('ol',{class:'prp-ol'},PRP_STEPS.map(x=>li(h('b',{},x.t),' · ',x.c,h('span',{class:'prp-d'},x.d?'Durée : '+prpDur(x.d):'Pas de chrono'))))),
     sec('Comment fonctionne le minuteur',
       h('p',{},'Tu appuies une seule fois sur « Démarrer ». Le temps défile comme un temps de récup et passe tout seul d’une étape à l’autre : ',h('b',{},'tu n’as plus besoin d’arrêter le chrono.')),
-      h('p',{},'30 secondes avant la fin d’une étape, la consigne suivante apparaît en bas de l’écran avec la mention « Ensuite » : profites-en pour préparer ta barre. La dernière étape n’a pas de chrono, tu prends le temps qu’il te faut.')),
+      h('p',{},'30 secondes après le début d’une étape, la consigne de la suivante apparaît en bas de l’écran avec la mention « Ensuite » : profites-en pour préparer ta barre. La dernière étape n’a pas de chrono, tu prends le temps qu’il te faut.')),
     sec('Conseils',h('ul',{class:'prp-ul'},[
       'Fais ton échauffement général avant de lancer le protocole.',
       'Léger : tu pourrais faire bien plus de reps. Un peu plus lourd : ça commence à piquer. Lourd : 3 reps difficiles mais propres, avec encore une ou deux reps en réserve.',
@@ -7702,8 +7743,8 @@ function openPrTimer(mv,onSaved){
     timeEl.textContent=wuMMSS(k);
     barEl.style.width=Math.max(0,Math.min(100,100*(1-left/(x.d*1000))))+'%';
     ov.classList.toggle('alert',st.phase==='run'&&k>0&&k<=3);
-    if(nextEl)nextEl.classList.toggle('on',k>0&&k<=PRP_PREVIEW); /* la consigne suivante apparaît 30 s avant la fin */
-    if(st.phase==='run'&&k!==st.lastK){st.lastK=k;if(!document.hidden){if(k>0&&k<=3)beep(660,120);else if(k===PRP_PREVIEW)beep(520,90);}}
+    if(nextEl)nextEl.classList.toggle('on',k>0&&(x.d-k)>=PRP_PREVIEW); /* la consigne suivante apparaît 30 s après le début de l'étape */
+    if(st.phase==='run'&&k!==st.lastK){st.lastK=k;if(!document.hidden){if(k>0&&k<=3)beep(660,120);else if(x.d-k===PRP_PREVIEW)beep(520,90);}}
   }
   function draw(){
     if(st.phase==='done'||st.phase==='closed')return;
@@ -11849,7 +11890,30 @@ function noAvatarEl(uid,width,dot,onclick){
   if(go_){el.classList.add('tap');el.setAttribute('role','button');el.setAttribute('tabindex','0');el.addEventListener('click',e=>{e.stopPropagation();go_();});el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go_();}});}
   return el;
 }
+/* Pendant un rendu, un avatar identique à celui du rendu précédent (même tenue, même taille, même nom) est RÉUTILISÉ tel quel : son décor et son dessin ne sont ni rechargés ni redessinés.
+   Seuls les avatars du rendu précédent sont gardés (aucune mémoire en plus). Hors rendu (fenêtres, aperçus), on crée toujours un nouvel élément. */
+const AVP={prev:new Map(),cur:new Map(),depth:0,on:false};
+function avPoolBegin(){if(AVP.depth===0){if(AVP.cur.size)AVP.prev=AVP.cur;AVP.cur=new Map();AVP.on=true;}AVP.depth++;}
+function avPoolEnd(){AVP.depth=Math.max(0,AVP.depth-1);if(AVP.depth===0)AVP.on=false;}
+function avBind(w,onclick){
+  w._oc=onclick||null;
+  w.classList.toggle('tap',!!onclick);
+  if(onclick){w.setAttribute('tabindex','0');w.setAttribute('role','button');}else{w.removeAttribute('tabindex');w.setAttribute('role','img');}
+  if(!w._ocL){w._ocL=1;
+    w.addEventListener('click',e=>{if(w._oc)w._oc(e);});
+    w.addEventListener('keydown',e=>{if(!w._oc)return;if(e.key==='Enter'||e.key===' '){e.preventDefault();w._oc();}});}
+}
 function avatarEl(sx,eq,width,onclick,label,world){
+  if(world||!AVP.on)return avatarElRaw(sx,eq,width,onclick,label,world);
+  let key;try{key=sx+'|'+(width||0)+'|'+(label||'')+'|'+JSON.stringify(eq);}catch(e){return avatarElRaw(sx,eq,width,onclick,label,world);}
+  const cur=AVP.cur.get(key)||[];AVP.cur.set(key,cur);
+  let w=(AVP.prev.get(key)||[])[cur.length];
+  if(!w)w=avatarElRaw(sx,eq,width,null,label,false);
+  cur.push(w);
+  avBind(w,onclick);
+  return w;
+}
+function avatarElRaw(sx,eq,width,onclick,label,world){
   const wrap=h('div',{class:'av'+(onclick?' tap':'')+(world?' nobg':''),style:width?'width:'+width+'px':null,role:'img','aria-label':label||'Avatar'});
   const cv=h('canvas',{width:AV_W,height:AV_H});wrap.append(cv);
   let cur=eq,seq=0;
@@ -12182,7 +12246,7 @@ function avMeasure(sx,full){
 function avApplyFrame(div,box){
   if(!box)return;
   /* la tête (≈ 55 % du cercle) est centrée dans le rond ; si elle touche le haut de l'image, le haut du cercle est complété par le décor */
-  const Wn=Math.max(460,Math.min(600,box.hw*3.9)),k=24/Wn,y0=box.top-Wn*.04; /* plan large : de la tête jusqu'aux hanches */
+  const Wn=630,k=24/Wn,y0=box.top-Wn*.04; /* plan large : de la tête jusqu'aux hanches (cadrage fixe, plus resserré sur la tête) */
   div.style.setProperty('--av-w',(AV_W*k).toFixed(2)+'cqw');div.style.setProperty('--av-h',(AV_H*k).toFixed(2)+'cqw');
   div.style.setProperty('--av-l',(12-box.cx*k).toFixed(2)+'cqw');div.style.setProperty('--av-t',(-y0*k).toFixed(2)+'cqw');
 }
