@@ -2321,66 +2321,48 @@ button.pf2-xp{width:calc(100% - 8px);background:none;border-left:0;border-right:
 .bp-dr b{font-size:15px}
 .bp-dr span{font-size:12px;color:#b9bdcc}
 .bp-hint{margin:8px 14px 0;font-size:11px;color:#9aa0b4;text-align:center}
-/* ---------- bonus quotidien (look « néon » : éclairs bleus, salle de crossfit, bandeaux pinceau noirs, rose fluo) ---------- */
+/* ---------- bonus quotidien : l'illustration fournie (assets/embedded/bonus-quotidien-fond.webp) sert de décor tel quel (éclairs, tas de pièces, titre, boutons) ; on ne pose dessus que ce qui change (montant, série, cases des jours, texte du bouton). Positions en % de l'image (1024×1536), tailles en cqw = % de la largeur de la carte. ---------- */
 .dc-ov{position:fixed;inset:0;z-index:96;display:grid;place-items:center;padding:14px;background:rgba(2,4,16,.88);overflow:auto;overscroll-behavior:contain}
-.dc{--dc-brush:polygon(0 24%,2% 9%,6% 17%,11% 4%,18% 12%,26% 2%,35% 10%,46% 1%,57% 9%,68% 2%,79% 10%,88% 3%,95% 11%,99% 6%,100% 30%,98% 46%,100% 62%,97% 80%,100% 93%,93% 87%,85% 98%,76% 90%,66% 99%,55% 91%,44% 100%,33% 92%,22% 99%,13% 91%,6% 99%,2% 88%,0 72%,2% 54%,0 40%);
-  position:relative;width:min(100%,400px);box-sizing:border-box;border-radius:20px;padding:14px 12px 18px;color:#fff;text-align:center;overflow:hidden;isolation:isolate;display:grid;gap:12px;
-  background:radial-gradient(70% 28% at 50% 46%,rgba(255,45,154,.55),transparent 70%),radial-gradient(90% 40% at 0 0,rgba(30,107,255,.6),transparent 65%),radial-gradient(90% 40% at 100% 100%,rgba(30,107,255,.5),transparent 65%),radial-gradient(60% 18% at 50% 100%,rgba(255,45,154,.5),transparent 75%),linear-gradient(180deg,#030720,#091347 45%,#050a26 75%,#04061a);
-  border:2px solid #2c7bff;box-shadow:0 0 30px rgba(44,123,255,.8),0 0 70px rgba(44,123,255,.35),inset 0 0 44px rgba(44,123,255,.45)}
-.dc-bg,.dc-bolts{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.dc-bg{z-index:-2;opacity:.8}
-.dc-bolts{z-index:-1;filter:drop-shadow(0 0 2px #fff) drop-shadow(0 0 5px #2aa8ff) drop-shadow(0 0 11px #1e6bff)}
-.dc-x{position:absolute;top:8px;right:8px;width:34px;height:34px;border-radius:50%;border:2px solid #ff2d9a;background:#1a0626;color:#fff;font:700 16px/1 var(--f-body);cursor:pointer;z-index:3;box-shadow:0 0 10px rgba(255,45,154,.8)}
-.dc-title,.dc-amt,.dc-go{position:relative;isolation:isolate}
-.dc-title::before,.dc-amt::before{content:"";position:absolute;inset:-6px -10px;z-index:-1;background:#04050c;clip-path:var(--dc-brush);filter:drop-shadow(0 0 6px rgba(255,45,154,.6))}
-.dc-title{display:flex;align-items:center;justify-content:center;gap:10px;margin:6px 34px 6px 0;padding:10px 14px 14px;font-family:var(--f-display);font-style:italic;font-size:clamp(25px,7.6vw,33px);line-height:1;text-transform:uppercase;letter-spacing:.01em;transform:rotate(-1.5deg);-webkit-text-stroke:.5px currentColor;white-space:nowrap}
-.dc-title svg{flex:none;filter:drop-shadow(0 0 4px rgba(255,255,255,.5))}
-.dc-title em{color:#ff2d9a;font-style:italic;text-shadow:0 0 10px rgba(255,45,154,.7)}
-.dc-title::after{content:"";position:absolute;left:44%;right:6%;bottom:6px;height:3px;border-radius:3px;background:linear-gradient(90deg,transparent,#ff2d9a 18%,#ff2d9a 80%,transparent);box-shadow:0 0 8px #ff2d9a}
-.dc-sub{position:relative;margin:2px 0 0;padding-bottom:10px;font-family:var(--f-display);font-style:italic;font-size:clamp(17px,5vw,21px);line-height:1.2;text-transform:none;text-shadow:0 2px 6px rgba(0,0,0,.8)}
-.dc-sub::after{content:"";position:absolute;left:30%;right:8%;bottom:0;height:3px;border-radius:3px;background:linear-gradient(90deg,transparent,#ff2d9a 20%,#ff2d9a 85%,transparent);transform:rotate(-1.2deg);box-shadow:0 0 8px #ff2d9a}
-.dc-sub em{color:#ff2d9a;font-style:italic}
-.dc-stack{position:relative;height:128px;width:100%;margin:-2px 0 -8px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.6)) drop-shadow(0 0 16px rgba(255,45,154,.75))}
-.dc-stack::before{content:"";position:absolute;left:50%;top:50%;width:340px;height:340px;margin:-170px 0 0 -170px;z-index:-1;background:repeating-conic-gradient(from 3deg,rgba(255,80,190,.75) 0 2.5deg,transparent 2.5deg 11deg);-webkit-mask-image:radial-gradient(circle,#000 8%,transparent 66%);mask-image:radial-gradient(circle,#000 8%,transparent 66%);animation:dcSpin 40s linear infinite}
-.dc-stack::after{content:"";position:absolute;left:50%;top:52%;width:230px;height:150px;margin:-75px 0 0 -115px;z-index:-1;background:radial-gradient(closest-side,rgba(255,170,230,.9),rgba(255,45,154,.45) 55%,transparent);filter:blur(4px)}
-.dc-stack .coin{position:absolute;display:block}
-.dc-stack .coin:nth-child(1){left:50%;top:0;margin-left:-4px;transform:rotate(6deg)}
-.dc-stack .coin:nth-child(2){left:calc(50% - 98px);top:44px;transform:rotate(-12deg)}
-.dc-stack .coin:nth-child(3){left:calc(50% + 40px);top:46px;transform:rotate(12deg)}
-.dc-stack .coin:nth-child(4){left:calc(50% - 128px);top:62px;transform:rotate(-6deg)}
-.dc-stack .coin:nth-child(5){left:calc(50% - 40px);top:18px;z-index:2}
-.dc-stack .coin:nth-child(1){margin-left:-52px}
-.dc-amt{display:flex;align-items:center;justify-content:center;gap:12px;margin:4px 0;padding:8px 14px;font-family:var(--f-display);font-style:italic;text-transform:uppercase;transform:rotate(-1deg)}
-.dc-amt::before{inset:-10px -16px}
-.dc-amt b{font-size:clamp(46px,14.5vw,64px);line-height:1;color:#fff;font-weight:400;-webkit-text-stroke:1px #fff;text-shadow:0 3px 0 rgba(0,0,0,.6),0 0 14px rgba(255,255,255,.35)}
-.dc-amt em{font-size:clamp(38px,12vw,54px);line-height:1;color:#ff2d9a;font-style:italic;-webkit-text-stroke:1px #ff2d9a;text-shadow:0 0 14px rgba(255,45,154,.6)}
-.dc-amt .coin{filter:drop-shadow(0 0 8px rgba(255,200,60,.8))}
-.dc-serie{padding:12px 6px 10px;border-radius:16px;border:2px solid #ff2d9a;background:rgba(5,6,18,.88);box-shadow:0 0 16px rgba(255,45,154,.75),inset 0 0 18px rgba(255,45,154,.22)}
-.dc-st{margin:0 0 10px;font-family:var(--f-body);font-style:italic;font-weight:700;font-size:clamp(16px,4.8vw,19px)}
-.dc-st b{color:#ffd91a;font-weight:700;font-size:1.12em;margin-left:4px}
-.dc-row{position:relative;display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-.dc-row::before{content:"";position:absolute;left:7%;right:7%;top:21px;height:3px;background:linear-gradient(90deg,#e8b923,#c99a1e);z-index:0;box-shadow:0 0 6px rgba(232,185,35,.6)}
-.dc-d{position:relative;z-index:1;display:grid;justify-items:center;gap:1px;min-width:0}
-.dc-coin{width:42px;height:42px;display:grid;place-items:center;border-radius:50%;background:#0a0a12}
-.dc-d.done .dc-coin,.dc-d.next .dc-coin{box-shadow:0 0 0 2px #e8b923,0 0 8px rgba(232,185,35,.7)}
-.dc-d.done .dc-coin{filter:saturate(.7) brightness(.85)}
-.dc-d.now .dc-coin{width:44px;height:44px;box-shadow:0 0 0 2px #e8b923,0 0 8px rgba(232,185,35,.7)}
-.dc-d.next .dc-coin{filter:none}
-.dc-d.wk .dc-coin{width:48px;height:48px;margin-top:-3px;box-shadow:0 0 0 3px #ffd91a,0 0 16px 4px rgba(255,217,26,.9),0 0 32px rgba(255,217,26,.6);animation:dcGlow 1.4s ease-in-out infinite}
-.dc-dl{margin-top:4px;font-size:11px;font-weight:600;color:#e9e9f2}
-.dc-d.wk .dc-dl{color:#ffd91a;font-weight:700}
-.dc-da{font-family:var(--f-body);font-weight:800;font-size:19px;line-height:1;color:#fff}
-.dc-d.wk .dc-da{color:#ffd91a;font-size:25px}
-.dc-du{display:none}
-.dc-go{border:0;cursor:pointer;margin:8px 6px 0;padding:17px 22px;font-family:var(--f-display);font-style:italic;font-size:clamp(23px,6.8vw,30px);text-transform:uppercase;color:#1b0613;background:none;white-space:nowrap;transform:rotate(-1deg);filter:drop-shadow(0 0 14px rgba(255,45,154,.85))}
-.dc-go::before{content:"";position:absolute;inset:0;z-index:-2;background:linear-gradient(180deg,#ff6cbb,#ff2d9a 55%,#d4157a);clip-path:var(--dc-brush)}
-.dc-go::after{content:"";position:absolute;inset:7px 12px;z-index:-1;border:2px solid rgba(110,0,60,.55);border-radius:10px;box-shadow:inset 0 2px 0 rgba(255,255,255,.4)}
-.dc-go:disabled{filter:saturate(.8) drop-shadow(0 0 10px rgba(255,45,154,.6));cursor:default}
-@keyframes dcSpin{to{transform:rotate(360deg)}}
-.dc-won .dc-stack{animation:dcPop .5s ease-out}
-@keyframes dcGlow{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
-@keyframes dcPop{0%{transform:scale(1)}40%{transform:scale(1.18)}100%{transform:scale(1)}}
-@media (prefers-reduced-motion:reduce){.dc-d.now .dc-coin,.dc-d.wk .dc-coin,.dc-won .dc-stack,.dc-stack::before{animation:none}}
+.dc{position:relative;container-type:inline-size;width:min(100%,420px,calc((100vh - 28px)*2/3));width:min(100%,420px,calc((100dvh - 28px)*2/3));aspect-ratio:2/3;box-sizing:border-box;border-radius:18px;overflow:hidden;color:#fff;text-align:center;
+  background:#030720 url('assets/embedded/bonus-quotidien-fond.webp') center/100% 100% no-repeat;box-shadow:0 0 30px rgba(44,123,255,.7),0 0 70px rgba(44,123,255,.3)}
+.dc>*{position:absolute;margin:0;box-sizing:border-box}
+.dc-x{left:90.6%;top:1.6%;width:7.6%;aspect-ratio:1;padding:0;border:0;border-radius:50%;background:transparent;color:transparent;font-size:0;cursor:pointer}
+.dc-x:focus-visible,.dc-go:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.dc-amt{left:12%;width:76%;top:46.2%;height:10%;display:flex;align-items:center;justify-content:center;gap:2.2cqw;font-family:var(--f-display);font-style:italic;text-transform:uppercase;white-space:nowrap;transform:rotate(-2deg)}
+.dc-amt b{font-size:14cqw;line-height:1;font-weight:400;color:#fff;-webkit-text-stroke:.3cqw #fff;text-shadow:0 .6cqw 0 rgba(0,0,0,.6),0 0 3cqw rgba(255,255,255,.35)}
+.dc-amt b.w{font-size:12cqw}
+.dc-amt img,.dc-amt .coin{height:12.5cqw;width:auto;display:block;filter:drop-shadow(0 0 2cqw rgba(255,200,60,.8))}
+.dc-amt em{font-size:11.5cqw;line-height:1;font-style:italic;color:#ff2d9a;-webkit-text-stroke:.3cqw #ff2d9a;text-shadow:0 0 3cqw rgba(255,45,154,.6)}
+.dc-pan{left:5.3%;top:60.4%;width:89.4%;height:16.7%;border-radius:3cqw}
+.dc-st{left:5.3%;width:89.4%;top:62.3%;display:flex;justify-content:center;align-items:center;gap:1.8cqw;font-family:var(--f-body);font-style:italic;font-weight:700;font-size:4.3cqw;line-height:1.1;white-space:nowrap}
+.dc-st i{font-style:normal;font-size:5.4cqw}
+.dc-st b{color:#ffd91a;font-weight:700;font-size:4.9cqw}
+.dc-row{left:7.4%;width:85.4%;top:66.6%;display:grid;grid-template-columns:repeat(7,1fr)}
+.dc-row::before,.dc-row::after{content:"";position:absolute;left:7.143%;top:4.85cqw;height:.7cqw;border-radius:1cqw}
+.dc-row::before{right:7.143%;background:#6e6a80}
+.dc-row::after{width:calc((100% - 14.286%)*var(--dcp,0));background:linear-gradient(90deg,#ffd91a,#e8b923);box-shadow:0 0 1.5cqw rgba(255,217,26,.7)}
+.dc-d{position:relative;z-index:1;display:grid;justify-items:center;align-content:start;min-width:0}
+.dc-m{position:relative;width:10.4cqw;height:10.4cqw;display:grid;place-items:center}
+.dc-m img{width:8.8cqw;height:8.8cqw;display:block;border-radius:50%}
+.dc-d.done .dc-m img{filter:brightness(.82) saturate(.9)}
+.dc-d.now .dc-m img{width:10cqw;height:10cqw;box-shadow:0 0 0 .5cqw #ffd91a,0 0 4cqw 1.2cqw rgba(255,217,26,.85);animation:dcGlow 1.4s ease-in-out infinite}
+.dc-ok{position:absolute;right:.2cqw;bottom:.2cqw;width:3.6cqw;height:3.6cqw;border-radius:50%;background:#2ee66b;color:#06210f;font:800 2.5cqw/3.6cqw var(--f-body);text-align:center}
+.dc-w{position:absolute;top:-1cqw;right:-2.4cqw;padding:.3cqw 1.3cqw;border-radius:99px;background:#ff2d9a;color:#fff;font:800 2.4cqw/1.3 var(--f-body);box-shadow:0 0 2cqw rgba(255,45,154,.7)}
+.dc-dl{margin-top:.4cqw;font-family:var(--f-body);font-weight:600;font-size:2.7cqw;line-height:1.1;color:#c9cad6;white-space:nowrap}
+.dc-d.done .dc-dl{color:#e9e9f2}
+.dc-d.now .dc-dl{color:#ffd91a;font-weight:700}
+.dc-go{left:9.8%;top:83.2%;width:83%;height:9.3%;padding:0;border:0;background:transparent;cursor:pointer;font-family:var(--f-display);font-style:italic;text-transform:uppercase;font-size:6.6cqw;line-height:1;color:#1b0613;white-space:nowrap;-webkit-text-stroke:.2cqw #1b0613;transform:rotate(-1.2deg)}
+.dc-go:active{transform:rotate(-1.2deg) scale(.98)}
+.dc-go:disabled{cursor:default}
+/* repli si l'image de fond est absente d'assets/embedded */
+.dc-nobg{background:radial-gradient(90% 40% at 0 0,rgba(30,107,255,.6),transparent 65%),radial-gradient(90% 40% at 100% 100%,rgba(30,107,255,.5),transparent 65%),linear-gradient(180deg,#030720,#091347 45%,#04061a);border:2px solid #2c7bff}
+.dc-nobg .dc-pan{background:rgba(5,6,18,.9);border:2px solid #ff2d9a;box-shadow:0 0 16px rgba(255,45,154,.7)}
+.dc-nobg .dc-amt{background:#04050c}
+.dc-nobg .dc-go{background:linear-gradient(180deg,#ff6cbb,#ff2d9a 55%,#d4157a);border-radius:12px}
+@keyframes dcGlow{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes dcPop{0%{transform:rotate(-2deg) scale(1)}40%{transform:rotate(-2deg) scale(1.18)}100%{transform:rotate(-2deg) scale(1)}}
+.dc-won .dc-amt{animation:dcPop .5s ease-out}
+@media (prefers-reduced-motion:reduce){.dc-d.now .dc-m img,.dc-won .dc-amt{animation:none}}
 .bp-coin{position:absolute;left:5px;bottom:4px;display:inline-flex;align-items:center;gap:2px;font:700 11px var(--f-mono,monospace);color:#ffe08a;background:#000b;border-radius:99px;padding:2px 6px 2px 3px}
 .bp-coin .coin{display:inline-flex}
 .bp-coin.ready{background:linear-gradient(90deg,#ff2d6f,#ff6a1f);color:#fff;animation:bpPulse 1.4s ease-in-out infinite}
@@ -4405,7 +4387,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-10.7';
+const APP_VERSION='2026-11-10.8';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -6141,15 +6123,24 @@ function dcClaim(){
   saveLog({coinGot:cg},'Bonus quotidien : +'+i.coins+' coins.');
   return i.coins;
 }
-let dcTries=0;
+let dcTimer=0;
+/* Ouverture à la connexion : dès que le profil est chargé et qu'aucune autre fenêtre n'est ouverte. Si ce n'est pas encore possible (données en chargement, autre fenêtre, visite guidée…), on réessaie toutes les 2 s (jusqu'à 10 min) au lieu d'abandonner. */
 function maybeDailyBonus(){
   const t=todayStr();
-  if(S._dcDone===t||!dcCan()||rankHold()||tourEl)return;
-  if(document.getElementById('dc-ov'))return;
-  if(document.querySelector('[aria-modal="true"],.reward-pop,#cer-ov,#tm-ov')){if(dcTries++<30)setTimeout(maybeDailyBonus,3000);return;}
+  if(S._dcDone===t)return;
+  if(!dcCan()){if(S.uid)dcWatch();return;}
+  if(dcInfo().claimed||document.getElementById('dc-ov')){S._dcDone=t;return;}
+  if(rankHold()||tourEl||document.querySelector('[aria-modal="true"],.reward-pop,#cer-ov,#tm-ov')){dcWatch();return;}
   S._dcDone=t;
-  if(dcInfo().claimed)return;
   openDailyBonus();
+}
+function dcWatch(){
+  if(dcTimer)return;
+  let n=0;
+  dcTimer=setInterval(()=>{
+    if(S._dcDone===todayStr()||++n>300){clearInterval(dcTimer);dcTimer=0;return;}
+    maybeDailyBonus();
+  },2000);
 }
 function openDailyBonus(){
   if(document.getElementById('dc-ov')||!dcCan())return;
@@ -6158,38 +6149,20 @@ function openDailyBonus(){
   const ov=h('div',{class:'dc-ov',id:'dc-ov',role:'dialog','aria-modal':'true','aria-label':'Bonus quotidien'});
   const onKey=e=>{if(e.key==='Escape')close();};
   const close=()=>{document.removeEventListener('keydown',onKey);document.body.style.overflow=prevOv;ov.remove();render();};
-  const bolts='<svg class="dc-bolts" viewBox="0 0 400 640" preserveAspectRatio="none" aria-hidden="true" fill="none" stroke="#d6f1ff" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round">'
-    +'<polyline points="0,60 38,88 22,122 66,150 44,198 70,226"/><polyline points="38,88 70,84 92,60"/><polyline points="22,122 0,146"/>'
-    +'<polyline points="0,250 30,276 12,318 48,346 24,396 58,424"/><polyline points="48,346 84,352"/>'
-    +'<polyline points="400,96 362,128 380,168 338,204 356,252 330,282"/><polyline points="380,168 400,196"/><polyline points="338,204 306,196 288,222"/>'
-    +'<polyline points="400,330 366,356 386,402 346,432 360,470"/><polyline points="366,356 336,350"/>'
-    +'<polyline points="0,520 44,546 28,588 78,614"/><polyline points="44,546 70,530"/><polyline points="400,500 354,526 372,570 322,602"/><polyline points="372,570 400,590"/>'
-    +'<polyline points="118,0 140,30 110,58 132,84"/><polyline points="276,0 258,34 288,62 266,92"/>'
-    +'<polyline points="292,640 270,606 302,580" stroke="#ff9ad6"/><polyline points="96,640 120,612 96,590" stroke="#ff9ad6"/></svg>';
-  const gym='<svg class="dc-bg" viewBox="0 0 400 640" preserveAspectRatio="none" aria-hidden="true">'
-    +'<defs><pattern id="dcHoles" width="10" height="14" patternUnits="userSpaceOnUse"><rect x="3" y="4" width="4" height="5" rx="1" fill="#02040f"/></pattern><linearGradient id="dcPost" x1="0" x2="1"><stop offset="0" stop-color="#1b3f9a"/><stop offset=".5" stop-color="#2b63d8"/><stop offset="1" stop-color="#10286a"/></linearGradient><linearGradient id="dcFloor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a3a9a" stop-opacity="0"/><stop offset="1" stop-color="#2c7bff" stop-opacity=".5"/></linearGradient></defs>'
-    +'<rect x="22" y="150" width="14" height="480" fill="url(#dcPost)" opacity=".7"/><rect x="22" y="150" width="14" height="480" fill="url(#dcHoles)" opacity=".7"/>'
-    +'<rect x="364" y="120" width="14" height="510" fill="url(#dcPost)" opacity=".7"/><rect x="364" y="120" width="14" height="510" fill="url(#dcHoles)" opacity=".7"/>'
-    +'<rect x="60" y="215" width="6" height="415" fill="#1a3a9a" opacity=".45"/><rect x="334" y="190" width="6" height="440" fill="#1a3a9a" opacity=".45"/>'
-    +'<rect x="22" y="196" width="120" height="8" fill="#2b63d8" opacity=".5"/><rect x="260" y="170" width="118" height="8" fill="#2b63d8" opacity=".5"/>'
-    +'<line x1="30" y1="204" x2="30" y2="236" stroke="#9fb4d8" stroke-width="3" opacity=".8"/><line x1="55" y1="204" x2="55" y2="236" stroke="#9fb4d8" stroke-width="3" opacity=".8"/>'
-    +'<circle cx="43" cy="262" r="21" fill="none" stroke="#c9d3e8" stroke-width="5" opacity=".85"/>'
-    +'<line x1="338" y1="178" x2="338" y2="206" stroke="#9fb4d8" stroke-width="3" opacity=".8"/><line x1="360" y1="178" x2="360" y2="206" stroke="#9fb4d8" stroke-width="3" opacity=".8"/>'
-    +'<circle cx="349" cy="232" r="21" fill="none" stroke="#c9d3e8" stroke-width="5" opacity=".85"/>'
-    +'<rect x="0" y="470" width="400" height="170" fill="url(#dcFloor)"/></svg>';
-  const cal='<svg viewBox="0 0 48 48" width="38" height="38" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="9" width="38" height="34" rx="5"/><path d="M14 4v9M34 4v9M5 19h38"/><path d="M13 26h4M22 26h4M31 26h4M13 34h4M22 34h4M31 34h4" stroke-width="3.6"/></svg>';
   const card=h('div',{class:'dc'});
-  card.innerHTML=gym+bolts;
+  /* le décor est l'image fournie ; absente, on garde un fond sombre simple */
+  const pre=new Image();pre.onerror=()=>card.classList.add('dc-nobg');pre.src='assets/embedded/bonus-quotidien-fond.webp';
+  const pic=(file,sz)=>{const im=new Image();im.src='assets/embedded/'+file;im.alt='';im.draggable=false;im.onerror=()=>{im.replaceWith(coinIco(sz));};return im;};
   const days=[];
   for(let k=1;k<=7;k++){
-    const st=k<i.day?'done':k===i.day?'now':'next',amt=k===7?DC_WEEK:DC_DAY;
-    days.push(h('div',{class:'dc-d '+st+(k===7?' wk':'')},
-      h('div',{class:'dc-coin'},coinIco(k===7?42:36)),
-      h('span',{class:'dc-dl'},'Jour '+k),
-      h('b',{class:'dc-da'},String(amt)),
-      h('span',{class:'dc-du'},'pièces')));
+    const st=k<i.day?'done':k===i.day?'now':'next';
+    const m=h('div',{class:'dc-m'},pic('bonus-medaille-'+(k<=i.day?'or':'grise')+'.webp',34));
+    if(st==='done')m.append(h('span',{class:'dc-ok','aria-hidden':'true'},'✓'));
+    if(k===7)m.append(h('span',{class:'dc-w'},'+'+DC_WEEK));
+    days.push(h('div',{class:'dc-d '+st},m,h('span',{class:'dc-dl'},'Jour '+k)));
   }
-  const stack=h('div',{class:'dc-stack','aria-hidden':'true'},coinIco(72),coinIco(66),coinIco(66),coinIco(62),coinIco(92));
+  const row=h('div',{class:'dc-row'},days);
+  row.style.setProperty('--dcp',String((i.day-1)/6));
   const go=h('button',{class:'dc-go',type:'button',id:'dc-go',onclick:()=>{
     go.disabled=true;
     const n=dcClaim();
@@ -6198,15 +6171,11 @@ function openDailyBonus(){
     setTimeout(close,1100);
   }},'Récupérer mes coins');
   card.append(
+    h('div',{class:'dc-pan','aria-hidden':'true'}),
     h('button',{class:'dc-x',type:'button','aria-label':'Fermer',onclick:close},'✕'),
-    (()=>{const t=h('div',{class:'dc-title'});t.innerHTML=cal;t.append(h('span',{},'Bonus ',h('em',{},'quotidien')));return t;})(),
-    h('p',{class:'dc-sub'},'Connecte-toi chaque jour pour récupérer ton ',h('em',{},'bonus de coins'),' !'),
-    stack,
-    h('div',{class:'dc-amt'},h('b',{},'+'+i.coins),coinIco(54),h('em',{},'coins')),
-    h('div',{class:'dc-serie'},
-      h('p',{class:'dc-st'},'🔥 Série du moment : ',h('b',{},i.day+(i.day>1?' jours':' jour'))),
-      h('div',{class:'dc-row'},days)),
-    go);
+    h('div',{class:'dc-amt'},h('b',{class:i.coins>9?'w':''},'+'+i.coins),pic('bonus-piece.webp',54),h('em',{},'coins')),
+    h('div',{class:'dc-st'},h('i',{'aria-hidden':'true'},'🔥'),h('span',{},'Série du moment :'),h('b',{},i.day+(i.day>1?' jours':' jour'))),
+    row,go);
   ov.append(card);
   ov.addEventListener('click',e=>{if(e.target===ov)close();});
   document.addEventListener('keydown',onKey);
