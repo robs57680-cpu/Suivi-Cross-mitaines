@@ -8572,6 +8572,7 @@ function partCard(p,w,date){
     (fmtId&&S.tip===fmtId)?h('div',{class:'tip',role:'dialog'},fmtExplain(p).map((t,k)=>k===0?h('b',{},t):h('p',{},t))):null,
     lvOpen?h('div',{class:'varnote'},'Version '+levelName(p,lvOpen[1])+' : '+[(lvOpen[0].variants||[]).length?'les variantes remplacent les mouvements':'',rdOf(lvOpen[0])?'le nombre de tours est adapté':'',rpOf(lvOpen[0])?'les reps sont adaptées':''].filter(Boolean).join(' · ')+' (en surbrillance).'):null,
     p.kind==='force'?forceInfo(p):null,
+    (p.kind==='force'&&p.prProto&&p.movement)?h('div',{class:'row'},h('button',{class:'btn primary btn-block',type:'button',id:'prproto-'+p.label,onclick:()=>openPrTimer(p.movement,()=>{})},'Protocole PR · '+p.movement)):null,
     h('div',{class:'lines'},lines.map(metcon?metL:(t=>renderLine(t,(p.kind==='renfo'||p.kind==='autre')?p.variants:null,p)))),
     (metcon&&p.word)?h('div',{class:'cword'},h('span',{class:'flabel'},'Mot du coach'),h('p',{},linkText(p.word))):null,
     metcon?levelsBlock(p):null,
@@ -14328,9 +14329,8 @@ function calcTiers(p){
     }
     return out;
   };
-  /* un niveau adapté (reps ou tours changés) ne peut avoir ses propres paliers que si « Mêmes paliers pour les 4 niveaux » est décochée : on la décoche */
-  let unsynced=false;
-  if(p.syncTiers&&p.levels.some((lv,k)=>k<3&&lv.mode==='custom'&&lvAdapted(p,lv))){p.syncTiers=false;unsynced=true;}
+  /* « Mêmes paliers pour les 4 niveaux » cochée : tous les niveaux reprennent les paliers de Rx, même si leurs reps ou leurs tours changent.
+     Décochée : un niveau « Adapté » dont les reps, les tours ou les variantes changent reçoit SES propres paliers. */
   const rx=compute(p,e),res=[],own=[];
   p.levels.forEach((lv,k)=>{
     res[k]=rx;
@@ -14347,7 +14347,7 @@ function calcTiers(p){
     p.levels.forEach((lv,k)=>{if(k===3||(lv.mode==='custom'&&!p.syncTiers))lv.capTiers=res[k].capTiers.length?res[k].capTiers.map(c=>({...c})):blankCapTiers();});
   }
   const top=p.levels[3].tiers[0]||(ft&&rx.capTiers[0]?{t:rx.capTiers[0].t+' au time cap'}:{t:'—'});
-  p.estInfo=(ft?'Palier max ('+(fine?20:10)+' pts) : '+top.t+' pour Rx'+(own.length?'':' et tous les niveaux')+', '+I.l.toLowerCase()+'.'+(rx.capTiers.length?' '+rx.capTiers.length+' palier'+(rx.capTiers.length>1?'s':'')+' au-delà du time cap, écrit'+(rx.capTiers.length>1?'s':'')+' en reps (ou tours + reps) atteintes au time cap. Le dernier palier en temps va jusqu’au time cap.':'')+(own.length?' Paliers propres à '+own.join(', ')+' (reps, tours ou variantes adaptés)'+(unsynced?' : « Mêmes paliers pour les 4 niveaux » a été décochée.':'.'):''):'Palier max ('+(fine?20:10)+' pts) : '+top.t+' tours pour Rx'+(own.length?'':' et tous les niveaux')+', '+I.l.toLowerCase()+'.'+(own.length?' Paliers propres à '+own.join(', ')+' (reps, tours ou variantes adaptés)'+(unsynced?' : « Mêmes paliers pour les 4 niveaux » a été décochée.':'.'):''))
+  p.estInfo=(ft?'Palier max ('+(fine?20:10)+' pts) : '+top.t+' pour Rx'+(own.length?'':' et tous les niveaux')+', '+I.l.toLowerCase()+'.'+(rx.capTiers.length?' '+rx.capTiers.length+' palier'+(rx.capTiers.length>1?'s':'')+' au-delà du time cap, écrit'+(rx.capTiers.length>1?'s':'')+' en reps (ou tours + reps) atteintes au time cap. Le dernier palier en temps va jusqu’au time cap.':'')+(own.length?' Paliers propres à '+own.join(', ')+' (reps, tours ou variantes adaptés).':''):'Palier max ('+(fine?20:10)+' pts) : '+top.t+' tours pour Rx'+(own.length?'':' et tous les niveaux')+', '+I.l.toLowerCase()+'.'+(own.length?' Paliers propres à '+own.join(', ')+' (reps, tours ou variantes adaptés).':''))
     +' Temps pur estimé '+fmtTime(Math.round(e.T))+' ('+fmtN(Math.round(e.R))+' reps)'+(ft?'':' par tour : '+fmtTime(Math.round(e.roundTime)))
     +(e.unknown.length?' · Mouvement non reconnu (3 s par rep supposées) : '+e.unknown.join(', '):'')+'. À ajuster à ta façon de coacher.'+(fine?' Mode 20 paliers : écart entre paliers divisé par 2, points de 20 à 1.':'');
   render();
@@ -14542,7 +14542,7 @@ function fixDraft(d){
   });
   return d;
 }
-const blankPart=k=>({kind:k,name:'',content:'',movement:'',format:'FT',detail:'',repsRound:'',dur:'',interval:'1',deadBy:false,focus:'',intensity:'',syncTiers:true,word:'',lineRounds:false,redo:true,test:false,levels:blankLevels()});
+const blankPart=k=>({kind:k,name:'',content:'',movement:'',format:'FT',detail:'',repsRound:'',dur:'',interval:'1',deadBy:false,focus:'',intensity:'',syncTiers:true,word:'',lineRounds:false,redo:true,test:false,prProto:false,levels:blankLevels()});
 function blankWod(){return {date:todayStr(),title:'',base:'',deload:false,parts:[Object.assign(blankPart('force'),{name:'Force'}),Object.assign(blankPart('renfo'),{name:'Renforcement'}),Object.assign(blankPart('metcon'),{name:'Metcon'})]};}
 function wodToDraft(w){
   return {date:w.date,title:w.title||'',base:(w.base!==undefined&&w.base!==null)?String(w.base):'',deload:!!w.deload,bonus:!!w.bonus,
@@ -14554,7 +14554,7 @@ function wodToDraft(w){
         capTiers:(l.capTiers&&l.capTiers.length)?l.capTiers.map(t=>({t:capInput(cm,tierCum(p,t.t)),p:String(t.p)})):blankCapTiers()}));
       for(let j=pad-1;j>=0;j--)lv.unshift({mode:'off',touched:false,name:LEVEL_NAMES[j],loadF:'',loadH:'',note:'',vars:{},tiers:blankTiers(),capTiers:blankCapTiers()});
       const sk=l=>JSON.stringify([l.loadF,l.loadH,l.note,l.vars,l.tiers,l.capTiers,Number(l.dRounds)||0,l.dReps||{}]);lv.forEach((l,k)=>{if(k<3&&l.mode==='custom'&&sk(l)===sk(lv[3]))l.mode='same';});
-      return {kind:p.kind||'autre',name:p.name||'',content:p.content||'',movement:p.movement||'',method:p.method||'',meth:p.meth||null,format:fmt,detail:p.detail||'',repsRound:p.repsRound?String(p.repsRound):'',word:p.word||'',lineRounds:!!p.lineRounds,redo:p.redo!==false,test:!!p.test,customLvl:p.customLvl!==false,dur:p.dur?String(p.dur):'',interval:p.interval?String(p.interval).replace('.',','):'1',deadBy:!!p.deadBy,focus:FOCUS[p.focus]?p.focus:'',intensity:INTENS[p.intensity]?p.intensity:'',levels:lv,legacyN:(p.kind==='metcon'&&pad>0)?L0.length:0,syncTiers:(()=>{const k=l=>JSON.stringify([l.tiers,l.capTiers]);return lv.every((l,j)=>j===3||l.mode==='off'||k(l)===k(lv[3]));})()};
+      return {kind:p.kind||'autre',name:p.name||'',content:p.content||'',movement:p.movement||'',method:p.method||'',meth:p.meth||null,format:fmt,detail:p.detail||'',repsRound:p.repsRound?String(p.repsRound):'',word:p.word||'',lineRounds:!!p.lineRounds,redo:p.redo!==false,test:!!p.test,prProto:!!p.prProto,customLvl:p.customLvl!==false,dur:p.dur?String(p.dur):'',interval:p.interval?String(p.interval).replace('.',','):'1',deadBy:!!p.deadBy,focus:FOCUS[p.focus]?p.focus:'',intensity:INTENS[p.intensity]?p.intensity:'',levels:lv,legacyN:(p.kind==='metcon'&&pad>0)?L0.length:0,syncTiers:(()=>{const k=l=>JSON.stringify([l.tiers,l.capTiers]);return lv.every((l,j)=>j===3||l.mode==='off'||k(l)===k(lv[3]));})()};
     })};
 }
 function draftToWod(d){
@@ -14563,7 +14563,7 @@ function draftToWod(d){
   if(!d.parts.length)throw new Error('Ajoute au moins une partie.');
   const parts=d.parts.map((p,i)=>{
     const o={label:'P'+(i+1),name:p.name.trim(),kind:p.kind,content:p.content.trim()};
-    if(p.kind==='force'){o.movement=p.movement.trim();if(p.method)o.method=p.method;if(p.meth&&p.meth.name)o.meth={id:String(p.meth.id||'').slice(0,40),name:String(p.meth.name).slice(0,60),note:String(p.meth.note||'').slice(0,400)};}
+    if(p.kind==='force'){o.movement=p.movement.trim();if(p.prProto&&o.movement)o.prProto=true;if(p.method)o.method=p.method;if(p.meth&&p.meth.name)o.meth={id:String(p.meth.id||'').slice(0,40),name:String(p.meth.name).slice(0,60),note:String(p.meth.note||'').slice(0,400)};}
     if(p.kind==='renfo'||p.kind==='autre'){ /* variantes du réglage « Configurer les mouvements » (Rx, puis Intermédiaire, puis Débutant, puis Découverte), proposées en « X OU Y » */
       const rv=[];
       for(const from of mvDetect(p.content)){
@@ -15657,6 +15657,8 @@ function wodEditor(modal){
     box.append(field('Nom de la partie',tin(p,'name',{id:'p'+i+'-name',placeholder:metcon?'Metcon':'Back Squat'})));
     if(metcon&&ld)box.append(loadLine(ld));
     if(p.kind==='force'){const names=MOVES.map(m=>m[0]);if(p.movement&&!names.includes(p.movement))names.push(p.movement);box.append(field('Mouvement (pour les trophées de force)',sel([['','Aucun']].concat(names.map(n=>[n,n])),p.movement||'',v=>{p.movement=v;render();},{id:'p'+i+'-mv'})));
+      box.append(h('label',{class:'chk'},h('input',{type:'checkbox',id:'p'+i+'-prproto',checked:!!p.prProto,disabled:!p.movement,onchange:e=>{p.prProto=e.target.checked;render();}}),h('span',{},'Protocole PR sur cet atelier')),
+        h('p',{class:'hint'},p.movement?'Coché : les athlètes voient un bouton « Protocole PR » sur cette partie, qui ouvre directement le minuteur guidé pour « '+p.movement+' ». Leur PR s’enregistre à la fin.':'Choisis d’abord le mouvement ci-dessus : le minuteur PR s’ouvre sur ce mouvement.'));
       box.append(field('Méthode (affichée à l’athlète avec son explication)',sel([['','Automatique (détectée dans le nom et le contenu)'],['none','Aucune']].concat(FORCE_METH.map(m=>[m[0],m[1]])),p.method||'',v=>{p.method=v;render();},{id:'p'+i+'-meth'}),'Les séances envoyées par le planificateur portent déjà leur méthode. « Automatique » la reconnaît sinon dans le nom ou le contenu (5/3/1, Wendler, vagues de volume…). Pour une traction lestée, l’avertissement sur la charge totale s’affiche tout seul.'));}
     box.append(field('Contenu, une ligne par consigne',h('textarea',{id:'p'+i+'-content',rows:'4',value:p.content,placeholder:metcon?'21-15-9\nThrusters\nPull-ups':'5 x 5 Back Squat à 75 %',oninput:e=>{p.content=e.target.value;}}),
       metcon?(p.format==='FT'?'Les charges se règlent par niveau ci-dessous. Un schéma comme 21-15-9 ou 10-9-8-7-6-5-4-3-2-1 sur sa propre ligne, suivi des mouvements, est détecté : chaque nombre devient un tour pour les paliers du time cap.':'Les charges se règlent par niveau ci-dessous. Pour qu’un mouvement compte moins de reps (corde à sauter…), ajoute {10=1} en fin de ligne (10 reps comptent pour 1) ou {=5} (la ligne entière vaut 5 reps). Exemple : 50 Single under {10=1}. Écris le nombre de reps en début de ligne.'):'Écris un pourcentage et le mouvement sur la même ligne : chaque athlète verra sa charge calculée.'));
