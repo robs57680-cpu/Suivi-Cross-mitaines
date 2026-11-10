@@ -12366,8 +12366,12 @@ function avMeasure(sx,full){
   }
   return avLoad(sx).then(A=>A&&A.bgm?avHeadBox((x,y)=>A.bgm[y*AV_W+x]!==1):null).catch(()=>null);
 }
+const AV_TOP_MAX=70; /* haut de la tête le plus bas toléré dans le cadrage (= plan large standard) */
 function avApplyFrame(div,box){
-  if(!box)box={cx:AV_W/2,top:70,hw:0}; /* pas de mesure : plan large standard */
+  if(!box)box={cx:AV_W/2,top:AV_TOP_MAX,hw:0}; /* pas de mesure : plan large standard */
+  /* le cadrage ne doit jamais dépendre de l'ordre de chargement au démarrage : une mesure tardive ou fausse (tête mangée par le détourage, image pas encore prête) remontait l'avatar et coupait le haut de la tête.
+     On borne donc la mesure : la tête ne peut pas être placée plus haut que le plan large standard. */
+  box={cx:isFinite(box.cx)?box.cx:AV_W/2,top:Math.max(0,Math.min(isFinite(box.top)?box.top:AV_TOP_MAX,AV_TOP_MAX)),hw:box.hw||0};
   /* la tête (≈ 55 % du cercle) est centrée dans le rond ; si elle touche le haut de l'image, le haut du cercle est complété par le décor */
   const Wn=680,k=24/Wn,y0=box.top-Wn*.04; /* plan large : de la tête jusqu'aux hanches (cadrage fixe, plus resserré sur la tête) */
   div.style.setProperty('--av-w',(AV_W*k).toFixed(2)+'cqw');div.style.setProperty('--av-h',(AV_H*k).toFixed(2)+'cqw');
@@ -12378,7 +12382,8 @@ function avFrameAuto(uid,div){
   const av0=div.querySelector('.av'),fa0=div.querySelector('.feed-av');
   if(av0&&fa0&&av0.style.backgroundImage){fa0.style.backgroundImage=av0.style.backgroundImage;fa0.style.backgroundSize='cover';fa0.style.backgroundPosition='center';}
   const f=avFrameKey(uid);
-  if(AVF_RES[f.key]!==undefined){avApplyFrame(div,AVF_RES[f.key]);return;}
+  avApplyFrame(div,AVF_RES[f.key]||null); /* cadrage standard posé tout de suite : plus de saut quand la mesure arrive plus tard */
+  if(AVF_RES[f.key]!==undefined)return;
   avMeasure(f.sx,f.full).then(b=>{AVF_RES[f.key]=b||null;avApplyFrame(div,b);});
 }
 /* cadre de bannière : le CADRE est la limite réelle. On mesure l'image (fenêtre transparente intérieure) puis on la place pour que le bord intérieur
