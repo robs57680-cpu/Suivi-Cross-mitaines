@@ -12281,7 +12281,7 @@ const BN_DEFAULT={bg:'base',frame:'',title:'',avframe:''};
      background : 1280x800, opaque · effect : 1280x800, transparent · frame : 1280x800, transparent (contour seul, rester dans les 30 px du bord)
      logo : 564x768 (zone à droite, 24 % x 33 % de la largeur, au-dessus du fond et des effets), transparent · plate : 1024x180 (bandeau du titre), transparent, sans texte
    Les éléments ci-dessous sans src sont des éléments de démonstration dessinés en CSS (classe css) : à supprimer ou remplacer quand les images existent. */
-const CM_RARITY={standard:{name:'Standard',price:50,col:'#9aa3ad'},rare:{name:'Rare',price:80,col:'#2aa6e0'},epique:{name:'Épique',price:150,col:'#ff2fb4'},legendaire:{name:'Légendaire',price:250,col:'#ffb21a'}};
+const CM_RARITY={standard:{name:'Standard',price:60,col:'#9aa3ad'},rare:{name:'Rare',price:120,col:'#2aa6e0'},epique:{name:'Épique',price:240,col:'#ff2fb4'},legendaire:{name:'Légendaire',price:400,col:'#ffb21a'}};
 const CM_LAYERS=[{id:'background',tab:'mbg',name:'Fond',shop:'mfond'},{id:'effect',tab:'mfx',name:'Effets',shop:'meffet'},{id:'logo',tab:'mlogo',name:'Logo',shop:'mlogo'},{id:'badge',tab:'mbadge',name:'Badge'},{id:'frame',tab:'mframe',name:'Cadre',shop:'mcadre'},{id:'plate',tab:'mplate',name:'Plaque',shop:'mplaque'}];
 /* champs : id · layer · name · rarity (standard|rare|epique|legendaire) · src (image) ou css (classe) · free (à tout le monde) · price (sinon prix de la rareté)
    · avail:false (plus en vente ; les athlètes qui l'ont le gardent) · unlock:{d:'texte',test:uid=>bool} (déblocage par accomplissement / événement, ex. légendaires) */
@@ -17576,6 +17576,19 @@ function shopDraft(){
   }
   return c.shopDraft;
 }
+/* aligne tous les objets sur le prix de leur qualité : efface les prix spéciaux du brouillon puis enregistre */
+function applyRarPrices(){
+  const d=shopDraft();let n=0;const sans=[];
+  for(const it of AV_ITEMS.concat(shopAll())){
+    const x=d.items[it.id];if(!x)continue;
+    const k=CM_RARITY[x.rar||it.rarity]?(x.rar||it.rarity):(it.cm?'standard':'');
+    if(!k){if(x.on)sans.push(it.name);continue;}
+    if(String(x.price||'')!==''){x.price='';n++;}
+  }
+  if(sans.length)toast(sans.length+' objet(s) en vente sans qualité (prix inchangé) : '+sans.slice(0,4).join(', ')+(sans.length>4?'…':'')+'. Choisis-leur une qualité.',true);
+  else toast(n?n+' objet(s) alignés sur le prix de leur qualité.':'Tous les objets suivent déjà le prix de leur qualité.');
+  saveShop();
+}
 function saveShop(){
   const d=shopDraft(),coin=Math.floor(Number(String(d.coin).replace(',','.')));
   if(!Number.isFinite(coin)||coin<0){toast('Coins par séance : entre un nombre entier, 0 ou plus.',true);return;}
@@ -17668,7 +17681,9 @@ function coachShop(){
   el.append(h('section',{class:'card'},h('h2',{class:'h2'},'Prix par qualité'),
     h('p',{class:'hint'},'Règle le prix de chaque qualité une seule fois : un objet dont tu choisis la qualité prend automatiquement ce prix, sans le saisir. Un prix écrit sur un objet reste prioritaire (prix spécial). Change un prix ici puis enregistre le shop : tous les objets de cette qualité (sans prix spécial) suivent.'),
     h('div',{class:'grid2'},Object.entries(CM_RARITY).map(([k,v])=>field(v.name,h('span',{class:'row',style:'flex-wrap:nowrap;align-items:center'},
-      h('input',{type:'number',min:'1',step:'1',inputmode:'numeric',id:'shop-rarprice-'+k,'aria-label':'Prix de la qualité '+v.name,value:d.rarPrice[k],oninput:e=>{d.rarPrice[k]=e.target.value;},onchange:()=>render()}),coinIco(20)))))));
+      h('input',{type:'number',min:'1',step:'1',inputmode:'numeric',id:'shop-rarprice-'+k,'aria-label':'Prix de la qualité '+v.name,value:d.rarPrice[k],oninput:e=>{d.rarPrice[k]=e.target.value;},onchange:()=>render()}),coinIco(20))))),
+    h('div',{class:'row',style:'margin-top:12px'},h('button',{class:'btn primary',type:'button',id:'shop-apply-rar',onclick:applyRarPrices},'Appliquer ces prix à tous les objets')),
+    h('p',{class:'hint'},'Efface les prix spéciaux écrits sur les objets : chaque objet prend alors le prix de sa qualité (Standard, Rare, Épique, Légendaire), puis le shop est enregistré. Les objets sans qualité sont signalés : choisis-leur une qualité dans la liste ci-dessous.')));
   const sec=h('section',{class:'card'},h('h2',{class:'h2'},'Articles du shop'),
     h('p',{class:'hint'},'Coche « En vente », choisis une qualité (elle fixe le prix toute seule, voir « Prix par qualité » plus haut) ou écris un prix spécial en coins, et une rareté (Standard, Rare, Épique, Légendaire : elle donne l’éclat de l’objet dans le shop et la personnalisation) ; « Coup de cœur » met l’objet en avant en haut du shop ; « % de réduc. » (1 à 99) affiche une réduction sur l’objet dans le shop, avec l’ancien prix barré. Puis enregistre. Un objet déjà acheté reste à l’athlète même si tu le retires. Pour ajouter un skin : dépose son image dans assets/embedded et ajoute une ligne dans AV_ITEMS ; il apparaît ici.'));
   AV_SLOTS.map(([sl,label])=>[label,AV_ITEMS.filter(x=>x.slot===sl)]).concat([['Fonds de bannière',shopBanners().filter(b=>b.kind==='bg')],['Cadres d’avatar (fil)',shopBanners().filter(b=>b.kind==='avframe')]].concat(CM_LAYERS.filter(L=>L.shop).map(L=>['Bannière modulaire · '+L.name,CM_LIST.filter(x=>x.layer===L.id&&!x.free)]))).forEach(([label,its])=>{
