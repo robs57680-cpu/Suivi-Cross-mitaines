@@ -4471,6 +4471,21 @@ const MOVES=[
 ];
 const SIGNED=['Traction lestée']; /* PR en kg pouvant être nul ou négatif (déleste) */
 const prOk=(n,v)=>v!==null&&(v>0||SIGNED.includes(n));
+/* partie de séance dont la charge peut être nulle ou négative (déleste) : mouvement « Traction lestée », ou reconnue par son nom/contenu quand le mouvement n'est pas renseigné */
+const signedPart=p=>!!p&&(SIGNED.includes(p.movement)||/traction.{0,12}lest|weighted pull/.test(String([p.name,p.content].join(' ')).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase()));
+/* le pavé numérique de l'iPhone n'a pas de signe moins : pour une charge pouvant être négative (déleste), un bouton +/− ajoute ou retire le « - » devant le nombre */
+function signInput(inp,signed){
+  if(!signed)return inp;
+  const sgn=h('button',{class:'btn sm',type:'button','aria-label':'Changer le signe de la charge (déleste ou lest)',title:'+ = lest · − = déleste',style:'min-width:44px;font-size:20px;font-weight:800',onclick:()=>{
+    let v=String(inp.value).trim();
+    v=/^[-−]/.test(v)?v.replace(/^[-−]\s*/,''):'-'+v;
+    inp.value=v;inp.dispatchEvent(new Event('input',{bubbles:true}));inp.focus();
+    sgn.textContent=/^[-−]/.test(v)?'−':'+';sgn.style.color=/^[-−]/.test(v)?'#ff5a5a':'';
+  }},/^[-−]/.test(String(inp.value).trim())?'−':'+');
+  if(/^[-−]/.test(String(inp.value).trim()))sgn.style.color='#ff5a5a';
+  inp.addEventListener('input',()=>{const n=/^[-−]/.test(String(inp.value).trim());sgn.textContent=n?'−':'+';sgn.style.color=n?'#ff5a5a':'';});
+  return h('div',{style:'display:flex;gap:8px;align-items:stretch'},sgn,inp);
+}
 const KIND={force:'Force',renfo:'Renforcement',metcon:'Metcon',autre:'Autre'};
 const FORMAT={FT:'For Time',AMRAP:'AMRAP',EMOM:'EMOM'};
 /* EMOM : intervalle en minutes (1 = EMOM, 2 = E2MOM, 3 = E3MOM…) et mode « Dead by » (score = temps tenu, en secondes ; plus on tient, plus on marque) */
@@ -10019,7 +10034,7 @@ function entryForm(w,date){
       if(S.entry.only)return;
       form.append(h('p',{class:'hint'},h('b',{},'Échauffement : '),'ne le note pas ici. Inscris seulement tes séries de travail, sinon l’échauffement serait compté dans ton tonnage.'));
       const fd=(!S.entry.coach&&(S.entry.uid||S.uid)===S.uid)?forceDefault(p):null;
-      const signed=SIGNED.includes(p.movement);
+      const signed=signedPart(p);
       if(!signed){
         const sx=S.entry.sets[p.label]||(S.entry.sets[p.label]={s:'',r:''});
         const sch=forceSchema(p); /* séries demandées par la séance : fixes, non modifiables */
@@ -10029,7 +10044,7 @@ function entryForm(w,date){
           field('Répétitions par série',h('input',{id:'reps-'+p.label,type:'text',inputmode:'numeric',placeholder:'reps',value:sx.r,oninput:e=>{sx.r=e.target.value;}}))));
       }
       form.append(field((signed?p.label+' · '+(p.movement||p.name||'Force')+' : charge la plus lourde (kg)':'Charge utilisée (kg)'),
-        h('input',{id:'load-'+p.label,type:'text',inputmode:SIGNED.includes(p.movement)?'text':'decimal',placeholder:fd!==null?'charge prévue':'optionnel',value:S.entry.loads[p.label]||'',oninput:e=>{S.entry.loads[p.label]=e.target.value;}}),fd!==null?'Charge prévue d’après tes pourcentages : '+fmtN(fd)+' kg. Modifie-la si tu as utilisé autre chose ; si tu la laisses vide, c’est elle qui est enregistrée.'+(signed?'':' Séries × reps × charge forment ton tonnage de la saison.'):(signed?null:'Séries × reps × charge forment ton tonnage de la saison (trophée Roi du tonnage).')));
+        signInput(h('input',{id:'load-'+p.label,type:'text',inputmode:signed?'decimal':'decimal',placeholder:fd!==null?'charge prévue':'optionnel',style:signed?'flex:1;min-width:0':null,value:S.entry.loads[p.label]||'',oninput:e=>{S.entry.loads[p.label]=e.target.value;}}),signed),fd!==null?'Charge prévue d’après tes pourcentages : '+fmtN(fd)+' kg. Modifie-la si tu as utilisé autre chose ; si tu la laisses vide, c’est elle qui est enregistrée.'+(signed?'':' Séries × reps × charge forment ton tonnage de la saison.'):(signed?null:'Séries × reps × charge forment ton tonnage de la saison (trophée Roi du tonnage).')));
     }
     if(p.kind==='metcon'){
       const ft=p.format==='FT';
@@ -10191,16 +10206,16 @@ function submitEntryNow(w){
     }
   }
   const loads={};
-  for(const [k,raw] of (S.entry.only&&m?[]:Object.entries(S.entry.loads))){if(String(raw).trim()==='')continue;const v=parseNum(raw),pm=(w.parts||[]).find(q=>q.label===k);if(!prOk(pm&&pm.movement,v)){toast('Charge illisible pour '+k,true);return;}loads[k]=v;}
+  for(const [k,raw] of (S.entry.only&&m?[]:Object.entries(S.entry.loads))){if(String(raw).trim()==='')continue;const v=parseNum(raw),pm=(w.parts||[]).find(q=>q.label===k);if(!(prOk(pm&&pm.movement,v)||(v!==null&&signedPart(pm)))){toast('Charge illisible pour '+k,true);return;}loads[k]=v;}
   if(!coach&&uid===S.uid&&!(S.entry.only&&m))for(const p of (w.parts||[])){
     if(p.kind!=='force'||loads[p.label]!==undefined)continue;
-    const d=forceDefault(p);if(d!==null&&prOk(p.movement,d))loads[p.label]=d;
+    const d=forceDefault(p);if(d!==null&&(prOk(p.movement,d)||signedPart(p)))loads[p.label]=d;
   }
   if(Object.keys(loads).length)e.loads=loads;
   /* séries × reps : enregistrés avec la charge (tonnage) */
   const setsO={};
   for(const p of (w.parts||[])){
-    if(p.kind!=='force'||SIGNED.includes(p.movement)||loads[p.label]===undefined)continue;
+    if(p.kind!=='force'||signedPart(p)||loads[p.label]===undefined)continue;
     const sx=S.entry.sets&&S.entry.sets[p.label],sc=forceSchema(p);
     let n=sc?Math.max(1,Math.min(sc.s,parseInt(sx&&sx.s,10)||sc.s)):(sx&&String(sx.s).trim()!==''?parseInt(sx.s,10):NaN),rr=sx&&String(sx.r).trim()!==''?parseInt(sx.r,10):(sc?sc.r:NaN);
     if(!(n>0&&n<=99&&rr>0&&rr<=999)){const typed=sx&&(sc?String(sx.r).trim()!=='':(String(sx.s).trim()!==''||String(sx.r).trim()!==''));if(typed){toast('Séries et reps illisibles pour '+p.label,true);return;}continue;}
