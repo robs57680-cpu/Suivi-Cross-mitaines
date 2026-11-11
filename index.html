@@ -4334,7 +4334,7 @@ function cleanNullText(root){
 }
 /* Le SDK Firebase est chargé en dynamique : la page s'affiche tout de suite, même si le réseau est lent.
    Au bout de 3 s sans réponse, l'appli bascule en mode cache (dernières données enregistrées sur l'appareil). */
-let firebaseConfig=null,appCheckSiteKey=null,initializeAppCheck=null,ReCaptchaEnterpriseProvider=null,CustomProvider=null,initializeApp,getAuth,initializeAuth,indexedDBLocalPersistence,browserLocalPersistence,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup,signInWithCredential,deleteUser,EmailAuthProvider,reauthenticateWithCredential,OAuthProvider,reauthenticateWithPopup,revokeAccessToken,getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc,disableNetwork,enableNetwork,query,orderBy,limit,where,getDocs,getDoc;
+let firebaseConfig=null,appCheckSiteKey=null,initializeAppCheck=null,ReCaptchaEnterpriseProvider=null,CustomProvider=null,initializeApp,getAuth,initializeAuth,indexedDBLocalPersistence,browserLocalPersistence,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup,signInWithCredential,deleteUser,EmailAuthProvider,reauthenticateWithCredential,OAuthProvider,reauthenticateWithPopup,revokeAccessToken,getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc,disableNetwork,enableNetwork,query,orderBy,limit,where,getDocs,getDoc,documentId;
 const FB_URL='https://www.gstatic.com/firebasejs/10.14.1/';
 const sdkPromise=(async()=>{
   const [cfg,a,u,f,ac]=await Promise.all([import('./firebase-config.js').catch(()=>({})),import(FB_URL+'firebase-app.js'),import(FB_URL+'firebase-auth.js'),import(FB_URL+'firebase-firestore.js'),import(FB_URL+'firebase-app-check.js').catch(()=>({}))]);
@@ -4344,7 +4344,7 @@ const sdkPromise=(async()=>{
   appCheckSiteKey=cfg.appCheckSiteKey||null;initializeAppCheck=ac.initializeAppCheck||null;ReCaptchaEnterpriseProvider=ac.ReCaptchaEnterpriseProvider||null;CustomProvider=ac.CustomProvider||null;
   ({initializeApp}=a);
   ({getAuth,initializeAuth,indexedDBLocalPersistence,browserLocalPersistence,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,signOut,sendPasswordResetEmail,GoogleAuthProvider,signInWithPopup,signInWithCredential,deleteUser,EmailAuthProvider,reauthenticateWithCredential,OAuthProvider,reauthenticateWithPopup,revokeAccessToken}=u);
-  ({getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc,disableNetwork,enableNetwork,query,orderBy,limit,where,getDocs,getDoc}=f);
+  ({getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc,disableNetwork,enableNetwork,query,orderBy,limit,where,getDocs,getDoc,documentId}=f);
 })();
 sdkPromise.catch(e=>{window.__fbState='SDK ÉCHEC';window.__dbg&&window.__dbg('SDK Firebase ÉCHEC',e);});
 
@@ -4373,7 +4373,7 @@ function makeDb(fdb){
         orderBy:(f,d)=>mk(cons.concat([orderBy(f,d||'asc')])),
         limit:n=>mk(cons.concat([limit(n)])),
         where:(f,op,v)=>mk(cons.concat([where(f,op,v)])),
-        onSnapshot:(n,e)=>onSnapshot(cons.length?query(collection(fdb,p),...cons):collection(fdb,p),s=>n({docs:s.docs.map(d=>({id:d.id,data:()=>d.data()})),fromCache:!!(s.metadata&&s.metadata.fromCache)}),e),
+        onSnapshot:(n,e,meta)=>onSnapshot(cons.length?query(collection(fdb,p),...cons):collection(fdb,p),meta?{includeMetadataChanges:true}:{},s=>n({docs:s.docs.map(d=>({id:d.id,data:()=>d.data()})),fromCache:!!(s.metadata&&s.metadata.fromCache)}),e),
         get:()=>getDocs(cons.length?query(collection(fdb,p),...cons):collection(fdb,p)).then(s=>({docs:s.docs.map(d=>({id:d.id,data:()=>d.data()}))}))
       });
       return Object.assign(mk([]),{
@@ -4387,7 +4387,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-10.8';
+const APP_VERSION='2026-11-11.2';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -4905,6 +4905,7 @@ function bonusSync(){
     if(!day)return;
     const per=periodFor(day);
     if(!per||per.virtual||per.locked||periodState(per)==='done')return;
+    if(!S._wodsAll){loadWodsPast();return;}
     const key=day+'|'+Object.keys(S.wods).length+'|'+plist().length;
     if(!S._bonusMemo||S._bonusMemo.key!==key){const w=bonusBuild(day);S._bonusMemo={key,w,v:w?Object.assign({},w,{virtual:true}):null};}
     const M=S._bonusMemo;if(!M.w)return;
@@ -5134,7 +5135,16 @@ const bCmp=()=>boardGoat()?gCmp:rowCmp,bTied=()=>boardGoat()?gTied:tied;
 const bVal=r=>boardGoat()?(r.weighted||0):(r.total||0);
 function posOfM(list,r){const l=list.slice().sort(bCmp()),t=bTied(),out=[];l.forEach((x,i)=>out.push(i>0&&t(l[i-1],x)?out[i-1]:i+1));const i=l.indexOf(r);return i<0?0:out[i];}
 const posOf=(list,r)=>{const i=list.indexOf(r);return i<0?0:posList(list)[i];};
+let _wpP=null;
+function loadWodsPast(){
+  if(S._wodsAll)return Promise.resolve();
+  if(!S.db||S.snapMode||S._wodsFrom==null)return Promise.resolve();
+  if(_wpP)return _wpP;
+  _wpP=S.db.collection('wods').where(documentId(),'<',S._wodsFrom).get().then(sn=>{const o={};sn.docs.forEach(d=>{o[d.id]=d.data();});S._wodsOld=Object.assign({},S._wodsOld,o);S.wods=Object.assign({},S._wodsOld,S.wods);S._wodsAll=true;_wpP=null;scheduleRender();}).catch(()=>{_wpP=null;});
+  return _wpP;
+}
 function computeBoard(period,withBots,gid){
+  if(!S._wodsAll&&(period.virtual||(S._wodsFrom&&period.start<S._wodsFrom)))loadWodsPast(); /* classement d'une saison passée : on charge ses séances */
   const allWods=Object.values(S.wods).sort((a,b)=>a.date<b.date?-1:1);
   const wods=Object.values(S.wods).filter(w=>inP(w.date,period)&&(BONUS_PAST_POINTS||!bonusHidden(w))).sort((a,b)=>a.date<b.date?-1:1);
   const metconCount=wods.filter(metconOf).length;
@@ -5792,6 +5802,7 @@ function myRatios(){
   if(!S.uid||!(Number(S.prof.weight)>0))return out;
   const pubOld=(S.logs[S.uid]&&S.logs[S.uid].ratios)||{};
   for(const p of [...Object.values(S.periods),ALL]){
+    if(!S._wodsAll&&(p.virtual||(S._wodsFrom&&p.start<S._wodsFrom))){if(Number(pubOld[p.id])>0)out[p.id]=Number(pubOld[p.id]);continue;} /* séances anciennes pas chargées : on garde le rapport publié */
     /* saison terminée : le rapport déjà publié est conservé tel quel et rien de nouveau n'est publié (un poids saisi après la fin de la saison ne doit pas créer un trophée rétroactif) */
     if(!p.virtual&&periodState(p)==='done'){if(Number(pubOld[p.id])>0)out[p.id]=Number(pubOld[p.id]);continue;}
     const row=computeBoard(p).rows.find(r=>r.uid===S.uid);
@@ -8897,8 +8908,8 @@ function viewFeed(){
     }
   }
   posts.sort((a,b)=>String(b.at).localeCompare(String(a.at)));
-  /* le fil ne montre que les 14 derniers jours (comme les réactions chargées) */
-  {const lim=new Date(Date.now()-14*86400000).toISOString();for(let i=posts.length-1;i>=0;i--)if(String(posts[i].at)<lim)posts.splice(i,1);}
+  /* le fil ne montre que les 7 derniers jours (comme les réactions chargées) */
+  {const lim=new Date(Date.now()-7*86400000).toISOString();for(let i=posts.length-1;i>=0;i--)if(String(posts[i].at)<lim)posts.splice(i,1);}
   for(let i=posts.length-1;i>=0;i--)if(isBlocked(posts[i].uid))posts.splice(i,1);
   if(!posts.length){el.append(h('div',{class:'empty'},h('p',{},'Aucune séance publiée dans le fil pour le moment.'),h('p',{class:'muted'},'Les séances apparaîtront ici après validation des résultats par les athlètes.')));return el;}
   const visiblePosts=posts.slice(0,feedShown);
@@ -9257,7 +9268,7 @@ function viewCards(){
     }else{
       el.append(h('div',{class:'empty'},h('p',{},'Aucune séance publiée pour le moment.'),
         S.owner?h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{go('coach');S.coach.view='wod';openWodWindow(t);}},'Publier une séance')):null));
-      if(pastList.length&&!past)el.append(h('div',{class:'row'},h('button',{class:'btn',type:'button',id:'car-past',onclick:()=>{S.showPast=true;S.carDate=pastList[pastList.length-1].date;render();window.scrollTo(0,0);}},'Voir les saisons passées')));
+      if((pastList.length||(!S._wodsAll&&plist().some(q=>!q.virtual&&periodState(q)==='done')))&&!past)el.append(h('div',{class:'row'},h('button',{class:'btn',type:'button',id:'car-past',onclick:()=>{loadWodsPast().then(()=>{const pl=Object.values(S.wods).filter(w=>pastSeasonDate(w.date)&&!bonusHidden(w)).sort((a,b)=>a.date<b.date?-1:1);S.showPast=true;S.carDate=pl.length?pl[pl.length-1].date:null;render();window.scrollTo(0,0);});}},'Voir les saisons passées')));
     }
     return el;
   }
@@ -9276,14 +9287,13 @@ function viewCards(){
   {const bw=S.owner?bonusWhy():'';if(bw)el.append(h('p',{class:'hint',id:'bonus-why'},'★ Pas de séance bonus cette semaine (message visible par toi seul) : '+bw));}
   if(fOn)el.append(h('p',{class:'hint',id:'eq-filter-note'},'Filtre matériel actif : '+(hidden?hidden+' séance'+(hidden>1?'s':'')+' masquée'+(hidden>1?'s':''):'aucune séance masquée')+'. Les séances déjà faites restent visibles pour pouvoir faire le REDO.'),hidden?remind():null);
   /* bouton à l'extrémité gauche du carrousel : afficher / masquer les séances des saisons terminées */
-  const pastBtn=(pastList.length||past)?h('div',{class:'car-slot car-past'},
+  const pastBtn=(pastList.length||past||(!S._wodsAll&&plist().some(q=>!q.virtual&&periodState(q)==='done')))?h('div',{class:'car-slot car-past'},
     h('div',{class:'car-card',style:'--c1:#3a3f4a;--c2:#171a20;cursor:default;justify-content:center;align-items:center;text-align:center;gap:14px'},
       h('h2',{class:'cc-title'},past?'Saisons passées affichées':'Saisons passées'),
       h('p',{class:'sb-p'},'Retrouve les séances des saisons terminées. Elles ne rapportent aucun point.'),
       h('button',{type:'button',class:'btn primary',id:'car-past',onclick:()=>{
-        if(past){S.showPast=false;S.carDate=null;}
-        else{S.showPast=true;S.carDate=pastList.length?pastList[pastList.length-1].date:null;}
-        render();window.scrollTo(0,0);}},past?'Masquer les saisons passées':'Voir les saisons passées'))):null;
+        if(past){S.showPast=false;S.carDate=null;render();window.scrollTo(0,0);return;}
+        loadWodsPast().then(()=>{const pl=Object.values(S.wods).filter(w=>pastSeasonDate(w.date)&&!bonusHidden(w)).sort((a,b)=>a.date<b.date?-1:1);S.showPast=true;S.carDate=pl.length?pl[pl.length-1].date:null;render();window.scrollTo(0,0);});}},past?'Masquer les saisons passées':'Voir les saisons passées'))):null;
   const track=h('div',{class:'car-track',role:'list','aria-label':'Séances, fais glisser pour changer'},
     pastBtn,
     ws.map((w,k)=>{const wk=byWeek[mondayOf(w.date)]||[];return sessionCard(w,wk.indexOf(w.date),wk.length,mine,ws[k-1]&&ws[k-1].date,ws[k+1]&&ws[k+1].date);}));
@@ -18309,16 +18319,20 @@ function startFirebase(){
     S.pre=null;{const wc=wcRead();if(wc&&wc.uid===user.uid&&Object.keys(wc.wods||{}).length){S.pre=true;S.wods=wc.wods;S.periods=wc.periods||{};S._wcSeen=wc.seen||{};if(wc.mylog)S.logs={[user.uid]:wc.mylog};}}
     S.uid=user.uid;S.created=(user.metadata&&user.metadata.creationTime)||'';S.email=user.email||'';setTimeout(pushSync,2500);S.meName=user.displayName||(user.email||'').split('@')[0]||'';
     const fail=e=>{S.error=(e&&e.code==='permission-denied')?'Accès refusé par la base de données. Publie les règles de sécurité (voir README).':'Lecture des données impossible pour le moment.';scheduleRender();};
-    const watch=(path,key)=>unsubs.push(S.db.collection(path).onSnapshot(sn=>{S[key]=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));S.loaded[key]=true;S._srv[key]=!sn.fromCache;
+    S._wodsOld={};S._wodsAll=false;S._wodsFrom=null;S._wodsOn=false;
+    const watch=(path,key,qf)=>unsubs.push((qf?qf(S.db.collection(path)):S.db.collection(path)).onSnapshot(sn=>{S[key]=Object.assign({},key==='wods'?S._wodsOld:null,Object.fromEntries(sn.docs.map(d=>[d.id,d.data()])));S.loaded[key]=true;S._srv[key]=!sn.fromCache;
       if(S._netOff&&ready())backOnline();
       if(S.cacheMode&&S._srv.periods&&S._srv.wods&&S._srv.logs)S.cacheMode=false;
       if(!S.cacheMode)snapSave();
       if(ready())S.pre=null;
       wcSave();
+      if(key==='periods'&&!S._wodsOn){S._wodsOn=true;startWods();}
       scheduleRender();if(key==='logs')selfSync();launchRecapMaybe();},fail,true));
-    watch('periods','periods');watch('wods','wods');watch('logs','logs');
+    /* séances : seulement la saison en cours (et 8 jours avant, pour le fil) ; les saisons passées se chargent à la demande (loadWodsPast) */
+    const startWods=()=>{const a=activePeriod(),lim=addDays(todayStr(),-8),st=(!a||a.virtual)?'0000-01-01':(a.start<lim?a.start:lim);S._wodsFrom=st;if(st==='0000-01-01')S._wodsAll=true;watch('wods','wods',c=>c.where(documentId(),'>=',st));};
+    watch('periods','periods');watch('logs','logs');
     if(persist)cacheT=setTimeout(()=>{if(S.uid===user.uid&&!ready()&&snapRead()&&snapRead().uid===user.uid)goCache();},3000);
-    unsubs.push(S.db.doc('config/coach').onSnapshot(sn=>{S.coachUid=sn.exists?(sn.data().uid||null):null;S.coachLoaded=true;S.owner=!!S.coachUid&&S.coachUid===S.uid;if(S.owner&&!S._bugOn){S._bugOn=true;unsubs.push(bugWatch());}dmSync();wuMaybeSeed();scheduleRender();launchRecapMaybe();},fail));
+    unsubs.push(S.db.doc('config/coach').onSnapshot(sn=>{S.coachUid=sn.exists?(sn.data().uid||null):null;S.coachLoaded=true;S.owner=!!S.coachUid&&S.coachUid===S.uid;if(S.owner)loadWodsPast();if(S.owner&&!S._bugOn){S._bugOn=true;unsubs.push(bugWatch());}dmSync();wuMaybeSeed();scheduleRender();launchRecapMaybe();},fail));
     /* les groupes ne bloquent jamais l'appli : si les règles ne sont pas encore publiées, on ignore l'erreur */
     unsubs.push(S.db.doc('config/groups').onSnapshot(sn=>{const d=sn.exists?sn.data():null;S.groups={list:(d&&Array.isArray(d.list))?d.list:[],of:(d&&d.of&&typeof d.of==='object')?d.of:{},snap:(d&&d.snap&&typeof d.snap==='object')?d.snap:{},bots:(d&&d.bots&&typeof d.bots==='object')?d.bots:{},loaded:true};S._freezing=false;scheduleRender();},()=>{}));
     /* message du coach : si les règles ne sont pas publiées, on ignore l'erreur */
@@ -18332,7 +18346,7 @@ function startFirebase(){
     /* réactions emoji : si les règles ne sont pas publiées, on ignore l'erreur */
     unsubs.push(S.db.collection('reports').onSnapshot(sn=>{S.reports=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));scheduleRender();},()=>{}));
     /* seulement les réactions des 2 dernières semaines (économie de lectures Firestore) */
-    unsubs.push(S.db.collection('reactions').where('at','>=',new Date(Date.now()-14*86400000).toISOString()).onSnapshot(sn=>{const old=S.reactions||{},nw=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));S.reactions=nw;const toMe=m=>Object.keys(m).filter(k=>m[k]&&m[k].to===S.uid).map(k=>k+'|'+m[k].emoji).sort().join();if(toMe(old)!==toMe(nw)||!rxRefresh())scheduleRender();},()=>{}));
+    unsubs.push(S.db.collection('reactions').where('at','>=',new Date(Date.now()-7*86400000).toISOString()).onSnapshot(sn=>{const old=S.reactions||{},nw=Object.fromEntries(sn.docs.map(d=>[d.id,d.data()]));S.reactions=nw;const toMe=m=>Object.keys(m).filter(k=>m[k]&&m[k].to===S.uid).map(k=>k+'|'+m[k].emoji).sort().join();if(toMe(old)!==toMe(nw)||!rxRefresh())scheduleRender();},()=>{}));
     unsubs.push(S.db.doc('users/'+S.uid+'/private/profile').onSnapshot(sn=>{const d=sn.exists?sn.data():null;const _op=S.prof;S.prof={plan:(d&&d.plan&&typeof d.plan==='object')?JSON.parse(JSON.stringify(d.plan)):null,pend:(d&&d.pend&&typeof d.pend==='object')?JSON.parse(JSON.stringify(d.pend)):{},prs:(d&&d.prs)?JSON.parse(JSON.stringify(d.prs)):{},sex:(d&&d.sex)||'',birth:(d&&typeof d.birth==='string')?d.birth:'',health:(d&&d.health&&typeof d.health==='object')?JSON.parse(JSON.stringify(d.health)):null,consent:(d&&d.consent&&typeof d.consent==='object')?JSON.parse(JSON.stringify(d.consent)):null,terms:(d&&d.terms&&typeof d.terms==='object')?JSON.parse(JSON.stringify(d.terms)):null,genEx:(d&&Array.isArray(d.genEx))?d.genEx:null,genAll:(d&&Array.isArray(d.genAll))?d.genAll:null,words:(d&&Array.isArray(d.words))?d.words:[],mvcfg:(d&&d.mvcfg&&typeof d.mvcfg==='object')?JSON.parse(JSON.stringify(d.mvcfg)):{},revd:(d&&d.revd&&typeof d.revd==='object')?JSON.parse(JSON.stringify(d.revd)):{},intf:(d&&d.intf&&typeof d.intf==='object')?JSON.parse(JSON.stringify(d.intf)):{},intn:(d&&d.intn&&typeof d.intn==='object')?JSON.parse(JSON.stringify(d.intn)):{},intCustom:(d&&Array.isArray(d.intCustom))?JSON.parse(JSON.stringify(d.intCustom)):[],pace:(d&&d.pace&&typeof d.pace==='object')?JSON.parse(JSON.stringify(d.pace)):{},spread:(d&&d.spread&&typeof d.spread==='object')?JSON.parse(JSON.stringify(d.spread)):{},weight:(d&&Number(d.weight)>0)?Number(d.weight):0,rewardDraft:(d&&typeof d.rewardDraft==='string')?d.rewardDraft:'',rewardPlan:(d&&d.rewardPlan&&typeof d.rewardPlan==='object')?JSON.parse(JSON.stringify(d.rewardPlan)):null,pf:(d&&d.pf&&typeof d.pf==='object')?JSON.parse(JSON.stringify(d.pf)):{},trash:(d&&Array.isArray(d.trash))?JSON.parse(JSON.stringify(d.trash)):[],blocked:(d&&Array.isArray(d.blocked))?d.blocked.filter(x=>typeof x==='string').slice(0,200):[]};if(planSaveT!==null&&_op){S.prof.plan=_op.plan||null;S.prof.pend=_op.pend||{};}if(rwT!==null&&_op)S.prof.rewardDraft=_op.rewardDraft||'';if(rwpSaveT!==null&&_op)S.prof.rewardPlan=_op.rewardPlan||null;if(pfT!==null&&_op)S.prof.pf=_op.pf||{};syncIntens();S.profLoaded=true;scheduleRender();selfSync();planSync();rwpSync();},fail));
     render();
   });
