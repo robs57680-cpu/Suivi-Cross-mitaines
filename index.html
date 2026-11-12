@@ -7507,7 +7507,7 @@ const tmuAll=()=>{try{const o=JSON.parse(localStorage.getItem(tmuKey())||'{}');r
 const tmuHas=(date,kind)=>!!(S.uid&&(tmuAll()[date]||{})[kind]);
 function tmuSet(date,kind){try{const o=tmuAll();o[date]=Object.assign({},o[date]||{},{[kind]:1});const ks=Object.keys(o).sort();while(ks.length>40)delete o[ks.shift()];localStorage.setItem(tmuKey(),JSON.stringify(o));}catch(e){}}
 /* bonus encore possible : athlète connecté (pas le coach), séance publiée, non verrouillée, et pas encore enregistrée (les coins de séance ne sont pas encore versés) */
-const tmCoinOn=(date,kind)=>{const lg=S.uid&&S.logs[S.uid],cg=(lg&&lg.coinGot)||{};return !!date&&!!lg&&!!lg.pseudo&&!!S.db&&!S.owner&&!S.snapMode&&!!S.wods[date]&&timerOk(date)&&cg[date]===undefined&&cg['tb:'+date]===undefined;};
+const tmCoinOn=(date,kind)=>{const lg=S.uid&&S.logs[S.uid],cg=(lg&&lg.coinGot)||{};return !!date&&!!S.uid&&(!!S.owner||(!!lg&&!!lg.pseudo))&&!!S.db&&!S.snapMode&&!!S.wods[date]&&timerOk(date)&&cg[date]===undefined&&cg['tb:'+date]===undefined;};
 /* minuteurs que cette séance propose : échauffement toujours ; force / renfo seulement avec un temps de récup et un nombre de séries connu (ou renfo en EMOM) ; metcon */
 function tmKindsOf(date){
   const out=['wu'],w0=S.wods[date],w=w0&&myWod(w0,S.uid);
@@ -7524,13 +7524,11 @@ function tmBonusInfo(date){
   const lines=tmKindsOf(date).map(k=>({k,label:'Utilisation '+(k==='wu'?'de l’échauffement':'du timer '+k),v:tmuHas(date,k)?1:0}));
   return {lines,total:lines.reduce((a,l)=>a+l.v,0)};
 }
-/* pastille « +1 coins » à cheval sur le bas du minuteur, penchée ; elle devient « ✓ validé » une fois le bonus validé */
+/* pastille « +1 » (avec la pièce) à cheval sur le bas du minuteur, penchée ; elle devient « ✓ validé » une fois le bonus validé. Le coach gagne ce bonus comme un athlète. */
 function tmCoinBadge(date,kind){
   const got=tmuHas(date,kind);
-  /* le coach ne gagne pas de coins : il voit quand même la pastille (aperçu) sur chaque minuteur de ses séances */
-  const preview=!!S.owner&&!!date&&!!S.wods[date];
-  if(!got&&!preview&&!tmCoinOn(date,kind))return null;
-  return h('span',{class:'tm-cb'+(got?' got':''),role:'img','aria-label':got?'Bonus de ce minuteur validé, il sera versé à la fin de ta séance':'Ce minuteur rapporte 1 coin bonus, versé à la fin de ta séance, quand il est vraiment utilisé'},coinIco(15),h('b',{},got?'✓ validé':'+1 coins'));
+  if(!got&&!tmCoinOn(date,kind))return null;
+  return h('span',{class:'tm-cb'+(got?' got':''),role:'img','aria-label':got?'Bonus de ce minuteur validé, il sera versé à la fin de ta séance':'Ce minuteur rapporte 1 coin bonus, versé à la fin de ta séance, quand il est vraiment utilisé'},coinIco(15),h('b',{},got?'✓ validé':'+1'));
 }
 /* bloc affiché à la fin d'un minuteur : bonus validé, déjà validé, ou explication. res = {ok, why} */
 function tmCoinResult(date,kind,res){
@@ -17711,8 +17709,8 @@ function coinReadAward(kind,what){
 const coinPatch=(uid,date)=>{
   const lg=S.logs[uid]||{},n=coinForDate(date),have=lg.coinGot||{},add={};
   if(n&&have[date]===undefined)add[date]=n;
-  /* coins bonus des minuteurs : versés une seule fois, avec les coins de la séance, pour l'athlète qui enregistre sa propre séance (une seule clé « tb:date » = nombre de bonus) */
-  if(uid===S.uid&&!S.owner&&have[date]===undefined&&have['tb:'+date]===undefined){const b=tmBonusInfo(date);if(b.total>0)add['tb:'+date]=b.total;}
+  /* coins bonus des minuteurs : versés une seule fois, avec les coins de la séance, pour l'athlète (ou le coach) qui enregistre sa propre séance (une seule clé « tb:date » = nombre de bonus) */
+  if(uid===S.uid&&have[date]===undefined&&have['tb:'+date]===undefined){const b=tmBonusInfo(date);if(b.total>0)add['tb:'+date]=b.total;}
   return Object.keys(add).length?{coinGot:Object.assign({},have,add)}:null;
 };
 /* un objet du catalogue sans condition d'obtention (ajouté pour le shop) : jamais gagné par la progression */
