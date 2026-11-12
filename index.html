@@ -4430,7 +4430,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-12.7';
+const APP_VERSION='2026-11-12.8';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -7527,7 +7527,9 @@ function tmBonusInfo(date){
 /* pastille « +1 coins » à cheval sur le bas du minuteur, penchée ; elle devient « ✓ validé » une fois le bonus validé */
 function tmCoinBadge(date,kind){
   const got=tmuHas(date,kind);
-  if(!got&&!tmCoinOn(date,kind))return null;
+  /* le coach ne gagne pas de coins : il voit quand même la pastille (aperçu) sur chaque minuteur de ses séances */
+  const preview=!!S.owner&&!!date&&!!S.wods[date];
+  if(!got&&!preview&&!tmCoinOn(date,kind))return null;
   return h('span',{class:'tm-cb'+(got?' got':''),role:'img','aria-label':got?'Bonus de ce minuteur validé, il sera versé à la fin de ta séance':'Ce minuteur rapporte 1 coin bonus, versé à la fin de ta séance, quand il est vraiment utilisé'},coinIco(15),h('b',{},got?'✓ validé':'+1 coins'));
 }
 /* bloc affiché à la fin d'un minuteur : bonus validé, déjà validé, ou explication. res = {ok, why} */
