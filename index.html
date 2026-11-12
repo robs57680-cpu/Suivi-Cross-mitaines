@@ -936,7 +936,10 @@ section.feed-card>.rep-btn{position:absolute!important;left:auto!important;top:a
 section.feed-card>.rep-btn:hover,section.feed-card>.rep-btn:focus-visible{opacity:1}
 section.feed-card>.rep-btn.done{opacity:.4;filter:grayscale(.7)}
 /* avec un cadre, le cadre EST le contour : pas de trait gris de la carte autour */
-body section.feed-card.th-cm:has(>.bn.has-frame){border:0;background:none;box-shadow:none;border-radius:0}
+body section.feed-card.th-cm:has(>.bn.has-frame){border:0;background:none;box-shadow:none;border-radius:0;
+  /* le cadre dépasse de la bannière (haut et bas) : on garde cette place autour de la carte, sinon il passe sur la publication voisine. 0,93 = largeur de la bannière (100 % − 2 gouttières de 3,5 %) */
+  margin-top:max(0%,calc(var(--fr-ot,4.56)*.93%/var(--bnm-ratio) - var(--bn-g) + 1.5%));
+  margin-bottom:calc(var(--fr-ob,6.67)*.93%/var(--bnm-ratio) + 1.5%)}
 /* bannière modulaire plus haute : tout est dedans (avatar, nom, plaque, résultats, réactions, points, titre de la séance et date) */
 .bn.bnm:not(.bnm-mini){aspect-ratio:var(--bnm-r2,1.6)}
 .bn.bnm .bnm-logo{top:3.5cqw;right:3cqw}
@@ -12604,6 +12607,8 @@ const CM_ITEMS=[
   {id:'frame_hexagone_bleu_01',layer:'frame',name:'Hexagone bleu',rarity:'rare',src:'assets/embedded/cadre-banniere-hexagone-bleu.webp',tone:'#3f8bff'},
   {id:'frame_metal_chrome_01',layer:'frame',name:'Métal chromé',rarity:'rare',src:'assets/embedded/cadre-banniere-metal-chrome.webp',tone:'#dfe8ff'},
   {id:'frame_neon_cyber_01',layer:'frame',name:'Néon cyberpunk',rarity:'epique',src:'assets/embedded/cadre-banniere-neon-cyber.webp',tone:'#8a5cff'},
+  {id:'frame_industriel_rouge_01',layer:'frame',name:'Overlay industriel rouge et noir',rarity:'standard',src:'assets/embedded/cadre-banniere-industriel-rouge-noir.webp',tone:'#e5231f',free:true},
+  {id:'frame_gaming_bleu_01',layer:'frame',name:'Gaming industriel bleu',rarity:'epique',src:'assets/embedded/cadre-banniere-gaming-bleu.webp',tone:'#2f8bff'},
   {id:'logo_no_excuses_01',layer:'logo',name:'No Excuses',rarity:'rare',src:'assets/embedded/logo-no-excuses.webp'},
   {id:'logo_cm_givre_01',layer:'logo',name:'CM givré',rarity:'epique',src:'assets/embedded/logo-cm-givre.webp'},
   {id:'logo_couronne_neon_01',layer:'logo',name:'Couronne néon',rarity:'legendaire',src:'assets/embedded/logo-couronne-neon.webp'},
@@ -12616,6 +12621,7 @@ const CM_ITEMS=[
   {id:'plate_neon_01',layer:'plate',name:'Lumineuse',rarity:'legendaire',css:'cm-pl-neon'},
   {id:'plate_eclairs_01',layer:'plate',name:'Éclairs',rarity:'epique',src:'assets/embedded/plaque-eclairs.webp'}
 ];
+const CM_DEF_FRAME='frame_industriel_rouge_01'; /* cadre équipé d'office tant que l'athlète n'a rien choisi pour la couche Cadre (un « Aucun » choisi à la main est respecté) */
 const CM_DEFAULT_TITLE='Athlète Cross’Mitaines'; /* texte de la plaque tant que l'athlète n'a pas équipé de titre */
 const CM_LIST=CM_ITEMS.map(x=>Object.assign({cm:true,kind:'cm'},x));
 const CM_BY=Object.fromEntries(CM_LIST.map(x=>[x.id,x]));
@@ -12666,6 +12672,7 @@ function cmOf(uid){
     const it=id?CM_BY[id]:null;
     out[L.id]=(it&&it.layer===L.id&&(isPrev||cmOwned(uid,it)))?it:null;
   }
+  if(!out.frame&&raw.frame===undefined&&!(prev&&prev.layer==='frame'))out.frame=CM_BY[CM_DEF_FRAME]||null;
   const bid=raw.badge===undefined?(((S.logs[uid]||{}).badge)||''):raw.badge;
   out.badge=bid?((awards()[uid]||[]).find(a=>a.id===bid)||(coachTestOn(uid)?cmAllAwards().find(a=>a.id===bid):null)||null):null;
   return out;
@@ -12760,7 +12767,11 @@ function cmFrameMeasure(src){
 function cmFrameFit(fm,src){
   const ap=k=>{if(!k)return;const d=.004,l=k.l-d,r=k.r+d,t=k.t-d*1.6,b=k.b+d*1.6,w=r-l,hh=b-t;
     fm.style.left=(-l/w*100).toFixed(3)+'%';fm.style.top=(-t/hh*100).toFixed(3)+'%';
-    fm.style.width=(100/w).toFixed(3)+'%';fm.style.height=(100/hh).toFixed(3)+'%';};
+    fm.style.width=(100/w).toFixed(3)+'%';fm.style.height=(100/hh).toFixed(3)+'%';
+    /* dépassement du cadre (en % de la hauteur de la bannière) : la carte du fil garde la place qu'il lui faut, pour que deux cadres ne s'empiètent pas */
+    const ot=Math.max(0,t/hh*100),ob=Math.max(0,(100/hh)-(t/hh*100)-100);
+    const setOv=()=>{const cd=fm.closest&&fm.closest('.feed-card');if(cd){cd.style.setProperty('--fr-ot',ot.toFixed(2));cd.style.setProperty('--fr-ob',ob.toFixed(2));}};
+    setOv();setTimeout(setOv,0);setTimeout(setOv,400);};
   if(CM_FRCAL[src]!==undefined){ap(CM_FRCAL[src]);return;}
   cmFrameMeasure(src).then(k=>{CM_FRCAL[src]=k;ap(k);});
 }
@@ -12968,7 +12979,7 @@ function bannerSection(){
     return h('div',{class:'cmpv',role:'status'},kids);
   };
   const cmItemsView=L=>{
-    const cur=cmCur()[L.id]||'',RK=['standard','rare','epique','legendaire'];
+    const cv=cmCur()[L.id],cur=(cv===undefined&&L.id==='frame')?CM_DEF_FRAME:(cv||''),RK=['standard','rare','epique','legendaire'];
     const items=CM_LIST.filter(it=>it.layer===L.id).sort((a,b)=>(cmOwned(S.uid,b)-cmOwned(S.uid,a))||(RK.indexOf(rarOf(a))-RK.indexOf(rarOf(b))));
     const tl=it=>{
       const own=cmOwned(S.uid,it),on=own&&cur===it.id,pv=!!(S._cmPrev&&S._cmPrev.id===it.id),rk=rarOf(it)||'standard',r=CM_RARITY[rk];
