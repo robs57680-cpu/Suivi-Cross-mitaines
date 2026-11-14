@@ -48,7 +48,8 @@
   color-scheme:dark;
 }
 *{box-sizing:border-box}
-html{padding-top:env(safe-area-inset-top,0px)}
+:root{--sat:calc(env(safe-area-inset-top,0px) + var(--adh,0px))}
+html{padding-top:var(--sat)}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;padding-inline:16px;padding-block:0 96px}
 .shell{max-width:720px;margin:0 auto}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -58,7 +59,7 @@ h1,h2,h3,p{margin:0}
 .stack{display:grid;gap:16px;min-width:0}
 
 /* en-tête */
-.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:14px 12px;border-bottom:2px solid var(--edge);margin-bottom:16px}
+.top{position:sticky;top:var(--sat);z-index:5;background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:14px 12px;border-bottom:2px solid var(--edge);margin-bottom:16px}
 .brand{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-size:26px;letter-spacing:.06em;line-height:1}
 .bb{width:58px;height:20px;color:var(--ink);flex:none}
 .bb .pl{fill:var(--accent)}
@@ -157,7 +158,7 @@ textarea{resize:vertical}
 .hg-warn{border-left:4px solid var(--danger);padding:8px 10px;background:color-mix(in srgb,var(--danger) 10%,var(--surface));display:grid;gap:6px}.hg-warn p,.hg-par p{margin:0}.hg-par{border:2px solid var(--accent);padding:10px;display:grid;gap:6px;border-radius:4px}.hg-par h3{margin:0;font-size:15px;text-transform:uppercase;letter-spacing:.04em}.hg-wait{font-weight:700}
 /* encart « Entrer mes résultats » : fenêtre au-dessus de la page, les champs brillent quelques fois à l'ouverture */
 body.modal-open{overflow:hidden}
-.ov.entry-ov{z-index:35;background:var(--bg);align-items:stretch;justify-items:center;padding:calc(8px + env(safe-area-inset-top,0px)) 8px calc(8px + env(safe-area-inset-bottom,0px))}
+.ov.entry-ov{z-index:35;background:var(--bg);align-items:stretch;justify-items:center;padding:calc(8px + var(--sat)) 8px calc(8px + env(safe-area-inset-bottom,0px))}
 .sheet.entry-sheet{width:100%;max-width:820px;height:100%;max-height:none;border-radius:6px;padding:0 16px 24px;gap:14px;background:var(--surface);box-shadow:0 2px 14px rgba(0,0,0,.35)}
 .ov-h{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 0 10px;background:var(--surface);border-bottom:2px solid var(--edge)}
 .ov-h .ov-t{font-family:var(--f-display);font-size:26px;line-height:1;text-transform:uppercase}
@@ -270,13 +271,13 @@ body.modal-open{overflow:hidden}
 .mvf-tips{margin:0;padding-left:20px;display:grid;gap:6px;font-size:14px;line-height:1.4}
 /* planificateur plein écran */
 #plan-full{position:fixed;inset:0;z-index:25;display:none;flex-direction:column;background:var(--bg);padding-bottom:env(safe-area-inset-bottom,0px)}
-#plan-full .pf-bar{flex:0 0 auto;display:flex;align-items:flex-end;height:calc(44px + env(safe-area-inset-top,0px));padding:0 6px;border-bottom:1px solid var(--line)}
+#plan-full .pf-bar{flex:0 0 auto;display:flex;align-items:flex-end;height:calc(44px + var(--sat));padding:0 6px;border-bottom:1px solid var(--line)}
 #plan-full .pf-back{width:44px;height:44px;display:grid;place-items:center;border:0;background:transparent;color:var(--ink);cursor:pointer;border-radius:50%}
 #plan-full .pf-back:active{background:var(--surface2)}
 #plan-full .pf-back svg{width:24px;height:24px}
 #plan-full iframe{flex:1 1 auto;width:100%;min-height:0;border:0;background:transparent;color-scheme:normal}
 #rwp-full{position:fixed;inset:0;z-index:25;display:none;flex-direction:column;background:var(--bg);padding-bottom:env(safe-area-inset-bottom,0px)}
-#rwp-full .pf-bar{flex:0 0 auto;display:flex;align-items:flex-end;height:calc(44px + env(safe-area-inset-top,0px));padding:0 6px;border-bottom:1px solid var(--line)}
+#rwp-full .pf-bar{flex:0 0 auto;display:flex;align-items:flex-end;height:calc(44px + var(--sat));padding:0 6px;border-bottom:1px solid var(--line)}
 #rwp-full .pf-back{width:44px;height:44px;display:grid;place-items:center;border:0;background:transparent;color:var(--ink);cursor:pointer;border-radius:50%}
 #rwp-full .pf-back:active{background:var(--surface2)}
 #rwp-full .pf-back svg{width:24px;height:24px}
@@ -376,9 +377,9 @@ html[data-plan],html[data-plan] body{overflow:hidden}
 .stp{display:flex;align-items:stretch;gap:6px}.stp input{flex:1;min-width:0;text-align:center}.stpa{display:flex;flex-direction:column;gap:2px}.stpb{flex:1;min-width:44px;padding:0 10px;border:1px solid var(--line,#8884);border-radius:8px;background:transparent;color:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center}.stpb:disabled{opacity:.3;cursor:default}.stpc{width:9px;height:9px;border-right:2.5px solid currentColor;border-bottom:2.5px solid currentColor;display:block}.stpb.dn .stpc{transform:rotate(45deg);margin-top:-4px}.stpb.up .stpc{transform:rotate(-135deg);margin-top:4px}
 @media (prefers-reduced-motion:reduce){.mvchev{transition:none}}
 .mvcard.focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent)}
-.mv-back{position:sticky;top:calc(env(safe-area-inset-top,0px) + var(--toph,60px));z-index:4;background:var(--bg);padding:8px 0;margin-top:-8px}
+.mv-back{position:sticky;top:calc(var(--sat) + var(--toph,60px));z-index:4;background:var(--bg);padding:8px 0;margin-top:-8px}
 .vfs{position:fixed;inset:0;z-index:40;background:#000;display:grid;grid-template-rows:auto 1fr;color:#fff}
-.vfs-h{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px;font-weight:700}
+.vfs-h{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:calc(10px + var(--sat)) 14px 10px;font-weight:700}
 .vfs-x{background:#fff2;border:0;color:#fff;font-size:20px;line-height:1;width:44px;height:44px;border-radius:50%;cursor:pointer}
 .vfs video{width:100%;height:100%;min-height:0;object-fit:contain;background:#000;padding-bottom:env(safe-area-inset-bottom,0px)}
 .chip.under{color:var(--plate-blue);border-color:var(--plate-blue)}
@@ -455,7 +456,7 @@ section.feed-card>.feed-badge{position:absolute!important;top:8px;right:12px;z-i
 .bsel[aria-pressed="true"]::after{content:'\2713  Affiché';position:absolute;top:6px;right:6px;background:var(--accent);color:var(--accent-ink);font:700 10px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border-radius:10px;line-height:1.2}
 .bsel[aria-pressed="true"] .badge{filter:drop-shadow(0 0 8px var(--accent))}
 .bsel:disabled{cursor:default}
-.cer{position:fixed;inset:0;z-index:40;background:var(--panel);color:var(--panel-ink);display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:12px;padding:calc(12px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));overflow:auto}
+.cer{position:fixed;inset:0;z-index:40;background:var(--panel);color:var(--panel-ink);display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:12px;padding:calc(12px + var(--sat)) 16px calc(16px + env(safe-area-inset-bottom,0px));overflow:auto}
 .cer-top{display:flex;justify-content:space-between;align-items:center;gap:12px;max-width:560px;margin:0 auto;width:100%}
 .cer-dots{display:flex;flex-wrap:wrap;gap:5px;min-width:0}
 .cd{width:8px;height:8px;border-radius:50%;background:var(--panel-muted);opacity:.35}
@@ -595,7 +596,7 @@ section.feed-card>.feed-badge{position:absolute!important;top:8px;right:12px;z-i
 .gb-vs{font:600 12px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:#cdb273}
 
 /* minuteur du metcon */
-.tm{position:fixed;inset:0;z-index:45;background:var(--panel);color:var(--panel-ink);display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:12px;padding:calc(12px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));overflow:auto;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+.tm{position:fixed;inset:0;z-index:45;background:var(--panel);color:var(--panel-ink);display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:12px;padding:calc(12px + var(--sat)) 16px calc(16px + env(safe-area-inset-bottom,0px));overflow:auto;user-select:none;-webkit-user-select:none;touch-action:manipulation}
 .tm.prep{background:#3A2600}
 .tm.prep .tm-time{color:#FFB703}
 .tm.alert{background:#3A0D08}
@@ -714,7 +715,7 @@ button.chip-link{font-family:var(--f-mono);font-size:11px;font-weight:600;letter
 @keyframes wuin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.wu-anim{animation:none}}
 /* gestion coach */
-.wu-page{position:fixed;inset:0;z-index:44;background:var(--bg);color:var(--ink);overflow:auto;padding:calc(12px + env(safe-area-inset-top,0px)) 16px calc(24px + env(safe-area-inset-bottom,0px))}
+.wu-page{position:fixed;inset:0;z-index:44;background:var(--bg);color:var(--ink);overflow:auto;padding:calc(12px + var(--sat)) 16px calc(24px + env(safe-area-inset-bottom,0px))}
 .wu-page .in{max-width:720px;margin:0 auto;display:grid;gap:14px}
 .wu-eh{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;align-items:center}
 .wu-eh .n{font-family:var(--f-display);font-size:26px;color:var(--accent)}
@@ -775,7 +776,7 @@ input[type=checkbox]{width:24px;height:24px;padding:0;accent-color:var(--accent)
 .avrow{display:flex;gap:16px;align-items:center}
 .avobj{display:flex;gap:14px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line)}
 .avobj:last-child{border-bottom:0}
-.avfs{position:fixed;inset:0;z-index:42;background:var(--panel);color:var(--panel-ink);display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 12px calc(12px + env(safe-area-inset-bottom,0px))}
+.avfs{position:fixed;inset:0;z-index:42;background:var(--panel);color:var(--panel-ink);display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:10px;padding:calc(10px + var(--sat)) 12px calc(12px + env(safe-area-inset-bottom,0px))}
 .av-top{display:flex;justify-content:space-between;align-items:center;gap:12px;max-width:720px;margin:0 auto;width:100%}
 .av-top .btn{color:var(--panel-ink);border-color:var(--panel-muted)}
 .av-stage{min-height:0;display:grid;place-items:center}
@@ -843,7 +844,7 @@ input[type=checkbox]{width:24px;height:24px;padding:0;accent-color:var(--accent)
 /* ===== écran « Personnalisation » de la bannière : néon rose ===== */
 .bnx{position:fixed;inset:0;z-index:40;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:16px;margin:0;padding:0 max(16px,calc((100vw - 720px)/2)) 0;background:radial-gradient(80% 22% at 0 0,rgba(255,31,90,.22),transparent 70%),radial-gradient(70% 22% at 100% 100%,rgba(255,31,90,.16),transparent 70%),#070507;color:#fff}
 body:has(.bnx){overflow:hidden}
-.bnx-head{position:sticky;top:0;z-index:3;display:grid;gap:12px;margin-inline:calc(-1*max(16px,(100vw - 720px)/2));padding:calc(env(safe-area-inset-top,0px) + 10px) max(16px,calc((100vw - 720px)/2)) 12px;background:linear-gradient(#070507 82%,rgba(7,5,7,0))}
+.bnx-head{position:sticky;top:0;z-index:3;display:grid;gap:12px;margin-inline:calc(-1*max(16px,(100vw - 720px)/2));padding:calc(var(--sat) + 10px) max(16px,calc((100vw - 720px)/2)) 12px;background:linear-gradient(#070507 82%,rgba(7,5,7,0))}
 .bnx-top{display:grid;grid-template-columns:44px minmax(0,1fr) 44px;align-items:center;gap:10px}
 .bnx-ib{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;padding:0;border:1.5px solid rgba(255,45,111,.85);border-radius:14px;background:rgba(255,45,111,.08);color:#fff;cursor:pointer;transition:transform .12s,background .15s}
 .bnx-ib:active{transform:scale(.94);background:rgba(255,45,111,.22)}
@@ -1201,7 +1202,7 @@ input[type=date]{inline-size:100%;max-inline-size:100%;box-sizing:border-box;ove
 .avfs .av-hintbox p{margin:0;font-size:15px;line-height:1.35;color:#eee}
 
 /* bandeau de mise à jour : reste visible en haut même après défilement */
-.banner.upd{position:sticky;top:calc(var(--toph,64px) + env(safe-area-inset-top,0px));z-index:7;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.banner.upd{position:sticky;top:calc(var(--toph,64px) + var(--sat));z-index:7;box-shadow:0 4px 14px rgba(0,0,0,.25)}
 
 /* thème Halloween : décor d'avatar élargi et habillage discret de l'appli */
 .av{background-size:cover;background-position:49% center}
@@ -1228,7 +1229,7 @@ html[data-noel] .tabs{border-top-color:#F5C451}
 #noel-snow{position:fixed;inset:0;z-index:-1;pointer-events:none}
 #noel-fall{position:fixed;inset:0;z-index:11;pointer-events:none}
 #noel-deco{position:fixed;inset:0;z-index:6;pointer-events:none;overflow:hidden}
-.nl-gar{position:absolute;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + var(--toph,60px) - 1px);height:34px;pointer-events:none}
+.nl-gar{position:absolute;left:0;right:0;top:calc(var(--sat) + var(--toph,60px) - 1px);height:34px;pointer-events:none}
 .nl-gar svg{display:block;width:100%;height:100%;overflow:visible}
 .nl-l{animation:nltw 2.6s ease-in-out infinite;animation-delay:var(--d,0s)}
 @keyframes nltw{0%,100%{opacity:.45}50%{opacity:1}}
@@ -1453,7 +1454,7 @@ section.feed-card.th-crimson>.feed-badge{position:absolute!important;left:2cqw;r
 .ibtn{position:relative}
 .ibdot{position:absolute;top:5px;right:5px;width:11px;height:11px;border-radius:50%;background:var(--accent);border:2px solid var(--surface)}
 /* message du coach : enveloppe à ouvrir */
-.ann{position:fixed;inset:0;z-index:60;background:rgba(8,9,11,.88);display:grid;place-items:center;padding:calc(16px + env(safe-area-inset-top,0px)) 16px calc(16px + env(safe-area-inset-bottom,0px));overflow:auto}
+.ann{position:fixed;inset:0;z-index:60;background:rgba(8,9,11,.88);display:grid;place-items:center;padding:calc(16px + var(--sat)) 16px calc(16px + env(safe-area-inset-bottom,0px));overflow:auto}
 .ann-stage{display:grid;justify-items:center;gap:20px;width:100%;max-width:440px;min-width:0}
 .ann-hint{color:#ECECE8;text-align:center;font-size:15px}
 .ann-hint b{display:block;font-family:var(--f-display);font-weight:400;font-size:26px;letter-spacing:.04em;text-transform:uppercase;margin-bottom:2px}
@@ -1514,10 +1515,14 @@ section.feed-card.th-crimson>.feed-badge{position:absolute!important;left:2cqw;r
 
 /* didacticiel */
 #hdr-right{display:flex;align-items:center;gap:8px}
-.help-fab{position:fixed;z-index:6;top:calc(env(safe-area-inset-top,0px) + var(--toph,56px) + 6px);right:max(10px,env(safe-area-inset-right,0px));opacity:.92;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.help-fab{position:fixed;z-index:6;top:calc(var(--sat) + var(--toph,56px) + 6px);right:max(10px,env(safe-area-inset-right,0px));opacity:.92;box-shadow:0 2px 8px rgba(0,0,0,.35)}
 body[data-pv] .help-fab,body[data-auth=home] .help-fab{display:none}
 .season-row{display:flex;justify-content:flex-start;margin:0 0 8px}
 .season-row .chip{max-width:70vw;overflow:hidden;text-overflow:ellipsis;display:block}
+.hdr-coin{flex:none;display:inline-flex;align-items:center;gap:5px;height:32px;padding:0 11px 0 8px;border-radius:999px;border:2px solid var(--edge);background:var(--surface);color:#ffd54a;font:800 14px var(--f-mono,monospace);cursor:pointer;line-height:1}
+.hdr-coin b{font:inherit}
+.hdr-coin.neg{color:#ff6b6b}
+.hdr-coin .coin{display:block}
 .help-btn{flex:none;width:32px;height:32px;border-radius:50%;border:2px solid var(--edge);background:var(--surface);color:var(--ink);font:700 17px var(--f-display);cursor:pointer;display:grid;place-items:center;padding:0;line-height:1}
 .tour{position:fixed;inset:0;z-index:90;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .tour svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
@@ -1546,7 +1551,7 @@ body[data-pv] .help-fab,body[data-auth=home] .help-fab{display:none}
 .tab-burger .ibdot{top:8px;right:12px}
 .drawer-bg{position:fixed;inset:0;z-index:26;background:rgba(8,9,11,.55);opacity:0;transition:opacity .25s ease}
 .drawer-bg.open{opacity:1}
-.drawer{position:absolute;top:0;right:0;bottom:0;width:min(300px,84vw);box-sizing:border-box;background:var(--surface);color:var(--ink);border-left:2px solid var(--edge);padding:calc(14px + env(safe-area-inset-top,0px)) 12px calc(14px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:4px;overflow:auto;transform:translateX(100%);transition:transform .25s ease;box-shadow:-12px 0 30px #0006}
+.drawer{position:absolute;top:0;right:0;bottom:0;width:min(300px,84vw);box-sizing:border-box;background:var(--surface);color:var(--ink);border-left:2px solid var(--edge);padding:calc(14px + var(--sat)) 12px calc(14px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:4px;overflow:auto;transform:translateX(100%);transition:transform .25s ease;box-shadow:-12px 0 30px #0006}
 .drawer-bg.open .drawer{transform:none}
 .drawer-bg.inst,.drawer-bg.inst .drawer{transition:none}
 .drawer .dh{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding:0 4px}
@@ -1559,7 +1564,7 @@ body[data-pv] .help-fab,body[data-auth=home] .help-fab{display:none}
 
 /* ===== Classement « Arène » : thème sombre braise, identique en clair et en sombre ===== */
 body.board-lock{overflow:hidden;padding-block-end:0}
-/* Classement verrouillé : la page ne défile pas, donc l'en-tête reste à sa place naturelle (sous la zone de l'encoche). En « sticky » avec top:env(safe-area-inset-top), l'appli iPhone le décalait une 2e fois de la hauteur de l'encoche. */
+/* Classement verrouillé : la page ne défile pas, donc l'en-tête reste à sa place naturelle (sous la zone de l'encoche). En « sticky » avec top:var(--sat), l'appli iPhone le décalait une 2e fois de la hauteur de l'encoche. */
 body.board-lock .top{position:relative;top:0}
 .arena{--ar-ember:#FF5A36;--ar-gold:#FFC857;--ar-steel:#9CC2FF;--ar-copper:#F29A5B;--ar-ink:#F6F2EA;--ar-mute:#9097A6;--ar-line:rgba(255,255,255,.09);
   --s1:60px;--s2:46px;--s3:46px;
@@ -1967,7 +1972,7 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;op
 @media (prefers-reduced-motion:no-preference){.rt-pill.me .pav{animation:rtPulse 1.6s ease-in-out infinite}}
 @media (prefers-reduced-motion:reduce){.rt-pill{transition:none}}
 @keyframes rtPulse{50%{box-shadow:0 0 0 3px var(--rt-me),0 0 28px 9px rgba(255,90,54,.95)}}
-.rt-ov{position:fixed;inset:0;z-index:70;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:10px;padding:calc(12px + env(safe-area-inset-top,0px)) 12px calc(12px + env(safe-area-inset-bottom,0px));color:var(--ar-ink);background:radial-gradient(120% 40% at 50% -6%,rgba(255,90,54,.30),transparent 62%),linear-gradient(180deg,#0E1018,#07080C 70%)}
+.rt-ov{position:fixed;inset:0;z-index:70;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:10px;padding:calc(12px + var(--sat)) 12px calc(12px + env(safe-area-inset-bottom,0px));color:var(--ar-ink);background:radial-gradient(120% 40% at 50% -6%,rgba(255,90,54,.30),transparent 62%),linear-gradient(180deg,#0E1018,#07080C 70%)}
 .rt-ov .rt-scroll{height:100%;min-height:0}
 .rt-ovhead{display:flex;align-items:center;gap:12px}
 .rt-ovhead .t{flex:1;min-width:0}
@@ -2078,7 +2083,7 @@ a.btn.primary{color:var(--accent-ink)}
 .dhr{display:flex;align-items:center;gap:4px}
 .dbell{position:relative;width:38px;height:38px;border:0;background:none;color:var(--ink);display:grid;place-items:center;cursor:pointer;padding:0}
 .dbell svg{width:24px;height:24px}.dbell .ibdot{top:3px;right:3px}.dbell[aria-expanded=true]{color:var(--accent)}
-.nbar{position:absolute;top:0;right:0;z-index:2;box-sizing:border-box;width:min(300px,84vw);display:grid;gap:10px;padding:calc(14px + env(safe-area-inset-top,0px)) 14px 14px;border-left:2px solid var(--edge);border-bottom:2px solid var(--accent);background:var(--surface);color:var(--ink);box-shadow:0 12px 24px #0006;max-height:70vh;overflow:auto;animation:nbIn .2s ease}
+.nbar{position:absolute;top:0;right:0;z-index:2;box-sizing:border-box;width:min(300px,84vw);display:grid;gap:10px;padding:calc(14px + var(--sat)) 14px 14px;border-left:2px solid var(--edge);border-bottom:2px solid var(--accent);background:var(--surface);color:var(--ink);box-shadow:0 12px 24px #0006;max-height:70vh;overflow:auto;animation:nbIn .2s ease}
 .nbar[hidden]{display:none}
 @keyframes nbIn{from{transform:translateY(-12px);opacity:0}to{transform:none;opacity:1}}
 .nb-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -2288,7 +2293,7 @@ button.pf2-xp{width:calc(100% - 8px);background:none;border-left:0;border-right:
 .pf2-dot.on{background:#fff;border-color:#ff2d6f}
 .pf2-xp .xv i{font-style:normal;color:#2ad4ff;margin-left:3px}
 /* passe d'XP */
-.reward-pop.bp-ov{display:flex;flex-direction:column;justify-content:center;align-items:stretch;place-items:stretch;padding:max(12px,env(safe-area-inset-top)) 0 max(12px,env(safe-area-inset-bottom));overflow:hidden;overscroll-behavior:contain;background:radial-gradient(circle at 0 0,#ff1f7acc 0,transparent 34%),radial-gradient(circle at 100% 0,#ff6a1fcc 0,transparent 30%),radial-gradient(circle at 100% 100%,#19d3ffaa 0,transparent 34%),radial-gradient(circle at 0 100%,#ff1f7a88 0,transparent 30%),#0d0e12;color:#fff;z-index:90}
+.reward-pop.bp-ov{display:flex;flex-direction:column;justify-content:center;align-items:stretch;place-items:stretch;padding:max(12px,var(--sat)) 0 max(12px,env(safe-area-inset-bottom));overflow:hidden;overscroll-behavior:contain;background:radial-gradient(circle at 0 0,#ff1f7acc 0,transparent 34%),radial-gradient(circle at 100% 0,#ff6a1fcc 0,transparent 30%),radial-gradient(circle at 100% 100%,#19d3ffaa 0,transparent 34%),radial-gradient(circle at 0 100%,#ff1f7a88 0,transparent 30%),#0d0e12;color:#fff;z-index:90}
 .reward-pop.bp-ov>*{width:100%;max-width:520px;margin-left:auto;margin-right:auto;box-sizing:border-box}
 .bp-top{display:flex;align-items:center;gap:12px;padding:0 14px 10px}
 .bp-hex{flex:none;width:52px;height:58px;display:grid;place-items:center}
@@ -2516,7 +2521,7 @@ body[data-auth] #main{padding:0;gap:0}
 .au .au-back{position:absolute;left:14px;top:16px;width:44px;height:44px;display:grid;place-items:center;padding:10px;border:0;border-radius:50%;background:rgba(0,0,0,.35);color:#fff;cursor:pointer;z-index:2}
 .au .au-back svg{width:100%;height:100%}
 .au .au-back-hit{left:1%;top:12%;width:14%;height:12%;border-radius:12px;background:transparent}
-.au-signup .au-back{top:calc(12px + env(safe-area-inset-top,0px))}
+.au-signup .au-back{top:calc(12px + var(--sat))}
 .pf2-avw{position:relative;flex:none}
 .pf2-avin{width:66px;height:90px;overflow:hidden;display:flex;justify-content:center;align-items:flex-start;border-radius:4px;background:radial-gradient(circle at 50% 28%,rgba(255,120,60,.2),transparent 72%)}
 .pf2-avin>*{flex:none}
@@ -2847,7 +2852,7 @@ section.feed-card.th-neonviolet>.feed-badge{position:absolute!important;left:aut
 
 /* ===== menu latéral « Crimson » : noir grunge, néon rose, boutons en verre ===== */
 .drawer-bg{background:rgba(0,0,0,.6);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
-.drawer{--mn:#ff2060;--mn2:#ff6b97;width:min(350px,86vw);gap:9px;padding:calc(12px + env(safe-area-inset-top,0px)) 14px calc(16px + env(safe-area-inset-bottom,0px));color:#fff;
+.drawer{--mn:#ff2060;--mn2:#ff6b97;width:min(350px,86vw);gap:9px;padding:calc(12px + var(--sat)) 14px calc(16px + env(safe-area-inset-bottom,0px));color:#fff;
   background:radial-gradient(120% 38% at 100% 0,rgba(255,32,96,.20),transparent 62%),url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 300 640%22 preserveAspectRatio=%22none%22%3E%3Cdefs%3E%3Cfilter id=%22r%22 x=%22-20%25%22 y=%22-20%25%22 width=%22140%25%22 height=%22140%25%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%22.012 .07%22 numOctaves=%223%22 seed=%227%22 result=%22n%22/%3E%3CfeDisplacementMap in=%22SourceGraphic%22 in2=%22n%22 scale=%2216%22/%3E%3C/filter%3E%3C/defs%3E%3Cg filter=%22url(%23r)%22 fill=%22%23ff1a55%22%3E%3Cpath d=%22M-30 150L120 -20L160 -20L-30 210Z%22 opacity=%22.5%22/%3E%3Cpath d=%22M-30 230L60 120L72 130L-30 262Z%22 opacity=%22.35%22/%3E%3Cpath d=%22M40 -10L112 -10L-30 118Z%22 opacity=%22.3%22/%3E%3Cpath d=%22M210 -10L330 -10L330 70Z%22 opacity=%22.2%22/%3E%3Cpath d=%22M-30 660L-30 520L70 660Z%22 opacity=%22.6%22/%3E%3Cpath d=%22M-30 585L30 660L8 660L-30 620Z%22 opacity=%22.3%22/%3E%3Cpath d=%22M240 660L330 560L330 660Z%22 opacity=%22.25%22/%3E%3C/g%3E%3C/svg%3E") center/100% 100% no-repeat,linear-gradient(180deg,#0b0b0c,#050506 60%,#0d0409);
   border-left:2px solid var(--mn);box-shadow:-2px 0 0 rgba(255,32,96,.3),-12px 0 38px rgba(255,32,96,.45)}
 .drawer .dh{display:grid;grid-template-columns:44px 1fr 44px;align-items:start;margin:0 0 4px;padding:0}
@@ -2959,6 +2964,16 @@ details.fwarn{display:block;padding:0}
 .tm .lap-g{color:#4ade80}
 .tm .lap-y{color:#facc15}
 .tm .lap-r{color:#ff5a5a}
+.ad-x2{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:44px;padding:10px 16px;margin-top:8px;border-radius:12px;border:2px solid #F4C400;background:transparent;color:inherit;font:inherit;font-weight:800;cursor:pointer;box-sizing:border-box}
+.ad-x2:disabled{opacity:.55;cursor:default}
+.ad-x2[hidden]{display:none}
+.ad-ask{position:fixed;inset:0;z-index:120;display:grid;place-items:center;padding:16px;background:rgba(2,4,16,.78);overscroll-behavior:contain}
+.ad-ask-c{width:min(360px,100%);box-sizing:border-box;display:grid;gap:12px;padding:20px 18px 16px;border-radius:16px;background:var(--surface,#1c1f26);color:var(--ink,#fff);border:2px solid #F4C400;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+.ad-ask-c h3{margin:0;font-size:1.15em}
+.ad-ask-c p{margin:0;opacity:.85}
+.ad-ask-c .ad-ask-yes{display:flex;align-items:center;justify-content:center;gap:6px;min-height:48px;padding:10px 16px;border-radius:12px;border:0;background:#F4C400;color:#1a1400;font:inherit;font-weight:800;cursor:pointer}
+.ad-ask-c .ad-ask-no{min-height:44px;padding:10px 16px;border-radius:12px;border:1px solid currentColor;background:transparent;color:inherit;font:inherit;cursor:pointer;opacity:.9}
+.ad-ask-c button:disabled{opacity:.55;cursor:default}
 </style>
 </head>
 <body>
@@ -4353,6 +4368,8 @@ KSkgYXBwbHlSZW1vdGUoZCk7CiAgICAgIH0sIGZ1bmN0aW9uICgpIHsgZGJEb2MgPSBudWxsOyBzZXRT
 c2V0U2F2ZSgnU3VyIGNldCBhcHBhcmVpbCBzZXVsZW1lbnQnKTsgfSk7CiAgfSBlbHNlIHNldFNhdmUoJ1N1ciBjZXQgYXBwYXJlaWwgc2V1bGVtZW50Jyk7Cn0pKCk7Cgo8L3NjcmlwdD4KCjwvYm9keT48L2h0
 bWw+Cg==
 </script>
+<script src="ads.js"></script>
+<script>try{if(window.Ads)Ads.init().then(function(ok){if(ok)Ads.showBanner();});}catch(e){console.warn("[Ads]",e);}</script>
 <script type="module">
 /* ---------- garde-fou « null » ----------
    Les méthodes natives append / prepend / replaceChildren / before / after / replaceWith transforment null et undefined en TEXTE (« null » affiché à l'écran),
@@ -4722,7 +4739,24 @@ function planOf(m){
     if(nums.length>1&&k>0)return {nums,k,sizes:nums.map(n=>n*k)};
   }
   const rt=roundTotal(m);
-  {const rm=rt>0?roundModel(m):null;return rt>0?{size:rt,rm,lns:rm?capLines(m):null}:null;}
+  if(rt>0){const rm=roundModel(m);return {size:rt,rm,lns:rm?capLines(m):null};}
+  return autoPlan(m);
+}
+/* For Time sans schéma ni « Reps par tour » : on déduit les tours du contenu, pour que l'athlète saisisse « tours + reps » au lieu d'un total de reps.
+   - le contenu (ou le détail) annonce « 5 rounds / 5 tours » : un tour = somme des reps des lignes d'exercice, nb de tours connu ;
+   - sinon, au moins 2 lignes d'exercice (chipper) : chaque ligne = 1 tour (comme « Chaque ligne = 1 tour »).
+   Si une ligne est une distance / des calories sans équivalence {a=b}, on ne devine rien (retour au total de reps). */
+function autoPlan(m){
+  if(!m||m.format!=='FT')return null;
+  const lines=String(m.content||'').split('\n').map(s=>s.trim()).filter(Boolean);
+  if(lines.some(s=>/^\d+(?:[.,]\d+)?\s*(km|m|cal|kcal)\b/i.test(s.replace(WTAG,'').trim())&&!WTAG.test(s)))return null;
+  const items=lineItems(m);
+  if(!items.length)return null;
+  const rm=(lines.join(' ')+' '+String(m.detail||'')).match(/(?:^|[^\d-])(\d+)\s*(?:rounds?|tours?)\b/i);
+  const nr=rm?+rm[1]:0;
+  if(nr>0){const size=items.reduce((a,x)=>a+x.n,0);return size>0?{size,nr,auto:true}:null;}
+  if(items.length>1)return {lines:true,items,sizes:items.map(i=>i.n),k:1,nums:items.map((_,i)=>i+1),auto:true};
+  return null;
 }
 const sizeAt=(pl,i)=>pl.sizes?pl.sizes[i]:pl.size;
 function planCum(pl,r,rp){let s=0;for(let i=0;i<r;i++)s+=sizeAt(pl,i)||0;return s+rp;}
@@ -6187,13 +6221,14 @@ function dcInfo(){
   return {claimed,streak,day,coins:day===7?DC_WEEK:DC_DAY};
 }
 const dcCan=()=>{const lg=S.logs[S.uid];return !!(S.uid&&ready()&&lg&&lg.pseudo&&S.db&&!S.snapMode);};
-function dcClaim(){
+function dcClaim(dbl){
   if(!dcCan())return 0;
   const i=dcInfo();if(i.claimed)return 0;
   const lg=S.logs[S.uid],cg=Object.assign({},lg.coinGot||{},{['dc:'+todayStr()]:i.coins});
+  if(dbl)cg['x2:dc:'+todayStr()]=i.coins; /* pub regardée : le bonus est doublé */
   S.logs[S.uid]=Object.assign({},lg,{coinGot:cg});
-  saveLog({coinGot:cg},'Bonus quotidien : +'+i.coins+' coins.');
-  return i.coins;
+  saveLog({coinGot:cg},'Bonus quotidien : +'+i.coins*(dbl?2:1)+' coins.');
+  return i.coins*(dbl?2:1);
 }
 let dcTimer=0;
 /* Ouverture à la connexion : dès que le profil est chargé et qu'aucune autre fenêtre n'est ouverte. Si ce n'est pas encore possible (données en chargement, autre fenêtre, visite guidée…), on réessaie toutes les 2 s (jusqu'à 10 min) au lieu d'abandonner. */
@@ -6235,9 +6270,16 @@ function openDailyBonus(){
   }
   const row=h('div',{class:'dc-row'},days);
   row.style.setProperty('--dcp',String((i.day-1)/6));
-  const go=h('button',{class:'dc-go',type:'button',id:'dc-go',onclick:()=>{
+  if(adOn()){try{Ads.preloadRewarded('reward_daily_bonus');}catch(e){}}
+  const go=h('button',{class:'dc-go',type:'button',id:'dc-go',onclick:async()=>{
     go.disabled=true;
-    const n=dcClaim();
+    let dbl=false;
+    if(adOn()){
+      const r=await adAsk('reward_daily_bonus',i.coins);
+      if(!r){go.disabled=false;return;}
+      dbl=r==='double';
+    }
+    const n=dcClaim(dbl);
     if(!n){close();return;}
     ov.classList.add('dc-won');go.textContent='✓ '+n+' coins récupérés';
     setTimeout(close,1100);
@@ -6879,7 +6921,8 @@ function renderInner(force){
   try{googleTermsApply();}catch(e){}
   if(S.uid&&ready()&&S.profLoaded&&S.logs[S.uid]){const ac=ageCatOf(S.prof.birth);if((S.logs[S.uid].ageCat||'')!==ac&&S.ageSync!==ac){S.ageSync=ac;saveLog({ageCat:ac});}}
   const p=selPeriod();
-  $('#hdr-right').replaceChildren(); /* le bandeau du haut est réservé à la publicité : logo + nom seulement */
+  $('#hdr-right').replaceChildren(); /* bandeau du haut : à droite, les coins (raccourci vers le Shop) puis le « ? » (ajouté par placeHelp) */
+  if(S.uid)$('#hdr-right').append(hdrCoin());
   const tabs=[['feed','Fil'],['today','Séance'],['board','Classement'],['shop','Shop']];
   const tabEls=tabs.map(([k,l])=>{const b=h('button',{class:'tab','data-tour':'tab-'+k,'aria-current':S.tab===k?'page':null,onclick:()=>go(k)});b.innerHTML=TAB_ICO[k]+'<span>'+l+'</span>';if(k==='shop'&&S.uid)b.append(coinBadge());return b;});
   {
@@ -8927,11 +8970,11 @@ function defaultDate(){
   const wk=all.filter(d=>d>=mon&&d<=sun);
   /* première séance non faite de la semaine en cours (la 1 faite → la 2 ; la 3 faite mais ni la 1 ni la 2 → la 1) */
   return wk.find(d=>!mine[d])
-    ||all.find(d=>d>sun&&!mine[d])   /* semaine terminée : la prochaine séance à venir */
+    ||all.find(d=>d>sun&&!mine[d]&&!aheadHidden(d))   /* semaine terminée : la prochaine séance à venir (au plus la semaine suivante) */
     ||wk[0]||(S.wods[t]?t:(all.filter(d=>d<mon).pop()||t));
 }
 function upcomingList(t,current){
-  const ws=Object.values(S.wods).filter(w=>w.date>t&&!wodInDoneSeason(w.date)).sort((a,b)=>a.date<b.date?-1:1).slice(0,12);
+  const ws=Object.values(S.wods).filter(w=>w.date>t&&!wodInDoneSeason(w.date)&&!aheadHidden(w.date)).sort((a,b)=>a.date<b.date?-1:1).slice(0,12);
   if(!ws.length)return h('div');
   const nowWk=mondayOf(t),mine=(S.logs[S.uid]&&S.logs[S.uid].entries)||{};
   return h('section',{class:'card'},h('h2',{class:'h2'},'Séances à venir'),
@@ -9350,8 +9393,12 @@ function equipRow(w){
     h('div',{class:'cc-eq-h'},'Matériel'),
     h('div',{class:'cc-eq-l'},l.map(([k,lab,svg])=>{const i=h('div',{class:'cc-eqi',role:'listitem',title:lab},h('span',{class:'cc-eqb'}),h('span',{class:'cc-eql'},lab));i.firstChild.innerHTML=svg;return i;})));
 }
-function cardPart(p){
+function cardPart(p,lk){
   const metcon=p.kind==='metcon';
+  /* séance verrouillée par pub : seulement le titre de la partie (rien du contenu, ni charges, ni format, ni mouvement) */
+  if(lk)return h('div',{class:'cc-part'+(metcon?' met':'')},
+    h('div',{class:'cc-lab'},p.label||'•'),
+    h('div',{class:'cc-body'},h('div',{class:'cc-name'},p.name||KIND[p.kind]||'Partie')));
   const lines=(p.content||'').split('\n').map(x=>x.trim()).filter(Boolean).map(x=>{try{return tagShow(x);}catch(e){return x;}});
   const top=metcon?(activeLevels(p).slice(-1)[0]||[null,0]):null;
   const ld=top&&top[0]?loadsText(top[0]):'';
@@ -9430,6 +9477,7 @@ function sessionCard(w,i,n,mine,prev,next){
   const ribbon=!!(done&&!rpt&&!isBonus(w)&&mE&&mE.redo!==false&&!redoDone&&!pastS&&!lockedDate(date)&&!lockedDate(todayStr())&&!wodPending(date)&&(mine[date].at?dfmt(new Date(mine[date].at)):date)<todayStr());
   const shown=parts.length>4?parts.filter((p,k)=>k<3||p.kind==='metcon').slice(0,4):parts;
   const open=()=>{S.viewDate=date;S.entry=null;S.redo=null;S.tip=null;render();window.scrollTo(0,0);};
+  const lk=adLockedDate(date); /* séance non faite d'une autre semaine : contenu masqué tant qu'on n'a pas regardé une pub */
   const subs=subsOf();
   const canSub=!isBonus(w)&&!!S.uid&&!!S.db&&!S.snapMode&&ready()&&!done&&!lockedDate(date)&&!pastS&&subs.some(Boolean);
   let slot=null,card=null,back=null;
@@ -9447,13 +9495,13 @@ function sessionCard(w,i,n,mine,prev,next){
       h('span',{class:'cc-n'},isBonus(w)?'Séance bonus · 4e de la semaine':'Séance '+(i+1)+' / '+n),
       done?h('span',{class:'cc-done'},'✓ Faite'):null),
     h('h2',{class:'cc-title'},wE.title),
-    (()=>{const m=metconOf(wE),tags=[];if(pastS)tags.push(h('span',{class:'cc-tag'},'SAISON TERMINÉE'));if(sw)tags.push(h('span',{class:'cc-tag'},'🏠 Remplacement'));if(m&&m.test)tags.push(h('span',{class:'cc-tag'},'TEST'));if(m&&m.redo!==false&&!lockedDate(date)&&!ribbon&&!redoDone&&!rpt)tags.push(h('span',{class:'cc-tag'},'RE DO'));if(rpt||rptNew)tags.push(h('span',{class:'cc-tag'},'↩ REDO du remplacement'));if(redoDone)tags.push(h('span',{class:'cc-tag'},'✓ REDO fait'));return tags.length?h('div',{class:'cc-flags'},tags):null;})(),
+    (()=>{const m=metconOf(wE),tags=[];if(pastS)tags.push(h('span',{class:'cc-tag'},'SAISON TERMINÉE'));if(adLockedDate(date))tags.push(h('span',{class:'cc-tag'},'🔒 Pub pour débloquer'));if(sw)tags.push(h('span',{class:'cc-tag'},'🏠 Remplacement'));if(m&&m.test)tags.push(h('span',{class:'cc-tag'},'TEST'));if(m&&m.redo!==false&&!lockedDate(date)&&!ribbon&&!redoDone&&!rpt)tags.push(h('span',{class:'cc-tag'},'RE DO'));if(rpt||rptNew)tags.push(h('span',{class:'cc-tag'},'↩ REDO du remplacement'));if(redoDone)tags.push(h('span',{class:'cc-tag'},'✓ REDO fait'));return tags.length?h('div',{class:'cc-flags'},tags):null;})(),
     h('div',{class:'cc-meta'},h('span',{},cap(fmtShort(date))),h('span',{},pastS?'0 pt · saison terminée':((rpt||rptNew)?'REDO · 1 à 3 pts':basePts(wE,per)+' pts'+(metconOf(wE)?' + metcon':'')))),
     ribbon?h('div',{class:'cc-redo',role:'note'},h('b',{},'RE DO · jusqu’à +3 pts'),h('span',{},'Refais ton metcon pour marquer des points')):null,
-    prevCard(wE,date),
-    h('div',{class:'cc-parts'},shown.map(cardPart)),
+    lk?null:prevCard(wE,date),
+    h('div',{class:'cc-parts'},shown.map(p=>cardPart(p,lk))),
     equipRow(wE),
-    h('div',{class:'cc-go'},ribbon?'Touche pour refaire et marquer des points ':'Touche pour ouvrir ',h('b',{},'→')));
+    h('div',{class:'cc-go'},lk?'🔒 Touche pour débloquer avec une pub ':(ribbon?'Touche pour refaire et marquer des points ':'Touche pour ouvrir '),h('b',{},'→')));
   if(canSub){
     back=h('div',{class:'car-card car-back face back','aria-hidden':'true',style:'--c1:'+col[0]+';--c2:'+col[1]},
       h('div',{class:'cc-top'},h('span',{class:'cc-n'},'Séance de remplacement')),
@@ -9585,7 +9633,7 @@ function viewCards(){
   /* séances des 4 dernières semaines et à venir, par semaine puis par date ; avec « saisons passées » : on ajoute celles des saisons terminées */
   const from=addDays(mondayOf(t),-28),past=!!S.showPast;
   const pastList=Object.values(S.wods).filter(w=>pastSeasonDate(w.date)&&!bonusHidden(w)).sort((a,b)=>a.date<b.date?-1:1);
-  const ws0=Object.values(S.wods).filter(w=>(past&&pastSeasonDate(w.date)&&!bonusHidden(w))||(w.date>=from&&!wodInDoneSeason(w.date))).sort((a,b)=>a.date<b.date?-1:1);
+  const ws0=Object.values(S.wods).filter(w=>(past&&pastSeasonDate(w.date)&&!bonusHidden(w))||(w.date>=from&&!wodInDoneSeason(w.date)&&!aheadHidden(w.date))).sort((a,b)=>a.date<b.date?-1:1);
   /* filtre matériel : une séance déjà validée reste visible ; sinon on regarde le matériel de la séance (ou de son remplacement choisi) */
   const okEq=w=>{if(!fOn||mine[w.date])return true;const ch=subChoice(S.uid,w.date),sw=ch&&ch.sw;return eqMissing(sw?wodFor(w,{sw}):w).length===0;};
   const ws=ws0.filter(okEq),hidden=ws0.length-ws.length;
@@ -9722,7 +9770,9 @@ function viewHealthGate(){
 }
 function viewToday(){
   if(needHealthGate())return viewHealthGate();
+  if(S.viewDate&&aheadHidden(S.viewDate))S.viewDate=null; /* trop loin dans le futur : on revient aux cartes */
   if(!S.viewDate)return viewCards();
+  if(adLockedDate(S.viewDate))return viewAdLock(S.viewDate);
   const t=todayStr(),date=S.viewDate||defaultDate(),w0=S.wods[date],w=w0&&myWod(w0,S.uid);
   /* même couleur que la carte sur laquelle on a cliqué (cardColor la mémorise par date) */
   const col=w?cardColor(date):null;
@@ -9818,7 +9868,7 @@ function readScore(m,st){
         if(a===''&&b==='')return {empty:true};
         const rn=a===''?0:parseNum(a),rp=b===''?0:parseNum(b);
         if(rn===null||rp===null||rn<0||rp<0||rn%1||rp%1)return {bad:true,capBad:true};
-        if(pl.sizes&&rn>=pl.sizes.length)return {many:true};
+        if((pl.sizes&&rn>=pl.sizes.length)||(pl.nr&&rn>=pl.nr))return {many:true};
         const sz=sizeAt(pl,rn);
         const rr=eqToRaw(pl,rn,rp);
         if(rr>=sz)return {over:true,max:pl.lines?fmtN(pl.items[rn].eq):(pl.rm?fmtN(pl.rm.eq):sz)};
@@ -10146,7 +10196,8 @@ function removeSession(date,uid){
   const tid=(S.owner&&uid!==S.uid&&(en[date]||rd[date]))?trashPush('result','Résultat de '+(lg.pseudo||'athlète')+' · '+fmtShort(date),{uid,date,entry:en[date]||null,redo:rd[date]||null}):null;
   const spent=coinSum(lg.shopBuy),before=coinEarned(lg)-spent;
   delete en[date];delete rd[date];S.confirm=null;
-  const after=coinEarned(lg,en,rd)-spent; /* les coins de cette séance partent avec elle : le solde peut devenir négatif s'ils étaient déjà dépensés */
+  /* les coins de cette séance partent avec elle, et ceux des paliers du pass d'XP qui dépendaient de son XP aussi : le solde peut devenir négatif s'ils étaient déjà dépensés */
+  let after;{const lg2=Object.assign({},lg,{entries:en,redos:rd}),saved=S.logs[uid];S.logs[uid]=lg2;try{after=coinEarned(lg2)-spent;}finally{S.logs[uid]=saved;}}
   const warn=uid===S.uid&&after<0&&after<before,alertCoach=warn&&!S.owner;
   const sp={entries:en,redos:rd};
   /* retrait fait par le coach pour l'athlète (séance saisie à sa place, doublon, erreur) : ce n'est pas de la triche, on compense le solde pour qu'il ne passe jamais en négatif */
@@ -10164,7 +10215,7 @@ function coinCheatPop(bal,coachKnows){
   pop.append(h('div',{class:'rp-card cc-card'},
     h('p',{class:'eyebrow'},'Avertissement'),
     h('h2',{class:'wtitle'},'Solde de coins négatif : '+bal),
-    h('p',{},'Tu viens de retirer une séance dont les coins avaient déjà été dépensés dans le Shop. Les coins se gagnent uniquement avec de vraies séances enregistrées : retirer une séance après avoir dépensé ses coins revient à tricher.'),
+    h('p',{},'Tu viens de retirer une séance dont les coins (et ceux des paliers du pass d’XP qui en dépendaient) avaient déjà été dépensés dans le Shop. Les coins et les récompenses du pass se gagnent uniquement avec de vraies séances enregistrées : retirer une séance après les avoir récupérés revient à tricher. Ton XP recule et ces récompenses te sont retirées.'),
     h('p',{},'Ton solde passe donc en négatif. Tu ne pourras plus acheter tant qu’il ne sera pas revenu à zéro, en validant de vraies séances.'+(coachKnows?' Le coach a été prévenu.':'')),
     h('div',{class:'row',style:'justify-content:center'},h('button',{class:'btn primary',type:'button',onclick:()=>pop.remove()},'J’ai compris'))));
   document.body.append(pop);
@@ -10178,7 +10229,7 @@ function coachAlert(uid,tab,text){
 }
 function coinCheatAlert(uid,date,bal){
   const pseudo=(((S.logs[uid]||{}).pseudo)||S.meName||'Athlète').slice(0,24);
-  coachAlert(uid,'Triche aux coins',pseudo+' a retiré sa séance du '+fmtShort(date)+' alors que les coins de cette séance étaient déjà dépensés. Solde de coins : '+bal+'.');
+  coachAlert(uid,'Triche aux coins',pseudo+' a retiré sa séance du '+fmtShort(date)+' alors que les coins de cette séance (et des paliers du pass d’XP liés) étaient déjà dépensés. Solde de coins : '+bal+'.');
 }
 /* séances validées le même jour (jour de la validation, pas de la séance) : dates des séances dont l'horodatage de validation tombe aujourd'hui */
 function sameDayValidated(entries){
@@ -10579,7 +10630,7 @@ function submitEntryNow(w){
   const multiD=(!coach&&uid===S.uid&&!S.owner&&!prevE)?sameDayValidated(Object.assign({},cur.entries||{},{[date]:e})):[];
   if(multiD.length>=2)sv.then(()=>multiSessionAlert(uid,multiD)).catch(()=>{});
   const coinWon=(coinCg&&!coach&&uid===S.uid)?coinForDate(date):0,bonusN=tbi?tbi.total:0;
-  if(rk||coinWon||bonusN){S._rankPend=true;sv.then(()=>(coinWon||bonusN)?coinWin(coinWon,tbi):null).then(()=>rk?rankAnimStart(rk):null).catch(()=>{}).finally(()=>{S._rankPend=false;if(!S.rankAnim)rankFlush();});}
+  if(rk||coinWon||bonusN){S._rankPend=true;sv.then(()=>(coinWon||bonusN)?coinWin(coinWon,tbi,date):null).then(()=>rk?rankAnimStart(rk):null).catch(()=>{}).finally(()=>{S._rankPend=false;if(!S.rankAnim)rankFlush();});}
 }
 function recentList(t,current){
   const per=periodFor(t)||activePeriod(); /* les séances des saisons précédentes n'apparaissent pas */
@@ -12233,7 +12284,7 @@ function avState(){
   return (S._ob={earned,prov});
 }
 /* le coach a tous les objets dans son propre inventaire, pour les tester ; les athlètes n'ont que ceux qu'ils ont gagnés */
-const avOwned=uid=>{const o=new Set(Object.keys(avState().earned[uid]||{}));const lg=S.logs[uid]||{};for(const key of (lg.rewardOwned||[])){const [pid,rid]=String(key).split(':');const p=S.periods[pid],r=(p&&p.rewards||[]).find(x=>x.id===rid);if(r&&r.type==='avatar'&&r.asset)o.add(r.asset);}
+const avOwned=uid=>{const o=new Set(Object.keys(avState().earned[uid]||{}));const lg=S.logs[uid]||{};for(const key of rwOwnedKeys(lg)){const [pid,rid]=String(key).split(':');const p=S.periods[pid],r=(p&&p.rewards||[]).find(x=>x.id===rid);if(r&&r.type==='avatar'&&r.asset)o.add(r.asset);}
   for(const id of Object.keys(lg.shopBuy||{}))if(AV_BY[id])o.add(id); /* achetés au shop */
   /* déguisements : jamais possédés par le sexe opposé (vampire = garçons, sorcière = filles), même offerts par une récompense */
   if(!(S.owner&&uid===S.uid)){const sx=avSexOf(uid);for(const id of Array.from(o)){const it=AV_BY[id];if(it&&(it.slot==='costume'||it.slot==='skin')&&!avSexOk(it,sx))o.delete(id);}}
@@ -12878,7 +12929,7 @@ function avatarCircle(uid,big,onclick){
 const bannerRow=(uid,big,onclick)=>h('div',{class:'feed-head'},avatarFramed(uid,onclick,big),
   h('div',{class:'feed-meta'},h('div',{class:'nm'},(S.logs[uid]||{}).pseudo||'Athlète',badgeMini(uid,30)),bannerTitle(uid)));
 function bannerSection(){
-  const lg=S.logs[S.uid]||{},sv=lg.banner||{},owned=new Set(lg.rewardOwned||[]);
+  const lg=S.logs[S.uid]||{},sv=lg.banner||{},owned=new Set(rwOwnedKeys(lg));
   const unlocked=[];
   for(const [pid,per] of Object.entries(S.periods||{}))for(const r of (per.rewards||[])){
     if(!owned.has(pid+':'+r.id))continue;
@@ -13117,7 +13168,7 @@ function flameEl(kind,n){
 /* ---------- jokers : gagnés avec l'XP (récompense de saison « Joker »), le stock ne se réinitialise jamais ---------- */
 function jokerEarned(lg){
   let n=0;
-  for(const key of ((lg&&lg.rewardOwned)||[])){const [pid,rid]=String(key).split(':'),pr=S.periods[pid],r=pr&&(pr.rewards||[]).find(x=>x.id===rid);if(r&&r.type==='joker')n++;}
+  for(const key of rwOwnedKeys(lg)){const [pid,rid]=String(key).split(':'),pr=S.periods[pid],r=pr&&(pr.rewards||[]).find(x=>x.id===rid);if(r&&r.type==='joker')n++;}
   return n;
 }
 const jokerUsed=lg=>((lg&&lg.jokers&&lg.jokers.fire)||[]).length+((lg&&lg.jokers&&lg.jokers.top)||[]).length;
@@ -13338,18 +13389,21 @@ const xpTierKey=(per,x)=>'rw:'+per.id+':xp'+x;
 const xpTierCoins=(per,x)=>(per&&!per.virtual&&per.id&&Number.isInteger(x)&&x>0&&x%XP_STEP===0)?XP_TIER_COINS:0;
 function xpTierCan(uid,per){const lg=S.logs[S.uid];return !!(S.uid&&uid===S.uid&&lg&&lg.pseudo&&S.db&&!S.snapMode&&per&&!per.virtual&&per.id);}
 const xpTierDone=(per,x)=>{const lg=S.logs[S.uid];return !!(lg&&lg.coinGot&&lg.coinGot[xpTierKey(per,x)]!==undefined);};
-function xpTierClaim(per,xs,xp){
+function xpTierClaim(per,xs,xp,dbl){
   const lg=S.logs[S.uid]||{},base=Object.assign({},lg.coinGot||{}),ks=[];
   for(const x of xs){if(!xpTierCoins(per,x)||xp<x)continue;const k=xpTierKey(per,x);if(base[k]!==undefined||ks.includes(k))continue;ks.push(k);}
   if(!ks.length)return 0;
   const all=Object.assign({},base);ks.forEach(k=>{all[k]=XP_TIER_COINS;});
+  const k2=dbl?'x2:'+ks[0]:null; /* pub regardée : une clé en plus = les coins des paliers récupérés, doublés (seulement les 5 coins par palier) */
+  if(k2)all[k2]=ks.length*XP_TIER_COINS;
   S.logs[S.uid]=Object.assign({},lg,{coinGot:all});
   /* les règles Firestore n'acceptent que 3 nouvelles clés de coinGot par écriture : on envoie par paquets de 3, l'un après l'autre */
-  const cum=Object.assign({},base),msg='+'+(ks.length*XP_TIER_COINS)+' coins récupérés.';
+  const cum=Object.assign({},base),msg='+'+(ks.length*XP_TIER_COINS*(dbl?2:1))+' coins récupérés'+(dbl?' (doublés).':'.');
   for(let i=0;i<ks.length;i+=3){
     ks.slice(i,i+3).forEach(k=>{cum[k]=XP_TIER_COINS;});
-    saveLog({coinGot:Object.assign({},cum)},i+3>=ks.length?msg:undefined);
+    saveLog({coinGot:Object.assign({},cum)},(!k2&&i+3>=ks.length)?msg:undefined);
   }
+  if(k2){cum[k2]=ks.length*XP_TIER_COINS;saveLog({coinGot:Object.assign({},cum)},msg);}
   return ks.length;
 }
 /* le pass d'XP : utilisé en fenêtre plein écran (profil) et intégré au Shop (embed) */
@@ -13365,24 +13419,23 @@ function xpPassPanel(o){
   hex.append(h('b',{},'XP'));
   const closeBtn=o.onClose?h('button',{type:'button',class:'bp-x','aria-label':'Fermer',onclick:o.onClose},'✕'):null;
   const top=h('div',{class:'bp-top'},hex,h('div',{class:'bp-val'},fmtN(xp)+' / '+fmtN(mx),h('small',{},'XP')),closeBtn);
-  const allBtn=h('button',{type:'button',class:'bp-all',hidden:true,onclick:()=>claim(pend())});
-  const me=h('div',{class:'bp-me'},h('span',{},fmtN(xp)+' XP'),h('i',{}));
+    const me=h('div',{class:'bp-me'},h('span',{},fmtN(xp)+' XP'),h('i',{}));
   const cards=[],coinEls=[],inner=h('div',{class:'bp-in'},me);
   const det=h('div',{class:'bp-det','aria-live':'polite'});
   const pend=()=>can?sl.filter(s=>xp>=s.x&&xpTierCoins(per,s.x)>0&&!xpTierDone(per,s.x)).map(s=>s.x):[];
-  const sync=()=>{const n=pend().length;allBtn.hidden=!n;if(n)allBtn.textContent='Tout récupérer · +'+(n*XP_TIER_COINS)+' coins';};
+  const sync=()=>{};
   const paint=i=>{
     const e=coinEls[i];if(!e)return;
-    const s=sl[i],c=xpTierCoins(per,s.x),got=xp>=s.x,done=xpTierDone(per,s.x);
+    const s=sl[i],c=xpTierCoins(per,s.x),got=xp>=s.x,done=got&&xpTierDone(per,s.x);
     e.className='bp-coin'+(done?' done':(got&&can)?' ready':'');
     e.replaceChildren(coinIco(13),document.createTextNode(done?'✓':'+'+c));
   };
   const showDet=()=>{
-    const s=sl[cur],got=xp>=s.x,coin=xpTierCoins(per,s.x),done=coin>0&&xpTierDone(per,s.x),rows=[];
+    const s=sl[cur],got=xp>=s.x,coin=xpTierCoins(per,s.x),done=coin>0&&got&&xpTierDone(per,s.x),rows=[];
     if(coin){
       const stt=done?'Récupérés ✓':got?(can?'À récupérer':'Atteint'):'Encore '+fmtN(s.x-xp)+' XP';
       const r=h('div',{class:'bp-dr'},h('b',{},'+'+coin+' coins'),h('span',{},'Palier · '+fmtN(s.x)+' XP · '+stt));
-      if(got&&can&&!done)r.append(h('button',{type:'button',class:'bp-claim',onclick:()=>claim([s.x])},'Récupérer '+coin+' coins'));
+      if(got&&can&&!done){r.append(h('button',{type:'button',class:'bp-claim',onclick:()=>claimAsk([s.x])},'Récupérer '+coin+' coins'));}
       rows.push(r);
     }
     s.rs.forEach(r=>{
@@ -13393,10 +13446,16 @@ function xpPassPanel(o){
     if(!rows.length)rows.push(h('div',{class:'bp-dr'},h('b',{},fmtN(s.x)+' XP'),h('span',{},got?'Palier atteint.':'Encore '+fmtN(s.x-xp)+' XP pour atteindre ce palier.')),h('span',{class:'bp-hint',style:'margin:0;text-align:left'},'Pas de récompense à ce palier.'));
     det.replaceChildren(...rows);
   };
-  const claim=xs=>{
-    const n=xpTierClaim(per,xs,xp);
+  const claim=(xs,dbl)=>{
+    const n=xpTierClaim(per,xs,xp,dbl);
     if(!n)return;
     sl.forEach((s,i)=>paint(i));showDet();sync();
+  };
+  const claimAsk=async xs=>{
+    if(!xs||!xs.length)return;
+    if(!adOn()){claim(xs);return;}
+    const r=await adAsk('reward_xp_double',xs.length*XP_TIER_COINS);
+    if(r)claim(xs,r==='double');
   };
   const pick=i=>{cur=i;cards.forEach((c,k)=>c.classList.toggle('sel',k===i));memo({sel:i});showDet();};
   sl.forEach((s,i)=>{
@@ -13407,13 +13466,13 @@ function xpPassPanel(o){
       s.rs.length>1?h('span',{class:'bp-n'},'×'+s.rs.length):null,pill,
       has?h('span',{class:'bp-st'},got?'✅':'🔒'):(got?h('span',{class:'bp-st'},'✔'):null));
     const c=h('button',{type:'button',class:'bp-c'+(got?' got':'')+(i===cur?' sel':''),'aria-label':fmtN(s.x)+' XP'+(coin?' : +'+coin+' coins':'')+(has?' : '+(s.rs[0].name||'récompense'):''),
-      onclick:()=>{pick(i);if(can&&xp>=s.x&&coin&&!xpTierDone(per,s.x))claim([s.x]);}},box,h('span',{class:'bp-xp'},fmtN(s.x)+' XP'));
+      onclick:()=>{pick(i);if(can&&xp>=s.x&&coin&&!xpTierDone(per,s.x))claimAsk([s.x]);}},box,h('span',{class:'bp-xp'},fmtN(s.x)+' XP'));
     cards.push(c);inner.append(c);paint(i);
     if(i<sl.length-1){const nx=sl[i+1].x,fr=Math.max(0,Math.min(1,(xp-s.x)/Math.max(0.0001,nx-s.x)));inner.append(h('div',{class:'bp-cn'},h('i',{style:'width:'+(fr*100)+'%'})));}
   });
   const track=h('div',{class:'bp-track'},inner);
   if(embed)track.addEventListener('scroll',()=>memo({x:track.scrollLeft}),{passive:true});
-  const hint=h('p',{class:'bp-hint'},(can?'Touche un palier atteint pour récupérer ses '+XP_TIER_COINS+' coins. ':'')+'Fais défiler vers la droite pour voir les prochaines récompenses.');
+  const hint=h('p',{class:'bp-hint'},(can?'Touche un palier atteint pour récupérer ses '+XP_TIER_COINS+' coins'+(adOn()?' (tu pourras les doubler avec une pub). ':'. '):'')+'Fais défiler vers la droite pour voir les prochaines récompenses.');
   const lay=first=>{
     const W=Math.min(track.clientWidth||360,window.innerWidth||360),cw=Math.max(70,Math.min(150,Math.floor((W-2*PAD-2*G)/3))); /* 3 cartes visibles (jamais plus de 150 px : la piste ne doit pas s'élargir avec son contenu) */
     track.style.setProperty('--bpw',cw+'px');track.style.setProperty('--bpg',G+'px');track.style.setProperty('--bpp',PAD+'px');
@@ -13431,7 +13490,7 @@ function xpPassPanel(o){
     const go=n=>{if(!track.isConnected){if(n<40)requestAnimationFrame(()=>go(n+1));return;}lay(true);if(window.ResizeObserver)new ResizeObserver(()=>lay(false)).observe(track);};
     requestAnimationFrame(()=>go(0));
   }
-  return {els:[top,allBtn,track,det,hint],lay,closeBtn};
+  return {els:[top,track,det,hint].filter(Boolean),lay,closeBtn};
 }
 function openXpPass(uid,xp,per0){
   if(document.querySelector('.bp-ov'))return;
@@ -13647,7 +13706,7 @@ function pgArc(val,frac,col,label,sub){
   return h('div',{class:'pg-ak'},w,h('div',{class:'tx'},h('b',{},val),h('span',{class:'lab'},label),h('span',{class:'sub'},sub)));
 }
 function pgRewards(xp,nr){
-  const lg=S.logs[S.uid]||{},owned=new Set(lg.rewardOwned||[]),got=[];
+  const lg=S.logs[S.uid]||{},owned=new Set(rwOwnedKeys(lg)),got=[];
   for(const [pid,per] of Object.entries(S.periods||{}))for(const r of (per.rewards||[]))if(owned.has(pid+':'+r.id)&&r.id!=='rat-laboratoire'&&!bgRemoved(r))got.push({r,start:per.start||''});
   got.sort((a,b)=>b.start.localeCompare(a.start));
   const hex=(ico,name,type,locked)=>h('div',{class:'pg-hex'+(locked?' lock':'')},h('div',{class:'hx'},h('span',{},ico)),h('b',{},name),h('small',{},type));
@@ -14452,7 +14511,7 @@ function capRepsAtFrac(cm,e,frac){
 }
 /* palier time cap : pct % des reps totales, arrondi à la fin du dernier exercice terminé, dans l'unité du score des athlètes */
 function capTierValue(p,e,pct){
-  const cm={format:p.format,content:p.content,repsRound:Number(p.repsRound)||0,lineRounds:p.format==='FT'&&!!p.lineRounds};
+  const cm={format:p.format,content:p.content,detail:p.detail,repsRound:Number(p.repsRound)||0,lineRounds:p.format==='FT'&&!!p.lineRounds};
   const b=capBoundaries(cm,e);
   if(!b.length)return String(Math.max(1,Math.round(e.R*pct/100)));
   const total=b[b.length-1],target=total*pct/100;let v=b[0];
@@ -14667,7 +14726,7 @@ function calcTiers(p){
     const out={tiers:[],capTiers:[]};
     if(ft){
       const capS=dur>0?dur*60:0,times=spreadTimesPct(e.T*I.f,spreadPct('FT')*mul,0,N);
-      const cm={format:pp.format,content:pp.content,repsRound:Number(pp.repsRound)||0,lineRounds:pp.format==='FT'&&!!pp.lineRounds};
+      const cm={format:pp.format,content:pp.content,detail:pp.detail,repsRound:Number(pp.repsRound)||0,lineRounds:pp.format==='FT'&&!!pp.lineRounds};
       const bnd=capBoundaries(cm,e),total=bnd.length?bnd[bnd.length-1]:e.R;
       let prev=Infinity,lastT=0;
       times.forEach((t,j)=>{
@@ -14873,7 +14932,13 @@ function coachMenu(){
 const blankTiers=()=>Array.from({length:10},(_,j)=>({t:'',p:String(10-j)})); /* 10 paliers, points 10 à 1 préremplis */
 const blankCapTiers=()=>[{t:'',p:''},{t:'',p:''},{t:'',p:''}];
 /* reps cumulées -> texte saisi par le coach : « 5+4 » si le WOD a des tours, sinon un nombre de reps */
-const capInput=(m,v)=>{const pl=planOf(m);if(!pl)return String(v).replace('.',',');const x=cumToRounds(pl,v);return x.r+'+'+fmtN(rawToEq(pl,x.r,x.rp));};
+const capInput=(m,v)=>{
+  const pl=planOf(m);if(!pl)return String(v).replace('.',',');
+  const x=cumToRounds(pl,v),e=rawToEq(pl,x.r,x.rp);
+  if(pl.lines)return x.r+'+'+fmtN(e); /* mode « ligne = tour » : « 4+60 » */
+  /* lisible : « 5 tours + 4 reps » (le champ accepte aussi « 5+4 ») */
+  return (x.r>0?x.r+' tour'+(x.r>1?'s':''):'')+((e>0||x.r===0)?(x.r>0?' + ':'')+fmtN(e)+' rep'+(e>1?'s':''):'');
+};
 /* texte du coach -> reps cumulées. « 5+4 » ou « 5 tours + 4 reps » = tours + reps ; un nombre seul = reps */
 function parseCap(m,s){
   const t=String(s).trim().toLowerCase(),pl=planOf(m);
@@ -14882,14 +14947,14 @@ function parseCap(m,s){
   if(m1){r=+m1[1];rp=+m1[2];}else if(m2){r=+m2[1];}
   if(r!==null){
     if(!pl)return null;
-    if(pl.sizes&&r>=pl.sizes.length)return null;
+    if((pl.sizes&&r>=pl.sizes.length)||(pl.nr&&r>=pl.nr))return null;
     const sz=sizeAt(pl,r);
     if(pl.lines&&rp>=pl.items[r].eq-1e-9&&rp>0)return null;
     const rr=eqToRaw(pl,r,rp);
     if(sz>0&&rr>=sz)return null;
     return planCum(pl,r,rr);
   }
-  if(/^\d+(?:[.,]\d+)?$/.test(t))return parseNum(t);
+  if(/^\d+(?:[.,]\d+)?\s*(?:reps?)?$/.test(t))return parseNum(t.replace(/\s*reps?$/,''));
   return null;
 }
 const blankLevels=()=>LEVEL_NAMES.map((n,k)=>({name:n,loadF:'',loadH:'',note:'',vars:{},tiers:blankTiers(),capTiers:blankCapTiers(),mode:k===0?'off':k<3?'same':'custom',touched:false}));
@@ -14908,7 +14973,7 @@ function blankWod(){return {date:todayStr(),title:'',base:'',deload:false,parts:
 function wodToDraft(w){
   return {date:w.date,title:w.title||'',base:(w.base!==undefined&&w.base!==null)?String(w.base):'',deload:!!w.deload,bonus:!!w.bonus,
     parts:(w.parts||[]).map(p=>{
-      const fmt=p.format||'FT';const cm={format:fmt,content:p.content||'',repsRound:p.repsRound||0,lineRounds:!!p.lineRounds};
+      const fmt=p.format||'FT';const cm={format:fmt,content:p.content||'',detail:p.detail,repsRound:p.repsRound||0,lineRounds:!!p.lineRounds};
       const L0=(p.kind==='metcon'?levelsOf(p):blankLevels()).slice(-4),pad=4-L0.length; /* ancien metcon à 3 niveaux : Découverte est ajoutée en tête, désactivée */
       const lv=L0.map((l,i)=>({mode:l.mode||(l.off?'off':'custom'),touched:l.touched!==undefined?l.touched:!l.off,name:l.name||LEVEL_NAMES[i+pad],loadF:l.loadF||'',loadH:l.loadH||'',note:l.note||'',dRounds:Number(l.dRounds)||0,dReps:Object.assign({},l.dReps||{}),vars:mvVarsOf(l),
         tiers:(l.tiers&&l.tiers.length)?l.tiers.map(t=>({t:(fmt==='FT'||(fmt==='EMOM'&&p.deadBy))?fmtTime(t.t):String(t.t).replace('.',','),p:String(t.p)})):blankTiers(),
@@ -14983,7 +15048,7 @@ function draftToWod(d){
         tiers.sort((a,b)=>p.format==='FT'?a.t-b.t:b.t-a.t);
         const capTiers=[];
         if(p.format==='FT'){
-          const cm={format:p.format,content:p.content,repsRound:o.repsRound||0,lineRounds:!!o.lineRounds};
+          const cm={format:p.format,content:p.content,detail:p.detail,repsRound:o.repsRound||0,lineRounds:!!o.lineRounds};
           for(const r of (lv.capTiers||[])){
             if(String(r.t).trim()===''&&String(r.p).trim()==='')continue;
             const t=parseCap(cm,r.t),pts=parseNum(r.p);
@@ -15830,21 +15895,21 @@ function tiersEditor(p,lv,i,k){
     h('div',{class:'row'},h('button',{class:'btn sm',type:'button',onclick:()=>tierAdd(p,lv)},'Ajouter un palier')));
 }
 function capTiersEditor(p,lv,i,k){
-  const pl=planOf({format:p.format,content:p.content,repsRound:Number(p.repsRound)||0,lineRounds:p.format==='FT'&&!!p.lineRounds});
+  const pl=planOf({format:p.format,content:p.content,detail:p.detail,repsRound:Number(p.repsRound)||0,lineRounds:p.format==='FT'&&!!p.lineRounds});
   if(!lv.capTiers)lv.capTiers=blankCapTiers();
   const sz=pl&&pl.sizes?pl.sizes.slice(0,8).join(', ')+(pl.sizes.length>8?'…':''):'';
   const info=pl&&pl.lines
     ?'Mode « chaque ligne = 1 tour » : '+pl.sizes.length+' lignes. Écris « 4+60 » pour 4 lignes terminées + 60 reps équivalentes sur la ligne 5 (600 m avec {10=1}), ou un nombre seul pour un total de reps.'
     :!pl
-    ?'Aucun tour détecté : écris un nombre de reps réalisées au time cap (par exemple 81). Pour noter en tours + reps (5+4), écris un schéma dans le contenu (21-15-9, 10-9-8-…-1) ou renseigne « Reps par tour ».'
+    ?'Aucun tour détecté : écris un nombre de reps réalisées au time cap (par exemple 81). Pour noter en tours + reps, écris « 5 rounds » dans le contenu, un schéma (21-15-9, 10-9-8-…-1) ou renseigne « Reps par tour ».'
     :(pl.sizes
       ?'Schéma détecté : '+pl.nums.join('-')+(pl.k>1?' ('+pl.k+' mouvements par ligne)':'')+'. Chaque nombre est un tour, en reps : '+sz+'. Écris « 2+10 » pour 2 tours + 10 reps, ou un nombre seul pour un total de reps (par exemple 81).'
-      :'Un tour = '+fmtN(pl.rm?pl.rm.eq:pl.size)+' reps. Écris « 5+4 » pour 5 tours + 4 reps, ou un nombre seul pour un total de reps (par exemple 81).');
+      :'Un tour = '+fmtN(pl.rm?pl.rm.eq:pl.size)+' reps'+(pl.auto?' (déduit du contenu)':'')+'. Écris « 5 tours + 4 reps » (ou « 5+4 »), ou un nombre seul pour un total de reps (par exemple 81).');
   return h('div',{class:'stack'},
     h('div',{class:'flabel'},'Si le time cap arrête l’athlète : score supérieur ou égal au palier'),
     h('p',{class:'hint'},info),
     lv.capTiers.map((r,j)=>h('div',{class:'trow'},
-      h('input',{id:'p'+i+'-l'+k+'-ct'+j,type:'text','aria-label':'Score au time cap du palier',value:r.t,placeholder:pl?'5+4':'81',oninput:e=>{r.t=e.target.value;},onchange:()=>{const cm={format:p.format,content:p.content,repsRound:Number(p.repsRound)||0,lineRounds:p.format==='FT'&&!!p.lineRounds};if(reslotTiers(lv.capTiers,x=>parseCap(cm,x),false))render();}}),
+      h('input',{id:'p'+i+'-l'+k+'-ct'+j,type:'text','aria-label':'Score au time cap du palier',value:r.t,placeholder:pl?(pl.lines?'4+60':'5 tours + 4 reps'):'81',oninput:e=>{r.t=e.target.value;},onchange:()=>{const cm={format:p.format,content:p.content,detail:p.detail,repsRound:Number(p.repsRound)||0,lineRounds:p.format==='FT'&&!!p.lineRounds};if(reslotTiers(lv.capTiers,x=>parseCap(cm,x),false))render();}}),
       h('input',{id:'p'+i+'-l'+k+'-cp'+j,type:'text',inputmode:'numeric','aria-label':'Points du palier time cap',value:r.p,placeholder:'points',oninput:e=>{r.p=e.target.value;}}),
       h('button',{class:'btn sm',type:'button','aria-label':'Retirer le palier',onclick:()=>{lv.capTiers.splice(j,1);render();}},'✕'))),
     h('div',{class:'row'},h('button',{class:'btn sm',type:'button',onclick:()=>{lv.capTiers.push({t:'',p:''});render();}},'Ajouter un palier time cap')));
@@ -16516,7 +16581,7 @@ function rewardImage(r){
    des coins (assets/embedded/Coins_sonnants_et_trebuchants.mp4) avec « + X » (X = coins gagnés), et un bouton « D'accord ».
    La promesse se résout à la fermeture : l'animation du classement démarre alors, comme avant. Ne rejette jamais. */
 const COIN_VIDEO='assets/embedded/Coins_sonnants_et_trebuchants.mp4';
-function coinWin(n,info){
+function coinWin(n,info,date){
   n=Math.floor(Number(n))||0;
   const tot=n+((info&&info.total)||0);
   if(tot<1)return Promise.resolve();
@@ -16533,7 +16598,17 @@ function coinWin(n,info){
     let first=true;
     vid.addEventListener('ended',()=>{if(done)return;if(first){first=false;vid.muted=true;}vid.currentTime=0;const p=vid.play();if(p&&p.catch)p.catch(()=>{});});
     vid.addEventListener('click',()=>{vid.muted=false;vid.currentTime=0;const p=vid.play();if(p&&p.catch)p.catch(()=>{vid.muted=true;const q=vid.play();if(q&&q.catch)q.catch(()=>{});});}); /* un toucher sur la vidéo la rejoue avec le son */
-    const okBtn=h('button',{class:'btn primary',type:'button',onclick:close},'D’accord');
+    const canX2=!!(date&&adOn()&&((S.logs[S.uid]||{}).coinGot||{})['x2:'+date]===undefined);
+    if(canX2){try{Ads.preloadRewarded('reward_session_double');}catch(e){}}
+    const okBtn=h('button',{class:'btn primary',type:'button'},'D’accord');
+    okBtn.onclick=async()=>{
+      if(!canX2){close();return;}
+      okBtn.disabled=true;
+      const r=await adAsk('reward_session_double',tot);
+      if(r==='double'&&!(await adCoinAdd({['x2:'+date]:tot},'Coins doublés : +'+tot+' coins.')))toast('Doublage non enregistré, réessaie.',true);
+      okBtn.disabled=false;
+      if(r)close();
+    };
     if(!info){
       card.append(vid,
         h('div',{class:'cw-n','aria-label':'Tu gagnes '+n+' coin'+(n>1?'s':'')},'+ '+n),
@@ -17679,7 +17754,7 @@ function bnOwned(uid,it){
   const lg=S.logs[uid]||{};
   if(it.cm)return cmOwned(uid,it);
   if(Object.prototype.hasOwnProperty.call(lg.shopBuy||{},it.id))return true;
-  const owned=new Set(lg.rewardOwned||[]);
+  const owned=new Set(rwOwnedKeys(lg));
   for(const [pid,per] of Object.entries(S.periods||{}))for(const r of (per.rewards||[]))if(r.type===it.kind&&r.asset===it.asset&&owned.has(pid+':'+r.id))return true;
   return false;
 }
@@ -17704,7 +17779,48 @@ const coinSum=o=>Object.values(o||{}).reduce((a,v)=>a+(Number(v)||0),0);
 /* coins gagnés : les coins d'une séance (clé = date) ne comptent QUE tant que la séance est enregistrée ; retirer la séance retire ses coins.
    Les autres clés (récompenses « rw:… ») et l'ajustement du coach comptent toujours. en = entrées à utiliser à la place de lg.entries (simulation d'un retrait). */
 const coinDateKey=k=>/^\d{4}-\d{2}-\d{2}$/.test(k);
-const coinEarned=(lg,en,rd)=>{const cg=(lg&&lg.coinGot)||{},E=en||(lg&&lg.entries)||{},R=rd||(lg&&lg.redos)||{};let t=0;for(const [k,v] of Object.entries(cg)){if(coinDateKey(k)&&!E[k])continue;if(k.startsWith('tb:')&&!E[k.slice(3)])continue;if(k.startsWith('redo:')&&!R[k.slice(5)])continue;t+=Number(v)||0;}return t+(Number(lg&&lg.coinAdj)||0);};
+/* ---------- anti-triche : le pass d'XP suit l'XP réelle ----------
+   Les coins des paliers (« rw:saison:xpN »), les coins des récompenses de saison (« rw:saison:récompense ») et leurs doublages (« x2:… ») ne comptent que tant que l'XP de la saison en cours atteint le palier.
+   Si l'athlète retire des séances, son XP recule : ces coins repartent avec (comme les coins de séance), et les récompenses de saison reçues (avatars, fonds, jokers…) sont retirées elles aussi.
+   Rien n'est effacé dans la base : si l'XP remonte grâce à de vraies séances, ils reviennent. Les saisons terminées ne bougent plus. */
+const _xpMemo={};
+function uidOfLog(lg){if(!lg)return null;for(const u of Object.keys(S.logs||{}))if(S.logs[u]===lg)return u;return null;}
+function xpNow(uid,pid){
+  const per=S.periods&&S.periods[pid],lg=uid&&S.logs&&S.logs[uid];
+  if(!per||!lg||per.virtual)return null;
+  const wn=Object.keys(S.wods||{}).length;
+  if(!wn)return null; /* séances du programme pas encore chargées : on ne retire rien */
+  const p=Object.assign({id:pid},per);
+  if(periodState(p)==='done')return null;
+  const en=lg.entries,rd=lg.redos,ne=en?Object.keys(en).length:0,nr=rd?Object.keys(rd).length:0,key=uid+'|'+pid,m=_xpMemo[key];
+  if(m&&m.en===en&&m.rd===rd&&m.ne===ne&&m.nr===nr&&m.wn===wn)return m.xp;
+  let xp=null;try{xp=seasonXp(uid,p);}catch(e){xp=null;}
+  _xpMemo[key]={en,rd,ne,nr,wn,xp};
+  return xp;
+}
+function coinXpNeed(k){
+  k=String(k);if(k.startsWith('x2:'))k=k.slice(3);
+  let m=/^rw:([^:]+):xp(\d+)$/.exec(k);
+  if(m)return {pid:m[1],need:Number(m[2])};
+  m=/^rw:([^:]+):(.+)$/.exec(k);
+  if(m){const per=S.periods&&S.periods[m[1]],r=per&&(per.rewards||[]).find(x=>x.id===m[2]);if(r&&Number(r.xp)>0)return {pid:m[1],need:Number(r.xp)};}
+  return null;
+}
+function coinXpOk(uid,k,memo){
+  const t=coinXpNeed(k);if(!t||!uid)return true;
+  const mk=t.pid;if(memo[mk]===undefined)memo[mk]=xpNow(uid,t.pid);
+  return memo[mk]===null||memo[mk]>=t.need;
+}
+/* une récompense de saison (clé « saison:id ») est-elle encore méritée avec l'XP actuelle ? */
+function rwKept(uid,key){
+  const [pid,rid]=String(key).split(':'),per=S.periods&&S.periods[pid],r=per&&(per.rewards||[]).find(x=>x.id===rid);
+  if(!r||!uid)return true;
+  const need=Number(r.xp)||0;if(need<=0)return true;
+  const xp=xpNow(uid,pid);
+  return xp===null||xp>=need;
+}
+function rwOwnedKeys(lg){const u=uidOfLog(lg),a=(lg&&lg.rewardOwned)||[];return u?a.filter(k=>rwKept(u,k)):a;}
+const coinEarned=(lg,en,rd)=>{const cg=(lg&&lg.coinGot)||{},E=en||(lg&&lg.entries)||{},R=rd||(lg&&lg.redos)||{},uidL=uidOfLog(lg),xm={};let t=0;for(const [k,v] of Object.entries(cg)){if(coinDateKey(k)&&!E[k])continue;if(k.startsWith('rw:')||k.startsWith('x2:rw:')){if(!coinXpOk(uidL,k,xm))continue;}if(k.startsWith('tb:')&&!E[k.slice(3)])continue;if(k.startsWith('redo:')&&!R[k.slice(5)])continue;if(k.startsWith('x2:')){const o=k.slice(3);if(coinDateKey(o)&&!E[o])continue;}t+=Number(v)||0;}return t+(Number(lg&&lg.coinAdj)||0);};
 const coinBal=uid=>{const lg=S.logs[uid]||{};return coinEarned(lg)-coinSum(lg.shopBuy);};
 /* coins d'une séance : une seule fois par date, au moment où le résultat est enregistré */
 const coinRedoPatch=(uid,date)=>{const lg=S.logs[uid]||{},k='redo:'+date;if(lg.coinGot&&lg.coinGot[k]!==undefined)return null;return {coinGot:Object.assign({},lg.coinGot||{},{[k]:COIN_REDO})};};
@@ -17717,6 +17833,122 @@ function coinReadAward(kind,what){
   const lg=S.logs[S.uid];
   saveLog({coinGot:Object.assign({},lg.coinGot||{},{['rd:'+kind]:READ_COIN})},what+' lu : +'+READ_COIN+' coins.');
 }
+/* ---------- PUBS RÉCOMPENSÉES (AdMob, appli iPhone seulement : sur le web rien ne change) ----------
+   Les coins en plus sont de NOUVELLES clés de coinGot (les clés existantes ne peuvent pas changer, règles Firestore) :
+     « x2:<clé d'origine> » = doublage (séance : x2:AAAA-MM-JJ ; bonus : x2:dc:AAAA-MM-JJ ; paliers : x2:rw:saison:xpN) ; il suit sa séance si elle est retirée.
+     « ad:AAAA-MM-JJ:n » (n = 1 à 5) = pub du Shop, 2 coins chacune, 5 par jour. */
+const AD_SHOP_COINS=2,AD_SHOP_MAX=5;
+const adOn=()=>{try{return !!(window.Ads&&Ads.isSupported());}catch(e){return false;}};
+let adBusy=false,adWhy='';
+async function adWatch(placement){
+  if(adBusy)return false;
+  adWhy='';
+  if(!adOn()){toast('Les pubs ne sont disponibles que dans l’appli iPhone.',true);return false;}
+  adBusy=true;
+  try{
+    const r=await Ads.showRewarded(placement);
+    adWhy=(r&&r.reason)||'';
+    if(r&&r.rewarded)return true;
+    toast(r&&r.reason==='no_ad'?'Aucune pub disponible pour le moment. Réessaie dans un instant.':'Regarde la pub jusqu’au bout pour obtenir la récompense.',true);
+    return false;
+  }catch(e){adWhy='error';toast('Pub indisponible pour le moment.',true);return false;}
+  finally{adBusy=false;}
+}
+/* Encadré « Doubler en regardant une pub ? » : s'ouvre quand on appuie pour récupérer une récompense.
+   Renvoie 'double' (pub regardée jusqu'au bout), 'single' (« Non merci » : récompense normale) ou null (fermé : rien n'est récupéré). */
+function adAsk(placement,coins){
+  return new Promise(res=>{
+    const prevOv=document.body.style.overflow;
+    const ov=h('div',{class:'ad-ask',role:'dialog','aria-modal':'true','aria-label':'Doubler la récompense'});
+    const end=v=>{document.removeEventListener('keydown',onKey);document.body.style.overflow=prevOv;ov.remove();res(v);};
+    const onKey=e=>{if(e.key==='Escape'&&!busy)end(null);};
+    let busy=false;
+    const yes=h('button',{class:'ad-ask-yes',type:'button'},'🎬 Regarder une pub : +'+(coins*2)+' coins');
+    const no=h('button',{class:'ad-ask-no',type:'button'},'Non merci, juste +'+coins+' coin'+(coins>1?'s':''));
+    yes.onclick=async()=>{
+      busy=true;yes.disabled=true;no.disabled=true;const t=yes.textContent;yes.textContent='Chargement de la pub…';
+      const ok=await adWatch(placement);
+      busy=false;
+      if(ok){end('double');return;}
+      yes.disabled=false;no.disabled=false;yes.textContent=t;
+    };
+    no.onclick=()=>end('single');
+    ov.append(h('div',{class:'ad-ask-c'},
+      h('h3',{},'Doubler ta récompense ?'),
+      h('p',{},'Regarde une courte pub pour gagner '+(coins*2)+' coins au lieu de '+coins+'.'),
+      yes,no));
+    document.addEventListener('keydown',onKey);
+    document.body.style.overflow='hidden';
+    document.body.append(ov);
+    try{Ads.preloadRewarded(placement);}catch(e){}
+  });
+}
+/* ajoute de nouvelles clés dans coinGot (3 nouvelles clés maximum par écriture) ; renvoie true si elles sont bien enregistrées */
+async function adCoinAdd(map,msg){
+  const lg=S.logs[S.uid]||{};
+  await saveLog({coinGot:Object.assign({},lg.coinGot||{},map)},msg);
+  const cg=((S.logs[S.uid]||{}).coinGot)||{};
+  return Object.keys(map).every(k=>cg[k]!==undefined);
+}
+/* séances hors de la semaine en cours : verrouillées tant qu'on n'a pas regardé une pub (déblocage retenu dans le téléphone) */
+const adUnlockKey=()=>'bs-adunlock-'+(S.uid||'');
+function adUnlockGet(){try{const a=JSON.parse(localStorage.getItem(adUnlockKey())||'[]');return Array.isArray(a)?a:[];}catch(e){return [];}}
+function adUnlockAdd(d){try{const a=adUnlockGet();if(!a.includes(d)){a.push(d);localStorage.setItem(adUnlockKey(),JSON.stringify(a.slice(-300)));}}catch(e){}}
+/* horizon : un athlète ne voit les séances qu'une semaine à l'avance (jusqu'au dimanche de la semaine suivante), même si elles sont déjà programmées ; le coach voit tout */
+const aheadEnd=()=>addDays(mondayOf(todayStr()),13);
+const aheadHidden=date=>!S.owner&&!!date&&date>aheadEnd();
+/* secours : si aucune pub n'est disponible 2 fois de suite pour une séance, elle est débloquée jusqu'à la fin de la journée (pour ne pas bloquer l'athlète par un manque de pub) */
+const adGraceKey=()=>'bs-adgrace-'+(S.uid||'');
+function adGraceGet(){try{const o=JSON.parse(localStorage.getItem(adGraceKey())||'{}');return(o&&o.day===todayStr()&&Array.isArray(o.dates))?o.dates:[];}catch(e){return [];}}
+function adGraceAdd(d){try{const a=adGraceGet();if(!a.includes(d))a.push(d);localStorage.setItem(adGraceKey(),JSON.stringify({day:todayStr(),dates:a.slice(-50)}));}catch(e){}}
+const adFailN={};
+function adLockedDate(date){
+  if(!adOn()||!S.uid||!date||!S.wods[date])return false;
+  /* saisons terminées et saisons verrouillées : mêmes règles que les semaines passées (contenu masqué, pub pour débloquer) */
+  if(mondayOf(date)===mondayOf(todayStr())||mondayOf(date)===addDays(mondayOf(todayStr()),7))return false; /* semaine en cours et semaine suivante : libres */
+  const lg=S.logs[S.uid]||{};
+  if(lg.entries&&lg.entries[date])return false;
+  return !adUnlockGet().includes(date)&&!adGraceGet().includes(date);
+}
+function viewAdLock(date){
+  const w0=S.wods[date],w=w0&&myWod(w0,S.uid),el=h('div',{class:'stack'});
+  el.append(h('div',{class:'row back-row'},h('button',{class:'btn sm back-btn',type:'button',onclick:backToCards},'← Retour aux séances')));
+  el.append(h('div',{},h('p',{class:'eyebrow'},pastSeasonDate(date)?'Séance d’une saison terminée':(date<todayStr()?'Séance d’une semaine passée':'Séance à venir')),h('h1',{class:'day'},cap(fmtDate(date)))));
+  const b=h('button',{class:'btn primary',type:'button',id:'ad-unlock'},'🎬 Débloquer cette séance avec une pub');
+  b.onclick=async()=>{
+    b.disabled=true;const t=b.textContent;b.textContent='Chargement de la pub…';
+    if(await adWatch('reward_unlock_session')){adUnlockAdd(date);toast('Séance débloquée !');render();window.scrollTo(0,0);}
+    else{
+      if(adWhy==='no_ad'||adWhy==='show_failed'||adWhy==='error'){
+        adFailN[date]=(adFailN[date]||0)+1;
+        if(adFailN[date]>=2){adGraceAdd(date);toast('Aucune pub disponible : séance débloquée pour aujourd’hui.');render();window.scrollTo(0,0);return;}
+      }
+      b.disabled=false;b.textContent=t;
+    }
+  };
+  el.append(h('section',{class:'card',style:'display:grid;gap:12px'},h('h2',{class:'h2'},'🔒 '+((w&&w.title)||'Séance verrouillée')),
+    h('p',{},'Les séances de la semaine en cours et de la semaine suivante sont libres. Pour celle-ci, regarde une courte pub : elle reste ensuite débloquée.'),b));
+  try{Ads.preloadRewarded('reward_unlock_session');}catch(e){}
+  return el;
+}
+/* Shop : pub contre des coins, 5 par jour */
+function adShopUsed(){const cg=((S.logs[S.uid]||{}).coinGot)||{},d=todayStr();let n=0;for(let k=1;k<=AD_SHOP_MAX;k++)if(cg['ad:'+d+':'+k]!==undefined)n++;return n;}
+function adShopBox(){
+  const used=adShopUsed(),left=AD_SHOP_MAX-used;
+  const b=h('button',{class:'sh-btn',type:'button',id:'ad-shop',disabled:left<=0},left>0?'🎬 Regarder une pub : +'+AD_SHOP_COINS+' coins':'Reviens demain !');
+  b.onclick=async()=>{
+    if(adShopUsed()>=AD_SHOP_MAX)return;
+    b.disabled=true;b.textContent='Chargement de la pub…';
+    if(await adWatch('reward_shop_coins')){
+      const cg=((S.logs[S.uid]||{}).coinGot)||{},d=todayStr();let k=1;
+      while(k<=AD_SHOP_MAX&&cg['ad:'+d+':'+k]!==undefined)k++;
+      if(k<=AD_SHOP_MAX){const ok=await adCoinAdd({['ad:'+d+':'+k]:AD_SHOP_COINS},'+'+AD_SHOP_COINS+' coins !');if(!ok)toast('Coins non enregistrés, réessaie.',true);}
+    }
+    render();
+  };
+  try{if(left>0)Ads.preloadRewarded('reward_shop_coins');}catch(e){}
+  return h('section',{class:'sh-box'},h('p',{},h('b',{},'Coins gratuits')),h('p',{class:'muted'},'Regarde une pub pour gagner '+AD_SHOP_COINS+' coins ('+used+' / '+AD_SHOP_MAX+' aujourd’hui).'),b);
+}
 const coinPatch=(uid,date)=>{
   const lg=S.logs[uid]||{},n=coinForDate(date),have=lg.coinGot||{},add={};
   if(n&&have[date]===undefined)add[date]=n;
@@ -17728,7 +17960,15 @@ const coinPatch=(uid,date)=>{
 for(const it of AV_ITEMS)if(!AV_OBJ[it.id])AV_OBJ[it.id]={d:'À acheter dans le Shop, avec des coins.',test:()=>false};
 /* pastille de l'en-tête : solde de coins */
 /* coins : la pièce et le nombre, sans fond, à cheval sur l'icône Shop de la barre du bas. Au-dessus de 100 coins, ils s'agitent une fois par minute (à dépenser !). */
-function updateCoinChip(){const el=document.querySelector('.tab-coin');if(el)coinChipPaint(el);}
+function updateCoinChip(){const el=document.querySelector('.tab-coin');if(el)coinChipPaint(el);const hc=document.querySelector('.hdr-coin');if(hc)hdrCoinPaint(hc);}
+/* coins dans le bandeau du haut : un toucher ouvre le Shop */
+function hdrCoinPaint(el){
+  const cb=S.uid?coinBal(S.uid):0;
+  el.classList.toggle('neg',cb<0);
+  el.setAttribute('aria-label',cb+' coins : ouvrir le Shop');
+  el.replaceChildren(coinIco(16),h('b',{},String(cb)));
+}
+function hdrCoin(){const el=h('button',{class:'hdr-coin',type:'button',title:'Ouvrir le Shop',onclick:()=>go('shop')});hdrCoinPaint(el);return el;}
 function coinChipPaint(el){
   const cb=S.uid?coinBal(S.uid):0;
   el.className='tab-coin'+(cb<0?' neg':'');el.dataset.bal=String(cb);
@@ -17937,6 +18177,7 @@ function viewShop(){
       its.length?grid(its):h('section',{class:'sh-box'},h('p',{class:'muted'},'Rien dans cette catégorie pour l’instant. Reviens bientôt : de nouveaux objets arrivent !')));
   }else{
     if(dcCan()&&!dcInfo().claimed)el.append(h('button',{class:'btn primary',type:'button',id:'dc-open',onclick:openDailyBonus},'Bonus quotidien disponible : +'+dcInfo().coins+' coins'));
+    if(adOn()&&dcCan())el.append(adShopBox());
     el.append(h('section',{class:'sh-hero sh-hero-pass'},h('div',{class:'sh-hero-t'},'Personnalise',h('br'),h('span',{},'ton univers')),shopPassBlock()));
     el.append(h('div',{class:'sh-h',id:'sh-cats'},h('h2',{},'Catégories'),h('button',{class:'sh-link',type:'button',onclick:()=>open('all')},'Tout voir →')),
       shopCatsStrip(all,open));
@@ -18452,14 +18693,14 @@ const tourBusy=()=>!!document.querySelector('.ov,.cer,.tm,.avfs,.ann,.reward-pop
 const curTourId=()=>!S.uid?((S.authReady&&S.db)?'login':null):((S.viewUser||S.boardDetail)?null:((S.tab==='today'&&!S.viewDate)?'cards':(TOURS[S.tab]?S.tab:null)));
 /* nom de la saison : en haut de la page Séance seulement */
 function seasonRow(p){return h('div',{class:'season-row'},h('span',{class:'chip season-chip '+(periodState(p)==='live'?'live':'done'),'data-tour':'season'},p.virtual?'Saison en cours':(p.name||seasonLabel(p))));}
-/* bouton « ? » : fixé en haut de l'écran, sous le bandeau, sur les pages qui ont un guide */
+/* bouton « ? » : dans le bandeau du haut, sur les pages qui ont un guide */
 function placeHelp(){
-  const old=document.getElementById('tour-help');
+  const old=document.getElementById('tour-help'),hr=document.getElementById('hdr-right');
   let want=false;try{want=!!(S.authReady&&S.db&&curTourId());}catch(e){}
-  if(!want){if(old)old.remove();return;}
-  if(old&&old.classList.contains('help-fab'))return;
+  if(!want||!hr){if(old)old.remove();return;}
+  if(old&&old.parentNode===hr)return;
   if(old)old.remove();
-  const b=helpBtn();b.classList.add('help-fab');document.body.append(b);
+  hr.append(helpBtn()); /* le « ? » vit dans le bandeau du haut, à droite */
 }
 function helpBtn(){return h('button',{class:'help-btn',id:'tour-help',type:'button','aria-label':'Afficher le guide de cet écran',title:'Guide de cet écran',onclick:()=>{const t=curTourId();if(t)startTour(TOURS[t]());}},'?');}
 function maybeTour(){
