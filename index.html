@@ -6423,7 +6423,7 @@ async function pushSave(sub){
 }
 async function pushSaveToken(token){
   if(!S.uid||!S.db||!token)return;
-  await S.db.doc('pushSubs/'+subId('fcm:'+token)).set({uid:S.uid,fcm:token,platform:'ios',at:new Date().toISOString()});
+  await S.db.doc('pushSubs/'+subId('fcm:'+token)).set({uid:S.uid,fcm:token,platform:((window.Capacitor&&window.Capacitor.getPlatform&&window.Capacitor.getPlatform())||'ios'),at:new Date().toISOString()});
   pushMark(true);
 }
 /* le jeton FCM peut mettre quelques secondes à arriver juste après l'autorisation (Apple doit d'abord donner son jeton APNs) */
@@ -12670,7 +12670,8 @@ const CM_ITEMS=[
   {id:'plate_cyan_01',layer:'plate',name:'Turquoise',rarity:'rare',css:'cm-pl-cyan'},
   {id:'plate_gold_01',layer:'plate',name:'Dorée',rarity:'epique',css:'cm-pl-gold'},
   {id:'plate_neon_01',layer:'plate',name:'Lumineuse',rarity:'legendaire',css:'cm-pl-neon'},
-  {id:'plate_eclairs_01',layer:'plate',name:'Éclairs',rarity:'epique',src:'assets/embedded/plaque-eclairs.webp'}
+  {id:'plate_eclairs_01',layer:'plate',name:'Éclairs',rarity:'epique',src:'assets/embedded/plaque-eclairs.webp'},
+  {id:'effect_fumee_grise_01',layer:'effect',name:'Fumée grise',rarity:'standard',src:'assets/embedded/effet-fumee-gris.webp',free:true}
 ];
 const CM_DEF_FRAME='frame_industriel_rouge_01'; /* cadre équipé d'office tant que l'athlète n'a rien choisi pour la couche Cadre (un « Aucun » choisi à la main est respecté) */
 const CM_DEFAULT_TITLE='Athlète Cross’Mitaines'; /* texte de la plaque tant que l'athlète n'a pas équipé de titre */
@@ -17069,13 +17070,21 @@ function privacySections(){
       '**Santé et condition physique** : tes résultats d’entraînement, tes charges et tes records, ton poids de corps, et ta déclaration de prévention santé (date, version, indication de minorité et d’accord d’un responsable légal). Ces données servent uniquement à faire fonctionner l’application (points, classement, trophées). Elles ne sont ni vendues ni utilisées pour de la publicité.',
       '**Communauté** : tes publications dans le fil (séances validées), ton classement, tes réactions (emojis), tes signalements, ton avis s’il est publié par le coach, et tes messages avec le coach.',
       '**Usage** : la date de ta dernière ouverture de l’application et les étapes de ton inscription (visibles du coach seul), et l’adresse d’envoi des notifications de ton appareil si tu les actives.',
-      '**Signalement d’un bug** : le texte que tu écris, ton pseudo et le type d’appareil ou de navigateur utilisé.']},
-    {t:'3. Pourquoi ?',p:['Pour faire fonctionner l’application (compte, séances, classement, trophées, avatar), t’envoyer les notifications que tu as activées, modérer la communauté et assurer la sécurité du service. Le traitement repose sur l’exécution du service que tu demandes ; pour les notifications et pour la déclaration de prévention santé, sur ton accord.']},
-    {t:'4. Publicité et suivi',p:['L’application ne contient aucune publicité et ne te suit pas à des fins publicitaires. Tes données ne sont pas vendues.']},
-    {t:'5. Qui y a accès ?',p:['Le coach et l’éditeur. Les prestataires techniques qui font fonctionner le service : Google (Firebase : connexion et base de données), Apple et Google (si tu choisis de te connecter avec eux), GitHub et Cloudflare (envoi des notifications et hébergement de la version web). Certains traitent des données hors de l’Union européenne, notamment aux États-Unis, avec les garanties prévues par la loi.']},
-    {t:'6. Combien de temps ?',p:['Tant que ton compte existe. Quand tu le supprimes (Profil, puis « Supprimer mon compte »), tes données personnelles sont effacées : profil, résultats, avis, réactions, messages et abonnements aux notifications. Il ne reste que la raison de ton départ, si tu l’as donnée, et l’ancienneté du compte, sans aucune identité.']},
-    {t:'7. Tes droits',p:['Tu peux accéder à tes données, les corriger (depuis ton profil), les effacer, t’opposer à leur traitement ou demander leur portabilité en écrivant à '+I.email+'. Tu peux aussi introduire une réclamation auprès de la CNIL (cnil.fr).']},
-    {t:'8. Mineurs',p:['L’application est réservée aux personnes de 16 ans ou plus ; entre 16 et 17 ans, avec l’accord d’un responsable légal.']}
+      '**Signalement d’un bug** : le texte que tu écris, ton pseudo et le type d’appareil ou de navigateur utilisé.',
+      '**Publicité** (sur l’application mobile uniquement, voir section 4) : un identifiant publicitaire de ton appareil, et les informations techniques nécessaires à l’affichage et à la mesure des publicités (type d’appareil, pays, type de connexion).']},
+    {t:'3. Pourquoi ?',p:['Pour faire fonctionner l’application (compte, séances, classement, trophées, avatar), t’envoyer les notifications que tu as activées, modérer la communauté, financer le service en affichant des publicités, et assurer la sécurité du service. Le traitement repose sur l’exécution du service que tu demandes ; sur ton accord pour les notifications, la déclaration de prévention santé, et les publicités personnalisées (voir section 4).']},
+    {t:'4. Publicité',p:[
+      'L’application mobile affiche des publicités fournies par Google AdMob, qui permettent de proposer l’application gratuitement. Ces publicités sont servies par Google et par les partenaires publicitaires de Google (régies et annonceurs du réseau AdMob). Elle n’affiche aucune publicité dans sa version web.',
+      'Lors de ta première ouverture de l’appli mobile, un message te permet de choisir entre des publicités personnalisées ou non personnalisées (choix RGPD), et de refuser le partage de tes données avec ces partenaires. Tu peux revoir ou modifier ce choix à tout moment depuis le menu de l’appli (« Préférences publicitaires »).',
+      'Selon ton choix, Google et ses partenaires peuvent stocker ou lire des informations sur ton appareil (identifiant publicitaire, cookies techniques équivalents) et utiliser une géolocalisation approximative ou précise pour mesurer et personnaliser les publicités. La liste à jour des partenaires publicitaires est consultable depuis le message de consentement affiché dans l’appli. Certains de ces partenaires traitent des données hors de l’Union européenne, notamment aux États-Unis, avec les garanties prévues par la loi (clauses contractuelles types ou équivalent).',
+      'Si tu refuses, tu continues de voir des publicités, mais non personnalisées : elles ne reposent pas sur ton profil ou ton comportement.',
+      'Les données de santé, de condition physique, de compte et de communauté décrites en section 2 ne sont jamais transmises à des fins publicitaires : seules les informations techniques listées ci-dessus le sont.']},
+    {t:'5. Suivi',p:['Sur iOS, l’appli peut te demander l’autorisation de suivi (App Tracking Transparency) avant d’afficher des publicités personnalisées. Tu peux changer ce choix à tout moment dans les réglages de ton iPhone (Réglages › Confidentialité et sécurité › Suivi). Tes données ne sont pas vendues.']},
+    {t:'6. Qui y a accès ?',p:['Le coach et l’éditeur. Les prestataires techniques qui font fonctionner le service : Google (Firebase : connexion et base de données ; AdMob : publicité), Apple et Google (si tu choisis de te connecter avec eux), GitHub et Cloudflare (envoi des notifications et hébergement de la version web). Certains traitent des données hors de l’Union européenne, notamment aux États-Unis, avec les garanties prévues par la loi.']},
+    {t:'7. Combien de temps ?',p:['Tant que ton compte existe. Quand tu le supprimes (Profil, puis « Supprimer mon compte »), tes données personnelles sont effacées : profil, résultats, avis, réactions, messages et abonnements aux notifications. Il ne reste que la raison de ton départ, si tu l’as donnée, et l’ancienneté du compte, sans aucune identité. Les informations publicitaires décrites en section 4 restent gérées par Google selon ses propres règles de conservation.']},
+    {t:'8. Tes droits',p:['Tu peux accéder à tes données, les corriger (depuis ton profil), les effacer, t’opposer à leur traitement ou demander leur portabilité en écrivant à '+I.email+'. Pour la publicité, tu peux à tout moment revoir ton consentement depuis le menu de l’appli. Tu peux aussi introduire une réclamation auprès de la CNIL (cnil.fr).']},
+    {t:'9. Mineurs',p:['L’application est réservée aux personnes de 16 ans ou plus ; entre 16 et 17 ans, avec l’accord d’un responsable légal.']},
+    {t:'10. Supprimer ton compte',p:['Tu peux supprimer ton compte et tes données à tout moment, depuis l’application (Profil, puis « Supprimer mon compte ») ou par e-mail à '+I.email+'.']}
   ];
 }
 function openLegal(id,title,sections){
@@ -17411,6 +17420,9 @@ const BLINK_MS=3000;
 function blinkEl(el){const ms=Date.now()-(S._bt||0);if(ms<BLINK_MS){el.classList.add('need-blink');el.style.animationDelay='-'+ms+'ms';}return el;}
 const blinkIf=(c,el)=>c?blinkEl(el):el;
 function menuDot(){const a=annActive();return !!(pendCount()>0||(a&&!annIsSeen(a))||dmUnread()||recapDot()||notifDotOn()||unusualAll().length>0||!rulesSeen()||!healthSeen()||profDot()||bugDot());}
+const ICO_ADS='<svg '+SVGA+'><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>';
+/* choix de publicité (message de consentement Google) : visible seulement dans l'appli mobile, quand les pubs sont actives */
+const adPrefsOn=()=>{try{return !!(window.Ads&&Ads.hasPrivacyOptions&&Ads.hasPrivacyOptions());}catch(e){return false;}};
 function drawerItems(){
   const a=annActive(),out=[];
   out.push({id:'profile',label:'Profil',ico:ICO_USER,dot:profDot(),cur:S.tab==='profile'&&!S.profView,fn:()=>{const f=()=>{S.profView=null;go('profile');};if(infosGuard(f))return;f();}});
@@ -17422,6 +17434,7 @@ function drawerItems(){
   out.push({id:'bug',label:'Signaler un bug',ico:ICO_BUG,dot:bugDot(),cur:S.tab==='bug',fn:()=>{S.bugFrom=S.tab;S.bugPv=S.profView;S.bugMsg='';S.bugTab=null;bugMarkSeen();go('bug');if(S.owner)loadBugs();}});
   out.push({id:'moves',label:'Apprentissage des mouvements',ico:ICO_MOVES,cur:S.tab==='moves',fn:()=>go('moves')});
   if(!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()))out.push({id:'share',label:'Partager l’appli',ico:ICO_PHONE,cur:S.tab==='share',fn:()=>go('share')}); /* lien web et QR code : inutiles (et refusés par les stores) dans l'appli native */
+  if(adPrefsOn())out.push({id:'adprefs',label:'Préférences publicitaires',ico:ICO_ADS,cur:false,fn:async()=>{try{await Ads.showPrivacyOptions();}catch(e){toast('Préférences indisponibles pour le moment.',true);}}});
   out.push({id:'avis',label:'Avis',ico:ICO_KB,cur:S.tab==='avis',fn:()=>go('avis')});
   return out;
 }
@@ -17843,7 +17856,7 @@ let adBusy=false,adWhy='';
 async function adWatch(placement){
   if(adBusy)return false;
   adWhy='';
-  if(!adOn()){toast('Les pubs ne sont disponibles que dans l’appli iPhone.',true);return false;}
+  if(!adOn()){toast('Les pubs ne sont disponibles que dans l’appli mobile (iPhone ou Android).',true);return false;}
   adBusy=true;
   try{
     const r=await Ads.showRewarded(placement);
@@ -18938,7 +18951,7 @@ function startFirebase(){
   window.addEventListener('offline',scheduleRender);
   window.addEventListener('online',scheduleRender);
   /* service worker pour tout le monde (mode hors ligne) : le même fichier que celui des notifications */
-  if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))setTimeout(()=>{navigator.serviceWorker.register(PUSH_SW).catch(()=>{});},1500);
+  if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)&&!__native)setTimeout(()=>{navigator.serviceWorker.register(PUSH_SW).catch(()=>{});},1500);
   render();
   let unsubs=[];
   onAuthStateChanged(auth,user=>{
