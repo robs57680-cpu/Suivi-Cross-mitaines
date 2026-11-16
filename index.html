@@ -11233,7 +11233,7 @@ function rcCompute(mon,per,gsel,mode){
   /* bots : présents dans tous les groupes, une seule fois ; chaque séance compte le jour prévu de la séance, jamais avant */
   for(const b of botsOn()){
     const a=[];
-    for(const w of wods){if(w.date>t)continue;const x=botPts(b,w,per);a.push({d:w.date,pts:x.base+x.perf,b:x.base,f:x.perf,lv:x.lv,s:1});}
+    for(const w of wods){if(w.date>t||w.bonus)continue;/* les bots ne font pas les séances bonus */const x=botPts(b,w,per);a.push({d:w.date,pts:x.base+x.perf,b:x.base,f:x.perf,lv:x.lv,s:1});}
     if(a.length)ev['bot:'+b.id]=a;
   }
   const cmp=gm?(a,b)=>tot2(b)-tot2(a)||Math.round(b.raw*100)-Math.round(a.raw*100)||a.pseudo.localeCompare(b.pseudo):rowCmp;
@@ -12670,8 +12670,7 @@ const CM_ITEMS=[
   {id:'plate_cyan_01',layer:'plate',name:'Turquoise',rarity:'rare',css:'cm-pl-cyan'},
   {id:'plate_gold_01',layer:'plate',name:'Dorée',rarity:'epique',css:'cm-pl-gold'},
   {id:'plate_neon_01',layer:'plate',name:'Lumineuse',rarity:'legendaire',css:'cm-pl-neon'},
-  {id:'plate_eclairs_01',layer:'plate',name:'Éclairs',rarity:'epique',src:'assets/embedded/plaque-eclairs.webp'},
-  {id:'effect_fumee_grise_01',layer:'effect',name:'Fumée grise',rarity:'standard',src:'assets/embedded/effet-fumee-gris.webp',free:true}
+  {id:'plate_eclairs_01',layer:'plate',name:'Éclairs',rarity:'epique',src:'assets/embedded/plaque-eclairs.webp'}
 ];
 const CM_DEF_FRAME='frame_industriel_rouge_01'; /* cadre équipé d'office tant que l'athlète n'a rien choisi pour la couche Cadre (un « Aucun » choisi à la main est respecté) */
 const CM_DEFAULT_TITLE='Athlète Cross’Mitaines'; /* texte de la plaque tant que l'athlète n'a pas équipé de titre */
