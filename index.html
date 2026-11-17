@@ -4462,7 +4462,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-17.5';
+const APP_VERSION='2026-11-17.8';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -4896,7 +4896,7 @@ function planOf(m){
 function autoPlan(m){
   if(!m||m.format!=='FT')return null;
   const lines=String(m.content||'').split('\n').map(s=>s.trim()).filter(Boolean);
-  if(lines.some(s=>/^\d+(?:[.,]\d+)?\s*(km|m|cal|kcal)\b/i.test(s.replace(WTAG,'').trim())&&!WTAG.test(s)))return null;
+  if(lines.some(s=>{const c=s.replace(WTAG,'').trim(),d=c.match(/^\d+(?:[.,]\d+)?\s*(km|m|cal|kcal)\b\s*(.*)$/i);return d&&!WTAG.test(s)&&!(/^k?m$/i.test(d[1])&&meterMv(d[2]));}))return null; /* « 100m Farmer Carry » : compté au mètre, ce n'est pas une distance à deviner */
   const items=lineItems(m);
   if(!items.length)return null;
   const rm=(lines.join(' ')+' '+String(m.detail||'')).match(/(?:^|[^\d-])(\d+)\s*(?:rounds?|tours?)\b/i);
@@ -14768,18 +14768,27 @@ function capLineSecs(m){
 /* reps réelles cumulées atteintes quand la fraction frac (0-1) du temps total est écoulée, en suivant le temps de chaque ligne ; null si le schéma ne se suit pas ligne par ligne (le calcul reste alors proportionnel aux reps) */
 function capRepsAtFrac(cm,e,frac){
   const pl=planOf(cm);
-  if(!pl||(pl.nums&&!pl.lines))return null; /* schéma 21-15-9 : suivi proportionnel */
-  const segs=capLineSecs(cm);
-  if(!segs.length)return null;
+  if(!pl)return null;
   let list;
-  if(pl.lines){
-    if(segs.length!==pl.sizes.length)return null;
-    list=segs;
+  if(pl.nums&&!pl.lines){ /* schéma 21-15-9 : chaque nombre du schéma, pour chaque mouvement, au temps par rep de ce mouvement */
+    const all=String(cm.content||'').split('\n').map(s=>s.replace(WTAG,'').trim()).filter(Boolean),li=all.findIndex(s=>LADDER.test(s));
+    const mv=all.slice(li+1).filter(s=>!LADDER.test(s));
+    if(mv.length!==pl.k)return null;
+    const secs=mv.map(t=>{const f=secOf(t.replace(/^\d+\s*/,''));return f?f.sec:3;});
+    list=[];pl.nums.forEach(n=>secs.forEach(sc=>list.push({n,eq:n,sec:n*sc})));
   }else{
-    if(!(pl.rm&&pl.size>0))return null;
-    if(Math.abs(segs.reduce((a,x)=>a+x.n,0)-pl.size)>1e-9)return null;
-    list=[];const rounds=Math.max(1,(e&&e.rounds)||1);
-    for(let r=0;r<rounds;r++)segs.forEach(x=>list.push(x));
+    const segs=capLineSecs(cm);
+    if(!segs.length)return null;
+    if(pl.lines){
+      if(segs.length!==pl.sizes.length)return null;
+      list=segs;
+    }else{
+      /* tours identiques (« 12 rounds », « Reps par tour » renseigné ou détecté) : le tour est rejoué autant de fois qu'il y a de tours */
+      if(!(pl.size>0))return null;
+      if(Math.abs(segs.reduce((a,x)=>a+x.n,0)-pl.size)>1e-9)return null;
+      list=[];const rounds=Math.max(1,pl.nr||(e&&e.rounds)||1);
+      for(let r=0;r<rounds;r++)segs.forEach(x=>list.push(x));
+    }
   }
   const T=list.reduce((a,x)=>a+x.sec,0);
   if(!(T>0))return null;
@@ -15014,6 +15023,8 @@ function calcTiers(p){
   const compute=(pp,e)=>{
     const out={tiers:[],capTiers:[]};
     if(ft){
+      /* paliers au-delà du time cap : temps de la suite normale des paliers (comme si le dernier palier avant le time cap n'était pas repoussé jusqu'au time cap),
+         donc le 1er palier après le time cap est celui qui suit vraiment le dernier palier calculé */
       const capS=dur>0?dur*60:0,times=spreadTimesPct(e.T*I.f,spreadPct('FT')*mul,0,N);
       const cm={format:pp.format,content:pp.content,detail:pp.detail,repsRound:Number(pp.repsRound)||0,lineRounds:pp.format==='FT'&&!!pp.lineRounds};
       const bnd=capBoundaries(cm,e),total=bnd.length?bnd[bnd.length-1]:e.R;
