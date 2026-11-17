@@ -4462,7 +4462,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-17.4';
+const APP_VERSION='2026-11-17.5';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -4603,7 +4603,7 @@ const GLOSS=[
 ['Sauts sans corde',['sauts sans corde','saut sans corde','sans corde','jump rope sans corde'],'Variante débutant de la corde à sauter : on saute sur place comme si on avait une corde, en imitant le mouvement des poignets, sans corde.',['Saut sur place, pieds joints, petits sauts rythmés','Poignets qui miment la rotation de la corde','Chaque saut compte comme une répétition'],['Pas de décollage des pieds','Sauts trop hauts, ou genoux qui montent beaucoup'],null,'assets/embedded/Sauts_sans_corde.mp4'],
 ['Wall Ball',['wall ball','wallball'],'Squat avec une balle, lancée sur une cible au mur. Hauteur à atteindre : 3 m pour les hommes, 2,70 m pour les femmes.',['Pli de la hanche sous le sommet des genoux','La balle touche la cible ou au-dessus'],['Balle sous la cible','Profondeur insuffisante'],null,'assets/embedded/wall_ball.mp4'],
 ['Kettlebell Swing',['kettlebell swing','kb swing','russian swing','american swing'],'Balancé de kettlebell. Russian : jusqu’à hauteur des yeux ; American : au-dessus de la tête, bras tendus.',['Hanches et genoux tendus en haut','Kettlebell à la hauteur demandée'],['Hauteur non atteinte','Extension de hanches incomplète'],null,'assets/embedded/kettlebell_swing.mp4'],
-['Lunge',['lunge','walking lunge','fente'],'Fente alternée, en marchant ou sur place.',['Le genou arrière touche le sol','Hanches et genoux tendus entre deux fentes'],['Genou arrière qui ne touche pas le sol','Extension incomplète en haut'],null,'assets/embedded/Lunges.mp4'],
+['Lunge',['lunge','fente'],'Fente alternée, sur place.',['Le genou arrière touche le sol','Hanches et genoux tendus entre deux fentes'],['Genou arrière qui ne touche pas le sol','Extension incomplète en haut'],null,'assets/embedded/Lunges.mp4'],
 ['Sit-up',['sit-up','abmat sit-up'],'Relevé de buste, sur AbMat en général.',['Omoplates au sol en bas','Buste relevé en haut (mains au niveau des pieds si la consigne le demande)'],['Épaules qui ne touchent pas le sol','Buste non relevé en haut'],null,'assets/embedded/sit_up.mp4'],
 ['Crunch mains sur les cuisses',['crunch mains sur les cuisses','crunch mains cuisses','crunch'],'Variante du sit-up, plus accessible : départ allongé sur le dos, jambes fléchies, mains posées sur les cuisses. On remonte le buste en faisant glisser les mains sur les cuisses, jusqu’à poser les mains sur le dessus des genoux, puis on redescend sous contrôle.',['Départ allongé sur le dos, jambes fléchies, mains sur les cuisses','Les mains glissent sur les cuisses jusqu’au dessus des genoux en haut','Épaules qui retouchent le sol en bas'],['Mains qui n’atteignent pas les genoux en haut','Épaules qui ne retouchent pas le sol en bas','Tirer sur la nuque ou se propulser avec les bras'],null,'assets/embedded/crunch_mains_sur_les_cuisses.mp4'],
 ['Dumbbell Snatch',['dumbbell snatch','db snatch'],'Arraché à un bras avec haltère, du sol au-dessus de la tête en un mouvement.',['Haltère du sol à bout de bras au-dessus de la tête','Bras, hanches et genoux tendus en haut'],['Bras non verrouillé en haut','Haltère qui ne part pas du sol'],null,'assets/embedded/dumbbell_snatch.mp4'],
@@ -4613,13 +4613,17 @@ const GLOSS=[
 ['Rowing TRX',['rowing trx','trx row','trx rows'],'Tirage horizontal aux sangles TRX : tu te penches en arrière, bras tendus et corps gainé de la tête aux talons, puis tu te tires vers les poignées. Plus tes pieds sont proches de l’ancrage, plus c’est difficile.',['Corps gainé de la tête aux talons','Bras tendus en bas','Poitrine à hauteur des poignées en haut'],['Hanches qui s’affaissent','Bras non tendus en bas','Poitrine qui n’atteint pas les poignées'],null,'assets/embedded/TRX.mp4'],
 ['DB Power Clean',['db power clean','dumbbell power clean','dumbbell clean','db clean','epaule haltere','epaule avec haltere','epaule aux halteres'],'Épaulé avec haltère(s) : l’haltère (ou les deux haltères) part du sol et est reçu sur les épaules en un seul mouvement, au-dessus de la parallèle.',['Haltère(s) du sol aux épaules en un seul mouvement','Réception au-dessus de la parallèle','Hanches et genoux tendus en fin de mouvement'],['Haltère(s) qui ne se posent pas sur les épaules','Fin de mouvement sans extension complète','Réception sous la parallèle']],
 ['Abdos à la poulie haute',['abdos a la poulie haute','abdos a la poulie','abdos poulie haute','abdos poulie','abdo a la poulie haute','abdo a la poulie','abdo poulie haute','abdo poulie','crunch a la poulie haute','crunch a la poulie','crunch poulie','cable crunch','kneeling cable crunch'],'Crunch à la poulie haute : à genoux, dos à la poulie, on s’enroule vers l’avant comme sur un crunch, puis on revient en position de départ sous contrôle.',['À genoux, dos à la poulie','Enroulement du buste vers l’avant, comme sur un crunch','Retour en position de départ sous contrôle'],['Mouvement fait avec les bras ou les hanches plutôt qu’avec les abdos','Enroulement incomplet','Retour non contrôlé'],null,'assets/embedded/abdo___la_poulie.mp4'],
-['Side bend',['side bend','side bends','flexion laterale','flexions laterales','inclinaison laterale','inclinaisons laterales'],'Flexion latérale du buste : debout, une charge dans une main, on s’incline sur le côté puis on remonte, en travaillant les obliques.',['Debout, charge tenue le long du corps','Inclinaison sur le côté, sans basculer vers l’avant ni vers l’arrière','Retour debout, buste droit'],['Buste qui part vers l’avant ou vers l’arrière','Élan pris avec les hanches','Retour incomplet en position droite'],null,'assets/embedded/side_bend.mp4']
+['Side bend',['side bend','side bends','flexion laterale','flexions laterales','inclinaison laterale','inclinaisons laterales'],'Flexion latérale du buste : debout, une charge dans une main, on s’incline sur le côté puis on remonte, en travaillant les obliques.',['Debout, charge tenue le long du corps','Inclinaison sur le côté, sans basculer vers l’avant ni vers l’arrière','Retour debout, buste droit'],['Buste qui part vers l’avant ou vers l’arrière','Élan pris avec les hanches','Retour incomplet en position droite'],null,'assets/embedded/side_bend.mp4'],
+['Fentes en marchant',['fentes en marchant','fente en marchant','fentes marchees','fente marchee','walking lunge','walking lunges'],'Fentes alternées en avançant : à chaque pas, le genou arrière vient toucher le sol, puis on se relève en ramenant la jambe arrière devant. Dans un WOD, la distance s’écrit en mètres (« 20m Fentes en marchant ») : 1 m compte comme 1 rep pour le calcul des paliers.',['Le genou arrière touche le sol à chaque fente','Hanches et genoux tendus entre deux fentes','On avance à chaque fente jusqu’à la distance demandée'],['Genou arrière qui ne touche pas le sol','Pas d’extension complète entre deux fentes','Fentes sur place au lieu d’avancer']],
+['Burpee Broad Jump',['burpee broad jump','burpees broad jump','burpees broad jumps','bbj','burpee saut en longueur','burpees saut en longueur'],'Burpee suivi d’un saut en longueur pieds joints vers l’avant : le burpee suivant part de l’endroit où tu as atterri. Dans un WOD, la distance s’écrit en mètres (« 10m Burpee Broad Jump ») : 1 m compte comme 1 rep pour le calcul des paliers.',['Poitrine et cuisses touchent le sol','Saut vers l’avant pieds joints : décollage et réception à deux pieds','Le burpee suivant part de l’endroit de la réception'],['Poitrine ou cuisses qui ne touchent pas le sol','Saut à un pied ou sans avancer','Reculer avant le burpee suivant']],
+['Slam ball',['slam ball','slam balls','slamball','ball slam','med ball slam'],'Lancer d’une balle lestée au sol avec force : balle tenue bras tendus au-dessus de la tête, on la projette au sol devant soi en fléchissant les hanches, puis on la ramasse pour la rep suivante.',['Bras tendus au-dessus de la tête, hanches et genoux tendus en haut','La balle est lancée au sol avec force','Ramassage le dos plat'],['Extension incomplète en haut (bras ou hanches)','Balle posée au lieu d’être lancée','Dos rond au ramassage']],
+['Farmer Carry',['farmer carry','farmer carries','farmer walk','farmers carry','farmers walk','marche du fermier'],'Marche en portant une charge dans chaque main (haltères, kettlebells ou poignées), bras tendus le long du corps. Dans un WOD, la distance s’écrit en mètres (« 50m Farmer Carry ») : 1 m compte comme 1 rep pour le calcul des paliers.',['Une charge dans chaque main, bras tendus le long du corps','Buste droit, épaules basses, gainage serré','Distance complète parcourue'],['Charge posée avant la fin : on repart de l’endroit où on s’est arrêté','Buste penché sur le côté ou épaules haussées','Charge qui balance et frappe les jambes']]
 ];
 const GLOSS_AL=(()=>{const out=[];GLOSS.forEach((g,gi)=>{const set=new Set();g[1].forEach(a=>{[a,a.replace(/-/g,' '),a.replace(/-/g,'')].forEach(v=>{set.add(v);if(!v.endsWith('s'))set.add(v+'s');});});set.forEach(a=>out.push([a,gi]));});return out.sort((x,y)=>y[0].length-x[0].length);})();
 
 const MUSCLES=[['pec','Pectoraux'],['eps','Épaules'],['bic','Biceps'],['tri','Triceps'],['avb','Avant-bras'],['trp','Trapèzes'],['dos','Dorsaux'],['lom','Lombaires'],['abd','Abdos / gainage'],['fes','Fessiers'],['qua','Quadriceps'],['isc','Ischio-jambiers'],['mol','Mollets']];
 /* muscle + 2 (principal) ou 1 (secondaire) */
-const MM={'Air Squat':'qua2 fes2 isc1 abd1 mol1','Back Squat':'qua2 fes2 isc1 lom1 abd1','Front Squat':'qua2 fes2 abd1 lom1','Overhead Squat':'qua2 fes2 eps2 abd2 trp1 tri1',
+const MM={'Fentes en marchant':'qua2 fes2 isc1 mol1 abd1','Burpee Broad Jump':'qua2 fes2 pec1 tri1 mol1 abd1','Slam ball':'abd2 dos2 eps1 fes1 tri1','Farmer Carry':'avb2 trp2 abd1 fes1','Air Squat':'qua2 fes2 isc1 abd1 mol1','Back Squat':'qua2 fes2 isc1 lom1 abd1','Front Squat':'qua2 fes2 abd1 lom1','Overhead Squat':'qua2 fes2 eps2 abd2 trp1 tri1',
 'Thruster':'qua2 fes2 eps2 tri1 abd1','Deadlift':'fes2 isc2 lom2 trp1 dos1 avb1 qua1','Power Clean':'fes2 qua2 trp2 isc1 eps1 lom1 avb1 bic1','Hang Power Clean':'fes2 qua2 trp2 isc1 eps1 lom1 avb1 bic1','Snatch':'fes2 qua2 trp2 eps2 lom1 isc1 tri1',
 'Clean & Jerk':'qua2 fes2 trp2 eps2 tri1 lom1','Jerk':'eps2 tri2 qua1 fes1 abd1','Push Press':'eps2 tri2 qua1 pec1','Shoulder Press':'eps2 tri2 pec1 trp1 abd1',
 'Bench Press':'pec2 tri2 eps1','Burpee':'pec2 tri1 eps1 abd1 qua1','Down Up':'pec1 tri1 eps1 abd1 qua1','Burpee Over the Bar':'pec2 tri1 eps1 abd1 qua1 mol1','Box Jump':'qua2 fes2 mol2 isc1',
@@ -5247,12 +5251,18 @@ function wodPoints(w,e,period,lg){
    Les reps en plus saisies par l'athlète sont les reps réelles, dans l'ordre des lignes du tour. */
 const WTAG=/\s*\{\s*(?:(\d+(?:[.,]\d+)?)\s*)?=\s*(\d+(?:[.,]\d+)?)\s*\}/;
 const NOT_REPS=/^\d+\s*(min|minutes?|sec|secondes?|s|rounds?|tours?|'|")(\s|$)/i;
-/* ligne de distance portant une équivalence : « 800m Run {10=1} » -> 800 (mètres), reste « m Run ». Sans équivalence, la ligne reste ignorée comme avant. */
+/* mouvements dont le réglage « Configurer les mouvements » vaut pour 1 mètre : « 10m Burpee Broad Jump » = 10 reps, « 30m Farmer Carry » = 30 reps
+   (le plus long nom reconnu gagne : « burpee broad jump » n'est pas un burpee, « fentes en marchant » n'est pas une fente simple) */
+const METER_MV=['Fentes en marchant','Burpee Broad Jump','Farmer Carry'];
+function meterMv(txt){const sp=mvSpans(String(txt||'').replace(WTAG,'').trim());const x=sp.find(y=>METER_MV.includes(y.name));return x?x.name:null;}
+/* ligne de distance portant une équivalence : « 800m Run {10=1} » -> 800 (mètres), reste « m Run ». Sans équivalence, la ligne reste ignorée comme avant,
+   sauf pour les mouvements comptés au mètre (METER_MV) : leur distance est leur nombre de reps. */
 function distInfo(clean,w){
-  if(!w)return null;
   const d=clean.match(/^(\d+(?:[.,]\d+)?)\s*(km|m)\b\s*(.*)$/i);if(!d)return null;
+  const mm=meterMv(d[3]);
+  if(!w&&!mm)return null;
   const v=parseNum(d[1]);if(!(v>0))return null;
-  return {n:Math.round(v*(d[2].toLowerCase()==='km'?1000:1)),rest:'m'+(d[3]?' '+d[3]:'')};
+  return {n:Math.round(v*(d[2].toLowerCase()==='km'?1000:1)),rest:'m'+(d[3]?' '+d[3]:''),mv:mm};
 }
 function roundModel(m){
   if(!m)return null;
@@ -14743,7 +14753,8 @@ function capLineSecs(m){
     const w=s.match(WTAG),clean=s.replace(WTAG,'').trim();
     if(NOT_REPS.test(clean)||/^\d+(\s*[-–\/]\s*\d+)+(\s|$)/.test(clean))continue;
     const di=distInfo(clean,w);let n,sec;
-    if(di){n=di.n;sec=n*paceSpm(/ram|row|ski/i.test(di.rest)?'row':'run');}
+    if(di&&di.mv){n=di.n;const f=secOf(di.rest);sec=n*(f?f.sec:3);}
+    else if(di){n=di.n;sec=n*paceSpm(/ram|row|ski/i.test(di.rest)?'row':'run');}
     else{
       const lm=clean.match(/^(\d+)\s+(\S.*)$/);if(!lm)continue;
       n=+lm[1];const f=secOf(lm[2]);sec=n*(f?f.sec:3);
@@ -14875,7 +14886,7 @@ function syncIntens(){
 const intList=()=>{syncIntens();const o=INTENS_CATS.map(a=>a[0]);return Object.entries(INTENS).sort((a,b)=>o.indexOf(a[1].cat)-o.indexOf(b[1].cat));};
 /* intensité d'une partie : celle de la liste, sinon le nom gardé dans la séance (intensité du coach absente du profil de l'athlète) */
 const intInfo=p=>(p.intensity&&p.intensityL)?{l:String(p.intensityL),d:(INTENS[p.intensity]&&INTENS[p.intensity].d)||''}:(INTENS[p.intensity]||null);
-const SEC_EXTRA={'Back Squat':3.5,'Bench Press':3,'Shoulder Press':3,'Jerk':4,'Down Up':3,'Crunch mains sur les cuisses':2,'Sauts sans corde':.5,'Pompes sur genoux':2,'Snatch':4,'Clean':4,'DB Power Clean':3.5,'Abdos à la poulie haute':3,'Side bend':2.5};
+const SEC_EXTRA={'Fentes en marchant':1.5,'Burpee Broad Jump':2.5,'Farmer Carry':1,'Slam ball':2,'Back Squat':3.5,'Bench Press':3,'Shoulder Press':3,'Jerk':4,'Down Up':3,'Crunch mains sur les cuisses':2,'Sauts sans corde':.5,'Pompes sur genoux':2,'Snatch':4,'Clean':4,'DB Power Clean':3.5,'Abdos à la poulie haute':3,'Side bend':2.5};
 const SEC_MAP={'Snatch':'Power Snatch','Row (rameur)':'Rameur'};
 let _secAl=null;
 function secAliases(){
@@ -14913,6 +14924,11 @@ function metEstimate(p){
     if(NOT_REPS.test(s))continue;
     const dm=s.match(/^(\d+(?:[.,]\d+)?)\s*(km|m)\b\s*(.*)$/i);
     let n=null,txt=s,sec=null,nm=s;
+    if(dm&&meterMv(dm[3])){ /* mouvement compté au mètre : 1 m = 1 rep, au temps réglé pour ce mouvement */
+      const meters=Math.round(parseNum(dm[1])*(dm[2].toLowerCase()==='km'?1000:1)),f=secOf(dm[3]);
+      if(!f)unknown.push(dm[3]);
+      items.push({n:meters,sec:f?f.sec:3,nm:f?f.nm:meterMv(dm[3])});continue;
+    }
     if(dm){ /* distance : allures réglables (défaut rameur 2:05 aux 500 m, course 5:00 au km) */
       const meters=parseNum(dm[1])*(dm[2].toLowerCase()==='km'?1000:1);
       const row=/ram|row|ski/i.test(dm[3]);
@@ -15728,7 +15744,7 @@ const mvHas=e=>!!e&&(Number(String(e.sec||'').replace(',','.'))>0||(!!e.lv&&e.lv
 const mvCfgCount=()=>Object.values(mvCfg()).filter(mvHas).length;
 const mvCfgLv=(name,k)=>{const c=mvCfg()[name];return (c&&c.lv&&c.lv[k])||{f:'',h:'',v:[]};};
 function mvLvObj(name,k){mvCfg();const c=(S.prof.mvcfg=S.prof.mvcfg||{});const e=c[name]=c[name]||{lv:[]};while(e.lv.length<4)e.lv.push({f:'',h:'',v:[]});if(!e.lv[k].v)e.lv[k].v=[];return e.lv[k];}
-const MV_EXTRA_CAT={'Course':'cardio','Vélo':'cardio','SkiErg':'cardio','Rameur':'cardio','Sled':'haltero','Farmer Carry':'haltero','Hip Thrust':'haltero','Romanian Deadlift':'haltero','Pendlay Row':'haltero'};
+const MV_EXTRA_CAT={'Slam ball':'haltero','Fentes en marchant':'gym','Burpee Broad Jump':'gym','Course':'cardio','Vélo':'cardio','SkiErg':'cardio','Rameur':'cardio','Sled':'haltero','Farmer Carry':'haltero','Hip Thrust':'haltero','Romanian Deadlift':'haltero','Pendlay Row':'haltero'};
 function mvGroup(name){
   if(MV_CAT[name])return MV_CAT[name];
   if(MV_EXTRA_CAT[name])return MV_EXTRA_CAT[name];
