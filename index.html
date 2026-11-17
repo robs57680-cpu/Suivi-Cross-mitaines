@@ -4462,7 +4462,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-17.12';
+const APP_VERSION='2026-11-17.13';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -4859,7 +4859,7 @@ function lineItems(m){
     const w=s.match(WTAG),clean=s.replace(WTAG,'').trim();
     if(NOT_REPS.test(clean)||LADDER.test(clean))continue;
     const di=distInfo(clean,w);let n;
-    if(di)n=di.n;else{const lm=clean.match(/^(\d+)\s+\S/);if(!lm)continue;n=+lm[1];}
+    if(di)n=di.n;else{const lm=clean.match(/^(\d+)(?:\s*x)?\s+\S/i);if(!lm)continue;n=+lm[1];}
     let eq=n;
     if(w){const a=w[1]?parseNum(w[1]):null,b=parseNum(w[2]);if(b!==null&&b>=0&&(a===null||a>0))eq=a?n*b/a:b;}
     items.push({n,eq});
@@ -5272,7 +5272,7 @@ function roundModel(m){
     const w=s.match(WTAG),clean=s.replace(WTAG,'').trim();
     if(NOT_REPS.test(clean)||/^\d+(\s*[-–\/]\s*\d+)+(\s|$)/.test(clean))continue;
     const di=distInfo(clean,w);let n;
-    if(di)n=di.n;else{const lm=clean.match(/^(\d+)\s+\S/);if(!lm)continue;n=+lm[1];}
+    if(di)n=di.n;else{const lm=clean.match(/^(\d+)(?:\s*x)?\s+\S/i);if(!lm)continue;n=+lm[1];}
     let eq=n;
     if(w){const a=w[1]?parseNum(w[1]):null,b=parseNum(w[2]);if(b!==null&&b>=0&&(a===null||a>0)){eq=a?n*b/a:b;weighted=true;}}
     items.push({n,eq});
@@ -10200,7 +10200,7 @@ function capLines(m){
     const w=s.match(WTAG),clean=s.replace(WTAG,'').trim();
     if(NOT_REPS.test(clean)||/^\d+(\s*[-–\/]\s*\d+)+(\s|$)/.test(clean))continue;
     const di=distInfo(clean,w);let n,rest;
-    if(di){n=di.n;rest=di.rest;}else{const lm=clean.match(/^(\d+)\s+(\S.*)$/);if(!lm)continue;n=+lm[1];rest=lm[2];}
+    if(di){n=di.n;rest=di.rest;}else{const lm=clean.match(/^(\d+)(?:\s*x)?\s+(\S.*)$/i);if(!lm)continue;n=+lm[1];rest=lm[2];}
     let eq=n;
     if(w){const a=w[1]?parseNum(w[1]):null,b=parseNum(w[2]);if(b!==null&&b>=0&&(a===null||a>0))eq=a?n*b/a:b;}
     out.push({n,eq,rest});
@@ -14802,7 +14802,7 @@ function capLineSecs(m){
     if(di&&di.mv){n=di.n;const f=secOf(di.rest);sec=n*(f?f.sec:3);}
     else if(di){n=di.n;sec=n*paceSpm(/ram|row|ski/i.test(di.rest)?'row':'run');}
     else{
-      const lm=clean.match(/^(\d+)\s+(\S.*)$/);if(!lm)continue;
+      const lm=clean.match(/^(\d+)(?:\s*x)?\s+(\S.*)$/i);if(!lm)continue;
       n=+lm[1];const f=secOf(lm[2]);sec=n*(f?f.sec:3);
     }
     let eq=n;
@@ -15014,7 +15014,7 @@ function metEstimate(p){
     T=roundTime*rounds;R=roundReps*rounds;
     if(items.length>1&&tr>0){trRound=items.length*tr;trT=trRound*rounds-tr;} /* transitions d'un tour, retour au 1er mouvement compris ; pas de transition après le dernier mouvement */
   }
-  return {T,R,roundTime,roundReps,rounds,unknown,tr:items.length>1?tr:0,trRound,trT,nMv:items.length};
+  return {T,R,roundTime,roundReps,rounds,unknown,tr:items.length>1?tr:0,trRound,trT,nMv:items.length,hasFixed:items.some(it=>it.fixed&&it.eqR===undefined)};
 }
 /* remplit les paliers du metcon (Rx, puis les autres niveaux adaptés) à partir de l'intensité choisie */
 /* le niveau change-t-il quelque chose qui joue sur le temps : reps, tours ou exercice remplacé par une variante ? */
@@ -15059,10 +15059,10 @@ function unitModel(m){
     const w=s.match(WTAG),clean=s.replace(WTAG,'').trim();
     if(NOT_REPS.test(clean)||/^\d+(\s*[-–\/]\s*\d+)+(\s|$)/.test(clean))continue;
     const di=distInfo(clean,w);let n;
-    if(di)n=di.n;else{const lm=clean.match(/^(\d+)\s+\S/);if(!lm)continue;n=+lm[1];}
+    if(di)n=di.n;else{const lm=clean.match(/^(\d+)(?:\s*x)?\s+\S/i);if(!lm)continue;n=+lm[1];}
     let eq=n;
     if(w){const a=w[1]?parseNum(w[1]):null,b=parseNum(w[2]);if(b!==null&&b>=0&&(a===null||a>0))eq=a?n*b/a:b;}
-    items.push({n,eq,u:di?eq:n});
+    items.push({n,eq,u:(di&&!di.mv)?eq:n}); /* mouvement au mètre (fentes, burpee broad jump…) : 1 m = 1 rep réelle ; autre distance : son équivalence */
   }
   const U=items.reduce((a,x)=>a+x.u,0),E=items.reduce((a,x)=>a+x.eq,0);
   if(!(U>0&&E>0)||!Number.isInteger(U)||!Number.isInteger(E)||Math.abs(U-E)<1e-9)return null;
@@ -15095,6 +15095,7 @@ function calcTiers(p){
   if(!ft&&!(dur>0)){toast('Indique la durée de l’AMRAP (min) pour calculer les paliers.',true);return;}
   /* For Time : les paliers se calculent comme s'il n'y avait pas de time cap. Un palier qui dépasse le time cap s'écrit en reps (ou tours + reps) atteintes au time cap.
      Un niveau « Adapté » dont les reps par exercice ou le nombre de tours changent reçoit SES paliers, calculés sur son propre contenu ; les autres niveaux reprennent ceux de Rx. */
+  let rxRR=null; /* reps par tour déduites du contenu de Rx (AMRAP sans « Reps par tour ») */
   const compute=(pp,e)=>{
     const out={tiers:[],capTiers:[]};
     if(ft){
@@ -15118,11 +15119,15 @@ function calcTiers(p){
     }else{
       const est=dur*60/(e.roundTime*I.f+(e.trRound||0));
       const tot=eqTotal(amrapModel(pp)),rr=(tot>0)?tot:e.roundReps,um=unitModel(amrapModel(pp));
+      /* « Reps par tour » vide et contenu entièrement lisible (reps, mètres des mouvements au mètre) : on l'en déduit pour écrire les paliers en tours + reps
+         (et pas en 7,5 tours). Un niveau adapté avec un autre nombre de reps par tour garde l'écriture en tours décimaux (un seul « Reps par tour » par WOD). */
+      const autoRR=!(tot>0)&&!um&&rr>0&&Number.isInteger(rr)&&!e.unknown.length&&!e.hasFixed&&(pp===p||rr===rxRR);
+      if(autoRR&&pp===p)rxRR=rr;
       if(um){ /* équivalence = écriture seulement : paliers en reps réelles, réécrits en reps équivalentes */
         let prev=Infinity;
         amrapRepTiers(est,spreadPct('AMRAP')*mul,um.U,N).forEach((v,j)=>{let q=unitsToEq(um,v);if(q>=prev)q=prev-1;if(q<1)return;prev=q;out.tiers.push({t:repsTxt(q,um.E),p:tierPts(j,fine)});});
       }else if(rr>0&&Number.isInteger(rr)){ /* paliers calculés en reps entières : même écart en % entre chaque palier, arrondi à la rep près */
-        amrapRepTiers(est,spreadPct('AMRAP')*mul,rr,N).forEach((v,j)=>out.tiers.push({t:(tot>0&&Number.isInteger(tot))?repsTxt(v,tot):tourTxt(Math.round(v/rr*100)/100),p:tierPts(j,fine)}));
+        amrapRepTiers(est,spreadPct('AMRAP')*mul,rr,N).forEach((v,j)=>out.tiers.push({t:(tot>0&&Number.isInteger(tot))?repsTxt(v,tot):autoRR?repsTxt(v,rr):tourTxt(Math.round(v/rr*100)/100),p:tierPts(j,fine)}));
       }else spreadRounds(est,est*(1-(N-1)*spreadPct('AMRAP')*mul/100),spreadPct('AMRAP')*mul,N).forEach((v,j)=>out.tiers.push({t:tourTxt(v),p:tierPts(j,fine)}));
     }
     return out;
@@ -15130,6 +15135,7 @@ function calcTiers(p){
   /* « Mêmes paliers pour les 4 niveaux » cochée : tous les niveaux reprennent les paliers de Rx, même si leurs reps ou leurs tours changent.
      Décochée : un niveau « Adapté » dont les reps, les tours ou les variantes changent reçoit SES propres paliers. */
   const rx=compute(p,e),res=[],own=[];
+  if(rxRR&&!(Number(p.repsRound)>0))p.repsRound=String(rxRR); /* rempli tout seul : les athlètes saisiront « tours + reps » */
   p.levels.forEach((lv,k)=>{
     res[k]=rx;
     if(k<3&&lv.mode==='custom'&&!p.syncTiers&&lvAdapted(p,lv)){
