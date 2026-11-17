@@ -4462,7 +4462,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-17.9';
+const APP_VERSION='2026-11-17.10';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -14775,6 +14775,8 @@ const SPREAD={
   AMRAP:{l:'AMRAP',d:4,min:1,max:10,h:'Écart entre deux paliers consécutifs, en % du palier à 10 points, arrondi à la rep près. 5 % : 247 reps, puis 235, 222…'},
   DEAD:{l:'EMOM Dead by',d:null,min:1,max:50,h:'Écart entre deux paliers consécutifs, en % du time cap (arrondi à l’intervalle). Vide = un intervalle par point, ou plusieurs si le cap en compte plus de 10.'}
 };
+/* temps de transition entre deux mouvements (s), réglé dans « Configurer les mouvements » (rangé dans S.prof.spread.TRANS) ; 0 = aucun */
+const transSec=()=>{const v=parseNum(String(((S.prof&&S.prof.spread)||{}).TRANS??''));return(v!==null&&v>=0&&v<=30)?v:0;};
 const spreadPct=k=>{const D=SPREAD[k],v=parseNum(String(((S.prof&&S.prof.spread)||{})[k]??''));return(v!==null&&v>=D.min&&v<=D.max)?v:D.d;};
 /* repères d'un time cap : reps cumulées (réelles) à la fin de chaque exercice, dans l'ordre où l'athlète les enchaîne */
 function capBoundaries(cm,e){
@@ -14997,7 +14999,7 @@ function metEstimate(p){
     items.push({n,sec,nm});
   }
   if(!items.length)return null;
-  let T=0,R=0,roundTime=0,roundReps=0;
+  let T=0,R=0,roundTime=0,roundReps=0;const tr=transSec();
   if(nums){
     const sum=nums.reduce((a,b)=>a+b,0);
     items.forEach(it=>{
@@ -15005,12 +15007,14 @@ function metEstimate(p){
       else if(it.n===null){T+=sum*it.sec;R+=sum;}
       else{T+=nums.length*it.n*it.sec;R+=nums.length*it.n;}
     });
+    if(items.length>1&&tr>0)T+=(nums.length*items.length-1)*tr; /* une transition à chaque changement de mouvement */
     roundTime=T/nums.length;roundReps=R/nums.length;
   }else{
     items.forEach(it=>{const n=it.fixed?1:it.n;roundTime+=n*it.sec;roundReps+=(it.fixed&&it.eqR!==undefined)?it.eqR:n;});
-    T=roundTime*rounds;R=roundReps*rounds;
+    if(items.length>1&&tr>0)roundTime+=items.length*tr; /* transitions d'un tour, retour au 1er mouvement compris (AMRAP, tours) */
+    T=roundTime*rounds-((items.length>1&&tr>0)?tr:0);R=roundReps*rounds; /* pas de transition après le dernier mouvement */
   }
-  return {T,R,roundTime,roundReps,rounds,unknown};
+  return {T,R,roundTime,roundReps,rounds,unknown,tr:items.length>1?tr:0,nMv:items.length};
 }
 /* remplit les paliers du metcon (Rx, puis les autres niveaux adaptés) à partir de l'intensité choisie */
 /* le niveau change-t-il quelque chose qui joue sur le temps : reps, tours ou exercice remplacé par une variante ? */
@@ -15112,7 +15116,7 @@ function calcTiers(p){
   }
   const top=p.levels[3].tiers[0]||(ft&&rx.capTiers[0]?{t:rx.capTiers[0].t+' au time cap'}:{t:'—'});
   p.estInfo=(ft?'Palier max ('+(fine?20:10)+' pts) : '+top.t+' pour Rx'+(own.length?'':' et tous les niveaux')+', '+I.l.toLowerCase()+'.'+(rx.capTiers.length?' '+rx.capTiers.length+' palier'+(rx.capTiers.length>1?'s':'')+' au-delà du time cap, écrit'+(rx.capTiers.length>1?'s':'')+' en reps (ou tours + reps) atteintes au time cap. Le dernier palier en temps va jusqu’au time cap.':'')+(own.length?' Paliers propres à '+own.join(', ')+' (reps, tours ou variantes adaptés).':''):'Palier max ('+(fine?20:10)+' pts) : '+top.t+' tours pour Rx'+(own.length?'':' et tous les niveaux')+', '+I.l.toLowerCase()+'.'+(own.length?' Paliers propres à '+own.join(', ')+' (reps, tours ou variantes adaptés).':''))
-    +' Temps pur estimé '+fmtTime(Math.round(e.T))+' ('+fmtN(Math.round(e.R))+' reps)'+(ft?'':' par tour : '+fmtTime(Math.round(e.roundTime)))
+    +' Temps pur estimé '+fmtTime(Math.round(e.T))+' ('+fmtN(Math.round(e.R))+' reps)'+(ft?'':' par tour : '+fmtTime(Math.round(e.roundTime)))+(e.tr>0?', transitions de '+fmtN(e.tr)+' s entre mouvements comprises':'')
     +(e.unknown.length?' · Mouvement non reconnu (3 s par rep supposées) : '+e.unknown.join(', '):'')+'. À ajuster à ta façon de coacher.'+(fine?' Mode 20 paliers : écart entre paliers divisé par 2, points de 20 à 1.':'');
   render();
 }
@@ -15972,6 +15976,7 @@ function mvCfgSave(){
   S.prof.pace=pc;
   const sp=S.prof.spread||{};
   for(const k of Object.keys(SPREAD)){const v=parseNum(String(sp[k]??''));if(v!==null&&v>=SPREAD[k].min&&v<=SPREAD[k].max)sp[k]=Math.round(v*10)/10;else delete sp[k];}
+  {const tv=parseNum(String(sp.TRANS??'').trim());if(String(sp.TRANS??'').trim()!==''&&tv!==null&&tv>=0&&tv<=30)sp.TRANS=Math.round(tv*10)/10;else delete sp.TRANS;}
   S.prof.spread=sp;
   S.prof.mvcfg=c;saveProf();toast('Configuration des mouvements enregistrée');render();
 }
@@ -15991,6 +15996,9 @@ function paceCard(){
     h('p',{class:'muted'},'Servent à estimer le temps des distances (ex. 250 m Rameur) dans le calcul des paliers. Vide = valeur par défaut.'));
   [['row','Rameur et ski : temps pour 500 m','2:05'],['run','Course et autres distances : temps pour 1 km','5:00']].forEach(([k,l,ph])=>
     box.append(field(l,h('input',{id:'pace-'+k,type:'text',value:S.prof.pace[k]??'',placeholder:ph,'aria-label':l,oninput:ev=>{S.prof.pace[k]=ev.target.value;}}),'Écris 2:05 ou 125 (secondes). Défaut : '+ph+'.')));
+  S.prof.spread=S.prof.spread||{};
+  box.append(field('Temps de transition entre deux mouvements (secondes)',h('input',{id:'pace-trans',type:'text',inputmode:'decimal',value:S.prof.spread.TRANS??'',placeholder:'0','aria-label':'Temps de transition entre deux mouvements (secondes)',oninput:ev=>{S.prof.spread.TRANS=ev.target.value;}}),
+    'Ajouté au temps pur à chaque changement de mouvement (poser la corde, aller à la barre…). Ex. 2 s : un tour de 3 mouvements compte 6 s de plus en AMRAP. Vide ou 0 = pas de transition. Recalcule les paliers d’un WOD pour en tenir compte.'));
   return box;
 }
 function spreadCard(){
