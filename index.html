@@ -9502,6 +9502,41 @@ function feedPts(w,e,lg){
   if(!(t>0))return null;
   return h('span',{class:'feed-pts','aria-label':fmtN(t)+' points remportés sur cette séance'},'+'+fmtN(t));
 }
+/* Coach : temps au tour enregistrés par le minuteur de l'athlète pendant le metcon (e.laps = temps de passage en secondes depuis le départ).
+   Rétroactif : lit ce qui est déjà enregistré dans la séance. Sans minuteur (ou sans tour marqué avec « +1 »), il n'y a rien à afficher. */
+function openLapsSheet(uid,date){
+  if(!S.owner||document.getElementById('laps-ov'))return;
+  const lg=S.logs[uid]||{},e=(lg.entries||{})[date],w0=S.wods[date];
+  if(!e||!w0)return;
+  const w=wodFor(w0,e),m=metconOf(w),laps=Array.isArray(e.laps)?e.laps.map(Number).filter(x=>isFinite(x)&&x>=0):[];
+  const esc=ev=>{if(ev.key==='Escape')close();};
+  const close=()=>{ov.remove();document.removeEventListener('keydown',esc);};
+  const body=[];
+  if(m&&hasScore(e))body.push(h('p',{},h('b',{},e.cap?capLabel(m,capValue(m,e)):scoreText(m,e.score,e)),' · '+lvlLab(m,e)));
+  if(!laps.length){
+    body.push(h('div',{class:'banner'},h('p',{style:'margin:0'},h('b',{},'Pas de temps au tour pour cette séance. '),'L’athlète n’a pas utilisé le minuteur de l’appli pendant le metcon, ou n’a marqué aucun tour avec le bouton « +1 ».')));
+  }else{
+    const sp=laps.map((x,i)=>x-(i?laps[i-1]:0));
+    const best=Math.min(...sp),worst=Math.max(...sp),avg=sp.reduce((a,b)=>a+b,0)/sp.length;
+    body.push(h('p',{class:'hint'},'Temps relevés par le minuteur de l’athlète : le temps de passage est compté depuis le départ, le temps du tour depuis le tour précédent.'));
+    body.push(h('table',{style:'width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums'},
+      h('thead',{},h('tr',{},['Tour','Passage','Temps du tour'].map((t,i)=>h('th',{style:'text-align:'+(i?'right':'left')+';padding:6px 4px;border-bottom:2px solid var(--edge);font-size:13px'},t)))),
+      h('tbody',{},laps.map((x,i)=>{
+        const c=sp.length>1&&sp[i]===best?'#1E9B4A':sp.length>1&&sp[i]===worst?'#D92B1F':'';
+        return h('tr',{},h('td',{style:'padding:6px 4px;border-bottom:1px solid var(--line)'},'Tour '+(i+1)),
+          h('td',{style:'text-align:right;padding:6px 4px;border-bottom:1px solid var(--line)'},fmtTime(x)),
+          h('td',{style:'text-align:right;padding:6px 4px;border-bottom:1px solid var(--line);font-weight:700'+(c?';color:'+c:'')},fmtTime(sp[i])));
+      }))));
+    if(sp.length>1)body.push(h('p',{class:'hint'},'Meilleur tour '+fmtTime(best)+' · moins bon '+fmtTime(worst)+' · moyenne '+fmtTime(avg)));
+  }
+  const ov=h('div',{class:'ov',id:'laps-ov',style:'z-index:70',onclick:ev=>{if(ev.target===ov)close();}},
+    h('div',{class:'sheet',role:'dialog','aria-modal':'true','aria-label':'Temps au tour'},
+      h('p',{class:'eyebrow'},(lg.pseudo||'Athlète')+' · '+cap(fmtShort(date))),
+      h('h2',{class:'wtitle'},'Temps au tour'+(w.title?' · '+w.title:'')),
+      ...body,
+      h('button',{class:'btn primary',type:'button',id:'laps-close',onclick:close},'Fermer')));
+  document.body.append(ov);document.addEventListener('keydown',esc);
+}
 function viewFeed(){
   if(S.viewUser)return viewAthlete(S.viewUser);
   const el=h('div',{class:'stack'});
@@ -9533,7 +9568,10 @@ function viewFeed(){
     if(fb){fbEl=badgeEl(fb.tid,fb.per.name,108,trophyName(fb.tid)+' · '+fb.per.name,fb.per);fbEl.classList.add('feed-badge');head.classList.add('has-badge');}
     const results=[];
     (w.parts||[]).filter(p=>p.kind==='force').forEach(p=>{const kg=e.loads&&e.loads[p.label];if(kg!==undefined)results.push(h('div',{class:'feed-metric fm-force'},h('b',{},fmtKg(kg)),h('span',{},p.movement||p.name||'Force')));});
-    if(m&&hasScore(e))results.push(h('div',{class:'feed-metric fm-mc'+(String(e.cap?capLabel(m,capValue(m,e)):scoreText(m,e.score,e)).length>10?' fm-long':'')},h('b',{},e.cap?capLabel(m,capValue(m,e)):scoreText(m,e.score,e)),h('span',{},'Metcon · '+(e.cap?'Time cap':m.format==='FT'?'Temps':m.format==='AMRAP'?'Tours / reps':isDead(m)?'Dead by':'Tours'))));
+    if(m&&hasScore(e)){
+      const mcA=S.owner?{role:'button',tabindex:0,title:'Voir les temps au tour',style:'cursor:pointer','aria-label':'Voir les temps au tour du metcon de '+(lg.pseudo||'Athlète'),onclick:ev=>{ev.stopPropagation();openLapsSheet(uid,date);},onkeydown:ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();openLapsSheet(uid,date);}}}:{};
+      results.push(h('div',Object.assign({class:'feed-metric fm-mc'+(S.owner?' fm-laps':'')+(String(e.cap?capLabel(m,capValue(m,e)):scoreText(m,e.score,e)).length>10?' fm-long':'')},mcA),h('b',{},e.cap?capLabel(m,capValue(m,e)):scoreText(m,e.score,e)),h('span',{},'Metcon · '+(e.cap?'Time cap':m.format==='FT'?'Temps':m.format==='AMRAP'?'Tours / reps':isDead(m)?'Dead by':'Tours')+(S.owner?' · ⏱ tours':''))));
+    }
     else if(m&&e.noMetcon)results.push(h('div',{class:'feed-metric'},h('b',{},'Metcon non réalisé'),h('span',{},'Pas de points de metcon')));
     const rx=h('div',{class:'rxrow','data-rx-to':uid,'data-rx-date':date},rxButtons(uid,date));
     if(cmOn){ /* bannière modulaire : résultats, réactions et points sont dans la bannière ; titre de séance, date, message et signalement dessous */
