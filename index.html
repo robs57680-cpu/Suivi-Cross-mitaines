@@ -2939,6 +2939,10 @@ details.fwarn{display:block;padding:0}
 .tm-dots{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 .tm-dots i{width:14px;height:14px;border-radius:50%;border:2px solid var(--panel-muted);display:block}
 .tm-dots i.on{background:var(--panel-accent);border-color:var(--panel-accent)}
+.tm-dots i.sep{margin-left:14px}
+.tm-ex{display:grid;gap:2px;text-align:center;margin:4px auto;padding:8px 14px;border-radius:6px;background:rgba(255,255,255,.08);max-width:420px}
+.tm-ex b{font-size:18px;line-height:1.2}.tm-ex span{font-size:14px;opacity:.85}
+.tm-ex.chg{background:var(--panel-accent);color:#000}
 .tm-dots i.cur{border-color:var(--panel-ink);box-shadow:0 0 0 3px rgba(255,255,255,.22)}
 .tm-msg{margin:0;max-width:42ch;font-size:15px;line-height:1.45;padding:10px 12px;border-radius:8px;border:1px solid var(--panel-muted);background:rgba(255,255,255,.06);text-align:left}
 .tm-msg.ok{border-color:var(--panel-accent);font-weight:700;text-align:center}
@@ -4458,7 +4462,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-17.1';
+const APP_VERSION='2026-11-17.4';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -4795,6 +4799,38 @@ function persoSync(m,st){
   const c=persoCalc(m,st.pk);
   st.level=c.miss.length?null:c.base;st.kg=0;
   return c;
+}
+/* niveau « virtuel » qui assemble les choix Perso : variantes et reps de chaque mouvement prises dans son niveau, tours du niveau de base.
+   Sert à afficher le descriptif Perso sur la carte de la séance et dans le rappel du minuteur (mêmes fonctions que pour un niveau normal). */
+function persoLevel(m,c){
+  if(!c||c.miss.length)return null;
+  const L=levelsOf(m),lines=psLines(m),variants=[],dReps={};
+  const lvOf=r=>L[r.o.idx.find(i=>lvRank(m,i)===r.rank)!==undefined?r.o.idx.find(i=>lvRank(m,i)===r.rank):r.o.idx[0]]||{};
+  c.rows.forEach(r=>{const v=psVars(m,lvOf(r)).find(x=>x&&x.from===r.name&&x.to&&x.to.length);if(v)variants.push({from:v.from,to:v.to.slice()});});
+  lines.forEach((t,j)=>{
+    const sp=mvSpans(t.replace(WTAG,''));if(!sp.length)return;
+    const r=c.rows.find(x=>x.name===sp[0].name);if(!r)return;
+    const d=Number((lvOf(r).dReps||{})[j])||0;if(d)dReps[j]=d;
+  });
+  const base=L[c.base]||{},sx=S.prof.sex;
+  const ld=k=>c.rows.filter(r=>r.o.load.length&&r.o.load[k]).map(r=>r.name+' '+r.o.load[k]).join(' · ');
+  const o={name:'Perso',variants,dReps,loadF:ld(0),loadH:ld(1)};
+  if(rdOf(base))o.dRounds=rdOf(base);
+  return o;
+}
+/* choix Perso faits sur la carte de la séance avant le chrono : S.cardPs['date|label'] = {perso:true, pk}, gardés sur l'appareil (bs-psc-{uid}) */
+const psCardKey=()=>'bs-psc-'+(S.uid||'');
+function psCard(date,m){
+  if(S._pscU!==S.uid){S._pscU=S.uid;let v={};try{v=JSON.parse(localStorage.getItem(psCardKey())||'{}')||{};}catch(e){}S.cardPs={};for(const [k,x] of Object.entries(v))if(x&&x.pk)S.cardPs[k]={perso:true,pk:x.pk};}
+  const k=(date||'')+'|'+((m&&m.label)||'');
+  return S.cardPs[k]||null;
+}
+function psCardSet(date,m,st){
+  psCard(date,m);
+  const k=(date||'')+'|'+((m&&m.label)||'');
+  if(st)S.cardPs[k]=st;else delete S.cardPs[k];
+  const o={};for(const [kk,x] of Object.entries(S.cardPs))if(x&&x.pk)o[kk]={pk:x.pk};
+  try{localStorage.setItem(psCardKey(),JSON.stringify(o));}catch(e){}
 }
 /* champs Perso à enregistrer sur un résultat (vide si la saisie n'est pas en Perso) */
 function persoFields(m,st){
@@ -8312,7 +8348,7 @@ function openWarmupEdit(){
   paint();
 }
 
-function openTimer(w,date,m,lvIdx){
+function openTimer(w,date,m,lvIdx,psLv){
   if(document.getElementById('tm-ov'))return;
   const fmt=m.format||'FT',dur=metDuration(m),size=fmt==='AMRAP'?roundSizeFor(m):0;
   const ivS=Math.max(1,Math.round(emomIv(m)*60)),dead=isDead(m); /* durée d'un intervalle EMOM en secondes ; Dead by */
@@ -8358,12 +8394,12 @@ function openTimer(w,date,m,lvIdx){
   /* rappel du metcon, comme sur la fiche : niveau consulté (variantes et tours adaptés compris), Rx si aucun niveau n'a été touché */
   const lvA=activeLevels(m),lvPick=(Number.isInteger(lvIdx)&&lvA.some(x=>x[1]===lvIdx))?lvIdx:(lvA.length?lvA[lvA.length-1][1]:0);
   const summary=()=>{
-    const lv=levelsOf(m)[lvPick]||{},lines=String(m.content||'').split('\n').map(x=>x.trim()).filter(Boolean);
+    const lv=psLv||levelsOf(m)[lvPick]||{},lines=String(m.content||'').split('\n').map(x=>x.trim()).filter(Boolean);
     const adapted=((lv.variants||[]).length||rdOf(lv)||rpOf(lv))?true:false;
     const L=adapted?((t,ix)=>h('div',{class:'line'},lvLine(t,ix,lv))):metLine;
     const ld=loadsText(lv);
     return h('div',{class:'tm-sum'},
-      h('span',{class:'flabel tm-eb'},'Rappel · version '+levelName(m,lvPick)),
+      h('span',{class:'flabel tm-eb'},'Rappel · version '+(psLv?'Perso':levelName(m,lvPick))),
       h('div',{class:'lines'},lines.map(L)),
       ld?h('div',{class:'lvl-load'},(S.prof.sex?'Ta charge : ':'')+ld):null,
       adapted?h('div',{class:'varnote'},[(lv.variants||[]).length?'Les variantes remplacent les mouvements':'',rdOf(lv)?'le nombre de tours est adapté':'',rpOf(lv)?'les reps sont adaptées':''].filter(Boolean).join(' · ')+' (en surbrillance).'):null);
@@ -8634,13 +8670,30 @@ function levelDetail(m,lv,i){
     (ft&&lv.capTiers&&lv.capTiers.length)?h('div',{class:'tiers'},lv.capTiers.map(t=>h('span',{class:'tier'},'Time cap ≥ '+capLabel(m,tierCum(m,t.t),true)+' → '+fmtN(t.p)+' pts'))):null,
     S.prof.sex?null:h('p',{class:'sub'},'Renseigne ton sexe dans ton profil pour voir directement ta charge.')];
 }
-function levelsBlock(m){
+function levelsBlock(m,date){
   const lv=activeLevels(m).slice().reverse(); /* Rx, Intermédiaire, Débutant */
   const open=lv.find(x=>S.tip==='lv-'+m.label+x[1]);
+  const psK='lv-'+m.label+'ps',psOn=S.tip===psK&&persoOk(m);
+  let ps=null;
+  if(psOn){
+    ps=psCard(date,m);
+    if(!ps){ps={perso:true,pk:persoPrefill(m,S.uid,null)};psCardSet(date,m,ps);}
+    ps.onPk=()=>psCardSet(date,m,ps);
+  }
   return h('div',{class:'levels'},
     h('div',{class:'flabel'},'Niveaux de pratique · touche un niveau pour le détail'),
     h('div',{class:'seg'+(lv.length>3?' s4':'')},lv.map(([l,i])=>h('button',{type:'button',class:'btn sm tipbtn','aria-pressed':S.tip==='lv-'+m.label+i?'true':'false',onclick:()=>toggleTip('lv-'+m.label+i)},levelName(m,i)))),
-    open?h('div',{class:'tip',role:'dialog'},levelDetail(m,open[0],open[1])):null);
+    persoOk(m)?h('button',{type:'button',class:'btn sm tipbtn ps-btn','aria-pressed':psOn?'true':'false',onclick:()=>toggleTip(psK)},'Perso · un niveau par mouvement'):null,
+    open?h('div',{class:'tip',role:'dialog'},levelDetail(m,open[0],open[1])):null,
+    ps?h('div',{class:'tip',role:'dialog'},persoPanel(m,ps),
+      h('p',{class:'hint'},'Tes choix sont gardés : ils seront repris quand tu lanceras le chrono et quand tu entreras ton résultat.')):null);
+}
+/* choix Perso complet de la carte (ouverte ou non), pour le descriptif et le minuteur */
+function psCardCalc(m,date){
+  const ps=persoOk(m)?psCard(date,m):null;
+  if(!ps)return null;
+  const c=persoCalc(m,ps.pk);
+  return c.miss.length?null:c;
 }
 /* chronomètre des parties force / renfo : 1er appui = lance, 2e = arrête, appui suivant = repart de 0.
    L'état vit hors du DOM (la page se redessine souvent) et se calcule avec l'heure réelle : il continue même écran éteint. */
@@ -8825,8 +8878,45 @@ function parseRest(s){
   return null;
 }
 /* nombre de séries : réglé par le coach, sinon lu dans le contenu (« 5 x 5 Back Squat », « 4 séries »), sinon 0 = inconnu */
+/* ---------- renfo à plusieurs exercices non enchaînés ----------
+   Une partie de renfo dont au moins 2 lignes annoncent des séries (« 5×6-8 tractions », « 4x 45s gainage planche ») se fait exercice par exercice :
+   toutes les séries du 1er, puis toutes celles du 2e… Le minuteur compte alors le total (5 + 4 = 9 séries) et affiche l'exercice en cours.
+   Exceptions (ancien comportement, un seul compteur) : nombre de séries forcé par le coach (nSets), ou mot « superset / biset / en alternance » dans le contenu.
+   Exercice tenu (gainage, planche, chaise, hollow, L-sit, suspension… ou séries en temps « 4x 45s ») : pendant la série, un chrono MONTANT s'affiche ;
+   un bip signale l'objectif (45 s) s'il est indiqué. « Série terminée » lance la récup comme pour un exercice normal. */
+const SET_RE=/(\d{1,2})\s*(?:x|×|\*)\s*(?:(\d{1,3})(?!\d)|max\b)/i,SET_RE2=/(\d{1,2})\s*s[ée]ries?\b/i;
+const HOLD_RE=/gainage|planche|plank|chaise|wall ?sit|hollow|l-?sit|suspension|dead ?hang|isom[ée]tri|superman hold|\bhold\b|tenue|tenir/i;
+const HOLD_T=/(\d{1,2})\s*(?:x|×|\*)\s*(\d{1,3})\s*(s\b|sec|secondes?|''|"|’’|min\b|mn\b|'|’)/i;
+/* enchaînement choisi par le coach (« Entrer un WOD ») : p.chain = 'seq' (un exercice après l'autre) ou 'ss' (superset) ; absent = automatique
+   (superset si le contenu dit « superset / biset / en alternance », sinon un exercice après l'autre dès que 2 lignes annoncent des séries) */
+const isSuperset=p=>!!p&&p.kind==='renfo'&&(p.chain==='ss'||(p.chain!=='seq'&&/super-?set|bi-?set|tri-?set|en alternance|altern[ée]/i.test(String(p.content||''))));
+function setPlan(p){
+  if(!p||p.kind!=='renfo'||Math.floor(Number(p.nSets))>0)return null;
+  if(isSuperset(p))return null;
+  return setLines(p,2);
+}
+/* lignes qui annoncent des séries ; null s'il y en a moins de « min » */
+function setLines(p,min){
+  const txt=String((p&&p.content)||'');
+  const out=[];
+  for(const raw of txt.split('\n')){
+    const line=raw.trim();if(!line)continue;
+    const m=line.match(SET_RE)||line.match(SET_RE2);if(!m)continue;
+    const n=+m[1];if(!(n>0))continue;
+    const ht=line.match(HOLD_T),hold=!!ht||HOLD_RE.test(line);
+    let target=0;if(ht){const v=+ht[2];target=/^(min|mn|'|’)$/i.test(ht[3])?v*60:v;}
+    const label0=(line.replace(m[0],'').replace(/^\s*[-–\/]\s*\d{1,3}/,'').replace(/^[\s:·\-–]+|[\s:·\-–]+$/g,'').replace(/^(?:s|sec|secondes?|''|"|’’|min|mn|'|’)\s+/i,'').trim())||line;
+    const label=label0.replace(/^de\s+/i,'');
+    out.push({line,label:label.charAt(0).toUpperCase()+label.slice(1),n,hold,target});
+  }
+  return out.length>=(min||1)?out:null;
+}
+/* série k (0 = première) du plan → {b: n° d'exercice, i: n° de série dans l'exercice, x: l'exercice} */
+function planAt(plan,k){let b=0,i=k;while(plan[b]&&i>=plan[b].n){i-=plan[b].n;b++;}return plan[b]?{b,i,x:plan[b]}:null;}
 function setCount(p){
+  const pl=setPlan(p);if(pl)return pl.reduce((a,x)=>a+x.n,0);
   const n=Math.floor(Number(p&&p.nSets));if(n>0)return n;
+  if(isSuperset(p)){const ls=setLines(p,1);if(ls)return Math.max(...ls.map(x=>x.n));}
   const re=/(\d{1,2})\s*(?:x|×|\*)\s*(?:\d{1,3}(?!\d)|max\b)/i,re2=/(\d{1,2})\s*s[ée]ries?\b/i;let first=0;
   for(const raw of String((p&&p.content)||'').split('\n')){
     const m=raw.match(re)||raw.match(re2);if(!m)continue;
@@ -8838,10 +8928,15 @@ function setCount(p){
 const SET_TOL=30; /* écart toléré entre récup prévue et récup prise, en secondes */
 function openSetTimer(p,date){
   if(document.getElementById('tm-ov'))return;
-  const rest=Math.round(Number(p.restSec))||0,N=setCount(p);
+  const rest=Math.round(Number(p.restSec))||0,N=setCount(p),plan=setPlan(p);
   if(rest<=0)return;
+  const at=k=>plan?planAt(plan,k):null; /* exercice de la série k */
+  const ss=isSuperset(p)?setLines(p,1):null,ssHold=!!(ss&&ss.some(x=>x.hold)),ssTarget=ss?Math.max(0,...ss.filter(x=>x.hold).map(x=>x.target)):0;
+  const curHold=k=>{const a=at(k);return a?{hold:a.x.hold,target:a.x.target}:{hold:ssHold,target:ssTarget};};
+  const ssBadge=()=>(ss&&ss.length>1)?h('p',{class:'tm-ex'},h('b',{},'Superset · '+ss.map(x=>x.label).join(' + ')),h('span',{},'Enchaîne les exercices, puis récup')):null;
+  const exTxt=(a,withSet)=>a?'Exercice '+(a.b+1)+' / '+plan.length+' · '+a.x.label+(withSet?' · série '+(a.i+1)+' / '+a.x.n:''):'';
   /* phase : ready (avant la série 1) · work · rest · done · closed */
-  const st={phase:'ready',k:0,done:0,rests:[],t1:0,rem:null,bell:false,iv:null,ac:null,muted:tmMuted(),wake:null,vid:null,ws:0,coinEl:null};
+  const st={phase:'ready',k:0,done:0,rests:[],t1:0,rem:null,bell:false,iv:null,ac:null,muted:tmMuted(),wake:null,vid:null,ws:0,coinEl:null,holds:[],hsec:-1,hbell:false};
   try{st.ac=new (window.AudioContext||window.webkitAudioContext)();if(st.ac.resume)st.ac.resume();}catch(e){}
   const beep=(f,ms)=>{
     if(!st.muted&&st.ac){try{const o=st.ac.createOscillator(),g=st.ac.createGain();o.type='sine';o.frequency.value=f;g.gain.value=.3;o.connect(g);g.connect(st.ac.destination);o.start();o.stop(st.ac.currentTime+ms/1000);}catch(e){}}
@@ -8865,7 +8960,7 @@ function openSetTimer(p,date){
   const armed=(btn,txt,fn)=>{let t=null;const orig=btn.textContent;return ()=>{if(t){clearTimeout(t);t=null;btn.textContent=orig;fn();return;}btn.textContent=txt;t=setTimeout(()=>{t=null;btn.textContent=orig;},3000);};};
   const ov=h('div',{class:'tm prep',id:'tm-ov',role:'dialog','aria-modal':'true','aria-label':'Minuteur de séries'});
   let numEl=null,subEl=null;
-  const nTxt=N?N+' série'+(N>1?'s':''):'';
+  const nTxt=N?N+(ss&&ss.length>1?' tour':' série')+(N>1?'s':''):'';
   /* bonus : toutes les séries entrées, sans condition de temps à l'écran. Une série ne peut pas être validée avant 8 s (voir finishSet). */
   const setCoinRes=()=>{if(st.done<N){const r=N-st.done;return {ok:false,why:'il manque '+r+' série'+(r>1?'s':'')+' : le bonus se gagne quand toutes les séries sont entrées ('+st.done+' / '+N+').'};}return {ok:true};};
   const quit=()=>{if((st.phase==='work'||st.phase==='rest')&&N&&date&&tmCoinOn(date,p.kind)&&!tmuHas(date,p.kind))toast('Minuteur quitté avant la fin : pas de bonus. Il se gagne quand toutes les séries sont entrées ('+st.done+' / '+N+').');close();};
@@ -8884,33 +8979,42 @@ function openSetTimer(p,date){
     const vars=p.kind==='renfo'?p.variants:null;
     return lines.length?h('div',{class:'tm-sum'},h('span',{class:'flabel tm-eb'},'À faire'),h('div',{class:'lines'},lines.map(t=>renderLine(t,vars,p)))):null;
   };
-  const dots=()=>(N>0&&N<=20)?h('div',{class:'tm-dots','aria-hidden':'true'},Array.from({length:N},(_,i)=>h('i',{class:i<st.done?'on':(st.phase==='work'&&i===st.k?'cur':'')}))):null;
+  const dots=()=>(N>0&&N<=20)?h('div',{class:'tm-dots','aria-hidden':'true'},Array.from({length:N},(_,i)=>{const a=at(i);return h('i',{class:[i<st.done?'on':(st.phase==='work'&&i===st.k?'cur':''),(a&&a.i===0&&i>0)?'sep':''].filter(Boolean).join(' ')});})):null;
+  /* plusieurs exercices : l'ordre à suivre (affiché avant de commencer) */
+  const planBox=()=>plan?h('div',{class:'tm-sum'},h('span',{class:'flabel tm-eb'},'Exercice par exercice, sans enchaîner'),
+    h('div',{class:'lines'},plan.map((x,j)=>h('div',{class:'line'},h('b',{},(j+1)+'. '+x.label),' · '+x.n+' série'+(x.n>1?'s':'')+(x.hold?' · chrono pendant la série'+(x.target?' (objectif '+mmss(x.target)+')':''):''))))):null;
+  const exBadge=a=>a?h('p',{class:'tm-ex'},h('b',{},'Exercice '+(a.b+1)+' / '+plan.length+' · '+a.x.label),h('span',{},'Série '+(a.i+1)+' / '+a.x.n+(a.x.hold&&a.x.target?' · objectif '+mmss(a.x.target):''))):null;
   function showReady(){
     ov.className='tm prep';numEl=null;subEl=null;
-    const go=h('button',{type:'button',class:'btn primary tm-save tm-big'},'Je commence la série 1');
+    const go=h('button',{type:'button',class:'btn primary tm-save tm-big'},ss&&ss.length>1?'Je commence le tour 1':'Je commence la série 1');
     go.addEventListener('click',startSet);
     ov.replaceChildren(topBar(),h('div',{class:'tm-mid'},h('p',{class:'eyebrow tm-eb'},'Prépare-toi'),
-      h('div',{class:'tm-laps'},(nTxt?nTxt+' · ':'')+'récup '+mmss(rest)),
-      h('p',{class:'tm-sub'},'À chaque fin de série, appuie sur le gros bouton : ta récup démarre toute seule. Appuie à nouveau quand tu repars sur la série suivante.'),reminder()),h('div',{class:'tm-bot'},go));
+      h('div',{class:'tm-laps'},(nTxt?nTxt+(plan?' au total':'')+' · ':'')+'récup '+mmss(rest)),
+      h('p',{class:'tm-sub'},(ss&&ss.length>1?'Superset : enchaîne '+ss.map(x=>x.label).join(' + ')+' sans pause, puis appuie sur le gros bouton à la fin du tour : ta récup démarre toute seule.':'À chaque fin de série, appuie sur le gros bouton : ta récup démarre toute seule. Appuie à nouveau quand tu repars sur la série suivante.')+((plan&&plan.some(x=>x.hold))||ssHold?' Sur les exercices tenus, un chrono tourne pendant la série.':'')),planBox()||reminder()),h('div',{class:'tm-bot'},go));
   }
   function showWork(){
     ov.className='tm run';
-    numEl=h('div',{class:'tm-time'},String(st.k+1));
-    subEl=h('p',{class:'tm-sub'},N?'sur '+N+' · récup prévue '+mmss(rest):'récup prévue '+mmss(rest));
-    const fin=h('button',{type:'button',class:'btn primary tm-save tm-big'},'Série terminée');
+    const a=at(st.k),ch=curHold(st.k),hold=!!ch.hold;
+    st.hsec=-1;st.hbell=false;
+    numEl=h('div',{class:'tm-time'+(hold?' tm-hold':'')},hold?'0:00':String(st.k+1));
+    subEl=h('p',{class:'tm-sub'},ss&&ss.length>1?'Tour '+(st.k+1)+(N?' sur '+N:'')+(hold?' · chrono du tour':'')+' · récup prévue '+mmss(rest):hold?'Tiens ! Série '+(st.k+1)+' sur '+N+' au total':(N?'sur '+N+' · récup prévue '+mmss(rest):'récup prévue '+mmss(rest)));
+    const fin=h('button',{type:'button',class:'btn primary tm-save tm-big'},ss&&ss.length>1?'Tour terminé':'Série terminée');
     fin.addEventListener('click',finishSet);
     warnEl=h('p',{class:'tm-msg warn',role:'alert',hidden:true});
-    ov.replaceChildren(topBar(),h('div',{class:'tm-mid'},h('p',{class:'eyebrow tm-eb'},'Série en cours'),numEl,subEl,dots(),warnEl,reminder()),h('div',{class:'tm-bot'},fin));
+    ov.replaceChildren(topBar(),h('div',{class:'tm-mid'},h('p',{class:'eyebrow tm-eb'},(ss?'Tour en cours':'Série en cours')+(hold?' · chrono':'')),exBadge(a)||ssBadge(),numEl,subEl,dots(),warnEl,plan?null:reminder()),h('div',{class:'tm-bot'},fin));
+    if(hold)tick();
   }
   function showRest(){
     warnEl=null;ov.className='tm run';
     numEl=h('div',{class:'tm-time'},mmss(rest));
     subEl=h('p',{class:'tm-sub'},'Série '+st.done+(N?' / '+N:'')+' terminée · récup prévue '+mmss(rest));
-    const go=h('button',{type:'button',class:'btn primary tm-save tm-big'},'Je commence la série '+(st.done+1));
+    const nx=at(st.done),pv=at(st.done-1),chg=!!(nx&&pv&&nx.b!==pv.b);
+    const go=h('button',{type:'button',class:'btn primary tm-save tm-big'},nx?(chg?'Je passe à : '+nx.x.label:'Je commence la série '+(nx.i+1)+' / '+nx.x.n):(ss&&ss.length>1?'Je commence le tour ':'Je commence la série ')+(st.done+1));
     go.addEventListener('click',startSet);
     const end=h('button',{type:'button',class:'btn'},'Terminer l’exercice');
     end.addEventListener('click',armed(end,'Confirmer la fin',finish));
-    ov.replaceChildren(topBar(),h('div',{class:'tm-mid'},h('p',{class:'eyebrow tm-eb'},'Récupération'),numEl,subEl,dots(),reminder()),h('div',{class:'tm-bot'},go,h('div',{class:'row'},end)));
+    const nxt=nx?h('p',{class:'tm-ex'+(chg?' chg':'')},h('b',{},(chg?'Changement d’exercice · ':'Ensuite · ')+nx.x.label),h('span',{},'Exercice '+(nx.b+1)+' / '+plan.length+' · série '+(nx.i+1)+' / '+nx.x.n+(nx.x.hold?' · chrono'+(nx.x.target?' (objectif '+mmss(nx.x.target)+')':''):''))):null;
+    ov.replaceChildren(topBar(),h('div',{class:'tm-mid'},h('p',{class:'eyebrow tm-eb'},'Récupération'),numEl,subEl,nxt,dots(),plan?null:reminder()),h('div',{class:'tm-bot'},go,h('div',{class:'row'},end)));
     tick();
   }
   function startSet(){
@@ -8928,6 +9032,7 @@ function openSetTimer(p,date){
       warn('Une série ne peut pas se valider en moins de '+TM_SET_MIN+' secondes : ta série vient de commencer. Appuie sur « Série terminée » quand tu as vraiment fini (encore '+Math.ceil(TM_SET_MIN-el)+' s minimum). Cette règle évite les validations faites par erreur et protège ton coin bonus.');
       return;
     }
+    {const a=at(st.k);if(a&&a.x.hold)st.holds.push({b:a.b,i:a.i,sec:Math.round(el)});else if(!a&&ssHold)st.holds.push({b:-1,i:st.k,sec:Math.round(el)});}
     st.done++;
     if(N&&st.done>=N){finish();return;}
     st.phase='rest';st.t1=Date.now();st.rem=null;st.bell=false;beep(660,150);showRest();
@@ -8946,12 +9051,22 @@ function openSetTimer(p,date){
       h('ul',{},rs.map(r=>{const d=r.taken-r.planned,bad=Math.abs(d)>SET_TOL;return h('li',{},h('span',{},'Après la série '+r.after),h('b',{},mmss(r.taken)),h('span',{class:'sub',style:bad?'color:var(--panel-accent)':''},sign(d)));}))):null;
     const done=h('button',{type:'button',class:'btn primary tm-save'},'Fermer');
     done.addEventListener('click',close);
+    const holdBox=st.holds.length?h('div',{class:'tm-passages'},h('span',{class:'flabel tm-eb'},'Tes temps tenus'),
+      h('ul',{},st.holds.map(x=>{const ex=x.b>=0?plan[x.b]:{label:'Tour',target:ssTarget};return h('li',{},h('span',{},ex.label+(x.b>=0?' · série ':' ')+(x.i+1)),h('b',{},mmss(x.sec)),h('span',{class:'sub'},ex.target?(x.sec>=ex.target?'✓':'obj. '+mmss(ex.target)):''));}))):null;
     ov.replaceChildren(topBar(false),h('div',{class:'tm-mid'},h('p',{class:'eyebrow tm-eb'},'Terminé'),h('div',{class:'tm-time'},'OK'),
       h('p',{class:'tm-sub'},st.done+' série'+(st.done>1?'s':'')+(N&&st.done<N?' sur '+N:'')+' faite'+(st.done>1?'s':'')+'.'),
-      st.coinEl,list,msgs.map(m=>h('p',{class:'tm-msg '+m[0],role:'note'},m[1]))),h('div',{class:'tm-bot'},done));
+      st.coinEl,holdBox,list,msgs.map(m=>h('p',{class:'tm-msg '+m[0],role:'note'},m[1]))),h('div',{class:'tm-bot'},done));
   }
   function finish(){st.phase='done';st.coinEl=(N&&date)?tmCoinResult(date,p.kind,setCoinRes()):null;beep(880,600);showDone();}
   function tick(){
+    if(st.phase==='work'&&numEl){ /* exercice tenu : chrono montant pendant la série, bip à l'objectif */
+      const ch=curHold(st.k);if(!ch.hold)return;const a={x:ch};
+      const el=Math.floor((Date.now()-st.ws)/1000);
+      if(el!==st.hsec){st.hsec=el;numEl.textContent=mmss(el);
+        if(a.x.target&&!st.hbell&&el>=a.x.target){st.hbell=true;beep(880,600);if(subEl)subEl.textContent='Objectif '+mmss(a.x.target)+' atteint ! Appuie sur « Série terminée » quand tu lâches.';}
+        else if(a.x.target&&!st.hbell&&a.x.target-el<=3&&a.x.target-el>0)beep(660,120);}
+      return;
+    }
     if(st.phase!=='rest'||!numEl)return;
     const el=(Date.now()-st.t1)/1000,left=Math.ceil(rest-el);
     if(left!==st.rem){st.rem=left;if(left>0&&left<=3)beep(660,120);}
@@ -9045,7 +9160,8 @@ function partCard(p,w,date){
   const lines=(p.content||'').split('\n').map(s=>s.trim()).filter(Boolean);
   const hasSw=p.kind==='force'||p.kind==='renfo';
   /* niveau ouvert avec des variantes : elles remplacent les mouvements dans le descriptif, en surbrillance */
-  const lvOpen=metcon?activeLevels(p).find(x=>S.tip==='lv-'+p.label+x[1]&&((x[0].variants||[]).length||rdOf(x[0])||rpOf(x[0]))):null;
+  const psC=(metcon&&S.tip==='lv-'+p.label+'ps')?psCardCalc(p,date):null,psLv=psC?persoLevel(p,psC):null;
+  const lvOpen=psLv?[psLv,-1]:metcon?activeLevels(p).find(x=>S.tip==='lv-'+p.label+x[1]&&((x[0].variants||[]).length||rdOf(x[0])||rpOf(x[0]))):null;
   const metL=lvOpen?((t,ix)=>h('div',{class:'line'},lvLine(t,ix,lvOpen[0]))):metLine;
   /* format cliquable : metcon (For Time, AMRAP, EMOM) ou renforcement en EMOM */
   const fmtId=(metcon||(p.kind==='renfo'&&p.format==='EMOM'))?'fmt-'+(date||'')+'-'+p.label:null;
@@ -9057,17 +9173,19 @@ function partCard(p,w,date){
       metcon&&intInfo(p)?h('span',{class:'chip',title:intInfo(p).d},'Intensité : '+intInfo(p).l):null,
       metcon&&p.test?h('span',{class:'chip live'},'TEST'):null,
       metcon&&p.redo===false?h('span',{class:'chip miss'},'Pas de REDO'):null,
-      p.kind==='force'&&p.movement?h('span',{class:'chip'},p.movement):null),
+      p.kind==='force'&&p.movement?h('span',{class:'chip'},p.movement):null,
+      (p.kind==='renfo'&&p.format!=='EMOM'&&(setLines(p,2)||[]).length>=2)?h('span',{class:'chip'},isSuperset(p)?'Superset':'Exercice par exercice'):null),
     fmtId?h('div',{class:'fmt'},h('button',{type:'button',class:'fmtbtn tipbtn','aria-expanded':S.tip===fmtId?'true':'false',onclick:()=>toggleTip(fmtId)},fmtLabel(p)),
       metcon?[p.detail,p.lineRounds?'Chaque ligne = 1 tour':(p.repsRound?'1 tour = '+fmtN(eqTotal({content:p.content,repsRound:Number(p.repsRound)||0}))+' reps':'')].filter(Boolean).map(x=>' · '+x).join(''):''):null,
     (fmtId&&S.tip===fmtId)?h('div',{class:'tip',role:'dialog'},fmtExplain(p).map((t,k)=>k===0?h('b',{},t):h('p',{},t))):null,
+    psLv?h('div',{class:'varnote'},'Version Perso ×'+fmt2(psC.pv/LEVEL_DIV)+' ('+lvTag(psC.pv)+') : chaque mouvement à ton niveau (en surbrillance).'+(loadsText(psLv)?' Charges : '+loadsText(psLv)+'.':'')):
     lvOpen?h('div',{class:'varnote'},'Version '+levelName(p,lvOpen[1])+' : '+[(lvOpen[0].variants||[]).length?'les variantes remplacent les mouvements':'',rdOf(lvOpen[0])?'le nombre de tours est adapté':'',rpOf(lvOpen[0])?'les reps sont adaptées':''].filter(Boolean).join(' · ')+' (en surbrillance).'):null,
     p.kind==='force'?forceInfo(p):null,
     (p.kind==='force'&&p.prProto&&p.movement)?h('div',{class:'row'},h('button',{class:'btn primary btn-block',type:'button',id:'prproto-'+p.label,onclick:()=>openPrTimer(p.movement,()=>{})},'Protocole PR · '+p.movement)):null,
     h('div',{class:'lines'},lines.map(metcon?metL:(t=>renderLine(t,(p.kind==='renfo'||p.kind==='autre')?p.variants:null,p)))),
     (metcon&&p.word)?h('div',{class:'cword'},h('span',{class:'flabel'},'Mot du coach'),h('p',{},linkText(p.word))):null,
-    metcon?levelsBlock(p):null,
-    (metcon&&w&&timerOk(date))?h('div',{class:'row'},h('button',{class:'btn primary btn-block tm-cb-host',type:'button','data-tour':'start-metcon',onclick:()=>{const lo=activeLevels(p).find(x=>S.tip==='lv-'+p.label+x[1]);openTimer(w,date,p,lo?lo[1]:null);}},'Démarrer le metcon',tmCoinBadge(date,'metcon'))):null);
+    metcon?levelsBlock(p,date):null,
+    (metcon&&w&&timerOk(date))?h('div',{class:'row'},h('button',{class:'btn primary btn-block tm-cb-host',type:'button','data-tour':'start-metcon',onclick:()=>{const lo=activeLevels(p).find(x=>S.tip==='lv-'+p.label+x[1]);const pc=S.tip==='lv-'+p.label+'ps'?psCardCalc(p,date):null;openTimer(w,date,p,pc?pc.base:(lo?lo[1]:null),pc?persoLevel(p,pc):null);}},'Démarrer le metcon',tmCoinBadge(date,'metcon'))):null);
   return h('article',{class:'part'+(metcon?' metcon':'')},h('div',{class:'plabel'},p.label),body);
 }
 /* séance affichée à l'ouverture : celle du jour si elle n'est pas déjà faite, sinon la première séance de la semaine pas encore faite */
@@ -10174,7 +10292,7 @@ function persoPanel(m,st){
     };
     box.append(h('div',{class:'field ps-mv'},h('span',{class:'flabel'},x.name),
       h('div',{class:'ps-opts',role:'group','aria-label':'Niveau pour '+x.name},x.opts.map((o,j)=>h('button',{type:'button',class:'btn sm ps-opt'+(o.idx.length>1?' ps-sh':''),'aria-pressed':cur===j?'true':'false',
-        onclick:()=>{st.pk=Object.assign({},st.pk||{},{[x.name]:j});render();}},
+        onclick:()=>{st.pk=Object.assign({},st.pk||{},{[x.name]:j});if(st.onPk)st.onPk();render();}},
         h('b',{},psOptName(m,o)),h('span',{class:'ps-d'},det(o)))))));
   }
   if(c.miss.length)box.append(h('p',{class:'hint',role:'status'},'Reste à choisir : '+c.miss.join(', ')+'.'));
@@ -10496,6 +10614,7 @@ function openEntry(w,date,uid,coach){
   const mine=S.logs[uid]&&S.logs[uid].entries&&S.logs[uid].entries[date];const m=metconOf(w);
   if(!coach)S.entryGlowUntil=Date.now()+2900;
   S.entry={date,uid,coach:!!coach,score:'',rounds:'',reps:'',message:(mine&&mine.message)||'',level:m?((mine&&mine.level!==undefined)?okLvl(m,mine.level):null):0,kg:0,custom:false,loads:{},sets:{},prs:{},skip:!!(mine&&mine.noMetcon&&!hasScore(mine)),only:!!(mine&&mine.metconOnly)};
+  if(m&&!coach&&!(mine&&Number.isInteger(mine.level))){const pc=psCard(date,m);if(pc&&persoOk(m)&&!persoCalc(m,pc.pk).miss.length){S.entry.perso=true;S.entry.pk=Object.assign({},pc.pk);persoSync(m,S.entry);}}
   if(mine&&m&&isPerso(mine)){S.entry.perso=true;S.entry.pk=persoPrefill(m,uid,mine.pm);persoSync(m,S.entry);if(!Number.isInteger(S.entry.level))S.entry.level=okLvl(m,mine.level||0);}
   if(mine){
     fillState(m,S.entry,mine);
@@ -15122,7 +15241,7 @@ function fixDraft(d){
   });
   return d;
 }
-const blankPart=k=>({kind:k,name:'',content:'',movement:'',format:'FT',detail:'',repsRound:'',dur:'',interval:'1',deadBy:false,focus:'',intensity:'',syncTiers:true,word:'',lineRounds:false,redo:true,test:false,prProto:false,restSec:'',nSets:'',levels:blankLevels()});
+const blankPart=k=>({kind:k,name:'',content:'',movement:'',format:'FT',detail:'',repsRound:'',dur:'',interval:'1',deadBy:false,focus:'',intensity:'',syncTiers:true,word:'',lineRounds:false,redo:true,test:false,prProto:false,restSec:'',nSets:'',chain:'',levels:blankLevels()});
 function blankWod(){return {date:todayStr(),title:'',base:'',deload:false,parts:[Object.assign(blankPart('force'),{name:'Force'}),Object.assign(blankPart('renfo'),{name:'Renforcement'}),Object.assign(blankPart('metcon'),{name:'Metcon'})]};}
 function wodToDraft(w){
   return {date:w.date,title:w.title||'',base:(w.base!==undefined&&w.base!==null)?String(w.base):'',deload:!!w.deload,bonus:!!w.bonus,
@@ -15134,7 +15253,7 @@ function wodToDraft(w){
         capTiers:(l.capTiers&&l.capTiers.length)?l.capTiers.map(t=>({t:capInput(cm,tierCum(p,t.t)),p:String(t.p)})):blankCapTiers()}));
       for(let j=pad-1;j>=0;j--)lv.unshift({mode:'off',touched:false,name:LEVEL_NAMES[j],loadF:'',loadH:'',note:'',vars:{},tiers:blankTiers(),capTiers:blankCapTiers()});
       const sk=l=>JSON.stringify([l.loadF,l.loadH,l.note,l.vars,l.tiers,l.capTiers,Number(l.dRounds)||0,l.dReps||{}]);lv.forEach((l,k)=>{if(k<3&&l.mode==='custom'&&sk(l)===sk(lv[3]))l.mode='same';});
-      return {kind:p.kind||'autre',name:p.name||'',content:p.content||'',movement:p.movement||'',method:p.method||'',meth:p.meth||null,format:fmt,detail:p.detail||'',repsRound:p.repsRound?String(p.repsRound):'',word:p.word||'',lineRounds:!!p.lineRounds,redo:p.redo!==false,test:!!p.test,prProto:!!p.prProto,restSec:Number(p.restSec)>0?fmtTime(Number(p.restSec)):'',nSets:Number(p.nSets)>0?String(p.nSets):'',customLvl:p.customLvl!==false,dur:p.dur?String(p.dur):'',interval:p.interval?String(p.interval).replace('.',','):'1',deadBy:!!p.deadBy,focus:FOCUS[p.focus]?p.focus:'',intensity:INTENS[p.intensity]?p.intensity:'',levels:lv,legacyN:(p.kind==='metcon'&&pad>0)?L0.length:0,syncTiers:(()=>{const k=l=>JSON.stringify([l.tiers,l.capTiers]);return lv.every((l,j)=>j===3||l.mode==='off'||k(l)===k(lv[3]));})()};
+      return {kind:p.kind||'autre',name:p.name||'',content:p.content||'',movement:p.movement||'',method:p.method||'',meth:p.meth||null,format:fmt,detail:p.detail||'',repsRound:p.repsRound?String(p.repsRound):'',word:p.word||'',lineRounds:!!p.lineRounds,redo:p.redo!==false,test:!!p.test,prProto:!!p.prProto,restSec:Number(p.restSec)>0?fmtTime(Number(p.restSec)):'',nSets:Number(p.nSets)>0?String(p.nSets):'',chain:(p.chain==='ss'||p.chain==='seq')?p.chain:'',customLvl:p.customLvl!==false,dur:p.dur?String(p.dur):'',interval:p.interval?String(p.interval).replace('.',','):'1',deadBy:!!p.deadBy,focus:FOCUS[p.focus]?p.focus:'',intensity:INTENS[p.intensity]?p.intensity:'',levels:lv,legacyN:(p.kind==='metcon'&&pad>0)?L0.length:0,syncTiers:(()=>{const k=l=>JSON.stringify([l.tiers,l.capTiers]);return lv.every((l,j)=>j===3||l.mode==='off'||k(l)===k(lv[3]));})()};
     })};
 }
 function draftToWod(d){
@@ -15165,6 +15284,7 @@ function draftToWod(d){
       if(rs>0)o.restSec=rs;
       const ns=String(p.nSets||'').trim();
       if(ns!==''){const n=parseNum(ns);if(n===null||n<1||n>30||n%1)throw new Error('Nombre de séries illisible ('+o.label+') : écris un nombre entier entre 1 et 30, ou laisse vide.');if(rs>0)o.nSets=n;}
+      if(p.kind==='renfo'&&(p.chain==='ss'||p.chain==='seq'))o.chain=p.chain;
     }
     if(p.kind==='metcon'){
       if(!FOCUS[p.focus])throw new Error('Choisis le type de metcon ('+o.label+') : il sert aux trophées par catégorie.');
@@ -16262,6 +16382,14 @@ function wodEditor(modal){
     if(p.kind==='force'||(p.kind==='renfo'&&p.format!=='EMOM'))box.append(h('div',{class:'grid2'},
       field('Temps de récup entre les séries',tin(p,'restSec',{id:'p'+i+'-rest',inputmode:'text',placeholder:'1:30 ou 90'}),'En secondes (90) ou en minutes:secondes (1:30). Rempli, le chronomètre de la partie devient un minuteur plein écran : l’athlète appuie à chaque fin de série, ta récup se lance, puis il appuie quand il repart. À la fin, ses récups réelles sont comparées aux tiennes (écart toléré : 30 s). Vide = ancien chronomètre simple.'),
       field('Nombre de séries (facultatif)',tin(p,'nSets',{id:'p'+i+'-nsets',inputmode:'numeric',placeholder:'détecté dans le contenu'}),'Laisse vide : le nombre est lu dans le contenu (« 5 x 5 Back Squat » = 5 séries). À remplir seulement si rien n’est détecté ou pour forcer une valeur. Sans nombre, l’athlète termine lui-même.')));
+    if(p.kind==='renfo'&&p.format!=='EMOM'){
+      const ls=setLines(p,1)||[],cnt=setCount(p),ssOn=isSuperset(p);
+      box.append(field('Enchaînement des exercices',sel([['','Automatique (lu dans le contenu)'],['seq','Normal : un exercice après l’autre'],['ss','Superset : exercices enchaînés']],p.chain||'',v=>{p.chain=v;render();},{id:'p'+i+'-chain'}),
+        ls.length<2?'Utile quand plusieurs lignes annoncent des séries (ex. « 4x10 pompes » et « 4x 30s gainage »).'
+        :(Math.floor(Number(p.nSets))>0?'Nombre de séries forcé ci-dessus : le minuteur compte '+cnt+' séries.'
+        :ssOn?'Superset : '+ls.map(x=>x.label).join(' + ')+' enchaînés, puis récup. Le minuteur compte '+cnt+' tour'+(cnt>1?'s':'')+'.'
+        :'Normal : '+ls.map(x=>x.n+' × '+x.label).join(' puis ')+'. Le minuteur compte '+cnt+' séries et affiche l’exercice en cours.')));
+    }
     if(metcon){
       const md=roundModel({format:p.format,content:p.content});
       box.append(h('div',{class:'grid2'},
