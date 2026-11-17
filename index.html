@@ -346,6 +346,14 @@ html[data-plan],html[data-plan] body{overflow:hidden}
 .lvl-edit{border:2px solid var(--line);border-radius:4px;padding:10px;display:grid;gap:10px;background:var(--surface)}
 .seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .seg.s4{grid-template-columns:repeat(2,minmax(0,1fr))} /* 4 niveaux : 2 x 2 */
+.ps-btn{width:100%;margin-top:8px}.ps-btn[aria-pressed="true"]{background:#6B3FA0;border-color:#6B3FA0;color:#fff}
+.ps-panel{border:2px solid #6B3FA0;border-radius:6px;padding:10px;margin-top:8px}
+.ps-opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px}
+.ps-opt{display:grid;gap:2px;text-align:left;height:auto;padding:8px 10px;white-space:normal}
+.ps-opt[aria-pressed="true"]{background:#6B3FA0;border-color:#6B3FA0;color:#fff}
+.ps-opt.ps-sh b::after{content:' =';opacity:.7}
+.ps-d{font-size:12px;line-height:1.3;opacity:.85;overflow-wrap:anywhere}
+.ps-res{display:grid;gap:3px;background:rgba(107,63,160,.12);border-radius:4px;padding:8px 10px}
 .seg .btn{padding:8px 2px;font-size:11px;letter-spacing:0}
 .seg .btn[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .dots{display:flex;flex-wrap:wrap;gap:8px}
@@ -4676,14 +4684,15 @@ const LV_ABBR=['DEC','DEB','INT','RX'];
 /* niveau personnalisé en kilos : +5 / +10 kg sur la charge Rx (les −5 / −10 kg ne sont plus proposés : c'est le niveau Découverte qui les remplace ; les anciens résultats en −5 / −10 kg restent lus et comptés). 5 kg = 0,25 de niveau, 10 kg = 0,5.
    Résultat enregistré dans e.kg. Les anciens résultats (e.adj, en %) sont convertis à la lecture : +10 % → +5 kg, +20/30 % → +10 kg, −10 % → −5 kg, −20 % et moins → −10 kg. */
 const kgOf=e=>{if(!e)return 0;if(e.kg!==undefined&&e.kg!==null&&e.kg!=='')return Number(e.kg)||0;const a=Number(e.adj)||0;return !a?0:a>0?(a<15?5:10):(a>-15?-5:-10);};
-const isCust=e=>kgOf(e)!==0;
+const isPerso=e=>!!e&&typeof e.pv==='number'&&isFinite(e.pv); /* résultat en niveau Perso (un niveau par mouvement) */
+const isCust=e=>kgOf(e)!==0||isPerso(e);
 const LV_MIN=1.5,LV_MAX=3.5,KG_STEP=5,KG_LV=0.25; /* 5 kg = 0,25 de niveau */
 /* valeur de niveau d'un résultat : niveau choisi + 0,25 par tranche de 5 kg (Rx +10 kg = 3,5 ; ancien Débutant −10 kg = 1,5) */
 /* rang d'un niveau (0 Découverte, 1 Débutant, 2 Intermédiaire, 3 Rx) : le niveau le plus haut d'un metcon est toujours Rx, même si le metcon n'a que 1, 2 ou 3 niveaux enregistrés
    (anciens metcons à 3 niveaux Débutant / Intermédiaire / Rx : leurs indices restent valables, ils sont simplement décalés d'un rang) */
 const lvTop=m=>Math.max(0,levelsOf(m).length-1);
 const lvRank=(m,i)=>Math.max(0,Math.min(3,(i||0)+Math.max(0,4-levelsOf(m).length)));
-const lvVal=(e,m)=>Math.max(LV_MIN,Math.min(LV_MAX,LV_VAL[m?lvRank(m,e.level):Math.max(0,Math.min(3,(e.level||0)+1))]+kgOf(e)/KG_STEP*KG_LV));
+const lvVal=(e,m)=>isPerso(e)?Math.max(LV_MIN,Math.min(LV_MAX,e.pv)):Math.max(LV_MIN,Math.min(LV_MAX,LV_VAL[m?lvRank(m,e.level):Math.max(0,Math.min(3,(e.level||0)+1))]+kgOf(e)/KG_STEP*KG_LV));
 /* niveau le plus proche d'une moyenne (à égalité, le plus haut) */
 function lvNear(avg){let b=0;for(let i=1;i<4;i++)if(Math.abs(avg-LV_VAL[i])<=Math.abs(avg-LV_VAL[b])+1e-9)b=i;return b;}
 /* niveau affiché : le plus proche, avec + ou - s'il n'est pas exact (2,6 = INT+, 2,9 = RX-, 2 = DEB, 1,5 = DEC) */
@@ -4694,7 +4703,105 @@ const lowLvl=m=>{const a=activeLevels(m);return a.length?a[0][1]:0;};
 const SUB_F=1; /* une séance de remplacement rapporte les points normaux (séance + metcon) : plus de division par deux */
 const adjF=e=>(e&&e.sw)?SUB_F:1; /* le niveau personnalisé ne change pas les points ; seul un remplacement les réduit */
 const adjTxt=e=>{const k=kgOf(e);return k?' '+(k>0?'+':'−')+Math.abs(k)+' kg':'';};
-const lvlLab=(m,e)=>levelName(m,e.level)+adjTxt(e);
+const lvlLab=(m,e)=>isPerso(e)?'Perso '+lvTag(e.pv):levelName(m,e.level)+adjTxt(e);
+/* ---------- niveau Perso : l'athlète choisit un niveau par mouvement ----------
+   Rien ne change pour le coach : on lit les niveaux publiés du metcon (variantes cochées, reps adaptées, charges).
+   Pour chaque mouvement reconnu, les niveaux actifs voisins IDENTIQUES (même variante, mêmes reps, même charge) sont regroupés en une seule option (ex. « Rx / Intermédiaire » pour une corde identique).
+   Le nombre de tours n'entre pas dans la comparaison : en Perso, tours et paliers sont ceux du niveau de base (le plus bas retenu).
+   Calcul (règle validée par Robin) :
+   - référence = le niveau le plus bas choisi parmi tous les mouvements (une option qui regroupe plusieurs niveaux compte pour son niveau le plus haut) ;
+   - un mouvement dont l'option ne couvre qu'un niveau garde ce niveau ;
+   - un mouvement identique sur plusieurs niveaux prend la référence, sans sortir de sa fourchette (ex. Clean Rx + Tractions Débutant : la corde Rx/Inter compte Inter) ;
+   - valeur Perso = moyenne des valeurs de niveau (Découverte 1,5 · Débutant 2 · Intermédiaire 2,5 · Rx 3) → multiplicateur = valeur / 2, comme les autres niveaux.
+   Enregistré sur le résultat : level = niveau de base (paliers, tours), pv = valeur Perso, pm = { mouvement: rang retenu 0-3 }. Tout le reste (moyenne, INT+, GOAT) passe par lvVal. */
+const psLines=m=>String((m&&m.content)||'').split('\n').map(x=>x.trim()).filter(Boolean);
+function psLoaded(name){
+  const c=mvCfg()[name];
+  if(c&&c.lv&&c.lv.some(x=>x&&(String(x.f||'').trim()||String(x.h||'').trim())))return true;
+  return mvGroup(name)==='haltero';
+}
+/* charge d'un mouvement dans un niveau : « Clean 60 kg · Thruster 40 kg » → 60 kg pour Clean ; une valeur seule vaut pour les mouvements chargés */
+function psLoad(lv,key,name,det){
+  const s=String((lv&&lv[key])||'').trim();if(!s)return '';
+  const segs=s.split(/\s*·\s*/).map(norm),nm=norm(name);
+  const hit=segs.find(t=>t===nm||t.startsWith(nm+' '));
+  if(hit)return hit.slice(nm.length).trim();
+  if(segs.some(t=>det.some(n=>{const k=norm(n);return t===k||t.startsWith(k+' ');})))return '';
+  return norm(s).replace(/\s+/g,' ');
+}
+const psVars=(m,lv)=>(lv.variants&&lv.variants.length)?lv.variants:(lv.vars?mvVariantsOut(m,lv):[]);
+function psSig(m,lv,name,det,loaded,lines){
+  const v=psVars(m,lv).find(x=>x&&x.from===name&&x.to&&x.to.length);
+  const reps=[];
+  lines.forEach((t,j)=>{if(mvSpans(t.replace(WTAG,'')).some(x=>x.name===name))reps.push(Number((lv.dReps||{})[j])||0);});
+  const ld=loaded.includes(name)?[psLoad(lv,'loadF',name,det),psLoad(lv,'loadH',name,det)]:[];
+  return {key:JSON.stringify([v?v.to.slice().sort():[],reps,ld]),v,reps,load:ld};
+}
+/* mouvements du metcon et leurs options Perso : opts = [{idx:[indices de niveaux], hi, lo (rangs), v, reps, load}] du plus haut au plus bas */
+function persoMoves(m){
+  if(!m)return [];
+  const det=mvDetect(m.content);if(!det.length)return [];
+  let loaded=det.filter(psLoaded);if(!loaded.length)loaded=det;
+  const lines=psLines(m),act=activeLevels(m).slice().sort((a,b)=>lvRank(m,b[1])-lvRank(m,a[1]));
+  return det.map(name=>{
+    const opts=[];let prev=null;
+    for(const [lv,i] of act){
+      const sg=psSig(m,lv,name,det,loaded,lines),r=lvRank(m,i);
+      if(prev&&prev.key===sg.key){prev.idx.push(i);prev.lo=r;}
+      else{prev={key:sg.key,idx:[i],hi:r,lo:r,v:sg.v,reps:sg.reps,load:sg.load};opts.push(prev);}
+    }
+    return {name,opts};
+  });
+}
+/* le niveau Perso n'est proposé que si au moins 2 mouvements changent d'un niveau à l'autre */
+const persoOk=m=>persoMoves(m).filter(x=>x.opts.length>1).length>=2;
+const psOptName=(m,o)=>o.idx.map(i=>levelName(m,i)).join(' / ');
+function persoCalc(m,pk){
+  const mv=persoMoves(m);
+  const miss=mv.filter(x=>!(pk&&Number.isInteger(pk[x.name])&&x.opts[pk[x.name]])).map(x=>x.name);
+  if(!mv.length||miss.length)return {miss,mv};
+  const rows=mv.map(x=>({name:x.name,o:x.opts[pk[x.name]]}));
+  const ref=Math.min(...rows.map(r=>r.o.hi)); /* niveau le plus bas choisi (une option « Débutant / Découverte » compte Débutant) */
+  rows.forEach(r=>{r.shared=r.o.lo!==r.o.hi;r.rank=Math.max(r.o.lo,Math.min(r.o.hi,ref));});
+  const pv=Math.round(rows.reduce((s,r)=>s+LV_VAL[r.rank],0)/rows.length*1000)/1000;
+  const minR=Math.min(...rows.map(r=>r.rank)),act=activeLevels(m);
+  const bx=act.find(x=>lvRank(m,x[1])===minR)||act[0];
+  const pm={};rows.forEach(r=>{pm[r.name]=r.rank;});
+  return {miss:[],mv,rows,pv,pm,base:bx?bx[1]:0};
+}
+/* option d'un mouvement correspondant à un rang retenu (pour rouvrir un résultat ou préremplir) */
+function psOptFor(x,rank){
+  if(!Number.isInteger(rank))return null;
+  let j=x.opts.findIndex(o=>rank<=o.hi&&rank>=o.lo);
+  if(j<0)j=x.opts.reduce((b,o,k)=>Math.abs(o.hi-rank)<Math.abs(x.opts[b].hi-rank)?k:b,0);
+  return j;
+}
+/* préremplissage : pour chaque mouvement, le dernier rang retenu par l'athlète sur un résultat Perso (séances et REDO), sinon rien */
+function persoPrefill(m,uid,pm){
+  const pk={},mv=persoMoves(m);
+  const lg=S.logs[uid]||{},hist=[];
+  for(const src of [lg.entries||{},lg.redos||{}])for(const [d,e] of Object.entries(src))if(isPerso(e)&&e.pm)hist.push([(e.at||d),e.pm]);
+  hist.sort((a,b)=>String(b[0]).localeCompare(String(a[0])));
+  for(const x of mv){
+    let r=pm&&Number.isInteger(pm[x.name])?pm[x.name]:null;
+    if(r===null){const h0=hist.find(h1=>Number.isInteger(h1[1][x.name]));if(h0)r=h0[1][x.name];}
+    const j=psOptFor(x,r);if(j!==null)pk[x.name]=j;
+  }
+  return pk;
+}
+/* met à jour le niveau de base de la saisie Perso (null tant qu'un mouvement n'a pas de niveau) */
+function persoSync(m,st){
+  if(!st||!st.perso)return null;
+  const c=persoCalc(m,st.pk);
+  st.level=c.miss.length?null:c.base;st.kg=0;
+  return c;
+}
+/* champs Perso à enregistrer sur un résultat (vide si la saisie n'est pas en Perso) */
+function persoFields(m,st){
+  if(!st||!st.perso)return {};
+  const c=persoCalc(m,st.pk);
+  return c.miss.length?{}:{pv:c.pv,pm:c.pm};
+}
 
 /* ---------- time cap d'un For Time : tours + reps ----------
    Le score d'un For Time arrêté par le time cap est stocké en reps cumulées (capScore), les paliers aussi.
@@ -4832,6 +4939,7 @@ function redoPts(m,first,x){
 }
 function redoObj(st,r){
   const o={level:st.level};if(kgOf(st))o.kg=kgOf(st);
+  if(st.perso&&st._m)Object.assign(o,persoFields(st._m,st));
   if(r.cap){o.cap=true;o.capScore=r.v;if(r.rounds!==undefined)o.rounds=r.rounds;o.reps=r.reps;}
   else{o.score=r.v;if(r.rounds!==undefined){o.rounds=r.rounds;o.reps=r.reps;}}
   return o;
@@ -9532,7 +9640,7 @@ function sessionRankRows(w){
   for(const [uid,lg] of Object.entries(S.logs)){
     const e=lg.entries&&lg.entries[w.date];
     if(!e||e.sw||!hasScore(e))continue;
-    out.push({uid,pseudo:lg.pseudo||'Athlète',lvl:lvRank(m,e.level||0),lv:lvVal(e,m),k:scoreKey(m,e),txt:scoreText(m,e.score,e)});
+    out.push({uid,pseudo:lg.pseudo||'Athlète',lvl:isPerso(e)?lvNear(e.pv):lvRank(m,e.level||0),lv:lvVal(e,m),k:scoreKey(m,e),txt:scoreText(m,e.score,e)});
   }
   return out;
 }
@@ -10030,6 +10138,7 @@ function lvgShow(){
     h('p',{},'Le niveau à choisir est celui qui correspond à tes capacités du moment : ni celui que tu aimerais avoir, ni celui des autres. Un bon niveau, c’est un metcon que tu peux faire proprement, du début à la fin, en poussant fort.'),
     h('p',{},'Ton résultat est ensuite coefficienté selon le niveau choisi : plus le niveau est élevé, plus ton score pèse dans tes points et ton classement. Choisir trop haut ne rapporte rien si tu ne tiens pas la séance, et choisir trop bas sous-évalue ton résultat.'),
     h('p',{class:'muted'},'Tu peux changer de niveau d’un metcon à l’autre, selon la forme et les mouvements.'),
+    h('p',{},'Un mouvement te bloque mais le reste passe au niveau au-dessus ? Choisis « Perso » quand il est proposé : tu prends un niveau par mouvement et ton coefficient est calculé à partir de tes choix.'),
     h('div',{class:'row',style:'justify-content:center'},h('button',{class:'btn primary',type:'button',id:'lvg-ok',onclick:close},'J’ai compris'))));
   pop.addEventListener('click',e=>{if(e.target===pop)close();});
   document.body.append(pop);
@@ -10039,13 +10148,52 @@ function levelField(m,st,label){
   /* 4 niveaux au plus : Découverte, Débutant, Intermédiaire, Rx (selon ceux activés par le coach) */
   const box=h('div',{class:'field'},h('span',{class:'flabel'},label),
     h('div',{class:'seg'+(activeLevels(m).length>3?' s4':''),role:'group','aria-label':'Niveau de pratique'},
-      activeLevels(m).map(([lv,i])=>h('button',{type:'button',class:'btn sm','aria-pressed':st.level===i?'true':'false',onclick:()=>{st.level=i;st.kg=0;st.custom=false;render();lvgShow();}},dispLvl(lv.name||('Niveau '+(i+1)))))));
+      activeLevels(m).map(([lv,i])=>h('button',{type:'button',class:'btn sm','aria-pressed':(!st.perso&&st.level===i)?'true':'false',onclick:()=>{st.perso=false;st.level=i;st.kg=0;st.custom=false;render();lvgShow();}},dispLvl(lv.name||('Niveau '+(i+1)))))));
+  if(persoOk(m)||st.perso){
+    box.append(h('button',{type:'button',class:'btn sm ps-btn','aria-pressed':st.perso?'true':'false',onclick:()=>{
+      if(!st.perso){st.perso=true;st.pk=persoPrefill(m,st.uid||S.uid,null);persoSync(m,st);}
+      render();lvgShow();}},'Perso · un niveau par mouvement'));
+    if(st.perso)box.append(persoPanel(m,st));
+  }
   box.append(lvlBanner(m,st));
+  return box;
+}
+/* panneau du niveau Perso : pour chaque mouvement, les options (niveaux identiques regroupés), puis le coefficient en direct */
+function persoPanel(m,st){
+  const c=persoSync(m,st),sx=S.prof.sex;
+  const box=h('div',{class:'stack ps-panel'},
+    h('p',{class:'hint'},'Choisis ton niveau pour chaque mouvement. Quand une option regroupe plusieurs niveaux (mouvement identique), elle compte au niveau le plus bas que tu as choisi ailleurs, dans la limite de ce qu’elle vaut.'));
+  for(const x of c.mv){
+    const cur=st.pk?st.pk[x.name]:undefined;
+    const det=o=>{
+      const a=[o.v?o.v.to.join(' ou '):x.name];
+      if(o.reps.some(Boolean))a.push('reps adaptées');
+      const ld=o.load.length?(sx==='F'?o.load[0]:sx==='H'?o.load[1]:[o.load[0]?'F '+o.load[0]:'',o.load[1]?'H '+o.load[1]:''].filter(Boolean).join(' · ')):'';
+      if(ld)a.push(ld);
+      return a.join(' · ');
+    };
+    box.append(h('div',{class:'field ps-mv'},h('span',{class:'flabel'},x.name),
+      h('div',{class:'ps-opts',role:'group','aria-label':'Niveau pour '+x.name},x.opts.map((o,j)=>h('button',{type:'button',class:'btn sm ps-opt'+(o.idx.length>1?' ps-sh':''),'aria-pressed':cur===j?'true':'false',
+        onclick:()=>{st.pk=Object.assign({},st.pk||{},{[x.name]:j});render();}},
+        h('b',{},psOptName(m,o)),h('span',{class:'ps-d'},det(o)))))));
+  }
+  if(c.miss.length)box.append(h('p',{class:'hint',role:'status'},'Reste à choisir : '+c.miss.join(', ')+'.'));
+  else box.append(h('div',{class:'ps-res',role:'status','aria-live':'polite'},
+    h('b',{},'Coefficient ×'+fmt2(c.pv/LEVEL_DIV)+' · niveau '+lvTag(c.pv)),
+    h('span',{class:'ps-d'},c.rows.map(r=>r.name+' '+LV_ABBR[r.rank]+(r.shared?' (identique '+psOptName(m,r.o)+')':'')).join(' · ')),
+    h('span',{class:'ps-d'},'Tours et paliers : ceux du niveau '+levelName(m,c.base)+'.')));
   return box;
 }
 /* résumé du niveau choisi (nom, couleur, charge, variante) : sert au bandeau de saisie et à la fenêtre de confirmation */
 function lvlInfo(m,st){
   const k=kgOf(st),lv=levelsOf(m)[st.level]||{};
+  if(st&&st.perso){
+    const c=persoCalc(m,st.pk);
+    if(c.miss.length)return {none:true,perso:true};
+    return {cls:'lv-c',perso:true,label:'Perso ×'+fmt2(c.pv/LEVEL_DIV)+' ('+lvTag(c.pv)+')',
+      load:c.rows.filter(r=>r.o.load.length).map(r=>{const sx=S.prof.sex,l=sx==='F'?r.o.load[0]:sx==='H'?r.o.load[1]:[r.o.load[0]?'F '+r.o.load[0]:'',r.o.load[1]?'H '+r.o.load[1]:''].filter(Boolean).join(' / ');return l?r.name+' '+l:'';}).filter(Boolean).join(' · '),
+      note:c.rows.map(r=>r.name+' : '+psOptName(m,r.o)+(r.o.v?' ('+r.o.v.to.join(' ou ')+')':'')).join(' · ')+' · tours et paliers du niveau '+levelName(m,c.base),kg:0};
+  }
   if(!Number.isInteger(st.level))return {none:true};
   const rank=lvRank(m,st.level),base=levelName(m,st.level);
   return {cls:k?'lv-c':'lv-'+rank,label:k?base+' '+(k>0?'+':'−')+Math.abs(k)+' kg':base,
@@ -10053,12 +10201,12 @@ function lvlInfo(m,st){
 }
 function lvlBanner(m,st){
   const i=lvlInfo(m,st);
-  if(i.none)return h('div',{class:'hint',role:'status'},'Aucun niveau sélectionné. Touche un niveau pour voir la charge et les variantes.');
+  if(i.none)return h('div',{class:'hint',role:'status'},i.perso?'Choisis un niveau pour chaque mouvement pour voir ton coefficient Perso.':'Aucun niveau sélectionné. Touche un niveau pour voir la charge et les variantes.');
   return h('div',{class:'lvl-ban '+i.cls,role:'status','aria-live':'polite'},
     h('div',{class:'lb-k'},'Tu saisis un score en'),
     h('div',{class:'lb-t'},i.label),
     i.load?h('div',{class:'lb-d'},h('b',{},(S.prof.sex?'Ta charge : ':'Charge : ')),i.load):h('div',{class:'lb-d'},'Pas de charge indiquée pour ce niveau.'),
-    i.note?h('div',{class:'lb-d'},h('b',{},'Variante : '),i.note):null);
+    i.note?h('div',{class:'lb-d'},h('b',{},i.perso?'Tes choix : ':'Variante : '),i.note):null);
 }
 /* fenêtre de confirmation avant d'enregistrer : rappelle le niveau, la charge, les variantes et le résultat saisi */
 function confirmLevel(m,st,go){
@@ -10077,7 +10225,7 @@ function confirmLevel(m,st,go){
         h('div',{class:'lb-k'},'Tu valides un score en'),h('div',{class:'lb-t'},i.label)),
       res?h('p',{class:'lvc-res'},h('span',{class:'flabel'},'Ton résultat'),h('b',{},res)):null,
       h('div',{class:'lvc-row'},h('span',{class:'flabel'},'Charge à utiliser'),h('b',{},i.load||'Pas de charge indiquée pour ce niveau')),
-      i.note?h('div',{class:'lvc-row'},h('span',{class:'flabel'},'Variante de ce niveau'),h('b',{},i.note)):h('div',{class:'lvc-row'},h('span',{class:'flabel'},'Variantes'),h('span',{class:'sub'},'Aucune : mêmes mouvements que le Rx.')),
+      i.note?h('div',{class:'lvc-row'},h('span',{class:'flabel'},i.perso?'Tes choix par mouvement':'Variante de ce niveau'),h('b',{},i.note)):h('div',{class:'lvc-row'},h('span',{class:'flabel'},'Variantes'),h('span',{class:'sub'},'Aucune : mêmes mouvements que le Rx.')),
       lines.length?h('div',{class:'lvc-row'},h('span',{class:'flabel'},'Metcon · '+(m.label||'')),h('div',{class:'lvc-lines'},lines.map(x=>h('div',{},x)))):null,
       h('p',{class:'hint'},'Vérifie que tu as bien fait la charge et les mouvements de ce niveau. Sinon, reviens corriger ton niveau.'),
       h('div',{class:'row'},
@@ -10282,6 +10430,7 @@ function openRedo(w,date){
   S.entry=null;S.entryGlowUntil=Date.now()+2900;
   const src=rd||mine||{};
   S.redo={date,score:'',rounds:'',reps:'',level:(rd&&rd.level!==undefined)?okLvl(m,rd.level):null,kg:0,custom:false};
+  if(rd&&isPerso(rd)){S.redo.perso=true;S.redo.pk=persoPrefill(m,S.uid,rd.pm);persoSync(m,S.redo);}
   fillState(m,S.redo,rd);
   render();
 }
@@ -10293,7 +10442,7 @@ function redoForm(w,date){
     let pts=0,why='';
     const r=readScore(m,S.redo);
     if(r.v!==undefined&&Number.isInteger(S.redo.level)){
-      const x=redoObj(S.redo,r);
+      S.redo._m=m;const x=redoObj(S.redo,r);
       const g=redoGrade(m,first,x);pts=g?REDO_PTS[g-1]:0;
       why=g===3?' Tu t’améliores !':g===2?' Tu égales ton premier résultat.':g===1?' Moins bien que ton premier résultat.':'';
     }
@@ -10314,14 +10463,17 @@ function submitRedo(w){
 function submitRedoNow(w){
   if(lockedDate(S.redo.date)||lockedDate(todayStr())){toast(LOCKMSG,true);return;}
   const m=metconOf(w),ft=m.format==='FT';
+  if(S.redo.perso){const pc=persoSync(m,S.redo);if(pc&&pc.miss.length){toast('Niveau Perso : choisis un niveau pour '+pc.miss.join(', ')+'.',true);return;}}
   if(!Number.isInteger(S.redo.level)){toast('Sélectionnez un niveau pour le metcon.',true);return;}
   const r=readScore(m,S.redo);
   if(r.empty||r.bad||r.over||r.many){toast(r.empty?'Indique ton résultat.':scoreErr(m,r),true);return;}
   const v=r.v;
   const date=S.redo.date,cur=S.logs[S.uid]||{},old=(cur.redos||{})[date];
+  const psF=persoFields(m,S.redo);
   S.redo.level=okLvl(m,S.redo.level);
   const rd={on:(old&&old.on)||todayStr(),level:S.redo.level,at:new Date().toISOString()};
   if(kgOf(S.redo))rd.kg=kgOf(S.redo);
+  Object.assign(rd,psF);
   if(r.cap){rd.cap=true;rd.capScore=v;if(r.rounds!==undefined)rd.rounds=r.rounds;rd.reps=r.reps;}
   else{rd.score=v;if(r.rounds!==undefined){rd.rounds=r.rounds;rd.reps=r.reps;}}
   S.redo=null;
@@ -10344,6 +10496,7 @@ function openEntry(w,date,uid,coach){
   const mine=S.logs[uid]&&S.logs[uid].entries&&S.logs[uid].entries[date];const m=metconOf(w);
   if(!coach)S.entryGlowUntil=Date.now()+2900;
   S.entry={date,uid,coach:!!coach,score:'',rounds:'',reps:'',message:(mine&&mine.message)||'',level:m?((mine&&mine.level!==undefined)?okLvl(m,mine.level):null):0,kg:0,custom:false,loads:{},sets:{},prs:{},skip:!!(mine&&mine.noMetcon&&!hasScore(mine)),only:!!(mine&&mine.metconOnly)};
+  if(mine&&m&&isPerso(mine)){S.entry.perso=true;S.entry.pk=persoPrefill(m,uid,mine.pm);persoSync(m,S.entry);if(!Number.isInteger(S.entry.level))S.entry.level=okLvl(m,mine.level||0);}
   if(mine){
     fillState(m,S.entry,mine);
     for(const [k,v] of Object.entries(mine.loads||{}))S.entry.loads[k]=String(v).replace('.',',');
@@ -10558,9 +10711,10 @@ function submitEntryNow(w){
   if(w.isSub&&w.subSw)e.sw=w.subSw; /* séance de remplacement : la copie suit le résultat */
   if(m){
     if(!S.entry.skip){
+      if(S.entry.perso){const pc=persoSync(m,S.entry);if(pc&&pc.miss.length){toast('Niveau Perso : choisis un niveau pour '+pc.miss.join(', ')+'.',true);return;}}
       if(!Number.isInteger(S.entry.level)){toast('Sélectionnez un niveau pour le metcon.',true);return;} /* aucun niveau par défaut */
     }
-    if(Number.isInteger(S.entry.level)){S.entry.level=okLvl(m,S.entry.level);e.level=S.entry.level;if(kgOf(S.entry))e.kg=kgOf(S.entry);}
+    if(Number.isInteger(S.entry.level)){const psF=persoFields(m,S.entry);S.entry.level=okLvl(m,S.entry.level);e.level=S.entry.level;if(kgOf(S.entry))e.kg=kgOf(S.entry);Object.assign(e,psF);}
     const r=S.entry.skip?{empty:true}:readScore(m,S.entry);
     if(S.entry.skip)e.noMetcon=true;
     if(r.bad||r.over||r.many){toast(scoreErr(m,r),true);return;}
