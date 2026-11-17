@@ -4462,7 +4462,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-17.10';
+const APP_VERSION='2026-11-17.12';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -14902,7 +14902,7 @@ function spreadRounds(top,bottom,pct,N){ /* N (10 par défaut) nombres de tours 
 }
 const tourTxt=v=>String(v).replace('.',',');
 /* points du palier j : 10, 9, 8… (10 paliers) ou 10, 9,5, 9… 0,5 (20 paliers, mode « fin ») */
-const tierPts=(j,fine)=>String((fine?20:10)-j);
+const tierPts=(j,fine)=>fine==='half'?String(10-j/2).replace('.',','):String((fine?20:10)-j); /* fine : false (10 paliers), true (20 paliers de 1 pt), 'half' (20 paliers de 0,5 pt) */
 /* AMRAP : 10 paliers en reps entières. Le palier à 10 points = tours estimés (au quart de tour) en reps, puis chaque palier est x % plus bas que le palier à 10 points, arrondi à la rep (ex. 247 reps, puis 235 à 5 %). */
 function amrapRepTiers(est,pct,rr,N){
   N=N||10;
@@ -14916,7 +14916,7 @@ function deadTiers(D,iv,pct,N,fine){ /* Dead by : temps tenu décroissant depuis
   const n=Math.max(1,Math.floor(D/iv)),k=pct?Math.max(1,Math.round(D*pct/100/iv)):Math.ceil(n/N),times=[];
   for(let j=0;j<N;j++){const t=D-j*k*iv;if(t<=0)break;times.push(t);}
   const c=times.length;
-  return times.map((t,j)=>({t:fmtTime(Math.round(t*60)),p:String(c>1?(fine?Math.round(20-19*j/(c-1)):Math.round(10-9*j/(c-1))):(fine?20:10))}));
+  return times.map((t,j)=>({t:fmtTime(Math.round(t*60)),p:fine==='half'?String(c>1?Math.round((10-9.5*j/(c-1))*2)/2:10).replace('.',','):String(c>1?(fine?Math.round(20-19*j/(c-1)):Math.round(10-9*j/(c-1))):(fine?20:10))}));
 }
 /* f = multiplicateur appliqué au temps « pur » (reps x secondes par rep) : transitions, fatigue, respirations */
 const INTENS={max:{l:'À fond',f:1.2,d:'Tu pousses du début à la fin.',cat:'max'},allure:{l:'Gestion d’allure',f:1.45,d:'Tu gardes un rythme régulier, sans te vider.',cat:'allure'},cool:{l:'Pas à fond',f:1.8,d:'Séance tranquille : tu gardes de la marge.',cat:'cool'}};
@@ -14999,7 +14999,7 @@ function metEstimate(p){
     items.push({n,sec,nm});
   }
   if(!items.length)return null;
-  let T=0,R=0,roundTime=0,roundReps=0;const tr=transSec();
+  let T=0,R=0,roundTime=0,roundReps=0,trRound=0,trT=0;const tr=transSec(); /* T et roundTime = temps pur (multiplié par le coefficient) ; trT et trRound = transitions, ajoutées SANS coefficient */
   if(nums){
     const sum=nums.reduce((a,b)=>a+b,0);
     items.forEach(it=>{
@@ -15007,14 +15007,14 @@ function metEstimate(p){
       else if(it.n===null){T+=sum*it.sec;R+=sum;}
       else{T+=nums.length*it.n*it.sec;R+=nums.length*it.n;}
     });
-    if(items.length>1&&tr>0)T+=(nums.length*items.length-1)*tr; /* une transition à chaque changement de mouvement */
+    if(items.length>1&&tr>0){trT=(nums.length*items.length-1)*tr;trRound=trT/nums.length;} /* une transition à chaque changement de mouvement */
     roundTime=T/nums.length;roundReps=R/nums.length;
   }else{
     items.forEach(it=>{const n=it.fixed?1:it.n;roundTime+=n*it.sec;roundReps+=(it.fixed&&it.eqR!==undefined)?it.eqR:n;});
-    if(items.length>1&&tr>0)roundTime+=items.length*tr; /* transitions d'un tour, retour au 1er mouvement compris (AMRAP, tours) */
-    T=roundTime*rounds-((items.length>1&&tr>0)?tr:0);R=roundReps*rounds; /* pas de transition après le dernier mouvement */
+    T=roundTime*rounds;R=roundReps*rounds;
+    if(items.length>1&&tr>0){trRound=items.length*tr;trT=trRound*rounds-tr;} /* transitions d'un tour, retour au 1er mouvement compris ; pas de transition après le dernier mouvement */
   }
-  return {T,R,roundTime,roundReps,rounds,unknown,tr:items.length>1?tr:0,nMv:items.length};
+  return {T,R,roundTime,roundReps,rounds,unknown,tr:items.length>1?tr:0,trRound,trT,nMv:items.length};
 }
 /* remplit les paliers du metcon (Rx, puis les autres niveaux adaptés) à partir de l'intensité choisie */
 /* le niveau change-t-il quelque chose qui joue sur le temps : reps, tours ou exercice remplacé par une variante ? */
@@ -15048,16 +15048,43 @@ function lvEstP(p,lv){
   if(rr>0&&so>0&&sn!==so)q.repsRound=String(Math.max(1,Math.round(rr*sn/so)));
   return q;
 }
+/* AMRAP avec équivalences ({10=1} sur 100 sauts à la corde…) : l'équivalence sert seulement à ÉCRIRE les résultats plus simplement.
+   Les paliers se calculent comme sans équivalence (en reps réelles ; une distance garde son équivalence, sinon 800 m compteraient pour 800 reps),
+   puis chaque palier est réécrit en reps équivalentes, comme l'athlète saisit son score. */
+function unitModel(m){
+  if(!roundModel(m))return null;
+  const items=[];
+  for(const raw of String(m.content||'').split('\n')){
+    const s=raw.trim();if(!s)continue;
+    const w=s.match(WTAG),clean=s.replace(WTAG,'').trim();
+    if(NOT_REPS.test(clean)||/^\d+(\s*[-–\/]\s*\d+)+(\s|$)/.test(clean))continue;
+    const di=distInfo(clean,w);let n;
+    if(di)n=di.n;else{const lm=clean.match(/^(\d+)\s+\S/);if(!lm)continue;n=+lm[1];}
+    let eq=n;
+    if(w){const a=w[1]?parseNum(w[1]):null,b=parseNum(w[2]);if(b!==null&&b>=0&&(a===null||a>0))eq=a?n*b/a:b;}
+    items.push({n,eq,u:di?eq:n});
+  }
+  const U=items.reduce((a,x)=>a+x.u,0),E=items.reduce((a,x)=>a+x.eq,0);
+  if(!(U>0&&E>0)||!Number.isInteger(U)||!Number.isInteger(E)||Math.abs(U-E)<1e-9)return null;
+  return {items,U,E};
+}
+/* reps réelles cumulées -> reps équivalentes cumulées (entières : ce que l'athlète a pu valider) */
+function unitsToEq(um,v){
+  const r=Math.floor(v/um.U+1e-9);let left=v-r*um.U,e=0;
+  for(const it of um.items){if(left>=it.u-1e-9){e+=it.eq;left-=it.u;}else{e+=Math.floor(left*it.eq/it.u+1e-9);break;}}
+  return r*um.E+e;
+}
 function calcTiers(p){
   /* case « 20 paliers » : deux fois plus de paliers (20 à 1 pt) et la moitié de l'écart réglé dans « Configurer les mouvements » */
-  const fine=!!p.fine,N=fine?20:10,mul=fine?0.5:1;
+  const fine0=!!p.fine,N=fine0?20:10,mul=fine0?0.5:1,fine=fine0&&p.fineStep==='0.5'?'half':fine0; /* 20 paliers : de 1 en 1 (20 à 1 pt) ou de 0,5 en 0,5 (10 à 0,5 pt) */
+  const ptsTxt=fine==='half'?'points de 10 à 0,5 (de 0,5 en 0,5)':'points de 20 à 1';
   if(p.format==='EMOM'){
     const D=parseNum(p.dur||''),iv=parseNum(String(p.interval||'1'))||1;
     if(!(D>0)){toast('Indique le time cap (min) pour calculer les paliers.',true);return;}
     const sd=spreadPct('DEAD'),tiers=deadTiers(D,iv,sd?sd*mul:sd,N,fine);
     p.levels.forEach((lv,k)=>{if(k<3&&(lv.mode==='off'||lv.mode==='same'||p.syncTiers))return;lv.tiers=tiers.map(x=>({...x}));lv.pend=null;});
     p.levels[3].tiers=tiers.map(x=>({...x}));p.levels[3].pend=null;
-    p.estInfo='Palier max ('+(fine?20:10)+' pts) : tenir '+tiers[0].t+' (tout le time cap), 1 point pour '+tiers[tiers.length-1].t+'. Mêmes paliers pour tous les niveaux.'+(fine?' Mode 20 paliers : écart divisé par 2, points de 20 à 1.':'');
+    p.estInfo='Palier max ('+(fine===true?20:10)+' pts) : tenir '+tiers[0].t+' (tout le time cap), 1 point pour '+tiers[tiers.length-1].t+'. Mêmes paliers pour tous les niveaux.'+(fine?' Mode 20 paliers : écart divisé par 2, '+ptsTxt+'.':'');
     render();return;
   }
   const I0=INTENS[p.intensity],I=I0?Object.assign({},I0,{f:intF(p.intensity)}):I0;
@@ -15073,7 +15100,7 @@ function calcTiers(p){
     if(ft){
       /* paliers au-delà du time cap : temps de la suite normale des paliers (comme si le dernier palier avant le time cap n'était pas repoussé jusqu'au time cap),
          donc le 1er palier après le time cap est celui qui suit vraiment le dernier palier calculé */
-      const capS=dur>0?dur*60:0,times=spreadTimesPct(e.T*I.f,spreadPct('FT')*mul,0,N);
+      const capS=dur>0?dur*60:0,times=spreadTimesPct(e.T*I.f+(e.trT||0),spreadPct('FT')*mul,0,N);
       const cm={format:pp.format,content:pp.content,detail:pp.detail,repsRound:Number(pp.repsRound)||0,lineRounds:pp.format==='FT'&&!!pp.lineRounds};
       const bnd=capBoundaries(cm,e),total=bnd.length?bnd[bnd.length-1]:e.R;
       let prev=Infinity,lastT=0;
@@ -15089,9 +15116,12 @@ function calcTiers(p){
          (ex. time cap 10:00 : 9:47 devient 10:00), sinon un athlète qui finit entre 9:47 et 10:00 ne marquerait rien */
       if(capS>0&&out.capTiers.length&&out.tiers.length&&lastT<capS)out.tiers[out.tiers.length-1].t=fmtTime(capS);
     }else{
-      const est=dur*60/(e.roundTime*I.f);
-      const tot=eqTotal(amrapModel(pp)),rr=(tot>0)?tot:e.roundReps;
-      if(rr>0&&Number.isInteger(rr)){ /* paliers calculés en reps entières : même écart en % entre chaque palier, arrondi à la rep près */
+      const est=dur*60/(e.roundTime*I.f+(e.trRound||0));
+      const tot=eqTotal(amrapModel(pp)),rr=(tot>0)?tot:e.roundReps,um=unitModel(amrapModel(pp));
+      if(um){ /* équivalence = écriture seulement : paliers en reps réelles, réécrits en reps équivalentes */
+        let prev=Infinity;
+        amrapRepTiers(est,spreadPct('AMRAP')*mul,um.U,N).forEach((v,j)=>{let q=unitsToEq(um,v);if(q>=prev)q=prev-1;if(q<1)return;prev=q;out.tiers.push({t:repsTxt(q,um.E),p:tierPts(j,fine)});});
+      }else if(rr>0&&Number.isInteger(rr)){ /* paliers calculés en reps entières : même écart en % entre chaque palier, arrondi à la rep près */
         amrapRepTiers(est,spreadPct('AMRAP')*mul,rr,N).forEach((v,j)=>out.tiers.push({t:(tot>0&&Number.isInteger(tot))?repsTxt(v,tot):tourTxt(Math.round(v/rr*100)/100),p:tierPts(j,fine)}));
       }else spreadRounds(est,est*(1-(N-1)*spreadPct('AMRAP')*mul/100),spreadPct('AMRAP')*mul,N).forEach((v,j)=>out.tiers.push({t:tourTxt(v),p:tierPts(j,fine)}));
     }
@@ -15115,9 +15145,9 @@ function calcTiers(p){
     p.levels.forEach((lv,k)=>{if(k===3||(lv.mode==='custom'&&!p.syncTiers))lv.capTiers=res[k].capTiers.length?res[k].capTiers.map(c=>({...c})):blankCapTiers();});
   }
   const top=p.levels[3].tiers[0]||(ft&&rx.capTiers[0]?{t:rx.capTiers[0].t+' au time cap'}:{t:'—'});
-  p.estInfo=(ft?'Palier max ('+(fine?20:10)+' pts) : '+top.t+' pour Rx'+(own.length?'':' et tous les niveaux')+', '+I.l.toLowerCase()+'.'+(rx.capTiers.length?' '+rx.capTiers.length+' palier'+(rx.capTiers.length>1?'s':'')+' au-delà du time cap, écrit'+(rx.capTiers.length>1?'s':'')+' en reps (ou tours + reps) atteintes au time cap. Le dernier palier en temps va jusqu’au time cap.':'')+(own.length?' Paliers propres à '+own.join(', ')+' (reps, tours ou variantes adaptés).':''):'Palier max ('+(fine?20:10)+' pts) : '+top.t+' tours pour Rx'+(own.length?'':' et tous les niveaux')+', '+I.l.toLowerCase()+'.'+(own.length?' Paliers propres à '+own.join(', ')+' (reps, tours ou variantes adaptés).':''))
-    +' Temps pur estimé '+fmtTime(Math.round(e.T))+' ('+fmtN(Math.round(e.R))+' reps)'+(ft?'':' par tour : '+fmtTime(Math.round(e.roundTime)))+(e.tr>0?', transitions de '+fmtN(e.tr)+' s entre mouvements comprises':'')
-    +(e.unknown.length?' · Mouvement non reconnu (3 s par rep supposées) : '+e.unknown.join(', '):'')+'. À ajuster à ta façon de coacher.'+(fine?' Mode 20 paliers : écart entre paliers divisé par 2, points de 20 à 1.':'');
+  p.estInfo=(ft?'Palier max ('+(fine===true?20:10)+' pts) : '+top.t+' pour Rx'+(own.length?'':' et tous les niveaux')+', '+I.l.toLowerCase()+'.'+(rx.capTiers.length?' '+rx.capTiers.length+' palier'+(rx.capTiers.length>1?'s':'')+' au-delà du time cap, écrit'+(rx.capTiers.length>1?'s':'')+' en reps (ou tours + reps) atteintes au time cap. Le dernier palier en temps va jusqu’au time cap.':'')+(own.length?' Paliers propres à '+own.join(', ')+' (reps, tours ou variantes adaptés).':''):'Palier max ('+(fine===true?20:10)+' pts) : '+top.t+' tours pour Rx'+(own.length?'':' et tous les niveaux')+', '+I.l.toLowerCase()+'.'+(own.length?' Paliers propres à '+own.join(', ')+' (reps, tours ou variantes adaptés).':''))
+    +' Temps pur estimé '+fmtTime(Math.round(e.T))+' ('+fmtN(Math.round(e.R))+' reps)'+(ft?'':' par tour : '+fmtTime(Math.round(e.roundTime)))+(e.tr>0?' + transitions '+(ft?fmtTime(Math.round(e.trT))+' au total':fmtN(e.trRound)+' s par tour')+' ('+fmtN(e.tr)+' s par changement de mouvement, sans coefficient)':'')
+    +(e.unknown.length?' · Mouvement non reconnu (3 s par rep supposées) : '+e.unknown.join(', '):'')+'. À ajuster à ta façon de coacher.'+(fine?' Mode 20 paliers : écart entre paliers divisé par 2, '+ptsTxt+'.':'');
   render();
 }
 function genIntoDraft(d){
@@ -16494,8 +16524,10 @@ function wodEditor(modal){
         h('div',{class:'seg',role:'group','aria-label':'Intensité du metcon'},intList().map(([k,v])=>h('button',{type:'button',class:'btn sm','aria-pressed':p.intensity===k?'true':'false',title:v.d,onclick:()=>{p.intensity=(p.intensity===k?'':k);p.estInfo='';render();}},v.l))),
         h('p',{class:'hint'},(p.intensity&&INTENS[p.intensity])?INTENS[p.intensity].d+' L’intensité est affichée aux athlètes.':'Précise aux athlètes s’il faut y aller à fond, en gestion d’allure ou pas à fond (ou une intensité créée dans la configuration des mouvements). Elle sert aussi à calculer les paliers.')),
         h('div',{class:'row'},h('button',{class:'btn',type:'button',id:'p'+i+'-calc',onclick:()=>calcTiers(p)},'Calculer les paliers'),
-          h('label',{class:'chk'},h('input',{type:'checkbox',id:'p'+i+'-fine',checked:!!p.fine,'aria-label':'20 paliers au lieu de 10',onchange:e=>{p.fine=e.target.checked;}}),h('span',{},'20 paliers (écart divisé par 2)'))),
-        h('p',{class:'hint'},p.estInfo||'Lit les mouvements, les reps et les tours du contenu, estime le temps selon l’intensité choisie et remplit les 10 paliers (10 points pour le palier max). Case « 20 paliers » cochée : 20 paliers de 20 à 1 point et écart entre paliers divisé par 2. Remplace les paliers déjà saisis.'));
+          h('label',{class:'chk'},h('input',{type:'checkbox',id:'p'+i+'-fine',checked:!!p.fine,'aria-label':'20 paliers au lieu de 10',onchange:e=>{p.fine=e.target.checked;render();}}),h('span',{},'20 paliers (écart divisé par 2)')),
+          h('div',{class:'row',role:'group','aria-label':'Points entre deux paliers (20 paliers)',style:'gap:6px;align-items:center'+(p.fine?'':';opacity:.5')},
+            [['0.5','0,5'],['1','1']].map(([v,l])=>{const on=(p.fineStep==='0.5')===(v==='0.5');return h('button',{type:'button',class:'btn sm'+(on?' primary':''),id:'p'+i+'-step-'+(v==='0.5'?'half':'one'),'aria-pressed':on?'true':'false',title:v==='0.5'?'20 paliers de 0,5 point : 10 points au total':'20 paliers de 1 point : 20 points au total',onclick:()=>{p.fineStep=v;if(v==='0.5')p.fine=true;render();}},l+' pt');}))),
+        h('p',{class:'hint'},p.estInfo||'Lit les mouvements, les reps et les tours du contenu, estime le temps selon l’intensité choisie et remplit les 10 paliers (10 points pour le palier max). Case « 20 paliers » cochée : 20 paliers et écart entre paliers divisé par 2, de 1 en 1 (20 points au total) ou de 0,5 en 0,5 (10 points au total) selon le bouton choisi. Remplace les paliers déjà saisis.'));
       const tab=p.lvTab===undefined?3:p.lvTab;
       box.append(h('div',{class:'field'},h('span',{class:'flabel'},'Niveaux · remplis d’abord Rx (niveau 4)'),
         h('div',{class:'seg s4',role:'tablist'},[0,1,2,3].map(k=>h('button',{type:'button',class:'btn sm',role:'tab','aria-pressed':tab===k?'true':'false',onclick:()=>{p.lvTab=k;render();}},(p.levels[k].name.trim()||LEVEL_NAMES[k])+(k<3&&p.levels[k].mode==='off'?' (off)':''))))));
