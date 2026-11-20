@@ -135,6 +135,9 @@ textarea{resize:vertical}
 .ps-lv{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:13px;border-top:1px dashed var(--line);padding-top:6px}
 .ps-lv .k{font-weight:700}
 .varmk{background:var(--accent);color:var(--accent-ink);border-radius:3px;padding:0 4px;font-weight:700}
+/* variante qui contient un mouvement (bouton) : le surlignage entoure tout le bouton, même quand il passe sur 2 lignes (sinon il glisse sous le texte) */
+.varmk{display:inline-block;max-width:100%;vertical-align:baseline}
+.varmk .mv{max-width:100%;text-align:left}
 .varnote{font-size:13px;font-weight:600;color:var(--accent)}
 .mvpanel{border:1px dashed var(--line);border-radius:6px;padding:10px;background:var(--surface2)}
 .mvpanel .chk{display:inline-flex;margin-right:12px}
