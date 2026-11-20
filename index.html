@@ -14,8 +14,8 @@
 <title>Box Score</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@500;600&family=Work+Sans:wght@400;500;600;700&family=Permanent+Marker&family=Rubik+Distressed&family=Great+Vibes&family=Caveat:wght@500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<noscript><link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@500;600&family=Work+Sans:wght@400;500;600;700&family=Permanent+Marker&family=Rubik+Distressed&family=Great+Vibes&family=Caveat:wght@500;700&display=swap" rel="stylesheet"></noscript>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;0,800;1,700;1,800&family=IBM+Plex+Mono:wght@500;600&family=Work+Sans:wght@400;500;600;700&family=Permanent+Marker&family=Rubik+Distressed&family=Great+Vibes&family=Caveat:wght@500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow+Condensed:ital,wght@0,500;0,600;0,700;0,800;1,700;1,800&family=IBM+Plex+Mono:wght@500;600&family=Work+Sans:wght@400;500;600;700&family=Permanent+Marker&family=Rubik+Distressed&family=Great+Vibes&family=Caveat:wght@500;700&display=swap" rel="stylesheet"></noscript>
 <style>
 /* Layout: a gym whiteboard column. Barbell wordmark on top, scoreboard panel for stats, weight plates as ranks and trophies.
    Light = concrete floor, dark = rubber floor. Anton for headings and numerals, Work Sans for text, Plex Mono for scores. */
@@ -2997,6 +2997,164 @@ details.fwarn{display:block;padding:0}
 .ad-ask-c .ad-ask-yes{display:flex;align-items:center;justify-content:center;gap:6px;min-height:48px;padding:10px 16px;border-radius:12px;border:0;background:#F4C400;color:#1a1400;font:inherit;font-weight:800;cursor:pointer}
 .ad-ask-c .ad-ask-no{min-height:44px;padding:10px 16px;border-radius:12px;border:1px solid currentColor;background:transparent;color:inherit;font:inherit;cursor:pointer;opacity:.9}
 .ad-ask-c button:disabled{opacity:.55;cursor:default}
+/* ===== page séance (refonte nov. 2026) : cartes sombres arrondies, timeline, couleur de la séance en accent ===== */
+body:has(.stack.sx)::before{opacity:0}
+.stack.sx{--sx-card:#17171A;--sx-card2:#212125;--sx-pill:#2B2B30;--sx-bd:rgba(255,255,255,.085);--sx-ink:#F5F5F7;--sx-mut:#A3A3AB;--sx-c:'Barlow Condensed','Avenir Next Condensed','Roboto Condensed','Arial Narrow',sans-serif-condensed,sans-serif;--sx-s:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,'Work Sans',sans-serif;
+  gap:18px;font-family:var(--sx-s);text-shadow:none}
+.stack.sx *{text-shadow:none}
+.sx-i{display:inline-grid;place-items:center;flex:none;width:20px;height:20px}
+.sx-i svg{width:100%;height:100%;display:block}
+/* cartes */
+.stack.sx>.card,.stack.sx>section.card,.stack.sx .sx-part,.stack.sx>.empty,body[data-tab=today] .stack.sx.themed>.card{background:var(--sx-card)!important;background-image:none!important;border:1px solid var(--sx-bd)!important;border-radius:20px!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.04),0 12px 28px rgba(0,0,0,.32)!important;color:var(--sx-ink);padding:18px}
+/* barre de date */
+.sx-date{display:grid;grid-template-columns:40px minmax(0,1fr) 40px;align-items:center;gap:4px;background:var(--sx-card);border:1px solid var(--sx-bd);border-radius:18px;padding:6px}
+.sx-arr{width:40px;height:54px;border:0;border-radius:12px;background:none;color:var(--sx-ink);display:grid;place-items:center;cursor:pointer;padding:0;-webkit-tap-highlight-color:transparent}
+.sx-arr .sx-i{width:26px;height:26px}
+.sx-arr:disabled{opacity:.22;cursor:default}
+.sx-arr:not(:disabled):active{background:rgba(255,255,255,.06)}
+.stack.sx .sx-day{min-height:54px;min-width:0;border:0;border-radius:13px;background:var(--sx-card2);color:var(--sx-ink);display:flex;align-items:center;justify-content:center;gap:10px;padding:0 10px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.stack.sx .sx-day .sx-i{width:22px;height:22px}
+.stack.sx .sx-day .day{font-family:var(--sx-c);font-weight:700;font-size:clamp(15px,4.7vw,22px);line-height:1;letter-spacing:.02em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--sx-ink);text-wrap:nowrap}
+.sx-day:active{filter:brightness(1.15)}
+/* pastilles */
+.sx-pill{display:inline-flex;align-items:center;gap:6px;background:var(--sx-pill);color:#E8E8EC;border-radius:999px;padding:5px 11px;font-family:var(--sx-c);font-weight:600;font-size:clamp(13.5px,3.75vw,16.5px);line-height:1.2;letter-spacing:.045em;text-transform:uppercase;max-width:100%;overflow-wrap:anywhere}
+.sx-pill .sx-i{width:17px;height:17px}
+.sx-pill.out{background:transparent;border:2px solid var(--accent);color:var(--accent);padding:3px 14px;font-weight:700}
+.sx-pill.acc{background:var(--accent);color:#fff}
+.sx-pill.miss{background:transparent;border:1.5px dashed rgba(255,255,255,.3);color:var(--sx-mut)}
+.sx-i.gold{color:#F6B40E}
+/* boutons */
+.stack.sx .sx-cta,.stack.sx .btn.primary{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:60px;border:0!important;border-radius:13px!important;background:var(--accent)!important;background-image:none!important;color:#fff!important;
+  font-family:var(--sx-c);font-style:normal!important;font-weight:700;font-size:21px;letter-spacing:.05em;text-transform:uppercase;box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 28%,transparent)}
+.stack.sx .sx-cta .sx-i{width:22px;height:22px}
+.stack.sx .sx-cta:active,.stack.sx .btn.primary:active{transform:scale(.985);filter:brightness(1.06)}
+.stack.sx .sx-ob,.stack.sx .card .btn:not(.primary):not(.sx-cta){border:1.5px solid rgba(255,255,255,.26)!important;border-radius:12px!important;background:transparent!important;background-image:none!important;color:var(--sx-ink);font-family:var(--sx-c);font-style:normal;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.stack.sx .sx-ob{display:flex;align-items:center;justify-content:center;gap:8px;min-height:58px;font-size:clamp(14px,4vw,18px);line-height:1.1;padding:4px 6px;text-align:center}
+.stack.sx .sx-ob .sx-i{width:20px;height:20px}
+/* échauffement */
+.stack.sx .wu-card{gap:18px}
+.sx-wu-top{display:grid;grid-template-columns:auto minmax(0,1fr);gap:14px;align-items:start}
+.sx-wu-ic{display:flex;align-items:center;align-self:start;height:74px;padding-right:12px;border-right:2px solid var(--accent);color:var(--accent)}
+.sx-wu-ic .sx-i{width:46px;height:46px}
+.sx-wu-txt{display:grid;gap:10px;min-width:0}
+.sx-wu-h{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.stack.sx .sx-wu-t{font-family:var(--sx-c);font-weight:700;font-size:31px;line-height:1;letter-spacing:.01em;text-transform:uppercase;color:var(--sx-ink)}
+.stack.sx .wu-intro{color:var(--sx-mut);font-size:16.5px;line-height:1.42}
+.stack.sx .wu-card .wu-acts{gap:12px}
+.stack.sx .wu-li{background:var(--sx-card2);border:1px solid var(--sx-bd);border-radius:12px}
+/* titre de section */
+.sx-title{display:grid;gap:6px;margin-top:6px}
+.stack.sx .sx-h{display:flex;align-items:center;gap:14px;margin:0;font:inherit;color:var(--ink)}
+.sx-hl{flex:1 1 16px;min-width:16px;height:2px;background:rgba(255,255,255,.28)}
+.sx-ht{flex:0 1 auto;font-family:var(--sx-c);font-style:italic;font-weight:800;font-size:clamp(28px,8.6vw,38px);line-height:1.02;letter-spacing:.005em;text-transform:uppercase;color:var(--sx-ink);text-align:center;text-wrap:balance;padding-right:.08em}
+.sx-ht em{font-style:italic;color:var(--accent)}
+.sx-sub{text-align:center;font-family:var(--sx-c);font-weight:600;font-size:17px;letter-spacing:.07em;text-transform:uppercase;color:var(--sx-mut)}
+.sx-tags{display:flex;justify-content:center;flex-wrap:wrap;gap:8px}
+/* carte de partie */
+.stack.sx .sx-part{display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+.sx-ph{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:start}
+.stack.sx .sx-lab{width:auto;min-width:66px;height:52px;padding:0 12px;border-radius:13px;background:var(--accent);color:#fff;font-family:var(--sx-c);font-weight:800;font-size:31px;line-height:1;display:grid;place-items:center;letter-spacing:.01em}
+.sx-pt{min-width:0;display:grid;gap:4px}
+.stack.sx .sx-pt h3{font-family:var(--sx-c);font-style:italic;font-weight:800;font-size:32px;line-height:1.02;letter-spacing:.005em;color:var(--sx-ink);margin:1px 0 0;overflow-wrap:anywhere;padding-right:.08em}
+.sx-pst{font-family:var(--sx-c);font-weight:700;font-size:21px;line-height:1.15;letter-spacing:.035em;text-transform:uppercase;color:#D9D9DE}
+.sx-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.sx-col{width:46px;height:46px;flex:none;border-radius:50%;border:0;background:#0C0C0E;color:var(--sx-ink);display:grid;place-items:center;cursor:pointer;padding:0;margin-top:2px;-webkit-tap-highlight-color:transparent}
+.sx-col .sx-i{width:22px;height:22px;transition:transform .2s}
+.sx-col[aria-expanded="false"] .sx-i{transform:rotate(-90deg)}
+.sx-div{height:1px;background:rgba(255,255,255,.12);margin:-2px 0}
+.stack.sx .sx-pb{display:grid;gap:16px;min-width:0}
+.stack.sx .sx-pb.has-sw{padding-right:70px;min-height:72px}
+.stack.sx .sx-pb.has-sw>.sw{top:-4px}
+.stack.sx .sw:not(.sw-emom) .sw-face{fill:#232327}
+.stack.sx .sx-fr .tipbtn::after{display:none}
+.stack.sx .fmtbtn{text-decoration:none;color:inherit;font:inherit;letter-spacing:inherit;text-transform:inherit;text-align:left}
+.stack.sx .sx-pst .fmtbtn{border-bottom:1.5px dotted rgba(255,255,255,.35)}
+/* timeline */
+.sx-tl{--c:12px;--rg:12px;list-style:none;margin:0;padding:0;display:grid;grid-template-columns:24px max-content minmax(0,1fr);column-gap:14px;row-gap:var(--rg)}
+.sx-tl.nonums{grid-template-columns:24px minmax(0,1fr)}
+.sx-tl>li{display:contents}
+.sx-tl .sx-k{position:relative;align-self:stretch;min-height:24px}
+.sx-tl .sx-k::after{content:"";position:absolute;left:11px;width:2px;top:0;bottom:calc(-1 * var(--rg));background:var(--accent)}
+.sx-tl>li:first-child>.sx-k::after{top:var(--c)}
+.sx-tl>li:last-child>.sx-k::after{bottom:auto;height:var(--c)}
+.sx-tl>li:only-child>.sx-k::after{display:none}
+.sx-tl .sx-k.sx-dk::before{content:"";position:absolute;z-index:1;left:5px;top:calc(var(--c) - 7px);width:14px;height:14px;border-radius:50%;background:var(--accent)}
+.sx-tl .sx-k.fmtk .sx-i{position:absolute;z-index:1;left:-4px;top:calc(var(--c) - 16px);width:32px;height:32px;color:var(--accent);background:var(--sx-card);border-radius:50%}
+.sx-tl .sx-n{font-family:var(--sx-c);font-weight:700;font-size:22px;line-height:24px;color:var(--sx-ink);white-space:nowrap}
+.sx-tl .sx-tx{min-width:0;font-size:17px;line-height:24px}
+.sx-tl .nonum>.sx-tx,.sx-tl .sx-fr>.sx-tx,.sx-tl .sx-hr>.sx-tx{grid-column:2/-1}
+.sx-tl .sx-fr>.sx-tx{font-family:var(--sx-c);font-weight:700;font-size:22px;letter-spacing:.035em;text-transform:uppercase;color:#D9D9DE}
+.sx-tl .sx-hr>.sx-tx{font-family:var(--sx-c);font-weight:700;font-size:22px;letter-spacing:.04em;text-transform:uppercase;color:var(--accent)}
+.sx-tl .sx-hr .mv,.sx-tl .sx-hr a{color:inherit}
+.sx-part.metcon .sx-tl .sx-mv{font-family:var(--sx-c);font-weight:600;font-size:22px;letter-spacing:.035em;text-transform:uppercase;color:var(--sx-ink)}
+.sx-tl .sx-mv *,.sx-tl .sx-hr .sx-tx *,.sx-tl .sx-fr .sx-tx *{font-family:inherit;text-transform:inherit;letter-spacing:inherit;font-size:inherit}
+.sx-part.metcon .sx-tl .sx-mv b,.sx-part.metcon .sx-tl .sx-mv strong{font-weight:700}
+.sx-part:not(.metcon) .sx-tl{--rg:8px;grid-template-columns:24px max-content minmax(0,1fr)}
+.sx-part:not(.metcon) .sx-tl.nonums{grid-template-columns:24px minmax(0,1fr)}
+.sx-part:not(.metcon) .sx-tl .sx-k.sx-dk::before{left:6px;top:calc(var(--c) - 6px);width:12px;height:12px}
+.sx-part:not(.metcon) .sx-tl .sx-tx{font-size:17.5px}
+.sx-part:not(.metcon) .sx-tl .sx-mv,.sx-part:not(.metcon) .sx-tl .sx-mv *{font-weight:400}
+.sx-part:not(.metcon) .sx-tl .sx-n{font-family:var(--sx-s);font-weight:500;font-size:17.5px}
+.sx-tl .sx-note{font-family:var(--sx-s);font-style:italic;font-weight:400;font-size:16.5px;line-height:1.3;letter-spacing:0;text-transform:none;color:var(--sx-mut);margin-top:1px}
+.sx-tl .line{overflow-wrap:anywhere}
+.sx-tl .chips{margin-top:6px}
+/* mot du coach */
+.stack.sx .sx-coach{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:14px;border:1.5px solid color-mix(in srgb,var(--accent) 75%,transparent);border-radius:14px;background:color-mix(in srgb,var(--accent) 17%,#141416);padding:12px 16px}
+.sx-coach-i{color:var(--accent)}
+.stack.sx .sx-coach-i .sx-i{width:40px;height:40px}
+.sx-coach-t{display:grid;gap:2px;min-width:0}
+.stack.sx .sx-coach .flabel{font-family:var(--sx-c);font-weight:700;font-size:19px;letter-spacing:.06em;color:var(--accent)}
+.stack.sx .sx-coach p{font-weight:500;font-size:17px;line-height:1.35;color:var(--sx-ink)}
+/* bouton « Voir l'explication » + ampoule qui gigote */
+.sx-xbtn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:56px;border-radius:14px;border:1.5px solid rgba(255,200,60,.5);background:linear-gradient(180deg,rgba(255,200,60,.12),rgba(255,200,60,.05));color:#FFD45C;
+  font-family:var(--sx-c);font-weight:700;font-size:20px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.sx-xbtn:active{transform:scale(.985)}
+.sx-bulb{display:inline-grid;color:#FFC83C;transform-origin:50% 88%;animation:sxWig 2.4s ease-in-out infinite;filter:drop-shadow(0 0 7px rgba(255,200,60,.65))}
+.sx-bulb .sx-i{width:28px;height:28px}
+.sx-bulb.on{animation:none}
+@keyframes sxWig{0%,58%,100%{transform:rotate(0) scale(1)}62%{transform:rotate(-17deg) scale(1.1)}68%{transform:rotate(15deg) scale(1.1)}74%{transform:rotate(-11deg) scale(1.06)}80%{transform:rotate(7deg)}86%{transform:rotate(-3deg)}}
+/* niveaux */
+.stack.sx .sx-pb .levels{gap:12px}
+.stack.sx .sx-lvh{display:flex;align-items:center;flex-wrap:wrap;gap:4px 7px;font-family:var(--sx-c);font-weight:600;font-size:clamp(12.5px,3.55vw,16px);letter-spacing:.035em;text-transform:uppercase;color:var(--sx-mut)}
+.stack.sx .sx-lvh b{color:var(--sx-ink);font-weight:700}
+.stack.sx .sx-lvh .sx-i{width:19px;height:19px;color:var(--sx-ink)}
+.stack.sx .sx-pb .seg{gap:10px}
+.stack.sx .sx-pb .seg .btn,.stack.sx .sx-pb .ps-btn{min-height:56px;padding:0 4px;border:1.5px solid rgba(255,255,255,.26)!important;border-radius:12px!important;background:transparent!important;background-image:none!important;color:var(--sx-ink)!important;
+  font-family:var(--sx-c);font-style:normal!important;font-weight:700;font-size:clamp(13px,3.7vw,18px)!important;letter-spacing:.02em!important;text-transform:uppercase!important;line-height:1.1;box-shadow:none!important}
+.stack.sx .sx-pb .seg .btn[aria-pressed="true"]{border:2px solid var(--accent)!important;color:var(--accent)!important;background:color-mix(in srgb,var(--accent) 9%,transparent)!important}
+.stack.sx .sx-pb .ps-btn{margin-top:0}
+.stack.sx .sx-pb .ps-btn[aria-pressed="true"]{border:2px solid #9B6BDB!important;color:#C9A8F5!important;background:rgba(107,63,160,.18)!important}
+.stack.sx .sx-pb .tip{background:#0F0F12;border:1px solid var(--sx-bd);border-radius:14px;box-shadow:none}
+.stack.sx .varnote{font-size:14px}
+/* pastille +1 coin des boutons et minuteurs */
+.stack.sx .tm-cb-host{margin-bottom:10px}
+.stack.sx .sx-cta .tm-cb{right:12px;bottom:-11px;font-family:var(--sx-s);letter-spacing:0;text-transform:none;font-style:normal}
+/* fenêtre d'explication */
+html.sx-lock,html.sx-lock body{overflow:hidden}
+.sx-xov{position:fixed;inset:0;z-index:2000;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.62);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:sxFade .2s ease-out;
+  --sx-c:'Barlow Condensed','Avenir Next Condensed','Roboto Condensed','Arial Narrow',sans-serif-condensed,sans-serif;--sx-s:-apple-system,BlinkMacSystemFont,'SF Pro Text','Segoe UI',Roboto,'Work Sans',sans-serif;font-family:var(--sx-s);text-shadow:none}
+.sx-xov.out{animation:sxFadeOut .22s ease-in forwards}
+.sx-xs{width:min(100%,560px);max-height:min(86vh,720px);display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;gap:14px;background:#17171A;color:#F5F5F7;border:1px solid rgba(255,255,255,.1);border-bottom:0;border-radius:24px 24px 0 0;
+  padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px));box-shadow:0 -12px 40px rgba(0,0,0,.5);animation:sxUp .28s cubic-bezier(.2,.9,.3,1.1)}
+.sx-xs:focus{outline:none}
+.sx-xov.out .sx-xs{animation:sxDown .22s ease-in forwards}
+@media (min-width:600px){.sx-xov{align-items:center}.sx-xs{border-radius:24px;border-bottom:1px solid rgba(255,255,255,.1)}}
+.sx-xh{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.1)}
+.sx-xh .sx-bulb{width:48px;height:48px;border-radius:14px;place-items:center;background:rgba(255,200,60,.12)}
+.sx-xh .sx-bulb .sx-i{width:30px;height:30px}
+.sx-xht{display:grid;gap:2px;min-width:0}
+.sx-xk{font-family:var(--sx-c);font-weight:700;font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent,#FF7A1A)}
+.sx-xht h2{margin:0;font-family:var(--sx-c);font-style:italic;font-weight:800;font-size:28px;line-height:1.05;overflow-wrap:anywhere}
+.sx-xx{width:42px;height:42px;border-radius:50%;border:0;background:#2B2B30;color:#F5F5F7;font-size:17px;cursor:pointer;display:grid;place-items:center;padding:0}
+.sx-xb{overflow:auto;-webkit-overflow-scrolling:touch;display:grid;gap:12px;align-content:start;font-size:17px;line-height:1.5;padding-right:2px}
+.sx-xb p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.sx-xai{margin:0;font-size:13px;color:#A3A3AB}
+.sx-xs .sx-cta{display:flex;align-items:center;justify-content:center;width:100%;min-height:58px;border:0;border-radius:13px;background:var(--accent,#FF7A1A);background-image:none;color:#fff;font-family:var(--sx-c);font-style:normal;font-weight:700;font-size:21px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
+@keyframes sxFade{from{opacity:0}to{opacity:1}}
+@keyframes sxFadeOut{to{opacity:0}}
+@keyframes sxUp{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
+@keyframes sxDown{to{transform:translateY(40px)}}
 </style>
 </head>
 <body>
@@ -7918,19 +8076,16 @@ function wuMaybeSeed(){
 /* carte « Échauffement » de l'onglet Séance */
 function warmupCard(date){
   const items=wuItems();
-  const sec=items.filter(x=>x.mode==='time').reduce((a,x)=>a+x.target,0);
-  const card=h('section',{class:'card wu-card',id:'wu-card'},
-    h('div',{class:'row',style:'justify-content:space-between;flex-wrap:nowrap'},h('h2',{class:'h2',style:'flex:1'},'Échauffement'),h('span',{class:'chip'},items.length+' exercice'+(items.length>1?'s':'')),
-      h('button',{type:'button',class:'qbtn',id:'wu-info','aria-label':'Informations sur l’échauffement','aria-expanded':S.tip==='warmup'?'true':'false',onclick:()=>toggleTip('warmup')},'?')),
-    S.tip==='warmup'?h('div',{class:'tip',role:'dialog'},
-      h('div',{},h('b',{},'Le contenu'),h('div',{class:'sub'},'Échauffement général'+(sec?' · environ '+Math.max(1,Math.round(sec/60))+' min chronométrées':'')+'.')),
-      h('div',{},h('b',{},'Mode guidé'),h('div',{class:'sub'},'Le timer t’accompagne et enchaîne les exercices, avec compte à rebours et bips.')),
-      h('div',{},h('b',{},'Mode libre'),h('div',{class:'sub'},'Tu avances à ton rythme, d’un exercice au suivant, sans chrono.'))):null,
-    h('p',{class:'wu-intro'},'Un échauffement avant d’attaquer la séance est très fortement conseillé. Celui qui est proposé ici est complet, mais chacun est libre de réaliser l’échauffement qu’il souhaite.'),
+  const card=h('section',{class:'card wu-card sx-card',id:'wu-card'},
+    h('div',{class:'sx-wu-top'},
+      h('span',{class:'sx-wu-ic','aria-hidden':'true'},sxIco('run')),
+      h('div',{class:'sx-wu-txt'},
+        h('div',{class:'sx-wu-h'},h('h2',{class:'sx-wu-t'},'Échauffement'),h('span',{class:'sx-pill out'},items.length+' exercice'+(items.length>1?'s':''))),
+        h('p',{class:'wu-intro'},'Un échauffement avant d’attaquer la séance est très fortement conseillé. Celui qui est proposé ici est complet, mais chacun est libre de réaliser l’échauffement qu’il souhaite.'))),
     h('div',{class:'wu-acts'},
-      h('button',{class:'btn wu-big',type:'button',id:'wu-free',onclick:()=>openWarmup('manual',0,date)},'Mode libre'),
-      h('button',{class:'btn wu-big',type:'button',id:'wu-toggle','aria-expanded':S.wu.list?'true':'false',onclick:()=>{S.wu.list=!S.wu.list;render();}},S.wu.list?'Masquer les exercices':'Voir les exercices')),
-    h('button',{class:'btn primary wu-big wu-full tm-cb-host',type:'button',id:'wu-start',onclick:()=>openWarmup('guided',0,date)},'Lancer l’échauffement',tmCoinBadge(date,'wu')));
+      h('button',{class:'btn sx-ob',type:'button',id:'wu-free','aria-label':'Mode libre : avancer à ton rythme, sans chrono',onclick:()=>openWarmup('manual',0,date)},sxIco('play'),h('span',{},'Mode libre')),
+      h('button',{class:'btn sx-ob',type:'button',id:'wu-toggle','aria-expanded':S.wu.list?'true':'false',onclick:()=>{S.wu.list=!S.wu.list;render();}},sxIco('eye'),h('span',{},S.wu.list?'Masquer les exercices':'Voir les exercices'))),
+    h('button',{class:'btn primary sx-cta tm-cb-host',type:'button',id:'wu-start','aria-label':'Lancer l’échauffement guidé, avec timer',onclick:()=>openWarmup('guided',0,date)},sxIco('play'),h('span',{},'Lancer l’échauffement'),tmCoinBadge(date,'wu')));
   if(S.wu.list)card.append(h('ol',{class:'wu-list'},items.map((x,i)=>h('li',{},
     h('button',{class:'wu-li',type:'button',onclick:()=>openWarmup('manual',i,date)},h('span',{class:'n'},i+1),h('span',{class:'t'},x.name),h('span',{class:'o'},wuObj(x)))))));
   return card;
@@ -8760,7 +8915,7 @@ function levelsBlock(m,date){
     ps.onPk=()=>psCardSet(date,m,ps);
   }
   return h('div',{class:'levels'},
-    h('div',{class:'flabel'},'Niveaux de pratique · touche un niveau pour le détail'),
+    h('div',{class:'flabel sx-lvh'},sxIco('bars'),h('b',{},'Niveau de pratique'),h('span',{},'· touche un niveau pour le détailler')),
     h('div',{class:'seg'+(lv.length>3?' s4':'')},lv.map(([l,i])=>h('button',{type:'button',class:'btn sm tipbtn','aria-pressed':S.tip==='lv-'+m.label+i?'true':'false',onclick:()=>toggleTip('lv-'+m.label+i)},levelName(m,i)))),
     persoOk(m)?h('button',{type:'button',class:'btn sm tipbtn ps-btn','aria-pressed':psOn?'true':'false',onclick:()=>toggleTip(psK)},'Perso · un niveau par mouvement'):null,
     open?h('div',{class:'tip',role:'dialog'},levelDetail(m,open[0],open[1])):null,
@@ -9234,16 +9389,94 @@ function forceInfo(p){
   }
   return out.length?out:null;
 }
-/* explication du metcon (texte relu par le coach), repliée : « Voir l'explication » ; état ouvert/fermé gardé quand la page se redessine */
+/* ---------- page séance (refonte nov. 2026) : barre de date, titre de section, cartes « timeline », explication en fenêtre ---------- */
+const SX_SVG=(d,f)=>'<svg viewBox="0 0 24 24" fill="'+(f?'currentColor':'none')+'" stroke="'+(f?'none':'currentColor')+'" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+d+'</svg>';
+const SX_IC={
+  left:SX_SVG('<path d="M15 18l-6-6 6-6"/>'),
+  right:SX_SVG('<path d="M9 18l6-6-6-6"/>'),
+  down:SX_SVG('<path d="M6 9l6 6 6-6"/>'),
+  cal:SX_SVG('<rect x="3" y="4.500" width="18" height="16.500" rx="2.500"/><path d="M3 9.500h18M8 2.500v4M16 2.500v4"/><path d="M7.500 13.500h.01M12 13.500h.01M16.500 13.500h.01M7.500 17h.01M12 17h.01M16.500 17h.01" stroke-width="2.600"/>'),
+  run:SX_SVG('<circle cx="15.500" cy="3.600" r="2.300"/><path d="M9.300 7.600l4.700-1.300 3 3.200 3.400.9-.6 2-4.400-1.200-1.400-1.500-1.500 4.300 3 2.500-.9 5.900-2.200-.3.7-4.700-3.100-2.400-1.600 3.200-4.900.6-.3-2.100 3.700-.5 3-7.100-1.600.5-1.600 2.700-1.900-1z"/>',true),
+  play:SX_SVG('<path d="M7 4.200v15.600c0 .8.900 1.300 1.600.800l11.400-7.800a1 1 0 0 0 0-1.600L8.600 3.400C7.900 2.900 7 3.400 7 4.200z"/>',true),
+  eye:SX_SVG('<path d="M2 12s3.600-7 10-7 10 7 10 7-3.600 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>'),
+  trophy:SX_SVG('<path d="M7 3h10v2h3v3a4 4 0 0 1-4.100 4A5 5 0 0 1 13 14.900V18h3v3H8v-3h3v-3.100A5 5 0 0 1 8.100 12 4 4 0 0 1 4 8V5h3V3zm0 4H6v1a2 2 0 0 0 1.100 1.800A5 5 0 0 1 7 9V7zm10 0v2a5 5 0 0 1-.1.800A2 2 0 0 0 18 8V7h-1z"/>',true),
+  watch:SX_SVG('<circle cx="12" cy="13.500" r="8"/><path d="M12 13.500V9.500M9.500 2.500h5M19 6l1.500-1.500"/>'),
+  chat:SX_SVG('<path d="M5 3.500h14a3 3 0 0 1 3 3v8.500a3 3 0 0 1-3 3h-7.500L6.200 21.600c-.6.500-1.500 0-1.500-.7V18A3 3 0 0 1 2 15V6.500a3 3 0 0 1 3-3z"/><circle cx="7.500" cy="10.800" r="1.500" fill="#141416"/><circle cx="12" cy="10.800" r="1.500" fill="#141416"/><circle cx="16.500" cy="10.800" r="1.500" fill="#141416"/>',true),
+  bars:SX_SVG('<rect x="3" y="14" width="4.500" height="7" rx="1"/><rect x="9.750" y="9" width="4.500" height="12" rx="1"/><rect x="16.500" y="3" width="4.500" height="18" rx="1"/>',true),
+  bulb:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.200a7 7 0 0 0-4.200 12.600c.8.600 1.200 1.400 1.200 2.300v.4h6v-.4c0-.9.400-1.700 1.200-2.300A7 7 0 0 0 12 2.200z" fill="currentColor"/><path d="M9.300 19.300h5.400M10.200 21.700h3.600" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M10 9.200c.4-1.200 1.300-1.900 2.600-2" stroke="#fff" stroke-opacity=".75" stroke-width="1.600" stroke-linecap="round" fill="none"/></svg>'
+};
+const sxIco=(k,c)=>{const s=document.createElement('span');s.className='sx-i'+(c?' '+c:'');s.innerHTML=SX_IC[k]||'';return s;};
+/* séances que les flèches font défiler : celles visibles dans la liste des séances */
+function sxNavDates(){
+  return Object.values(S.wods).filter(w=>!aheadHidden(w.date)&&!bonusHidden(w)&&(!wodInDoneSeason(w.date)||(S.showPast&&pastSeasonDate(w.date)))).map(w=>w.date).sort();
+}
+function sxDateBar(date){
+  const l=sxNavDates(),pv=l.filter(d=>d<date).pop()||null,nx=l.find(d=>d>date)||null;
+  const goD=d=>{if(!d)return;S.viewDate=d;S.carDate=d;S.entry=null;S.redo=null;S.tip=null;S.confirm=null;render();window.scrollTo(0,0);};
+  return h('nav',{class:'sx-date',id:'sx-date','aria-label':'Changer de séance'},
+    h('button',{type:'button',class:'sx-arr',id:'sx-prev',disabled:!pv,'aria-label':pv?'Séance précédente : '+fmtDate(pv):'Pas de séance précédente',onclick:()=>goD(pv)},sxIco('left')),
+    h('button',{type:'button',class:'sx-day',id:'sx-back','aria-label':fmtDate(date)+'. Toucher pour revenir à la liste des séances',onclick:backToCards},sxIco('cal'),h('span',{class:'day'},fmtDate(date))),
+    h('button',{type:'button',class:'sx-arr',id:'sx-next',disabled:!nx,'aria-label':nx?'Séance suivante : '+fmtDate(nx):'Pas de séance suivante',onclick:()=>goD(nx)},sxIco('right')));
+}
+/* « SÉANCE 3 · TITRE » : numéro de la séance dans sa semaine (comme sur les cartes) */
+function sxTitle(w,date,per){
+  const wk=Object.values(S.wods).filter(x=>!isBonus(x)&&mondayOf(x.date)===mondayOf(date)).map(x=>x.date).sort(),k=wk.indexOf(date);
+  const n=isBonus(w)?'Séance bonus':(k>=0?'Séance '+(k+1):'Séance');
+  return h('div',{class:'sx-title'},
+    h('h2',{class:'sx-h wtitle'},h('span',{class:'sx-hl','aria-hidden':'true'}),h('span',{class:'sx-ht'},n+' · ',h('em',{},w.title)),h('span',{class:'sx-hl','aria-hidden':'true'})),
+    h('p',{class:'sx-sub'},'Séance à '+basePts(w,per)+' pts'+(metconOf(w)?' + points du metcon selon ton niveau':'')),
+    (w.deload||isBonus(w))?h('div',{class:'sx-tags'},w.deload?h('span',{class:'sx-pill acc'},'Deload'):null,isBonus(w)?h('span',{class:'sx-pill acc'},'★ Séance bonus'):null):null);
+}
+/* lignes de titre du descriptif (« 4 rounds », « E3MOM 18' », « AMRAP 12' »…) : affichées à part, en couleur */
+const SX_HEAD=/^(?:\d+\s*(?:rounds?|tours?|rft)\b|(?:for\s*time|amrap|emom|e\d+(?:[.,]\d+)?mom|tabata|every\b|chipper|death\s*by|dead\s*by))/i;
+const SX_NUM=/^\s*(\d+(?:[.,]\d+)?(?:\s*[-–\/]\s*\d+(?:[.,]\d+)?)*(?:\s*(?:km|kcal|cal|kg|m|sec|s|min|′|'|″|"))?)(?:\s+(?=\S)|\s+$)/i;
+/* quantité en tête de ligne → colonne des nombres ; « (précision) » en fin de ligne → sous-ligne en italique.
+   Travail sur la ligne déjà dessinée : liens des mouvements et variantes en surbrillance sont gardés. */
+function sxSplit(line,note){
+  const texts=()=>{const tw=document.createTreeWalker(line,NodeFilter.SHOW_TEXT),a=[];for(let n=tw.nextNode();n;n=tw.nextNode())if(n.nodeValue.trim())a.push(n);return a;};
+  let num=null,sub=null,a=texts();
+  if(a.length){
+    const f=a[0],pm=f.parentNode;
+    if(pm&&pm.nodeName==='MARK'&&/^\s*\d+\s*$/.test(f.nodeValue)&&a.length>1){num=pm;pm.remove();}
+    else{const m=f.nodeValue.match(SX_NUM);if(m&&(f.nodeValue.length>m[0].length||a.length>1)){num=document.createTextNode(m[1]);f.nodeValue=f.nodeValue.slice(m[0].length);}}
+  }
+  if(note){
+    a=texts();const l=a[a.length-1];
+    if(l){const m=l.nodeValue.match(/\s*\(([^()]{1,90})\)\s*$/);if(m&&line.textContent.replace(m[0],'').trim()){l.nodeValue=l.nodeValue.slice(0,l.nodeValue.length-m[0].length);sub=m[1];}}
+  }
+  return {num,sub};
+}
+function sxRow(kind,content,opt){
+  opt=opt||{};
+  const k=h('span',{class:'sx-k '+kind,'aria-hidden':'true'},kind==='fmtk'?sxIco('watch'):null);
+  if(kind!=='sx-dk')return h('li',{class:'sx-r '+(kind==='fmtk'?'sx-fr':'sx-hr')},k,h('div',{class:'sx-tx'},content));
+  const r=opt.split?sxSplit(content,opt.note):{num:null,sub:null};
+  content.classList.add('sx-mv');
+  return h('li',{class:'sx-r'+(r.num?'':' nonum')},k,r.num?h('span',{class:'sx-n'},r.num):null,h('div',{class:'sx-tx'},content,r.sub?h('div',{class:'sx-note'},r.sub):null));
+}
+/* bouton « Voir l'explication » : l'ampoule gigote ; un appui ouvre une fenêtre qu'on ferme ensuite */
 function explainCard(p,date){
-  const key='mx-'+(date||'')+'-'+(p.label||''),op=(S._fmOpen=S._fmOpen||{});
-  const paras=String(p.explain).split(/\n\s*\n/).map(x=>x.trim()).filter(Boolean);
-  const det=h('details',{class:'mexp',id:key},
-    h('summary',{'aria-label':'Voir l’explication du metcon'},h('span',{class:'btn mexp-btn'},h('span',{class:'o'},'💡 Voir l’explication'),h('span',{class:'c'},'Masquer l’explication'))),
-    h('div',{class:'mexp-txt'},paras.map(t=>h('p',{},t)),h('p',{class:'mexp-ai'},'Explication rédigée avec l’IA et relue par le coach.')));
-  if(op[key])det.open=true;
-  det.addEventListener('toggle',()=>{op[key]=det.open;});
-  return det;
+  return h('button',{type:'button',class:'sx-xbtn',id:'mx-'+(date||'')+'-'+(p.label||''),'aria-haspopup':'dialog',onclick:e=>openExplain(p,e.currentTarget)},h('span',{class:'sx-bulb'},sxIco('bulb')),h('span',{},'Voir l’explication'));
+}
+function openExplain(p,from){
+  if(document.getElementById('sx-xov'))return;
+  const paras=String(p.explain||'').split(/\n\s*\n/).map(x=>x.trim()).filter(Boolean);
+  let ov=null;
+  const onK=e=>{if(e.key==='Escape')close();};
+  const close=()=>{if(!ov||ov.classList.contains('out'))return;ov.classList.add('out');document.removeEventListener('keydown',onK);document.documentElement.classList.remove('sx-lock');
+    setTimeout(()=>{ov.remove();try{const b=from&&from.id&&document.getElementById(from.id);if(b)b.focus({preventScroll:true});}catch(e){}},220);};
+  ov=h('div',{class:'sx-xov',id:'sx-xov',onclick:e=>{if(e.target===ov)close();}},
+    h('div',{class:'sx-xs',role:'dialog','aria-modal':'true','aria-labelledby':'sx-xt',tabindex:'-1'},
+      h('div',{class:'sx-xh'},h('span',{class:'sx-bulb on'},sxIco('bulb')),
+        h('div',{class:'sx-xht'},h('span',{class:'sx-xk'},'Explication'+(p.label?' · '+p.label:'')),h('h2',{id:'sx-xt'},p.name||'Metcon')),
+        h('button',{type:'button',class:'sx-xx','aria-label':'Fermer l’explication',onclick:close},'✕')),
+      h('div',{class:'sx-xb'},paras.map(t=>h('p',{},t))),
+      h('p',{class:'sx-xai'},'Explication rédigée avec l’IA et relue par le coach.'),
+      h('button',{type:'button',class:'btn primary sx-cta',id:'sx-xok',onclick:close},'J’ai compris')));
+  /* même couleur que la séance ouverte */
+  try{const st=(from&&from.closest('.stack'))||document.querySelector('.stack.sx');const ac=st&&getComputedStyle(st).getPropertyValue('--accent').trim();if(ac)ov.style.setProperty('--accent',ac);}catch(e){}
+  document.body.append(ov);document.documentElement.classList.add('sx-lock');document.addEventListener('keydown',onK);
+  setTimeout(()=>{try{ov.querySelector('.sx-xs').focus({preventScroll:true});}catch(e){}},60);
 }
 function partCard(p,w,date){
   const metcon=p.kind==='metcon';
@@ -9253,31 +9486,54 @@ function partCard(p,w,date){
   const psC=(metcon&&S.tip==='lv-'+p.label+'ps')?psCardCalc(p,date):null,psLv=psC?persoLevel(p,psC):null;
   const lvOpen=psLv?[psLv,-1]:metcon?activeLevels(p).find(x=>S.tip==='lv-'+p.label+x[1]&&((x[0].variants||[]).length||rdOf(x[0])||rpOf(x[0]))):null;
   const metL=lvOpen?((t,ix)=>h('div',{class:'line'},lvLine(t,ix,lvOpen[0]))):metLine;
+  const lineOf=(t,ix)=>metcon?metL(t,ix):renderLine(t,(p.kind==='renfo'||p.kind==='autre')?p.variants:null,p);
   /* format cliquable : metcon (For Time, AMRAP, EMOM) ou renforcement en EMOM */
   const fmtId=(metcon||(p.kind==='renfo'&&p.format==='EMOM'))?'fmt-'+(date||'')+'-'+p.label:null;
-  const body=h('div',{class:'pbody'+(hasSw?' has-sw':'')},
+  const fmtBtn=txt=>h('button',{type:'button',class:'fmtbtn tipbtn','aria-expanded':S.tip===fmtId?'true':'false',onclick:()=>toggleTip(fmtId)},txt);
+  /* repli de la carte (hors metcon) : état gardé quand la page se redessine */
+  const colKey=(date||'')+'|'+(p.label||''),cols=(S._sxCol=S._sxCol||{}),canCol=!metcon,closed=canCol&&!!cols[colKey];
+  /* lignes de titre (« 4 rounds », « E3MOM 18' »…) et lignes de mouvements */
+  const heads=[],moves=[];
+  lines.forEach((t,ix)=>((p.kind!=='force'&&t.length<=48&&SX_HEAD.test(t))?heads:moves).push([t,ix]));
+  let subT=null;
+  if(!metcon){
+    if(heads.length){const [t]=heads.shift();subT=fmtId?fmtBtn(t):t;}
+    else if(fmtId)subT=fmtBtn(fmtLabel(p));
+  }
+  const kindL=KIND[p.kind]||'Autre',sameKind=FM_NORM(p.name||'')===FM_NORM(kindL)||!p.name;
+  const pills=[
+    metcon?h('span',{class:'sx-pill'},'Metcon · points au classement'):(sameKind?null:h('span',{class:'sx-pill'},kindL)),
+    metcon&&p.focus&&FOCUS[p.focus]?h('span',{class:'sx-pill'},FOCUS[p.focus]):null,
+    metcon&&p.test?h('span',{class:'sx-pill'},sxIco('trophy','gold'),'Test'):null,
+    metcon&&p.redo===false?h('span',{class:'sx-pill miss'},'Pas de REDO'):null,
+    (p.kind==='force'&&p.movement&&FM_NORM(p.movement)!==FM_NORM(p.name||''))?h('span',{class:'sx-pill'},p.movement):null,
+    (p.kind==='renfo'&&p.format!=='EMOM'&&(setLines(p,2)||[]).length>=2)?h('span',{class:'sx-pill'},isSuperset(p)?'Superset':'Exercice par exercice'):null
+  ].filter(Boolean);
+  const head=h('div',{class:'sx-ph'},
+    h('div',{class:'plabel sx-lab'},p.label),
+    h('div',{class:'sx-pt'},h('h3',{},p.name||kindL),subT?h('div',{class:'sx-pst'},subT):null,pills.length?h('div',{class:'sx-pills'},pills):null),
+    canCol?h('button',{type:'button',class:'sx-col','aria-expanded':closed?'false':'true','aria-label':(closed?'Afficher':'Masquer')+' le détail de '+(p.name||p.label),onclick:()=>{cols[colKey]=!closed;render();}},sxIco('down')):null);
+  if(closed)return h('article',{class:'part sx-part closed'},head);
+  /* timeline : format (metcon), lignes de titre, puis un point par mouvement */
+  const split=p.kind!=='force';
+  const rows=[];
+  if(metcon&&fmtId)rows.push(sxRow('fmtk',fmtBtn([fmtLabel(p)].concat([p.detail,p.lineRounds?'Chaque ligne = 1 tour':(p.repsRound?'1 tour = '+fmtN(eqTotal({content:p.content,repsRound:Number(p.repsRound)||0}))+' reps':'')].filter(Boolean)).join(' · '))));
+  heads.forEach(([t,ix])=>rows.push(sxRow('hk',lineOf(t,ix))));
+  moves.forEach(([t,ix])=>rows.push(sxRow('sx-dk',lineOf(t,ix),{split,note:split})));
+  const tl=rows.length?h('ul',{class:'sx-tl'+(rows.some(r=>r.querySelector('.sx-n'))?'':' nonums')},rows):null;
+  const body=h('div',{class:'pbody sx-pb'+(hasSw?' has-sw':'')},
     hasSw?swBtn(swKey(p,date),(p.kind==='renfo'&&p.format==='EMOM')?p:null,(Number(p.restSec)>0&&!(p.kind==='renfo'&&p.format==='EMOM'))?p:null,date):null,
-    h('div',{class:'phead'},h('h3',{},p.name||KIND[p.kind]||'Partie'),
-      h('span',{class:'chip'+(metcon?' live':'')},metcon?'Metcon · points au classement':(KIND[p.kind]||'Autre')),
-      metcon&&p.focus&&FOCUS[p.focus]?h('span',{class:'chip'},FOCUS[p.focus]):null,
-      metcon&&intInfo(p)?h('span',{class:'chip',title:intInfo(p).d},'Intensité : '+intInfo(p).l):null,
-      metcon&&p.test?h('span',{class:'chip live'},'TEST'):null,
-      metcon&&p.redo===false?h('span',{class:'chip miss'},'Pas de REDO'):null,
-      p.kind==='force'&&p.movement?h('span',{class:'chip'},p.movement):null,
-      (p.kind==='renfo'&&p.format!=='EMOM'&&(setLines(p,2)||[]).length>=2)?h('span',{class:'chip'},isSuperset(p)?'Superset':'Exercice par exercice'):null),
-    fmtId?h('div',{class:'fmt'},h('button',{type:'button',class:'fmtbtn tipbtn','aria-expanded':S.tip===fmtId?'true':'false',onclick:()=>toggleTip(fmtId)},fmtLabel(p)),
-      metcon?[p.detail,p.lineRounds?'Chaque ligne = 1 tour':(p.repsRound?'1 tour = '+fmtN(eqTotal({content:p.content,repsRound:Number(p.repsRound)||0}))+' reps':'')].filter(Boolean).map(x=>' · '+x).join(''):''):null,
-    (fmtId&&S.tip===fmtId)?h('div',{class:'tip',role:'dialog'},fmtExplain(p).map((t,k)=>k===0?h('b',{},t):h('p',{},t))):null,
     psLv?h('div',{class:'varnote'},'Version Perso ×'+fmt2(psC.pv/LEVEL_DIV)+' ('+lvTag(psC.pv)+') : chaque mouvement à ton niveau (en surbrillance).'+(loadsText(psLv)?' Charges : '+loadsText(psLv)+'.':'')):
     lvOpen?h('div',{class:'varnote'},'Version '+levelName(p,lvOpen[1])+' : '+[(lvOpen[0].variants||[]).length?'les variantes remplacent les mouvements':'',rdOf(lvOpen[0])?'le nombre de tours est adapté':'',rpOf(lvOpen[0])?'les reps sont adaptées':''].filter(Boolean).join(' · ')+' (en surbrillance).'):null,
     p.kind==='force'?forceInfo(p):null,
-    (p.kind==='force'&&p.prProto&&p.movement)?h('div',{class:'row'},h('button',{class:'btn primary btn-block',type:'button',id:'prproto-'+p.label,onclick:()=>openPrTimer(p.movement,()=>{})},'Protocole PR · '+p.movement)):null,
-    h('div',{class:'lines'},lines.map(metcon?metL:(t=>renderLine(t,(p.kind==='renfo'||p.kind==='autre')?p.variants:null,p)))),
-    (metcon&&p.word)?h('div',{class:'cword'},h('span',{class:'flabel'},'Mot du coach'),h('p',{},linkText(p.word))):null,
+    (p.kind==='force'&&p.prProto&&p.movement)?h('div',{class:'row'},h('button',{class:'btn primary btn-block sx-cta',type:'button',id:'prproto-'+p.label,onclick:()=>openPrTimer(p.movement,()=>{})},'Protocole PR · '+p.movement)):null,
+    tl,
+    (fmtId&&S.tip===fmtId)?h('div',{class:'tip',role:'dialog'},fmtExplain(p).map((t,k)=>k===0?h('b',{},t):h('p',{},t))):null,
+    (metcon&&p.word)?h('div',{class:'cword sx-coach'},h('span',{class:'sx-coach-i'},sxIco('chat')),h('div',{class:'sx-coach-t'},h('span',{class:'flabel'},'Coach'),h('p',{},linkText(p.word)))):null,
     (metcon&&String(p.explain||'').trim())?explainCard(p,date):null,
     metcon?levelsBlock(p,date):null,
-    (metcon&&w&&timerOk(date))?h('div',{class:'row'},h('button',{class:'btn primary btn-block tm-cb-host',type:'button','data-tour':'start-metcon',onclick:()=>{const lo=activeLevels(p).find(x=>S.tip==='lv-'+p.label+x[1]);const pc=S.tip==='lv-'+p.label+'ps'?psCardCalc(p,date):null;openTimer(w,date,p,pc?pc.base:(lo?lo[1]:null),pc?persoLevel(p,pc):null);}},'Démarrer le metcon',tmCoinBadge(date,'metcon'))):null);
-  return h('article',{class:'part'+(metcon?' metcon':'')},h('div',{class:'plabel'},p.label),body);
+    (metcon&&w&&timerOk(date))?h('div',{class:'row'},h('button',{class:'btn primary btn-block sx-cta tm-cb-host',type:'button','data-tour':'start-metcon',onclick:()=>{const lo=activeLevels(p).find(x=>S.tip==='lv-'+p.label+x[1]);const pc=S.tip==='lv-'+p.label+'ps'?psCardCalc(p,date):null;openTimer(w,date,p,pc?pc.base:(lo?lo[1]:null),pc?persoLevel(p,pc):null);}},sxIco('play'),h('span',{},'Démarrer le metcon'),tmCoinBadge(date,'metcon'))):null);
+  return h('article',{class:'part sx-part'+(metcon?' metcon':'')},head,metcon?h('div',{class:'sx-div','aria-hidden':'true'}):null,body);
 }
 /* séance affichée à l'ouverture : celle du jour si elle n'est pas déjà faite, sinon la première séance de la semaine pas encore faite */
 function defaultDate(){
@@ -10131,10 +10387,9 @@ function viewToday(){
   const t=todayStr(),date=S.viewDate||defaultDate(),w0=S.wods[date],w=w0&&myWod(w0,S.uid);
   /* même couleur que la carte sur laquelle on a cliqué (cardColor la mémorise par date) */
   const col=w?cardColor(date):null;
-  const el=h('div',{class:'stack'+(col?' themed':'')});
+  const el=h('div',{class:'stack sx'+(col?' themed':'')});
   if(col)el.setAttribute('style','--c1:'+col[0]+';--c2:'+col[1]+';--accent:'+col[0]+';--accent-ink:#fff;--tint:color-mix(in srgb,'+col[0]+' 16%,var(--surface))');
-  el.append(h('div',{class:'row back-row'},h('button',{class:'btn sm back-btn',type:'button',onclick:backToCards},'← Retour aux séances')));
-  el.append(h('div',{class:col?'sess-hero':''},h('p',{class:'eyebrow'},date===t?'Aujourd’hui':date<t?'Séance passée':'Séance à venir'),w&&w.deload?h('div',{class:'row'},h('span',{class:'chip live'},'DELOAD')):null,w&&isBonus(w)?h('div',{class:'row'},h('span',{class:'chip live'},'★ SÉANCE BONUS')):null,h('h1',{class:'day'},cap(fmtDate(date)))));
+  el.append(sxDateBar(date));
   el.append(warmupCard(date));
   if(!ready()&&!S.pre){el.append(h('p',{class:'muted'},'Chargement…'));return el;}
   if(!w){
@@ -10142,7 +10397,7 @@ function viewToday(){
       S.owner?h('div',{class:'row'},h('button',{class:'btn primary',onclick:()=>{go('coach');S.coach.view='wod';openWodWindow(date);}},'Publier une séance')):null));
   }else{
     const per=periodFor(date);
-    el.append(h('h2',{class:'wtitle'},w.title),h('p',{class:'eyebrow'},'Séance à '+basePts(w,per)+' pts'+(metconOf(w)?' + points du metcon selon ton niveau':'')),h('p',{class:'hint'},'À faire n’importe quel jour de la semaine, du '+fmtShort(mondayOf(date))+' au '+fmtShort(addDays(mondayOf(date),6))+'.'));
+    el.append(sxTitle(w,date,per));
     if(pastSeasonDate(date))el.append(h('div',{class:'banner warn',id:'past-season-note'},h('p',{},h('b',{},'Saison terminée : '),'tu peux faire cette séance pour t’entraîner, mais elle ne rapporte aucun point.')));
     if(isBonus(w))el.append(h('div',{class:'banner',id:'bonus-note'},h('p',{},h('b',{},'★ Séance bonus : '),'publiée chaque semaine, à faire n’importe quel jour de la semaine. Elle rapporte la moitié des points d’une séance normale ('+basePts(w,per)+' pts de séance, points du metcon divisés par 2) et '+coinPerBonus()+' coins. C’est la 4e séance de ta semaine (objectif de 4 séances) ; pas de REDO ni de séance de remplacement.')));
     if(w.isSub)el.append(h('div',{class:'sub-banner'},h('b',{},'🏠 Séance de remplacement (pas ou peu de matériel)'),h('div',{},'Elle remplace « '+w.subFrom+' » : la séance d’origine ne sera plus réalisable une fois ton résultat enregistré. Points normaux (séance et metcon) une seule fois par saison pour ce remplacement : refait, il compte comme un REDO. Flamme maintenue.'),(!(S.logs[S.uid]&&S.logs[S.uid].entries&&S.logs[S.uid].entries[date]))?h('div',{class:'hint'},'Tant que ton résultat n’est pas enregistré, tu peux en choisir un autre depuis la carte (bouton ↻) ou revenir à la séance d’origine.'):null,
@@ -19177,15 +19432,15 @@ const TOURS={
     {needs:'drawer',sel:'[data-tour=dm-avis]',title:'Avis',text:'Note l’appli et laisse un petit mot : seul le coach le lit.'},
     {sel:'#tour-help',title:'Besoin d’un rappel ?',text:'Ce bouton « ? » te remet le guide de l’onglet où tu te trouves, quand tu veux.'}],
   today:()=>[
-    {sel:'.back-btn',title:'Retour aux séances',text:'Ce bouton te ramène à la liste des séances de la semaine.'},
-    {sel:'main .day',title:'La séance du jour',text:'La date de la séance. Tu peux la faire n’importe quel jour de la semaine.'},
+    {sel:'#sx-date',title:'La date de la séance',text:'Touche la date pour revenir à la liste des séances. Les flèches passent à la séance précédente ou suivante. Tu peux faire chaque séance n’importe quel jour de sa semaine.'},
     {sel:'#wu-card',title:'L’échauffement',text:'Un échauffement avant d’attaquer la séance est très fortement conseillé. Celui qui est proposé est complet, mais tu es libre de faire le tien. « Lancer l’échauffement » démarre le mode guidé avec timer, « Mode libre » te laisse avancer à ton rythme, et « Voir les exercices » affiche la liste. Pendant l’échauffement, la vidéo de l’exercice se lit en boucle pour te montrer le mouvement. Le « ? » en haut à droite de la carte explique les deux modes.'},
     {sel:'.sub-banner',title:'Séance de remplacement',text:'Cette séance remplace celle de la carte : elle rapporte les points normaux et garde ta flamme. Tu peux encore changer de remplacement depuis la carte (bouton ↻) tant que ton résultat n’est pas enregistré.'},
-    {sel:'main .wtitle',title:'Titre et points',text:'Le titre de la séance et les points de base qu’elle rapporte. Le metcon ajoute des points selon ton niveau.'},
+    {sel:'main .sx-title',title:'Titre et points',text:'Le titre de la séance et les points de base qu’elle rapporte. Le metcon ajoute des points selon ton niveau.'},
     {sel:'.pbody',title:'Les parties de la séance',text:'Force, renforcement, metcon… Chaque partie détaille ce qu’il faut faire. Le metcon est celle qui rapporte des points au classement.'},
     {sel:'.mv',title:'Touche un mouvement',text:'Le nom d’un mouvement (avec la petite main) ouvre sa fiche : rep valide, no rep, image ou vidéo. Le bouton « Retour à la séance » te ramène là où tu étais.'},
     {sel:'.sw',title:'Le chronomètre',text:'Sur la force et le renforcement, le chrono affiche la récup prévue par le coach. Touche-le (le petit doigt) : un minuteur plein écran compte tes séries. Appuie à chaque fin de série, ta récup démarre, puis appuie quand tu repars. À la fin, tes récups sont comparées à celles du coach. Chaque minuteur (échauffement, force, renforcement, metcon) rapporte 1 coin bonus par séance quand tu l’utilises vraiment, versé à la fin de ta séance ; s’il n’est pas gagné, l’écran de fin t’explique pourquoi.'},
     {sel:'.fmtbtn',title:'Le format du metcon',text:'Touche le format (For Time, AMRAP, EMOM…) pour une explication de son fonctionnement.'},
+    {sel:'.sx-xbtn',title:'L’explication du metcon',text:'L’ampoule qui bouge : touche « Voir l’explication » pour lire, dans une fenêtre, comment se déroule le metcon. Ferme-la avec la croix ou « J’ai compris ».'},
     {sel:'.levels',title:'Les niveaux',text:'Choisis Découverte, Débutant, Intermédiaire ou Rx : tu vois le record du niveau.'},
     {sel:'[data-tour=start-metcon]',title:'Démarrer le metcon',text:'Lance le minuteur en plein écran : 10 secondes de préparation, puis le chrono qui monte (For Time, avec le time cap), le compte à rebours et le bouton +1 à côté du nombre de tours (AMRAP) ou un bip chaque minute (EMOM). À l’arrêt, tu peux corriger ton résultat : il est prérempli dans le formulaire.'},
     {sel:'[data-tour=entry]',title:'Enregistre ton résultat',text:'Une fois la séance terminée, touche « Entrer mes résultats » : un encart s’ouvre (il s’ouvre aussi tout seul quand tu valides le minuteur). Les cases à remplir brillent un instant : choisis ton niveau, entre tes charges et ton score, puis valide. Tes points arrivent dans le classement. Tu peux aussi indiquer « Je n’ai pas fait le metcon » ou « Je n’ai fait que le metcon », refaire une séance passée (REDO) et laisser un message dans le fil.'},
