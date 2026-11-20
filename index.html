@@ -15720,10 +15720,12 @@ function explainPrompt(p){
     :'Score = nombre d’intervalles réussis.';
   const it=INTENS[p.intensity];
   return ['Tu es coach de CrossFit dans une petite salle. Explique le metcon ci-dessous en français à un grand débutant qui n’a jamais fait de CrossFit.',
-    'Règles : texte brut sans markdown (pas d’astérisques, pas de #), tutoiement, phrases courtes et simples, 120 à 220 mots.',
+    'Règles : texte brut sans markdown (pas d’astérisques, pas de #), tutoiement, phrases courtes et simples, 100 à 200 mots.',
+    'Écris dans un français naturel et correct, comme un coach qui parle à un athlète. Relis chaque phrase : aucune tournure maladroite ou traduite mot à mot (par exemple, n’écris jamais « adapter selon ton niveau de débutant »).',
     'Fais 4 petits paragraphes séparés par une ligne vide, chacun commençant par son titre suivi de deux-points :',
-    '« Le principe : » (le format en mots simples), « Le déroulé : » (ce que l’athlète fait concrètement, dans l’ordre, avec les tours et la durée), « Les mouvements : » (une ligne par mouvement commençant par « - », une phrase simple pour le décrire), « Score et conseils : » (comment le score est compté et 1 ou 2 conseils de gestion).',
-    'Les abréviations (KB, DB, T2B, C2B, DU, HSPU, cal…) doivent être expliquées. N’invente aucune donnée absente (charge, reps, durée). Si un niveau a une variante, dis qu’on peut adapter selon son niveau. Pas de conseil médical.',
+    '« Le principe : » (le format en mots simples), « Le déroulé : » (ce que l’athlète fait concrètement, dans l’ordre, avec les tours et la durée, en citant les mouvements par leur nom sans les décrire), « Les mouvements : » (uniquement cette phrase, recopiée telle quelle : « Clique sur un exercice pour voir sa fiche et la vidéo associée. »), « Score et conseils : » (comment le score est compté et 1 ou 2 conseils de gestion).',
+    'Ne décris pas comment se fait un mouvement : la fiche de l’exercice s’en charge. Explique seulement les abréviations entre parenthèses, en quelques mots (ex. « KB (kettlebell) », « DU (double unders, la corde passe 2 fois par saut) »). N’invente aucune donnée absente (charge, reps, durée). Pas de conseil médical.',
+    lv.length>1?'Des niveaux plus faciles existent (voir la liste « Niveaux »). Dans « Score et conseils », ajoute une phrase de ce genre : « Si c’est trop dur pour toi, choisis un niveau plus facile ('+(n=>n.length>1?n.slice(0,-1).join(', ')+' ou '+n[n.length-1]:n[0])(lv.slice(1).map(x=>x.replace(/^- /,'').split(' : ')[0]))+') : les mouvements, les charges ou les reps sont adaptés. » Adapte-la à ce que les niveaux changent vraiment, sans inventer.':'',
     '',
     'Format : '+fmt+(p.format==='EMOM'?' (intervalle de '+fmtN(ivN)+' min)':''),
     dur?((p.format==='FT'?'Time cap : ':'Durée : ')+mmss(dur)):'',
