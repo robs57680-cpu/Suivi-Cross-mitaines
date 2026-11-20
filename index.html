@@ -1794,6 +1794,17 @@ body.board-lock .top{position:relative;top:0}
 .fmeth-h{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
 .fmeth>summary{cursor:pointer;list-style:none}
 .fmeth>summary::-webkit-details-marker{display:none}
+/* explication du metcon (générée par l'IA, relue par le coach) */
+.mexp{margin:8px 0 4px}
+.mexp>summary{list-style:none;cursor:pointer}
+.mexp>summary::-webkit-details-marker{display:none}
+.mexp-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%}
+.mexp[open]>summary .mexp-btn .o{display:none}.mexp:not([open])>summary .mexp-btn .c{display:none}
+.mexp-txt{margin-top:8px;padding:10px 12px;border-left:4px solid var(--accent);border-radius:4px;background:var(--tint,rgba(127,127,127,.12));display:grid;gap:8px;font-size:14px;line-height:1.45}
+.mexp-txt p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.mexp-txt .mexp-ai{font-size:12px;opacity:.7}
+.ex-box textarea{min-height:140px;line-height:1.4}
+.ex-stale{color:#c0392b;font-weight:600}
 .fmeth>summary::after{content:'▾';margin-left:auto;opacity:.7;transition:transform .2s}
 .fmeth[open]>summary::after{transform:rotate(180deg)}
 .fmeth-k{font-family:var(--f-mono);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.75}
@@ -4422,6 +4433,61 @@ const sdkPromise=(async()=>{
   ({getFirestore,initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,onSnapshot,setDoc,deleteDoc,disableNetwork,enableNetwork,query,orderBy,limit,where,getDocs,getDoc,documentId}=f);
 })();
 sdkPromise.catch(e=>{window.__fbState='SDK ÉCHEC';window.__dbg&&window.__dbg('SDK Firebase ÉCHEC',e);});
+/* ---------- IA : explication des metcons (Firebase AI Logic, API Gemini Developer) ----------
+   Chargée seulement quand le coach touche « Générer avec l'IA ». Le module IA demande le SDK 12 : il tourne dans une 2e appli Firebase
+   (nom « bs-ai ») avec la même configuration, sans toucher au SDK 10 du reste de l'appli. Aucune clé secrète dans le code.
+   À activer une fois dans la console Firebase : AI Logic > Commencer > API Gemini Developer. */
+const AI_URL='https://www.gstatic.com/firebasejs/12.0.0/';
+const AI_MODELS=['gemini-3.5-flash-lite','gemini-3.6-flash','gemini-2.5-flash','gemini-2.5-flash-lite','gemini-flash-latest'];
+let aiP=null,aiModelOk=null;
+function aiLoad(){
+  if(!aiP){aiP=(async()=>{
+    await sdkPromise;if(!firebaseConfig)throw new Error('config Firebase absente');
+    const [a,ai,ac]=await Promise.all([import(AI_URL+'firebase-app.js'),import(AI_URL+'firebase-ai.js'),import(AI_URL+'firebase-app-check.js').catch(()=>({}))]);
+    let app=a.getApps().find(x=>x.name==='bs-ai');
+    if(!app){
+      app=a.initializeApp(firebaseConfig,'bs-ai');
+      /* App Check (appliqué sur AI Logic) : mêmes fournisseurs que le reste de l'appli — App Attest / Play Integrity en natif, reCAPTCHA Enterprise sur le web */
+      const nat=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
+      try{
+        if(nat&&ac.initializeAppCheck&&ac.CustomProvider){
+          const CAP=window.Capacitor,AC=(typeof CAP.registerPlugin==='function')?CAP.registerPlugin('FirebaseAppCheck'):(CAP.Plugins&&CAP.Plugins.FirebaseAppCheck);
+          if(AC&&typeof AC.getToken==='function'){let ini=null;const rdy=()=>ini||(ini=AC.initialize({isTokenAutoRefreshEnabled:true}).catch(()=>{}));
+            ac.initializeAppCheck(app,{provider:new ac.CustomProvider({getToken:async()=>{await rdy();const r=await AC.getToken({forceRefresh:false});return{token:r.token,expireTimeMillis:r.expireTimeMillis||(Date.now()+30*60*1000)};}}),isTokenAutoRefreshEnabled:true});}
+        }else if(!nat&&appCheckSiteKey&&ac.initializeAppCheck&&ac.ReCaptchaEnterpriseProvider){
+          ac.initializeAppCheck(app,{provider:new ac.ReCaptchaEnterpriseProvider(appCheckSiteKey),isTokenAutoRefreshEnabled:true});
+        }
+      }catch(e){window.__dbg&&window.__dbg('App Check IA',e);}
+    }
+    return {ai:ai.getAI(app,{backend:new ai.GoogleAIBackend()}),mod:ai};
+  })();aiP.catch(()=>{aiP=null;});}
+  return aiP;
+}
+async function aiText(prompt){
+  const {ai,mod}=await aiLoad();
+  const list=aiModelOk?[aiModelOk].concat(AI_MODELS.filter(x=>x!==aiModelOk)):AI_MODELS;let last=null;
+  for(const name of list){
+    try{
+      const model=mod.getGenerativeModel(ai,{model:name,generationConfig:{temperature:0.4,maxOutputTokens:1200}});
+      const r=await model.generateContent(prompt);const t=r&&r.response&&r.response.text?r.response.text():'';
+      if(t&&t.trim()){aiModelOk=name;return t.trim();}
+      last=new Error('réponse vide');
+    }catch(e){last=e;const msg=String(e&&e.message||e);if(!/not.?found|404|not supported|unsupported|no longer available|deprecated|retired/i.test(msg))throw e;}
+  }
+  throw last||new Error('IA indisponible');
+}
+function aiErrMsg(e){
+  const m=String(e&&e.message||e||'');
+  if(navigator.onLine===false)return 'Pas de connexion : l’explication ne peut pas être générée hors ligne.';
+  if(/app-check|appcheck|attestation/i.test(m))return 'L’IA refuse la demande : la vérification App Check de cet appareil a échoué. Essaie depuis la version web de l’appli, ou mets App Check en « Surveillance » pour AI Logic dans la console Firebase.';
+  if(/api-not-enabled|not been used|is disabled|SERVICE_DISABLED|403|PERMISSION_DENIED/i.test(m))return 'L’IA n’est pas encore activée. Console Firebase > AI Logic > « Commencer » > API Gemini Developer, puis réessaie.';
+  if(/429|quota|RESOURCE_EXHAUSTED|rate/i.test(m))return 'Trop de demandes à l’IA pour le moment. Réessaie dans une minute.';
+  if(/app-check|appcheck|attestation|unauthenticated|401/i.test(m))return 'L’IA refuse la demande : la vérification App Check de cet appareil a échoué. Essaie depuis la version web de l’appli, ou mets App Check en « Surveillance » pour AI Logic dans la console Firebase.';
+  if(/import|Failed to fetch|dynamically imported|network/i.test(m))return 'Le module IA ne se charge pas (réseau). Réessaie.';
+  return 'L’IA n’a pas pu générer l’explication : '+m.slice(0,160);
+}
+/* nettoie le texte de l'IA : pas de markdown */
+const aiClean=t=>String(t||'').replace(/\r/g,'').replace(/\*\*(.+?)\*\*/g,'$1').replace(/^#+\s*/gm,'').replace(/^\s*[*•]\s+/gm,'- ').replace(/\n{3,}/g,'\n\n').trim().slice(0,2500);
 
 let auth=null;
 /* Petite couche qui expose Firestore sous la forme utilisée par l'appli */
@@ -4462,7 +4528,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-17.13';
+const APP_VERSION='2026-11-20.1';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -4886,7 +4952,7 @@ function planOf(m){
     if(nums.length>1&&k>0)return {nums,k,sizes:nums.map(n=>n*k)};
   }
   const rt=roundTotal(m);
-  if(rt>0){const rm=roundModel(m);return {size:rt,rm,lns:rm?capLines(m):null};}
+  if(rt>0){const rm=roundModel(m),nr=roundsDeclared(m);return Object.assign({size:rt,rm,lns:rm?capLines(m):null},nr?{nr}:{});}
   return autoPlan(m);
 }
 /* For Time sans schéma ni « Reps par tour » : on déduit les tours du contenu, pour que l'athlète saisisse « tours + reps » au lieu d'un total de reps.
@@ -4905,6 +4971,8 @@ function autoPlan(m){
   if(items.length>1)return {lines:true,items,sizes:items.map(i=>i.n),k:1,nums:items.map((_,i)=>i+1),auto:true};
   return null;
 }
+/* nombre de tours annoncé dans le contenu ou le détail (« 4 rounds », « 5 tours », « 3 RFT »), 0 sinon */
+function roundsDeclared(m){const t=String(m&&m.content||'')+'\n'+String(m&&m.detail||'');const x=t.match(/(?:^|[^\d-])(\d+)\s*(?:rounds?|tours?|rft)\b/i);return x&&+x[1]>0?+x[1]:0;}
 const sizeAt=(pl,i)=>pl.sizes?pl.sizes[i]:pl.size;
 function planCum(pl,r,rp){let s=0;for(let i=0;i<r;i++)s+=sizeAt(pl,i)||0;return s+rp;}
 function cumToRounds(pl,v){
@@ -8535,8 +8603,9 @@ function openTimer(w,date,m,lvIdx,psLv){
       const big=h('div',{class:'tm-time'},mmss(st.adj));
       const inp=bigIn(mmss(st.adj),{'aria-label':'Temps final (mm:ss)',inputmode:'text'});
       const sync=()=>{big.textContent=mmss(st.adj);inp.value=mmss(st.adj);};
-      const adj=(d,l)=>h('button',{type:'button',class:'btn sm',onclick:()=>{st.adj=Math.max(0,st.adj+d);sync();}},l);
-      inp.addEventListener('change',()=>{const v=parseTime(inp.value);if(v===null){toast('Écris le temps comme 12:45',true);inp.value=mmss(st.adj);return;}st.adj=v;sync();});
+      const capT=v=>(dur&&v>dur)?(toast('Le temps ne peut pas dépasser le time cap ('+mmss(dur)+').',true),dur):v;
+      const adj=(d,l)=>h('button',{type:'button',class:'btn sm',onclick:()=>{st.adj=capT(Math.max(0,st.adj+d));sync();}},l);
+      inp.addEventListener('change',()=>{const v=parseTime(inp.value);if(v===null){toast('Écris le temps comme 12:45',true);inp.value=mmss(st.adj);return;}st.adj=capT(v);sync();});
       mid.append(h('p',{class:'eyebrow tm-eb'},'Terminé'),big,
         h('p',{class:'tm-sub'},'Tu n’as pas appuyé tout de suite ? Corrige ton temps.'),
         h('div',{class:'row'},adj(-10,'−10 s'),adj(-5,'−5 s'),adj(-1,'−1 s'),adj(1,'+1 s'),adj(5,'+5 s')),
@@ -9165,6 +9234,17 @@ function forceInfo(p){
   }
   return out.length?out:null;
 }
+/* explication du metcon (texte relu par le coach), repliée : « Voir l'explication » ; état ouvert/fermé gardé quand la page se redessine */
+function explainCard(p,date){
+  const key='mx-'+(date||'')+'-'+(p.label||''),op=(S._fmOpen=S._fmOpen||{});
+  const paras=String(p.explain).split(/\n\s*\n/).map(x=>x.trim()).filter(Boolean);
+  const det=h('details',{class:'mexp',id:key},
+    h('summary',{'aria-label':'Voir l’explication du metcon'},h('span',{class:'btn mexp-btn'},h('span',{class:'o'},'💡 Voir l’explication'),h('span',{class:'c'},'Masquer l’explication'))),
+    h('div',{class:'mexp-txt'},paras.map(t=>h('p',{},t)),h('p',{class:'mexp-ai'},'Explication rédigée avec l’IA et relue par le coach.')));
+  if(op[key])det.open=true;
+  det.addEventListener('toggle',()=>{op[key]=det.open;});
+  return det;
+}
 function partCard(p,w,date){
   const metcon=p.kind==='metcon';
   const lines=(p.content||'').split('\n').map(s=>s.trim()).filter(Boolean);
@@ -9194,6 +9274,7 @@ function partCard(p,w,date){
     (p.kind==='force'&&p.prProto&&p.movement)?h('div',{class:'row'},h('button',{class:'btn primary btn-block',type:'button',id:'prproto-'+p.label,onclick:()=>openPrTimer(p.movement,()=>{})},'Protocole PR · '+p.movement)):null,
     h('div',{class:'lines'},lines.map(metcon?metL:(t=>renderLine(t,(p.kind==='renfo'||p.kind==='autre')?p.variants:null,p)))),
     (metcon&&p.word)?h('div',{class:'cword'},h('span',{class:'flabel'},'Mot du coach'),h('p',{},linkText(p.word))):null,
+    (metcon&&String(p.explain||'').trim())?explainCard(p,date):null,
     metcon?levelsBlock(p,date):null,
     (metcon&&w&&timerOk(date))?h('div',{class:'row'},h('button',{class:'btn primary btn-block tm-cb-host',type:'button','data-tour':'start-metcon',onclick:()=>{const lo=activeLevels(p).find(x=>S.tip==='lv-'+p.label+x[1]);const pc=S.tip==='lv-'+p.label+'ps'?psCardCalc(p,date):null;openTimer(w,date,p,pc?pc.base:(lo?lo[1]:null),pc?persoLevel(p,pc):null);}},'Démarrer le metcon',tmCoinBadge(date,'metcon'))):null);
   return h('article',{class:'part'+(metcon?' metcon':'')},h('div',{class:'plabel'},p.label),body);
@@ -10142,7 +10223,8 @@ function readScore(m,st){
         if(a===''&&b==='')return {empty:true};
         const rn=a===''?0:parseNum(a),rp=b===''?0:parseNum(b);
         if(rn===null||rp===null||rn<0||rp<0||rn%1||rp%1)return {bad:true,capBad:true};
-        if((pl.sizes&&rn>=pl.sizes.length)||(pl.nr&&rn>=pl.nr))return {many:true};
+        if(pl.sizes&&rn>=pl.sizes.length)return {many:true};
+        if(pl.nr){const extra=(m.levels||[]).reduce((a,l)=>Math.max(a,rdOf(l)),0);if(rn>=pl.nr+extra)return {many:true};} /* « 4 tours » sur un WOD de 4 tours = terminé, pas un time cap */
         const sz=sizeAt(pl,rn);
         const rr=eqToRaw(pl,rn,rp);
         if(rr>=sz)return {over:true,max:pl.lines?fmtN(pl.items[rn].eq):(pl.rm?fmtN(pl.rm.eq):sz)};
@@ -10155,7 +10237,9 @@ function readScore(m,st){
       return {v:cv,cap:true,reps:cv};
     }
     if(String(st.score||'').trim()==='')return {empty:true};
-    const v=parseTime(st.score);return v===null?{bad:true}:{v};
+    const v=parseTime(st.score);if(v===null)return {bad:true};
+    {const d=metDuration(m);if(d&&v>d)return {bad:true,overCap:true,max:mmss(d)};} /* un temps au-delà du time cap est impossible : l'athlète choisit « Time cap atteint » */
+    return {v};
   }
   if(isDead(m)){const t=String(st.score||'').trim();if(t==='')return {empty:true};const v=parseHold(t),d=metDuration(m);return (v===null||v<0||(d&&v>d+0.5))?{bad:true,hold:true}:{v};}
   if(m.repsRound>0)return readRounds(m,st);
@@ -10163,6 +10247,7 @@ function readScore(m,st){
   const v=parseNum(st.score);return (v===null||v<0)?{bad:true}:{v};
 }
 function scoreErr(m,r){
+  if(r.overCap)return 'Ton temps dépasse le time cap ('+r.max+'). Si tu n’as pas terminé avant le time cap, choisis « Time cap atteint » et indique ce que tu as fait.';
   if(r.hold)return 'Temps tenu illisible ou supérieur au time cap. Écris-le comme 14:00 (14 minutes) ou 14.';
   if(r.many)return 'Tu as indiqué plus de tours que le WOD n’en contient. Si tu as tout terminé, choisis « Terminé dans le temps ».';
   if(r.capOver)return 'Tu ne peux pas écrire plus de reps que le WOD n’en contient ('+r.max+' au total). Vérifie ton résultat.';
@@ -15352,8 +15437,67 @@ function fixDraft(d){
   });
   return d;
 }
-const blankPart=k=>({kind:k,name:'',content:'',movement:'',format:'FT',detail:'',repsRound:'',dur:'',interval:'1',deadBy:false,focus:'',intensity:'',syncTiers:true,word:'',lineRounds:false,redo:true,test:false,prProto:false,restSec:'',nSets:'',chain:'',levels:blankLevels()});
+const blankPart=k=>({kind:k,name:'',content:'',movement:'',format:'FT',detail:'',repsRound:'',dur:'',interval:'1',deadBy:false,focus:'',intensity:'',syncTiers:true,word:'',explain:'',exSig:'',lineRounds:false,redo:true,test:false,prProto:false,restSec:'',nSets:'',chain:'',levels:blankLevels()});
 function blankWod(){return {date:todayStr(),title:'',base:'',deload:false,parts:[Object.assign(blankPart('force'),{name:'Force'}),Object.assign(blankPart('renfo'),{name:'Renforcement'}),Object.assign(blankPart('metcon'),{name:'Metcon'})]};}
+/* ---------- explication du metcon pour les débutants (formulaire coach) ---------- */
+const EX_BUSY=new WeakSet();
+function exSig(p){
+  return JSON.stringify([p.content,p.format,!!p.deadBy,p.detail,p.dur,p.interval,p.repsRound,!!p.lineRounds,p.intensity,
+    (p.levels||[]).map(l=>[l.mode,l.name,l.loadF,l.loadH,l.note])]).replace(/\s+/g,' ');
+}
+function explainPrompt(p){
+  const fmt=p.format==='EMOM'?(p.deadBy?'EMOM Dead by':'EMOM'):p.format==='AMRAP'?'AMRAP':'For Time';
+  const ivN=parseNum(String(p.interval||'1'))||1;
+  const dur=metDuration({format:p.format,dur:parseNum(String(p.dur||''))||0,detail:p.detail,content:p.content});
+  const lv=(p.levels||[]).map((l,k)=>{
+    if(l.mode==='off')return null;
+    const nm=String(l.name||LEVEL_NAMES[k]||'').trim();
+    if(k<3&&l.mode==='same')return '- '+nm+' : comme Rx';
+    const b=[l.loadF?'charge femmes '+l.loadF:'',l.loadH?'charge hommes '+l.loadH:'',l.note?'variante : '+l.note:''].filter(Boolean);
+    return '- '+nm+' : '+(b.length?b.join(' ; '):'rien de précisé');
+  }).filter(Boolean).reverse();
+  const score=p.format==='FT'?'Score = temps pour tout terminer. Si le time cap sonne avant la fin, le score est le nombre de tours + reps réalisés.'
+    :p.format==='AMRAP'?'Score = nombre de tours complets + reps du tour en cours dans le temps imparti.'
+    :p.deadBy?'Score = temps tenu : on continue tant qu’on réussit le travail dans chaque intervalle, jusqu’au time cap.'
+    :'Score = nombre d’intervalles réussis.';
+  const it=INTENS[p.intensity];
+  return ['Tu es coach de CrossFit dans une petite salle. Explique le metcon ci-dessous en français à un grand débutant qui n’a jamais fait de CrossFit.',
+    'Règles : texte brut sans markdown (pas d’astérisques, pas de #), tutoiement, phrases courtes et simples, 120 à 220 mots.',
+    'Fais 4 petits paragraphes séparés par une ligne vide, chacun commençant par son titre suivi de deux-points :',
+    '« Le principe : » (le format en mots simples), « Le déroulé : » (ce que l’athlète fait concrètement, dans l’ordre, avec les tours et la durée), « Les mouvements : » (une ligne par mouvement commençant par « - », une phrase simple pour le décrire), « Score et conseils : » (comment le score est compté et 1 ou 2 conseils de gestion).',
+    'Les abréviations (KB, DB, T2B, C2B, DU, HSPU, cal…) doivent être expliquées. N’invente aucune donnée absente (charge, reps, durée). Si un niveau a une variante, dis qu’on peut adapter selon son niveau. Pas de conseil médical.',
+    '',
+    'Format : '+fmt+(p.format==='EMOM'?' (intervalle de '+fmtN(ivN)+' min)':''),
+    dur?((p.format==='FT'?'Time cap : ':'Durée : ')+mmss(dur)):'',
+    p.detail?'Détail : '+p.detail:'',
+    p.repsRound?'Reps par tour : '+p.repsRound:'',
+    (p.format==='FT'&&p.lineRounds)?'Chaque ligne compte pour un tour.':'',
+    it?'Intensité demandée : '+it.l+' ('+it.d+')':'',
+    'Contenu :',String(p.content||'').trim(),
+    lv.length?'Niveaux :\n'+lv.join('\n'):'',
+    String(p.word||'').trim()?'Mot du coach : '+String(p.word).trim():'',
+    score,'Les « {10=1} » en fin de ligne sont une règle de calcul interne de l’appli : ne les mentionne pas.'].filter(x=>x!=='').join('\n');
+}
+async function genExplain(p){
+  if(!String(p.content||'').trim()){toast('Écris d’abord le contenu du metcon.',true);return;}
+  if(EX_BUSY.has(p))return;
+  EX_BUSY.add(p);render();
+  try{const t=await aiText(explainPrompt(p));p.explain=aiClean(t);p.exSig=exSig(p);toast('Explication générée : relis-la avant d’enregistrer la séance.');}
+  catch(e){toast(aiErrMsg(e),true);window.__dbg&&window.__dbg('IA explication',e);}
+  finally{EX_BUSY.delete(p);render();}
+}
+function explainBox(p,i){
+  const busy=EX_BUSY.has(p),stale=!!(String(p.explain||'').trim()&&p.exSig&&p.exSig!==exSig(p));
+  const ta=h('textarea',{id:'p'+i+'-explain',rows:'8',maxlength:'2500',disabled:busy,placeholder:'Touche « Générer avec l’IA » : une explication simple du metcon pour les débutants s’affiche ici. Tu peux la relire et la corriger.',value:p.explain||'',oninput:e=>{p.explain=e.target.value;}});
+  return h('div',{class:'field ex-box'},
+    h('span',{class:'flabel'},'Explication pour les débutants (bouton « Voir l’explication » sur la carte)'),
+    h('div',{class:'row'},
+      h('button',{type:'button',class:'btn',id:'p'+i+'-exgen',disabled:busy,onclick:()=>genExplain(p)},busy?'Génération en cours…':(String(p.explain||'').trim()?'Régénérer avec l’IA':'✨ Générer avec l’IA')),
+      (String(p.explain||'').trim()&&!busy)?h('button',{type:'button',class:'btn sm danger',onclick:()=>{p.explain='';p.exSig='';render();}},'Effacer'):null),
+    stale?h('p',{class:'hint ex-stale'},'⚠ Le metcon a changé depuis la génération : relis l’explication ou régénère-la.'):null,
+    ta,
+    h('span',{class:'hint'},'Remplis d’abord le contenu, le format, le time cap, l’intensité et les niveaux : l’IA s’en sert. Relis le texte (tu peux le corriger) avant d’enregistrer. Vide = pas de bouton pour les athlètes.'));
+}
 function wodToDraft(w){
   return {date:w.date,title:w.title||'',base:(w.base!==undefined&&w.base!==null)?String(w.base):'',deload:!!w.deload,bonus:!!w.bonus,
     parts:(w.parts||[]).map(p=>{
@@ -15364,7 +15508,7 @@ function wodToDraft(w){
         capTiers:(l.capTiers&&l.capTiers.length)?l.capTiers.map(t=>({t:capInput(cm,tierCum(p,t.t)),p:String(t.p)})):blankCapTiers()}));
       for(let j=pad-1;j>=0;j--)lv.unshift({mode:'off',touched:false,name:LEVEL_NAMES[j],loadF:'',loadH:'',note:'',vars:{},tiers:blankTiers(),capTiers:blankCapTiers()});
       const sk=l=>JSON.stringify([l.loadF,l.loadH,l.note,l.vars,l.tiers,l.capTiers,Number(l.dRounds)||0,l.dReps||{}]);lv.forEach((l,k)=>{if(k<3&&l.mode==='custom'&&sk(l)===sk(lv[3]))l.mode='same';});
-      return {kind:p.kind||'autre',name:p.name||'',content:p.content||'',movement:p.movement||'',method:p.method||'',meth:p.meth||null,format:fmt,detail:p.detail||'',repsRound:p.repsRound?String(p.repsRound):'',word:p.word||'',lineRounds:!!p.lineRounds,redo:p.redo!==false,test:!!p.test,prProto:!!p.prProto,restSec:Number(p.restSec)>0?fmtTime(Number(p.restSec)):'',nSets:Number(p.nSets)>0?String(p.nSets):'',chain:(p.chain==='ss'||p.chain==='seq')?p.chain:'',customLvl:p.customLvl!==false,dur:p.dur?String(p.dur):'',interval:p.interval?String(p.interval).replace('.',','):'1',deadBy:!!p.deadBy,focus:FOCUS[p.focus]?p.focus:'',intensity:INTENS[p.intensity]?p.intensity:'',levels:lv,legacyN:(p.kind==='metcon'&&pad>0)?L0.length:0,syncTiers:(()=>{const k=l=>JSON.stringify([l.tiers,l.capTiers]);return lv.every((l,j)=>j===3||l.mode==='off'||k(l)===k(lv[3]));})()};
+      return {kind:p.kind||'autre',name:p.name||'',content:p.content||'',movement:p.movement||'',method:p.method||'',meth:p.meth||null,format:fmt,detail:p.detail||'',repsRound:p.repsRound?String(p.repsRound):'',word:p.word||'',explain:p.explain||'',exSig:p.exSig||'',lineRounds:!!p.lineRounds,redo:p.redo!==false,test:!!p.test,prProto:!!p.prProto,restSec:Number(p.restSec)>0?fmtTime(Number(p.restSec)):'',nSets:Number(p.nSets)>0?String(p.nSets):'',chain:(p.chain==='ss'||p.chain==='seq')?p.chain:'',customLvl:p.customLvl!==false,dur:p.dur?String(p.dur):'',interval:p.interval?String(p.interval).replace('.',','):'1',deadBy:!!p.deadBy,focus:FOCUS[p.focus]?p.focus:'',intensity:INTENS[p.intensity]?p.intensity:'',levels:lv,legacyN:(p.kind==='metcon'&&pad>0)?L0.length:0,syncTiers:(()=>{const k=l=>JSON.stringify([l.tiers,l.capTiers]);return lv.every((l,j)=>j===3||l.mode==='off'||k(l)===k(lv[3]));})()};
     })};
 }
 function draftToWod(d){
@@ -15401,6 +15545,7 @@ function draftToWod(d){
       if(!FOCUS[p.focus])throw new Error('Choisis le type de metcon ('+o.label+') : il sert aux trophées par catégorie.');
       if(String(p.dur||'').trim()!==''){const dn=parseNum(p.dur);if(dn===null||dn<=0)throw new Error('Durée / time cap illisible ('+o.label+').');o.dur=dn;}
       if(String(p.word||'').trim())o.word=p.word.trim();
+      if(String(p.explain||'').trim()){o.explain=String(p.explain).trim().slice(0,2500);if(p.exSig)o.exSig=p.exSig;}
       if(p.redo===false||d.bonus)o.redo=false;
       if(p.test)o.test=true;
       if(p.customLvl===false)o.customLvl=false;
@@ -16491,6 +16636,7 @@ function wodEditor(modal){
       box.append(field('Méthode (affichée à l’athlète avec son explication)',sel([['','Automatique (détectée dans le nom et le contenu)'],['none','Aucune']].concat(FORCE_METH.map(m=>[m[0],m[1]])),p.method||'',v=>{p.method=v;render();},{id:'p'+i+'-meth'}),'Les séances envoyées par le planificateur portent déjà leur méthode. « Automatique » la reconnaît sinon dans le nom ou le contenu (5/3/1, Wendler, vagues de volume…). Pour une traction lestée, l’avertissement sur la charge totale s’affiche tout seul.'));}
     box.append(field('Contenu, une ligne par consigne',h('textarea',{id:'p'+i+'-content',rows:'4',value:p.content,placeholder:metcon?'21-15-9\nThrusters\nPull-ups':'5 x 5 Back Squat à 75 %',oninput:e=>{p.content=e.target.value;}}),
       metcon?(p.format==='FT'?'Les charges se règlent par niveau ci-dessous. Un schéma comme 21-15-9 ou 10-9-8-7-6-5-4-3-2-1 sur sa propre ligne, suivi des mouvements, est détecté : chaque nombre devient un tour pour les paliers du time cap.':'Les charges se règlent par niveau ci-dessous. Pour qu’un mouvement compte moins de reps (corde à sauter…), ajoute {10=1} en fin de ligne (10 reps comptent pour 1) ou {=5} (la ligne entière vaut 5 reps). Exemple : 50 Single under {10=1}. Écris le nombre de reps en début de ligne.'):'Écris un pourcentage et le mouvement sur la même ligne : chaque athlète verra sa charge calculée.'));
+    if(metcon)box.append(explainBox(p,i));
     if(p.kind==='renfo')box.append(h('div',{class:'grid2'},
       field('Format',sel([['','Aucun'],['EMOM','EMOM / E2MOM / E3MOM…']],p.format==='EMOM'?'EMOM':'',v=>{p.format=v||'FT';render();},{id:'p'+i+'-rfmt'}),'Le renforcement ne rapporte jamais de points, même en EMOM.'),
       p.format==='EMOM'?field('Intervalle (min)',tin(p,'interval',{id:'p'+i+'-riv',inputmode:'decimal',placeholder:'1'}),'1 = EMOM (toutes les minutes), 2 = E2MOM (toutes les 2 minutes), 3 = E3MOM…'):null));
