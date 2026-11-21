@@ -3163,6 +3163,142 @@ html.sx-lock,html.sx-lock body{overflow:hidden}
 @keyframes sxFadeOut{to{opacity:0}}
 @keyframes sxUp{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
 @keyframes sxDown{to{transform:translateY(40px)}}
+/* ===== Assistant de saisie du score ===== */
+.wz-ov{position:fixed;inset:0;z-index:9000;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.55)}
+.wz-sheet{width:100%;max-width:520px;max-height:88vh;display:flex;flex-direction:column;gap:10px;padding:14px 14px calc(14px + env(safe-area-inset-bottom));border-radius:18px 18px 0 0;background:var(--surface);color:var(--ink)}
+.wz-sheet .ov-h{display:flex;justify-content:space-between;align-items:center;font-weight:700}
+.wz-sheet .ov-x{background:none;border:0;color:inherit;font-size:18px;cursor:pointer}
+.wz-chat{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:4px 2px}
+.wz-b{max-width:85%;padding:9px 12px;border-radius:14px;line-height:1.35;font-size:15px}
+.wz-q{align-self:flex-start;background:var(--surface2);border-bottom-left-radius:4px}
+.wz-a{align-self:flex-end;background:var(--accent);color:var(--accent-ink);border-bottom-right-radius:4px}
+.wz-now{border:1px solid var(--accent)}
+.wz-done{border-color:#2fb35a}
+.wz-q small{display:block;margin-top:4px;color:var(--muted);font-size:13px}
+.wz-row{display:flex;gap:8px}
+.wz-in{flex:1;min-width:0;font-size:18px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);color:var(--ink)}
+.wz-opts{display:flex;flex-direction:column;gap:8px}
+.wz-opts .btn{text-align:left;padding:11px 14px}
+.wz-grid{display:grid;grid-template-columns:repeat(5,1fr)}
+.wz-grid .btn{text-align:center;padding:10px 4px}
+.wz-err{margin:0;color:#ff6b5a;font-size:14px}
+.wz-back{align-self:flex-start;background:none;border:0;color:var(--muted);padding:2px 0}
+/* ===== « Entrer mes résultats » v2 (maquette 21/11/2026) : cartes numérotées, grandes cases, icônes ===== */
+.ent{display:grid;gap:14px}
+.ent-date{display:flex;align-items:center;gap:12px}
+.ent-card{position:relative;display:grid;gap:14px;min-width:0;border:1px solid var(--line);border-radius:10px;padding:14px}
+.ent-ch{display:flex;align-items:center;gap:12px;min-width:0}
+.ent-ch h3{flex:1;min-width:0;margin:0}
+.ent-n{flex:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:var(--ink);color:var(--surface);font-weight:800}
+.ent-f3{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:end}
+.ent-sep{height:1px;background:var(--line)}
+.ent-ta{position:relative}.ent-ta textarea{width:100%;padding-bottom:30px}
+.ent-count{position:absolute;right:12px;bottom:8px;font-size:13px;color:var(--muted)}
+.ent-pts{display:flex;align-items:center;gap:12px}.ent-pts .preview{margin:0}
+.ent-act{display:grid;gap:12px}
+.ent .flabel .sx-i,.ent-date .sx-i,.ent-pts .sx-i,.ent-act .sx-i{display:inline-grid;width:22px;height:22px;flex:none;vertical-align:middle}
+.ent .flabel{display:flex;align-items:center;gap:8px}
+.ent .flabel .sx-i svg,.ent-date .sx-i svg,.ent-pts .sx-i svg,.ent-act .sx-i svg,.ent .seg .sx-i svg,.ent-logo .sx-i svg{width:100%;height:100%}
+
+/* --- dans la fenêtre plein écran (athlète) : look de la maquette --- */
+.sheet.entry-sheet.ent-dk,.sheet.lvc-dk{--e-card:#15161A;--e-in:#0D0E11;--e-bd:rgba(255,255,255,.09);--e-bd2:rgba(255,255,255,.24);--e-ink:#F4F5F7;--e-mut:#A4A7AE;
+  --e-c:'Barlow Condensed','Avenir Next Condensed','Roboto Condensed','Arial Narrow',sans-serif;
+  border-radius:0;padding:0 14px 30px;gap:16px;color:var(--e-ink);
+  background:radial-gradient(130% 55% at 100% 0,color-mix(in srgb,var(--accent) 16%,transparent),transparent 62%),linear-gradient(#0E0F13,#0A0B0D)}
+.ov.entry-ov.ent-dk-ov{background:#0A0B0D}
+.entry-sheet.ent-dk .ov-h{background:rgba(12,13,16,.92);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:0;padding:16px 2px 12px}
+.entry-sheet.ent-dk .ov-h .ov-t{display:flex;align-items:center;gap:14px;font-family:var(--e-c);font-style:italic;font-weight:800;font-size:clamp(24px,7vw,32px);letter-spacing:.01em;color:var(--e-ink)}
+.ent-logo{display:flex;align-items:center;padding-right:14px;border-right:2px solid color-mix(in srgb,var(--accent) 70%,transparent);height:34px}
+.ent-logo .sx-i{display:inline-grid;width:36px;height:28px;color:var(--accent)}
+.entry-sheet.ent-dk .ov-x{border:0;background:transparent;color:var(--e-ink);font-size:26px;width:48px;height:48px}
+.entry-sheet.ent-dk .ent{gap:15px}
+.entry-sheet.ent-dk .ent-date{min-height:54px;padding:0 18px;border:1px solid var(--e-bd);border-radius:16px;background:var(--e-card);font-family:var(--e-c);font-style:italic;font-weight:700;font-size:clamp(18px,5.4vw,24px);text-transform:uppercase;letter-spacing:.01em}
+.entry-sheet.ent-dk .ent-date .sx-i{width:28px;height:28px}
+.entry-sheet.ent-dk .ent-card{gap:15px;padding:16px 14px 18px 20px;border:1px solid var(--e-bd);border-radius:20px;background:var(--e-card);overflow:hidden}
+.entry-sheet.ent-dk .ent-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:linear-gradient(var(--accent),color-mix(in srgb,var(--accent) 35%,transparent) 45%,transparent 80%)}
+.entry-sheet.ent-dk .ent-ch{gap:14px}
+.entry-sheet.ent-dk .ent-n{width:38px;height:38px;background:#fff;color:#0A0B0D;font:800 21px var(--e-c)}
+.entry-sheet.ent-dk .ent-ch h3{font-family:var(--e-c);font-style:italic;font-weight:800;font-size:clamp(26px,7.6vw,34px);line-height:1;text-transform:uppercase;color:var(--e-ink)}
+.entry-sheet.ent-dk .ent .flabel{font-family:var(--e-c);font-style:italic;font-weight:700;font-size:clamp(13px,3.8vw,17px);line-height:1.15;letter-spacing:.015em;text-transform:uppercase;color:var(--e-ink)}
+.entry-sheet.ent-dk .ent .flabel .sx-i{width:26px;height:26px;color:var(--accent)}
+.entry-sheet.ent-dk .ent .field{gap:8px}
+.entry-sheet.ent-dk .ent :is(input:not([type=checkbox]):not([type=radio]),select){min-height:52px;border:1.5px solid var(--e-bd2);border-radius:12px;background:var(--e-in);color:var(--e-ink);font-size:21px;padding:8px 14px}
+.entry-sheet.ent-dk .ent textarea{width:100%;border:1.5px solid var(--e-bd2);border-radius:12px;background:var(--e-in);color:var(--e-ink);min-height:88px;font-size:16px;line-height:1.4;padding:12px 14px 30px}
+.entry-sheet.ent-dk .ent :is(input,textarea)::placeholder{color:#6E727A;font-style:italic}
+.entry-sheet.ent-dk .ent-f3{gap:12px}
+.entry-sheet.ent-dk .ent-f3 .flabel{font-size:clamp(11px,3.1vw,14px)}
+.entry-sheet.ent-dk .ent-f3 input{text-align:center;font-size:24px;padding:6px 4px}
+.entry-sheet.ent-dk .ent .stp{gap:0;border:1.5px solid var(--e-bd2);border-radius:14px;background:var(--e-in);overflow:hidden}
+.entry-sheet.ent-dk .ent .stp input{border:0;border-radius:0;background:transparent}
+.entry-sheet.ent-dk .ent .stpb{border:0;border-left:1px solid var(--e-bd);border-radius:0;background:#1C1E23;color:var(--accent);min-width:40px}
+.entry-sheet.ent-dk .ent .hint{position:relative;display:block;margin:0;padding-left:32px;font-size:15px;font-style:italic;line-height:1.42;color:var(--e-mut)}
+.entry-sheet.ent-dk .ent .hint::before{content:"";position:absolute;left:0;top:1px;width:21px;height:21px;background:currentColor;opacity:.85;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='9.5'/%3E%3Cpath d='M12 11v6' stroke-linecap='round'/%3E%3Ccircle cx='12' cy='7.6' r='1.3' fill='black' stroke='none'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2'%3E%3Ccircle cx='12' cy='12' r='9.5'/%3E%3Cpath d='M12 11v6' stroke-linecap='round'/%3E%3Ccircle cx='12' cy='7.6' r='1.3' fill='black' stroke='none'/%3E%3C/svg%3E") center/contain no-repeat}
+.entry-sheet.ent-dk .ent .hint b{color:var(--e-ink)}
+.entry-sheet.ent-dk .ent-sep{background:var(--e-bd2);opacity:.6}
+/* niveaux, Terminé / Time cap, Perso */
+.entry-sheet.ent-dk .ent .seg,.entry-sheet.ent-dk .ent .seg.s4{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.entry-sheet.ent-dk .ent .seg .btn,.entry-sheet.ent-dk .ent .ps-btn{display:flex;align-items:center;justify-content:center;gap:10px;min-height:50px;padding:4px 8px;border:1.5px solid var(--e-bd2);border-radius:12px;background:transparent;color:var(--e-ink);font-family:inherit;font-size:clamp(14px,4.1vw,18px);font-weight:500;text-transform:none;letter-spacing:0;line-height:1.15}
+.entry-sheet.ent-dk .ent .seg .btn .sx-i{display:inline-grid;width:24px;height:24px;flex:none;color:var(--accent)}
+.entry-sheet.ent-dk .ent .seg .btn[aria-pressed="true"]{border:2px solid var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--e-ink);box-shadow:0 0 14px color-mix(in srgb,var(--accent) 30%,transparent)}
+.entry-sheet.ent-dk .ent .ps-btn{width:100%;margin-top:10px;border:2px solid var(--accent);font-family:var(--e-c);font-style:italic;font-weight:700;text-transform:uppercase;letter-spacing:.02em}
+.entry-sheet.ent-dk .ent .ps-btn::before{content:"";width:22px;height:22px;flex:none;background:currentColor;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='7.5' r='4.5'/%3E%3Cpath d='M3.5 21c.6-4.6 4-7 8.5-7s7.9 2.4 8.5 7z'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='7.5' r='4.5'/%3E%3Cpath d='M3.5 21c.6-4.6 4-7 8.5-7s7.9 2.4 8.5 7z'/%3E%3C/svg%3E") center/contain no-repeat}
+.entry-sheet.ent-dk .ent .ps-btn[aria-pressed="true"]{background:#6B3FA0;border-color:#6B3FA0;color:#fff}
+.entry-sheet.ent-dk .ent .lvl-ban{border-radius:14px}
+/* message, points, boutons */
+.entry-sheet.ent-dk .ent-count{right:16px;bottom:12px;font-size:15px;color:var(--e-mut)}
+.entry-sheet.ent-dk .ent-pts{min-height:50px;padding:10px 16px;border:1px solid var(--e-bd);border-radius:16px;background:var(--e-card)}
+.entry-sheet.ent-dk .ent-pts .sx-i{width:28px;height:28px;color:#fff}
+.entry-sheet.ent-dk .ent-pts .preview{font-family:inherit;font-size:16px;line-height:1.35;color:var(--e-ink)}
+.entry-sheet.ent-dk .ent-act{gap:16px;margin-top:4px}
+.entry-sheet.ent-dk .ent .ent-act .btn{display:flex;align-items:center;justify-content:center;gap:14px;width:100%;min-height:58px;border-radius:999px!important;font-family:var(--e-c);font-style:italic;font-weight:800;font-size:clamp(20px,5.6vw,24px);letter-spacing:.02em;text-transform:uppercase}
+.entry-sheet.ent-dk .ent .ent-act .btn.primary{border:0!important;color:#fff!important;background:linear-gradient(90deg,var(--accent),color-mix(in srgb,var(--accent) 75%,#fff))!important;box-shadow:0 6px 22px color-mix(in srgb,var(--accent) 40%,transparent)}
+.entry-sheet.ent-dk .ent .ent-act .btn.primary .sx-i{width:30px;height:30px}
+.entry-sheet.ent-dk .ent .ent-act .ent-cancel{min-height:54px;border:2px solid rgba(255,255,255,.85)!important;background:transparent!important;color:#fff!important}
+/* bouton de l'assistant */
+.entry-sheet.ent-dk .ent .wz-open,.wz-open{display:flex;align-items:center;justify-content:center;width:100%;min-height:58px;margin:0;border:2px dashed var(--accent);border-radius:14px;background:color-mix(in srgb,var(--accent) 8%,transparent);color:inherit;font-size:clamp(15px,4.4vw,18px);font-weight:600;text-transform:none;letter-spacing:0}
+/* les cases (et les niveaux pas encore choisis) clignotent quelques fois à l'ouverture */
+.entry-sheet.ent-dk.glow .ent-need .seg .btn{animation:entryGlow .9s ease-in-out 3}
+@media (prefers-reduced-motion:reduce){.entry-sheet.ent-dk.glow .ent-need .seg .btn{animation:none}}
+@media (max-width:370px){.entry-sheet.ent-dk .ent-f3{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.entry-sheet.ent-dk .ent-f3>:first-child{grid-column:1/-1}}
+/* interrupteur comme la maquette : OUI à gauche, rond blanc à droite ; NON à droite, rond à gauche */
+.entry-sheet.ent-dk .yn-sw::before{left:auto;right:4px}
+.entry-sheet.ent-dk .yn-sw .o{right:auto;left:6px}
+.entry-sheet.ent-dk .yn-sw[aria-checked="false"]::before{right:auto;left:4px}
+.entry-sheet.ent-dk .yn-sw .n{left:auto;right:6px}
+.entry-sheet.ent-dk .yn-sw span{font-family:var(--e-c);font-style:italic;font-weight:800;font-size:15px;text-transform:uppercase}
+/* « Entrer mon REDO » : résultat à battre */
+.entry-sheet.ent-dk .redo-first{display:flex;align-items:center;gap:12px;min-height:50px;padding:8px 14px;border:1.5px solid var(--e-bd2);border-radius:12px;background:var(--e-in)}
+.entry-sheet.ent-dk .redo-first .sx-i{display:inline-grid;width:24px;height:24px;flex:none;color:var(--accent)}.entry-sheet.ent-dk .redo-first .sx-i svg{width:100%;height:100%}
+.entry-sheet.ent-dk .redo-first b{font-family:var(--e-c);font-style:italic;font-weight:800;font-size:clamp(18px,5.2vw,22px);text-transform:uppercase;letter-spacing:.01em;line-height:1.15}
+/* fenêtre « Confirme ton niveau » : look sombre de la saisie */
+.ov.lvc-ov{background:rgba(5,6,8,.78)}
+.sheet.lvc.lvc-dk{max-width:620px;border:1px solid var(--e-bd);border-bottom:0;border-radius:22px 22px 0 0;padding:0 16px calc(22px + env(safe-area-inset-bottom,0px));gap:14px;color:var(--e-ink);
+  background:radial-gradient(130% 50% at 100% 0,color-mix(in srgb,var(--accent) 16%,transparent),transparent 62%),linear-gradient(#0E0F13,#0A0B0D);box-shadow:0 -10px 40px rgba(0,0,0,.6)}
+.lvc-dk .ov-h{background:rgba(12,13,16,.92);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:0;padding:16px 2px 10px}
+.lvc-dk .ov-h .ov-t{display:flex;align-items:center;gap:14px;font-family:var(--e-c);font-style:italic;font-weight:800;font-size:clamp(22px,6.4vw,30px);letter-spacing:.01em;color:var(--e-ink)}
+.lvc-dk .ent-logo .sx-i svg{width:100%;height:100%}
+.lvc-dk .ov-x{border:0;background:transparent;color:var(--e-ink);font-size:26px;width:48px;height:48px}
+.lvc-dk .lvl-ban{border-radius:16px;border:0;padding:14px 18px;box-shadow:0 6px 22px rgba(0,0,0,.35)}
+.lvc-dk .lvl-ban .lb-t{font-family:var(--e-c);font-style:italic;font-size:clamp(26px,7.4vw,32px);letter-spacing:.01em}
+.lvc-dk .flabel{display:flex;align-items:center;gap:8px;font-family:var(--e-c);font-style:italic;font-weight:700;font-size:clamp(13px,3.8vw,16px);letter-spacing:.015em;text-transform:uppercase;color:var(--e-mut)}
+.lvc-dk .flabel .sx-i{display:inline-grid;width:22px;height:22px;flex:none;color:var(--accent)}.lvc-dk .flabel .sx-i svg{width:100%;height:100%}
+.lvc-dk .lvc-res{display:grid;gap:6px;margin:0;padding:14px 16px;border:1px solid var(--e-bd);border-radius:16px;background:var(--e-card)}
+.lvc-dk .lvc-res b{font-family:var(--e-c);font-style:italic;font-weight:800;font-size:clamp(24px,7vw,30px);color:var(--e-ink)}
+.lvc-dk .lvc-card{position:relative;display:grid;gap:12px;padding:14px 14px 14px 20px;border:1px solid var(--e-bd);border-radius:20px;background:var(--e-card);overflow:hidden}
+.lvc-dk .lvc-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:linear-gradient(var(--accent),color-mix(in srgb,var(--accent) 35%,transparent) 45%,transparent 80%)}
+.lvc-dk .lvc-row{gap:5px;padding-bottom:12px;border-bottom:1px solid var(--e-bd)}.lvc-dk .lvc-row:last-child{padding-bottom:0;border-bottom:0}
+.lvc-dk .lvc-row b{font-size:17px;color:var(--e-ink)}.lvc-dk .lvc-row .sub{color:var(--e-mut)}
+.lvc-dk .lvc-lines{font-size:15px;color:var(--e-ink)}
+.lvc-dk .hint{margin:0;font-size:15px;font-style:italic;line-height:1.42;color:var(--e-mut)}
+.lvc-dk .ent-act{display:grid;gap:12px}
+.lvc-dk .ent-act .btn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:56px;border-radius:999px!important;font-family:var(--e-c);font-style:italic;font-weight:800;font-size:clamp(18px,5.2vw,22px);letter-spacing:.02em;text-transform:uppercase}
+.lvc-dk .ent-act .btn.primary{border:0!important;color:#fff!important;background:linear-gradient(90deg,var(--accent),color-mix(in srgb,var(--accent) 75%,#fff))!important;box-shadow:0 6px 22px color-mix(in srgb,var(--accent) 40%,transparent)}
+.lvc-dk .ent-act .btn.primary .sx-i{display:inline-grid;width:28px;height:28px;flex:none}.lvc-dk .ent-act .btn .sx-i svg{width:100%;height:100%}
+.lvc-dk .ent-act .ent-cancel{min-height:52px;border:2px solid rgba(255,255,255,.85)!important;background:transparent!important;color:#fff!important}
 </style>
 </head>
 <body>
@@ -4705,7 +4841,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-21.3';
+const APP_VERSION='2026-11-21.5';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -9424,6 +9560,13 @@ const SX_IC={
   bars:SX_SVG('<rect x="3" y="14" width="4.500" height="7" rx="1"/><rect x="9.750" y="9" width="4.500" height="12" rx="1"/><rect x="16.500" y="3" width="4.500" height="18" rx="1"/>',true),
   bulb:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.200a7 7 0 0 0-4.200 12.600c.8.600 1.200 1.400 1.200 2.300v.4h6v-.4c0-.9.400-1.700 1.200-2.300A7 7 0 0 0 12 2.200z" fill="currentColor"/><path d="M9.300 19.300h5.400M10.200 21.700h3.600" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M10 9.200c.4-1.200 1.300-1.900 2.600-2" stroke="#fff" stroke-opacity=".75" stroke-width="1.600" stroke-linecap="round" fill="none"/></svg>'
 };
+Object.assign(SX_IC,{ /* icônes de « Entrer mes résultats » */
+  dumb:SX_SVG('<path d="M6.500 6.500v11M17.500 6.500v11M3.500 9.500v5M20.500 9.500v5M6.500 12h11"/>'),
+  flag:SX_SVG('<path d="M5 21V3.500"/><path d="M5 4h12.500l-2.500 4 2.500 4H5z" fill="currentColor"/>'),
+  star:SX_SVG('<path d="M12 2.800l2.800 5.900 6.400.800-4.700 4.400 1.200 6.400L12 17.200l-5.700 3.100 1.200-6.400-4.700-4.400 6.400-.800z"/>',true),
+  check:SX_SVG('<path d="M4.500 12.500l5 5 10-11"/>'),
+  slash:'<svg viewBox="0 0 36 24" fill="currentColor" aria-hidden="true"><path d="M9 2h9L10 22H1zM25 2h9l-8 20h-9z"/></svg>'
+});
 const sxIco=(k,c)=>{const s=document.createElement('span');s.className='sx-i'+(c?' '+c:'');s.innerHTML=SX_IC[k]||'';return s;};
 /* séances que les flèches font défiler : celles visibles dans la liste des séances */
 function sxNavDates(){
@@ -10439,9 +10582,9 @@ function entryOverlay(w,date){
   if(!form)return null;
   const close=()=>{if(kind==='entry')S.entry=null;else S.redo=null;render();};
   const glow=Date.now()<(S.entryGlowUntil||0);
-  return h('div',{class:'ov entry-ov',id:'entry-ov'},
-    h('div',{class:'sheet entry-sheet'+(glow?' glow':''),role:'dialog','aria-modal':'true','aria-label':ttl},
-      h('div',{class:'ov-h'},h('span',{class:'ov-t'},ttl),h('button',{type:'button',class:'ov-x',id:'entry-close','aria-label':'Fermer sans enregistrer',onclick:close},'✕')),
+  return h('div',{class:'ov entry-ov ent-dk-ov',id:'entry-ov'},
+    h('div',{class:'sheet entry-sheet ent-dk'+(glow?' glow':''),role:'dialog','aria-modal':'true','aria-label':ttl},
+      h('div',{class:'ov-h'},h('span',{class:'ov-t'},h('span',{class:'ent-logo'},sxIco('slash')),ttl),h('button',{type:'button',class:'ov-x',id:'entry-close','aria-label':'Fermer sans enregistrer',onclick:close},'✕')),
       form));
 }
 function entrySection(w,date){
@@ -10743,19 +10886,22 @@ function confirmLevel(m,st,go){
   const lines=(m.content||'').split('\n').map(x=>x.trim()).filter(Boolean);
   const esc=e=>{if(e.key==='Escape'){e.stopPropagation();close();}};
   const close=()=>{ov.remove();document.removeEventListener('keydown',esc,true);document.body.classList.remove('modal-open');};
-  const ov=h('div',{class:'ov',id:'lvc-ov',style:'z-index:60'},
-    h('div',{class:'sheet lvc',role:'dialog','aria-modal':'true','aria-label':'Confirme ton niveau'},
-      h('div',{class:'ov-h'},h('span',{class:'ov-t'},'Confirme ton niveau'),h('button',{type:'button',class:'ov-x','aria-label':'Fermer',onclick:close},'✕')),
+  /* même look sombre que « Entrer mes résultats » (cartes arrondies, icônes, gros boutons) */
+  const row=(ic,lab,val)=>h('div',{class:'lvc-row'},h('span',{class:'flabel'},sxIco(ic),h('span',{},lab)),val);
+  const ov=h('div',{class:'ov lvc-ov',id:'lvc-ov',style:'z-index:60'},
+    h('div',{class:'sheet lvc lvc-dk',role:'dialog','aria-modal':'true','aria-label':'Confirme ton niveau'},
+      h('div',{class:'ov-h'},h('span',{class:'ov-t'},h('span',{class:'ent-logo'},sxIco('slash')),'Confirme ton niveau'),h('button',{type:'button',class:'ov-x','aria-label':'Fermer',onclick:close},'✕')),
       h('div',{class:'lvl-ban '+i.cls},
         h('div',{class:'lb-k'},'Tu valides un score en'),h('div',{class:'lb-t'},i.label)),
-      res?h('p',{class:'lvc-res'},h('span',{class:'flabel'},'Ton résultat'),h('b',{},res)):null,
-      h('div',{class:'lvc-row'},h('span',{class:'flabel'},'Charge à utiliser'),h('b',{},i.load||'Pas de charge indiquée pour ce niveau')),
-      i.note?h('div',{class:'lvc-row'},h('span',{class:'flabel'},i.perso?'Tes choix par mouvement':'Variante de ce niveau'),h('b',{},i.note)):h('div',{class:'lvc-row'},h('span',{class:'flabel'},'Variantes'),h('span',{class:'sub'},'Aucune : mêmes mouvements que le Rx.')),
-      lines.length?h('div',{class:'lvc-row'},h('span',{class:'flabel'},'Metcon · '+(m.label||'')),h('div',{class:'lvc-lines'},lines.map(x=>h('div',{},x)))):null,
+      res?h('div',{class:'lvc-res'},h('span',{class:'flabel'},sxIco('watch'),h('span',{},'Ton résultat')),h('b',{},res)):null,
+      h('div',{class:'lvc-card'},
+        row('dumb','Charge à utiliser',h('b',{},i.load||'Pas de charge indiquée pour ce niveau')),
+        i.note?row('trophy',i.perso?'Tes choix par mouvement':'Variante de ce niveau',h('b',{},i.note)):row('trophy','Variantes',h('span',{class:'sub'},'Aucune : mêmes mouvements que le Rx.')),
+        lines.length?row('flag','Metcon · '+(m.label||''),h('div',{class:'lvc-lines'},lines.map(x=>h('div',{},x)))):null),
       h('p',{class:'hint'},'Vérifie que tu as bien fait la charge et les mouvements de ce niveau. Sinon, reviens corriger ton niveau.'),
-      h('div',{class:'row'},
-        h('button',{type:'button',class:'btn primary',id:'lvc-ok',onclick:()=>{close();go();}},'Oui, valider en '+i.label),
-        h('button',{type:'button',class:'btn',id:'lvc-back',onclick:close},'Modifier mon niveau'))));
+      h('div',{class:'ent-act'},
+        h('button',{type:'button',class:'btn primary',id:'lvc-ok',onclick:()=>{close();go();}},sxIco('check'),h('span',{},'Oui, valider en '+i.label)),
+        h('button',{type:'button',class:'btn ent-cancel',id:'lvc-back',onclick:close},'Modifier mon niveau'))));
   document.body.append(ov);document.body.classList.add('modal-open');
   document.addEventListener('keydown',esc,true);
   try{document.getElementById('lvc-ok').focus();}catch(x){}
@@ -10778,8 +10924,10 @@ function scoreFields(m,st,upd,pre,canSkip){
   /* Interrupteur Metcon sur « non » (= ancien bouton « Je n'ai pas fait le metcon ») : la séance s'enregistre sans points de metcon ; le champ de résultat disparaît. Un nouveau clic (ou un choix Terminé / Time cap) le fait revenir. */
   const skip=!!canSkip&&!!st.skip;
   const head=ft?[h('div',{class:'seg',style:'grid-template-columns:repeat(2,minmax(0,1fr))',role:'group','aria-label':'Fin du For Time'},
-    [[false,'Terminé dans le temps'],[true,'Time cap atteint']].map(([v,l])=>h('button',{type:'button',class:'btn sm','aria-pressed':(!skip&&!!st.capped===v)?'true':'false',onclick:()=>{st.skip=false;st.capped=v;render();}},l)))]:[];
+    [[false,'Terminé dans le temps'],[true,'Time cap atteint']].map(([v,l])=>h('button',{type:'button',class:'btn sm','aria-pressed':(!skip&&!!st.capped===v)?'true':'false',onclick:()=>{st.skip=false;st.capped=v;render();}},sxIco(v?'flag':'watch'),h('span',{},l))))]:[];
   if(skip)return head.concat([h('p',{class:'hint'},'La séance sera enregistrée sans les points du metcon. Remets l’interrupteur Metcon sur « oui » pour saisir un résultat.')]);
+  /* assistant de saisie (questions guidées) : pour l'athlète, pas pour le coach qui corrige un résultat */
+  if(!st.coach)head.unshift(h('button',{type:'button',class:'btn wz-open',id:pre+'-wz',onclick:()=>openScoreWizard(m,st)},'🤖 M’aider à entrer mon score'));
   if(ft&&st.capped&&!pl){
     const tl0=capTools(m,()=>({capped:true,creps:st.creps}));
     return head.concat([field(m.label+' · Reps réalisées au time cap',
@@ -10805,6 +10953,215 @@ function scoreFields(m,st,upd,pre,canSkip){
     h('input',{id:pre+'-score',type:'text',inputmode:ft?'text':'decimal',placeholder:ft?'12:45':'7,5',value:st.score||'',oninput:bind('score')}),
     ft?'Écris ton temps en minutes:secondes, par exemple 12:45 pour 12 min 45 s. Pas fini dans le time cap ? Choisis « Time cap atteint ».':'Écris un nombre de tours. Une série partielle se note en décimales : 7 tours et demi = 7,5.')]);
 }
+/* =====================================================================
+   BOX SCORE · ASSISTANT DE SAISIE DU SCORE (script, sans IA)
+   ---------------------------------------------------------------------
+   Bouton « 🤖 M'aider à entrer mon score » dans « Entrer mes résultats ».
+   L'assistant pose des questions selon le format du metcon, détecte les
+   réponses impossibles, puis REMPLIT les champs habituels du formulaire
+   (st.capped / st.score / st.rounds / st.reps / st.creps).
+   Il ne calcule aucun point lui-même : la vérification finale passe par
+   readScore() et capExplain(), les mêmes fonctions que le formulaire.
+   L'athlète valide ensuite la séance comme d'habitude.
+   Fonctions de l'appli utilisées : h, planOf, capLines, roundModel,
+   mdRawToEq, rawToEq, readScore, scoreErr, capExplain, capMaxReps,
+   metDuration, emomIv, isDead, levelsOf, perfPoints, adjF, parseTime,
+   parseNum, mmss, fmtN, LADDER, WTAG, render, toast.
+   ===================================================================== */
+
+/* ---------- 1. Lecture du metcon : tours et mouvements ---------- */
+const wzUnit=rest=>/^m\s/.test(rest)?'mètres de '+rest.slice(2):rest; /* « m Run » -> « mètres de Run » */
+function wzModel(m){
+  const lns=capLines(m),sum=a=>a.reduce((s,x)=>s+x.n,0);
+  const mv=x=>({n:x.n,rest:x.rest});
+  if(m.format==='FT'){
+    const pl=planOf(m);
+    if(!pl)return {kind:'total',max:capMaxReps(m)||0};
+    if(pl.lines){ /* chipper : chaque ligne = 1 tour */
+      const ok=lns.length===pl.items.length;
+      return {kind:'pick',pl,rounds:pl.items.map((it,i)=>({label:'Ligne '+(i+1)+(ok?' · '+lns[i].n+' '+lns[i].rest:''),movs:[{n:it.n,rest:ok?lns[i].rest:'reps'}]}))};
+    }
+    if(pl.sizes){ /* schéma 21-15-9 : un tour = une ligne du schéma, pour chaque mouvement */
+      const L=String(m.content||'').split('\n').map(x=>x.replace(WTAG,'').trim()).filter(Boolean);
+      const li=L.findIndex(x=>LADDER.test(x)),movs=L.slice(li+1).filter(x=>!LADDER.test(x));
+      return {kind:'pick',pl,rounds:pl.nums.map(N=>({label:'Tour de '+N,movs:movs.map(x=>({n:N,rest:x}))}))};
+    }
+    const raw=pl.rm?pl.rm.raw:pl.size; /* tours identiques */
+    return {kind:'rounds',pl,nr:pl.nr||0,raw,movs:(lns.length&&sum(lns)===raw)?lns.map(mv):null};
+  }
+  const md=roundModel(m),raw=md?md.raw:(Number(m.repsRound)>0?Number(m.repsRound):sum(lns));
+  return {kind:'amrap',md,raw,rr:Number(m.repsRound)>0,movs:(lns.length&&sum(lns)===raw)?lns.map(mv):null};
+}
+/* meilleur palier (celui qui rapporte le plus de points) du niveau choisi, pour les alertes « ça paraît beaucoup » */
+function wzTop(m,st){
+  const lv=levelsOf(m)[Number.isInteger(st.level)?st.level:0]||{};let b=null;
+  for(const t of lv.tiers||[])if(!b||t.p>b.p)b=t;
+  return b?Number(b.t):null;
+}
+
+/* ---------- 2. Les questions (une étape = une question) ---------- */
+/* Chaque étape renvoie {q, hint?, opts?:[{l,f}], input?:{ph,time?,f}} ; f(...) fait avancer l'assistant via go(). */
+function wzSteps(W){
+  const m=W.m,M=W.M,d=metDuration(m),A=W.a;
+  const go=(step,ans)=>W.go(step,ans);
+  const int=s=>{const v=parseNum(s);return (v===null||v<0||v%1)?null:v;};
+  const bad=t=>({err:t});
+  const S={
+    /* ----- FOR TIME ----- */
+    ft0:()=>({q:'As-tu terminé TOUT le WOD avant le time cap'+(d?' ('+mmss(d)+')':'')+' ?',
+      opts:[{l:'Oui, j’ai tout fini',f:()=>go('ftTime','Oui')},{l:'Non, le time cap a sonné',f:()=>go(M.kind==='total'?'capTotal':M.kind==='pick'?'capWhich':'capR','Non')}]}),
+    ftTime:()=>({q:'Quel temps affichait le chrono quand tu as fini ?',hint:'En minutes:secondes, par exemple 8:45.',
+      input:{ph:'8:45',time:true,f:s=>{
+        const v=parseTime(s);if(v===null)return bad('Écris ton temps comme 8:45 (8 minutes 45).');
+        A.time=v;
+        if(d&&v>d)return go('ftOver',s);
+        const top=wzTop(m,W.st);if(top&&v<top*0.75)return go('ftFast',s);
+        W.res={capped:false,score:mmss(v)};return go('recap',s);}}}),
+    ftOver:()=>({q:'Impossible : le time cap est de '+mmss(d)+', ton chrono ne peut pas afficher '+mmss(A.time)+'. Qu’est-ce qui s’est passé ?',
+      opts:[{l:'Le time cap a sonné avant la fin',f:()=>go(M.kind==='total'?'capTotal':M.kind==='pick'?'capWhich':'capR','Le time cap a sonné')},
+            {l:'Je me suis trompé de temps',f:()=>go('ftTime','Je corrige')}]}),
+    ftFast:()=>({q:'⚡ '+mmss(A.time)+', c’est plus rapide que le meilleur palier ('+mmss(wzTop(m,W.st))+'). Tu confirmes ?',
+      opts:[{l:'Oui, c’est bien mon temps',f:()=>{W.res={capped:false,score:mmss(A.time)};go('recap','Oui');}},{l:'Non, je corrige',f:()=>go('ftTime','Je corrige')}]}),
+
+    /* time cap, WOD sans tours connus : total de reps */
+    capTotal:()=>({q:'Combien de reps as-tu faites au total, tous mouvements confondus ?',hint:M.max?'Le WOD en contient '+M.max+'.':null,
+      input:{ph:'81',f:s=>{const v=int(s);if(v===null)return bad('Écris un nombre entier.');
+        if(M.max&&v>=M.max)return go('allDone',s);
+        W.res={capped:true,creps:String(v)};return go('recap',s);}}}),
+
+    /* time cap, tours identiques : combien de tours complets */
+    capR:()=>({q:'Combien de tours COMPLETS as-tu terminés ?',hint:M.nr?'Le WOD compte '+M.nr+' tours.':null,
+      input:{ph:'3',f:s=>{const v=int(s);if(v===null)return bad('Écris un nombre entier de tours.');
+        if(M.nr&&v>=M.nr)return go('allDone',s);
+        A.r=v;return go(M.movs?'capMv':'capRaw',s);}}}),
+    /* time cap, schéma ou chipper : dans quel tour / quelle ligne */
+    capWhich:()=>({q:'Dans quel tour étais-tu quand le time cap a sonné ?',
+      opts:M.rounds.map((x,i)=>({l:x.label,f:()=>{A.r=i;A.movs=x.movs;A.mi=0;go(x.movs.length>1?'capMv':'capN',x.label);}}))}),
+
+    /* sur quel mouvement (time cap ou AMRAP) */
+    capMv:()=>{const mv=A.movs||M.movs;return {q:'Sur quel mouvement étais-tu'+(W.am?' quand le temps s’est arrêté':'')+' ?',
+      opts:mv.map((x,i)=>({l:x.n+' '+x.rest,f:()=>{A.mi=i;go('capN',x.rest);}}))
+        .concat(A.r>0||W.am?[{l:'Je venais de finir un tour pile',f:()=>{A.mi=0;A.k=0;wzSet(W);go('recap','Fin de tour pile');}}]:[])};},
+    capN:()=>{const x=(A.movs||M.movs)[A.mi];return {q:'Combien de '+wzUnit(x.rest)+' as-tu faits ? (sur '+x.n+')',
+      input:{ph:String(Math.max(1,Math.floor(x.n/2))),f:s=>{const v=int(s);if(v===null)return bad('Écris un nombre entier.');
+        if(v>=x.n)return go('mvFull',s);
+        A.k=v;wzSet(W);return go('recap',s);}}};},
+    mvFull:()=>{const mv=A.movs||M.movs,x=mv[A.mi],nx=mv[A.mi+1];
+      return nx
+        ?{q:'Tu as fait les '+x.n+' '+wzUnit(x.rest)+' : ce mouvement était donc terminé. Tu étais sur le suivant ('+nx.n+' '+nx.rest+') ?',
+          opts:[{l:'Oui, j’étais sur '+nx.rest,f:()=>{A.mi++;go('capN','Oui');}},{l:'Non, je corrige',f:()=>go('capN','Je corrige')}]}
+        :{q:'Tu as fait les '+x.n+' '+wzUnit(x.rest)+' : c’était le dernier mouvement, tu avais donc terminé ce tour.',
+          opts:[{l:'Oui, j’avais fini ce tour',f:()=>{A.r++;A.mi=0;A.k=0;
+              if(M.kind==='pick'&&A.r>=M.rounds.length)return go('allDone','Oui');
+              if(M.kind==='rounds'&&M.nr&&A.r>=M.nr)return go('allDone','Oui');
+              if(M.kind==='pick'){A.movs=M.rounds[A.r].movs;return go(A.movs.length>1?'capMv':'capN','Oui');}
+              return go('capMv','Oui');}},
+            {l:'Non, je corrige',f:()=>go('capN','Je corrige')}]};},
+    capRaw:()=>({q:'Combien de reps as-tu faites dans le tour en cours, tous mouvements confondus ?',hint:'Un tour = '+M.raw+' reps.',
+      input:{ph:'10',f:s=>{const v=int(s);if(v===null)return bad('Écris un nombre entier.');
+        if(v>=M.raw)return bad('Un tour fait '+M.raw+' reps : si tu en as fait '+v+', tu avais terminé un tour de plus. Ajoute-le à tes tours complets (reviens en arrière).');
+        A.k=v;A.raw=v;wzSet(W);return go('recap',s);}}}),
+    allDone:()=>({q:'D’après ta réponse, tu as fait TOUT le WOD : tu l’as donc terminé avant le time cap.',
+      opts:[{l:'Oui, j’ai fini : j’entre mon temps',f:()=>go('ftTime','J’ai fini')},{l:'Non, je me suis trompé',f:()=>go(M.kind==='total'?'capTotal':M.kind==='pick'?'capWhich':'capR','Je corrige')}]}),
+
+    /* ----- AMRAP ----- */
+    am0:()=>({q:'Combien de tours COMPLETS as-tu faits ?',hint:M.raw?'Un tour = '+M.movs.map(x=>x.n+' '+x.rest).join(' + ')+'.':null,
+      input:{ph:'5',f:s=>{const v=int(s);if(v===null)return bad('Écris un nombre entier de tours.');
+        A.r=v;const top=wzTop(m,W.st);
+        if(top&&v>Math.ceil(top*1.3))return go('amHigh',s);
+        return go('capMv',s);}}}),
+    amHigh:()=>({q:'🤔 '+A.r+' tours, c’est bien au-dessus du meilleur palier ('+fmtN(wzTop(m,W.st))+' tours). Tu confirmes ?',
+      hint:'Attention à ne pas compter en reps ou à ne pas compter un tour commencé.',
+      opts:[{l:'Oui, c’est bien ça',f:()=>go('capMv','Oui')},{l:'Non, je corrige',f:()=>go('am0','Je corrige')}]}),
+    amTot:()=>({q:'Combien de tours as-tu faits ?',hint:'Un tour commencé se note en décimales : 7 tours et demi = 7,5.',
+      input:{ph:'7,5',f:s=>{const v=parseNum(s);if(v===null||v<0)return bad('Écris un nombre de tours, par exemple 7 ou 7,5.');
+        W.res={score:String(v).replace('.',',')};return go('recap',s);}}}),
+
+    /* ----- EMOM ----- */
+    em0:()=>({q:'Combien d’intervalles as-tu réussis en entier ?',hint:W.N?'L’EMOM en compte '+W.N+'.':null,
+      input:{ph:W.N?String(W.N):'10',f:s=>{const v=int(s);if(v===null)return bad('Écris un nombre entier.');
+        if(W.N&&v>W.N)return bad('L’EMOM ne compte que '+W.N+' intervalles.');
+        W.res={score:String(v)};return go('recap',s);}}}),
+    /* ----- EMOM DEAD BY ----- */
+    dd0:()=>({q:'As-tu réussi TOUS les intervalles jusqu’au time cap'+(d?' ('+mmss(d)+')':'')+' ?',
+      opts:[{l:'Oui, j’ai tout tenu',f:()=>{W.res={score:mmss(d)};go('recap','Oui');}},{l:'Non, j’ai décroché',f:()=>go(W.N?'ddK':'ddT','Non')}]}),
+    ddK:()=>{const iv=emomIv(m);return {q:'Quel est le PREMIER intervalle où tu n’as pas fini tes reps dans le temps ?',
+      hint:'Exemple : tu as raté la minute 14 → tu as tenu 13 minutes.',grid:true,
+      opts:Array.from({length:W.N},(_,i)=>({l:(iv===1?'Min ':'Int. ')+(i+1),f:()=>{A.k=i+1;const held=i*iv*60;W.res={score:mmss(held)};go(i===0?'dd1':'recap',(iv===1?'Minute ':'Intervalle ')+(i+1));}}))};},
+    dd1:()=>({q:'Tu as raté dès le premier intervalle : ton temps tenu est 0:00 (aucun point). C’est bien ça ?',
+      opts:[{l:'Oui',f:()=>go('recap','Oui')},{l:'Non, je corrige',f:()=>go('ddK','Je corrige')}]}),
+    ddT:()=>({q:'Combien de temps as-tu tenu ?',hint:'En minutes:secondes (13:00) ou en minutes (13).',
+      input:{ph:'13:00',f:s=>{W.res={score:s};return go('recap',s);}}}),
+
+    /* ----- RÉCAP ----- */
+    recap:()=>{
+      const tmp=Object.assign({},W.st,W.res),r=readScore(m,tmp);
+      if(r.empty||r.bad||r.over||r.many)return {q:'⚠️ '+scoreErr(m,r),opts:[{l:'↺ Recommencer',f:()=>W.restart()}]};
+      let txt;
+      if(m.format==='FT'&&tmp.capped){const x=capExplain(m,tmp);txt=x.ok||'';}
+      else if(m.format==='FT')txt='Tu as terminé le WOD en '+tmp.score+'.';
+      else if(isDead(m))txt='Tu as tenu '+tmp.score+(A.k?' (raté à l’intervalle '+A.k+')':'')+'.';
+      else if(W.am&&A.r!==undefined)txt='Tu as fait '+A.r+' tour'+(A.r>1?'s':'')+' complet'+(A.r>1?'s':'')+(A.k>0&&M.movs?' + '+A.k+' '+wzUnit(M.movs[A.mi].rest)+' dans le tour suivant':'')+(tmp.rounds===undefined?' (score : '+tmp.score+' tours)':'')+'.';
+      else txt='Score : '+tmp.score+(m.format==='EMOM'?' intervalles réussis.':' tours.');
+      let pts='Choisis ton niveau dans le formulaire pour voir tes points.';
+      if(Number.isInteger(W.st.level)){const p=Math.round(perfPoints(m,r.v,W.st.level,r.cap)*adjF(W.st)*100)/100;pts='Ça te rapporte '+fmtN(p)+' pt'+(p>1?'s':'')+' de metcon.';}
+      return {q:'✅ '+txt,hint:pts,done:true,
+        opts:[{l:'C’est ça, je remplis mon score',f:()=>W.apply()},{l:'↺ Recommencer',f:()=>W.restart()}]};
+    }
+  };
+  return S;
+}
+/* position (tour + mouvement + reps) -> champs du formulaire, en reps équivalentes là où l'appli les attend */
+function wzSet(W){
+  const M=W.M,A=W.a;
+  const mv=A.movs||M.movs;
+  const raw=A.raw!==undefined?A.raw:(mv?mv.slice(0,A.mi).reduce((s,x)=>s+x.n,0)+(A.k||0):0); /* reps réelles faites dans le tour en cours */
+  if(W.am){
+    if(M.rr){W.res={rounds:String(A.r),reps:String(M.md?mdRawToEq(M.md,raw):raw)};}
+    else{const f=M.md?mdRawToEq(M.md,raw)/M.md.eq:(M.raw?raw/M.raw:0);W.res={score:String(Math.round((A.r+f)*100)/100).replace('.',',')};}
+    return;
+  }
+  W.res={capped:true,rounds:String(A.r),reps:String(rawToEq(M.pl,A.r,raw))};
+}
+
+/* ---------- 3. Fenêtre de l'assistant (style conversation) ---------- */
+function openScoreWizard(m,st){
+  const W={m,st,M:wzModel(m),a:{},log:[],hist:[],am:m.format!=='FT'&&!(m.format==='EMOM')};
+  const dd=metDuration(m);W.N=(m.format==='EMOM'&&dd)?Math.floor(dd/(emomIv(m)*60)):0;
+  const first=()=>m.format==='FT'?'ft0':isDead(m)?'dd0':m.format==='EMOM'?'em0':(W.M.movs?'am0':'amTot');
+  W.at=first();
+  W.go=(step,ans)=>{W.hist.push({at:W.at,a:JSON.stringify(W.a),res:W.res,n:W.log.length});W.log.push({q:W.cur.q,a:ans});W.at=step;draw();};
+  W.back=()=>{const p=W.hist.pop();if(!p)return;W.at=p.at;W.a=JSON.parse(p.a);W.res=p.res;W.log.length=p.n;draw();};
+  W.restart=()=>{W.a={};W.res=null;W.log=[];W.hist=[];W.at=first();draw();};
+  W.apply=()=>{delete st.score;delete st.rounds;delete st.reps;delete st.creps;Object.assign(st,W.res);st.skip=false;close();render();
+    try{toast('Score rempli ✓ Vérifie ton niveau, puis valide la séance.');}catch(x){}};
+  const ov=h('div',{class:'ov wz-ov',role:'dialog','aria-modal':'true','aria-label':'Assistant de saisie du score'});
+  const close=()=>{ov.remove();document.removeEventListener('keydown',esc,true);};
+  const esc=e=>{if(e.key==='Escape'){e.stopPropagation();close();}};
+  document.addEventListener('keydown',esc,true);
+  function draw(){
+    W.cur=wzSteps(W)[W.at]();const c=W.cur;
+    const err=h('p',{class:'wz-err',role:'alert',hidden:true});
+    const chat=h('div',{class:'wz-chat'},
+      ...W.log.flatMap(x=>[h('div',{class:'wz-b wz-q'},x.q),h('div',{class:'wz-b wz-a'},x.a)]),
+      h('div',{class:'wz-b wz-q wz-now'+(c.done?' wz-done':'')},c.q,c.hint?h('small',{},c.hint):null));
+    let zone;
+    if(c.input){
+      const inp=h('input',{type:'text',inputmode:c.input.time?'text':'numeric',placeholder:c.input.ph,class:'wz-in'});
+      const ok=()=>{const v=inp.value.trim();if(!v)return;const r=c.input.f(v);if(r&&r.err){err.textContent=r.err;err.hidden=false;inp.focus();}};
+      inp.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();ok();}});
+      zone=h('div',{class:'wz-row'},inp,h('button',{type:'button',class:'btn primary',onclick:ok},'OK'));
+      setTimeout(()=>{try{inp.focus();}catch(x){}},30);
+    }else zone=h('div',{class:'wz-opts'+(c.grid?' wz-grid':'')},...c.opts.map(o=>h('button',{type:'button',class:'btn'+(c.done&&o===c.opts[0]?' primary':''),onclick:o.f},o.l)));
+    ov.replaceChildren(h('div',{class:'sheet wz-sheet'},
+      h('div',{class:'ov-h'},h('span',{class:'ov-t'},'🤖 Assistant score'),h('button',{type:'button',class:'ov-x','aria-label':'Fermer',onclick:close},'✕')),
+      chat,err,zone,
+      W.hist.length?h('button',{type:'button',class:'btn sm wz-back',onclick:W.back},'← Revenir'):null));
+    chat.scrollTop=chat.scrollHeight;
+  }
+  document.body.append(ov);draw();
+}
+
 function fillState(m,st,e){
   if(!m||!e)return;
   if(e.cap){
@@ -10973,11 +11330,30 @@ function redoForm(w,date){
     }
     preview.textContent=(per?'':'Hors saison, ne compte pas au classement. ')+'REDO : '+fmtN(pts)+' pt'+(pts>1?'s':'')+' (1 si moins bien, 2 si égal, 3 si mieux).'+why;
   };
-  const form=h('form',{class:'stack',onsubmit:e=>{e.preventDefault();submitRedo(w);}},h('h2',{class:'h2'},'REDO · '+w.title),
-    hasScore(first)?h('p',{class:'hint'},'À comparer avec ton premier résultat : '+lvlLab(m,first)+' · '+scoreText(m,first.score,first)+'. Même niveau et autant de points de metcon = égal ; plus de points, ou un niveau plus haut sans marquer moins = mieux ; un niveau plus bas ou moins de points = moins bien.'):null,
-    levelField(m,S.redo,m.label+' · Ton niveau'),...scoreFields(m,S.redo,upd,'redo'));
+  /* même look que « Entrer mes résultats » : cartes numérotées (1 Résultat à battre, 2 Ton REDO), icônes, barre Points, gros boutons */
+  let nb=0;
+  const card=t=>{const n=++nb,id='redo-h'+n;return h('section',{class:'ent-card','aria-labelledby':id},h('div',{class:'ent-ch'},h('span',{class:'ent-n','aria-hidden':'true'},String(n)),h('h3',{id},t)));};
+  const icoF=(f,k)=>{const l=f&&f.querySelector&&f.querySelector('.flabel');if(l&&!l.querySelector('.sx-i'))l.prepend(sxIco(k));return f;};
+  const form=h('form',{class:'stack ent',id:'redo-form',onsubmit:e=>{e.preventDefault();submitRedo(w);}},
+    h('div',{class:'ent-date'},sxIco('cal'),h('span',{},cap(fmtShort(date))+' • '+w.title)));
+  if(hasScore(first)){
+    const c1=card('Résultat à battre');
+    c1.append(h('div',{class:'redo-first'},sxIco('flag'),h('b',{},lvlLab(m,first)+' · '+scoreText(m,first.score,first))),
+      h('p',{class:'hint'},'Même niveau et autant de points de metcon = égal ; plus de points, ou un niveau plus haut sans marquer moins = mieux ; un niveau plus bas ou moins de points = moins bien.'));
+    form.append(c1);
+  }
+  const c2=card('Ton REDO');form.append(c2);
+  const lf=icoF(levelField(m,S.redo,m.label+' · Ton niveau'),'trophy');
+  if(!S.redo.perso&&!Number.isInteger(S.redo.level))lf.classList.add('ent-need'); /* niveau pas choisi : les boutons clignotent avec les cases */
+  c2.append(lf);
+  const sf=scoreFields(m,S.redo,upd,'redo');
+  sf.forEach(el=>{if(el&&el.querySelectorAll)el.querySelectorAll('.flabel').forEach(l=>{if(!l.querySelector('.sx-i'))l.prepend(sxIco('watch'));});});
+  c2.append(...sf);
   upd();
-  form.append(preview,h('div',{class:'row'},h('button',{class:'btn primary',type:'submit'},'Valider le REDO'),h('button',{class:'btn',type:'button',onclick:()=>{S.redo=null;render();}},'Annuler')));
+  form.append(h('div',{class:'ent-pts'},sxIco('star'),preview),
+    h('div',{class:'ent-act'},
+      h('button',{class:'btn primary',type:'submit'},sxIco('check'),h('span',{},'Valider le REDO')),
+      h('button',{class:'btn ent-cancel',type:'button',onclick:()=>{S.redo=null;render();}},'Annuler')));
   return form;
 }
 function submitRedo(w){
@@ -11062,46 +11438,70 @@ function entryForm(w,date){
     preview.textContent=(per?'':'Hors saison, ne compte pas au classement. ')+'Points : '+base+' pour la séance'+(m?(noLvl?' + metcon : niveau non sélectionné':' + '+fmtN(perf)+' pour le metcon'):'')+(noLvl?'':' = '+fmtN(base+perf));
   };
   const title=S.entry.coach?'Résultats de '+((S.logs[S.entry.uid]||{}).pseudo||'l’athlète'):'Mes résultats';
-  const form=h('form',{class:S.entry.coach?'card':'stack',id:'entry-form',onsubmit:e=>{e.preventDefault();submitEntry(w);}},S.entry.coach?h('h2',{class:'h2'},title):h('p',{class:'eyebrow'},cap(fmtShort(date))+' · '+w.title));
+  const form=h('form',{class:(S.entry.coach?'card':'stack')+' ent',id:'entry-form',onsubmit:e=>{e.preventDefault();submitEntry(w);}},
+    S.entry.coach?h('h2',{class:'h2'},title):h('div',{class:'ent-date'},sxIco('cal'),h('span',{},cap(fmtShort(date))+' • '+w.title)));
   if(S.entry.coach)form.append(h('p',{class:'hint'},'Tu modifies ce résultat en tant que coach. Les points et le classement se recalculent tout de suite.'));
   if(S.entry.coach&&w.isSub)form.append(h('div',{class:'sub-banner'},h('b',{},'🏠 Séance de substitution'),h('div',{},'Cet athlète a fait « '+w.title.replace(/ · remplacement$/,'')+' » à la place de « '+(w.subFrom||'la séance d’origine')+' ».')));
   const hasForce=(w.parts||[]).some(p=>p.kind==='force');
   /* « Corps de séance » se décoche dans tous les cas, sauf quand la séance ne contient que le metcon : alors on remet la valeur par défaut */
   const canBody=(w.parts||[]).some(p=>p.kind!=='metcon');
   if(!canBody)S.entry.only=false;
-  if(m&&canBody){
-    form.append(ynSwitch('Corps de séance',!S.entry.only,'entry-only',()=>{S.entry.only=!S.entry.only;if(S.entry.only)S.entry.skip=false;upd();render();}));
-    if(S.entry.only)form.append(h('p',{class:'hint'},'Tu gagnes les points du metcon, mais pas ceux de la séance.'+(hasForce?' La charge de la partie force n’est pas enregistrée.':'')));
+  /* cartes numérotées : 1 Corps de séance, 2 Metcon (interrupteur oui / non dans l'en-tête) */
+  let nb=0;
+  const card=(t,sw)=>{const n=++nb,id='ent-h'+n;return h('section',{class:'ent-card','aria-labelledby':id},h('div',{class:'ent-ch'},h('span',{class:'ent-n','aria-hidden':'true'},String(n)),h('h3',{id},t),sw?sw(id):null));};
+  const sw=(on,id,toggle)=>lid=>h('button',{type:'button',class:'yn-sw',id,role:'switch','aria-checked':on?'true':'false','aria-labelledby':lid,onclick:toggle},h('span',{class:'o'},'oui'),h('span',{class:'n'},'non'));
+  const icoF=(f,k)=>{const l=f.querySelector('.flabel');if(l)l.prepend(sxIco(k));return f;};
+  const c1=(!m||canBody)?card('Corps de séance',(m&&canBody)?sw(!S.entry.only,'entry-only',()=>{S.entry.only=!S.entry.only;if(S.entry.only)S.entry.skip=false;upd();render();}):null):null;
+  if(c1){
+    form.append(c1);
+    if(S.entry.only)c1.append(h('p',{class:'hint'},'Tu gagnes les points du metcon, mais pas ceux de la séance.'+(hasForce?' La charge de la partie force n’est pas enregistrée.':'')));
+    else if(!hasForce)c1.append(h('p',{class:'hint'},'Rien à noter pour cette partie : elle est comptée quand tu valides la séance.'));
   }
+  let c2=null,nf=0;
   (w.parts||[]).forEach(p=>{
     if(p.kind==='force'){
       if(S.entry.only)return;
-      form.append(h('p',{class:'hint'},h('b',{},'Échauffement : '),'ne le note pas ici. Inscris seulement tes séries de travail, sinon l’échauffement serait compté dans ton tonnage.'));
+      if(nf++)c1.append(h('div',{class:'ent-sep'}));
+      else c1.append(h('p',{class:'hint'},h('b',{},'Échauffement : '),'ne le note pas ici. Inscris seulement tes séries de travail, sinon l’échauffement serait compté dans ton tonnage.'));
       const fd=(!S.entry.coach&&(S.entry.uid||S.uid)===S.uid)?forceDefault(p):null;
       const signed=signedPart(p);
+      const nm=p.label+' · '+(p.movement||p.name||'Force');
+      const loadIn=signInput(h('input',{id:'load-'+p.label,type:'text',inputmode:'decimal',placeholder:fd!==null?fmtN(fd):'optionnel',style:signed?'flex:1;min-width:0':null,value:S.entry.loads[p.label]||'',oninput:e=>{S.entry.loads[p.label]=e.target.value;}}),signed);
+      const loadHint=fd!==null?'Charge prévue d’après tes pourcentages : '+fmtN(fd)+' kg. Modifie-la si tu as utilisé autre chose ; si tu la laisses vide, c’est elle qui est enregistrée.'+(signed?'':' Séries × reps × charge forment ton tonnage de la saison.'):(signed?null:'Séries × reps × charge forment ton tonnage de la saison (trophée Roi du tonnage).');
       if(!signed){
         const sx=S.entry.sets[p.label]||(S.entry.sets[p.label]={s:'',r:''});
         const sch=forceSchema(p); /* séries demandées par la séance : fixes, non modifiables */
         if(sch){const c0=parseInt(sx.s,10);if(!(c0>=1&&c0<=sch.s))sx.s=String(sch.s);}
-        form.append(h('div',{class:'grid2'},
-          field(p.label+' · '+(p.movement||p.name||'Force')+' : séries',sch?setsStepper(sx,sch.s,p.label):h('input',{id:'sets-'+p.label,type:'text',inputmode:'numeric',placeholder:'séries',value:sx.s,oninput:e=>{sx.s=e.target.value;}}),sch?'Prévu : '+sch.s+'. Utilise les flèches pour en faire moins (1 minimum).':null),
-          field('Répétitions par série',h('input',{id:'reps-'+p.label,type:'text',inputmode:'numeric',placeholder:'reps',value:sx.r,oninput:e=>{sx.r=e.target.value;}}))));
-      }
-      form.append(field((signed?p.label+' · '+(p.movement||p.name||'Force')+' : charge la plus lourde (kg)':'Charge utilisée (kg)'),
-        signInput(h('input',{id:'load-'+p.label,type:'text',inputmode:signed?'decimal':'decimal',placeholder:fd!==null?'charge prévue':'optionnel',style:signed?'flex:1;min-width:0':null,value:S.entry.loads[p.label]||'',oninput:e=>{S.entry.loads[p.label]=e.target.value;}}),signed),fd!==null?'Charge prévue d’après tes pourcentages : '+fmtN(fd)+' kg. Modifie-la si tu as utilisé autre chose ; si tu la laisses vide, c’est elle qui est enregistrée.'+(signed?'':' Séries × reps × charge forment ton tonnage de la saison.'):(signed?null:'Séries × reps × charge forment ton tonnage de la saison (trophée Roi du tonnage).')));
+        c1.append(h('div',{class:'ent-f3'},
+          icoF(field(nm+' · Séries',sch?setsStepper(sx,sch.s,p.label):h('input',{id:'sets-'+p.label,type:'text',inputmode:'numeric',placeholder:'séries',value:sx.s,oninput:e=>{sx.s=e.target.value;}})),'dumb'),
+          field('Répétitions par série',h('input',{id:'reps-'+p.label,type:'text',inputmode:'numeric',placeholder:'reps',value:sx.r,oninput:e=>{sx.r=e.target.value;}})),
+          field('Charge utilisée (kg)',loadIn)));
+        if(sch)c1.append(h('p',{class:'hint'},'Prévu : '+sch.s+'. Utilise les flèches pour en faire moins (1 minimum).'));
+      }else c1.append(icoF(field(nm+' : charge la plus lourde (kg)',loadIn),'dumb'));
+      if(loadHint)c1.append(h('div',{class:'ent-sep'}),h('p',{class:'hint'},loadHint));
     }
     if(p.kind==='metcon'){
-      const ft=p.format==='FT';
-      form.append(ynSwitch('Metcon',!S.entry.skip,'entry-skip',()=>{S.entry.skip=!S.entry.skip;if(S.entry.skip)S.entry.only=false;upd();render();}));
-      if(S.entry.skip)return; /* interrupteur Metcon sur « non » : toute la partie metcon est fermée */
-      form.append(levelField(p,S.entry,p.label+' · Ton niveau'));
-      form.append(...scoreFields(p,S.entry,upd,'entry',true));
+      c2=card('Metcon',sw(!S.entry.skip,'entry-skip',()=>{S.entry.skip=!S.entry.skip;if(S.entry.skip)S.entry.only=false;upd();render();}));
+      form.append(c2);
+      if(S.entry.skip){c2.append(h('p',{class:'hint'},'Le metcon ne sera pas compté : la séance s’enregistre sans ses points. Remets l’interrupteur sur « oui » pour saisir un résultat.'));return;} /* interrupteur Metcon sur « non » : toute la partie metcon est fermée */
+      const lf=icoF(levelField(p,S.entry,p.label+' · Ton niveau'),'trophy');
+      if(!S.entry.perso&&!Number.isInteger(S.entry.level))lf.classList.add('ent-need'); /* niveau pas choisi : les boutons clignotent avec les cases */
+      c2.append(lf);
+      const sf=scoreFields(p,S.entry,upd,'entry',true);
+      sf.forEach(el=>{if(el&&el.querySelectorAll)el.querySelectorAll('.flabel').forEach(l=>{if(!l.querySelector('.sx-i'))l.prepend(sxIco('watch'));});});
+      c2.append(...sf);
     }
   });
   const messageInput=h('textarea',{maxlength:'180',rows:'3',placeholder:'Un petit message pour le fil (facultatif)…',value:S.entry.message||'',oninput:e=>{S.entry.message=e.target.value;counter.textContent=e.target.value.length+'/180';}});
-  const counter=h('span',{class:'hint','aria-live':'polite'},(S.entry.message||'').length+'/180');
-  form.append(field('Message dans le fil · 180 caractères maximum',messageInput,counter));
-  upd();form.append(preview,h('div',{class:'row'},h('button',{class:'btn primary',type:'submit'},S.entry.coach?'Enregistrer':'Valider la séance'),h('button',{class:'btn',type:'button',onclick:()=>{S.entry=null;render();}},'Annuler')));
+  const counter=h('span',{class:'ent-count','aria-live':'polite'},(S.entry.message||'').length+'/180');
+  const last=c2||c1||form;
+  if(last!==form)last.append(h('div',{class:'ent-sep'}));
+  last.append(icoF(h('label',{class:'field ent-msg'},h('span',{class:'flabel'},'Message dans le fil · 180 caractères maximum'),h('div',{class:'ent-ta'},messageInput,counter)),'chat'));
+  upd();
+  form.append(h('div',{class:'ent-pts'},sxIco('star'),preview),
+    h('div',{class:'ent-act'},
+      h('button',{class:'btn primary',type:'submit'},sxIco('check'),h('span',{},S.entry.coach?'Enregistrer':'Valider la séance')),
+      h('button',{class:'btn ent-cancel',type:'button',onclick:()=>{S.entry=null;render();}},'Annuler')));
   return form;
 }
 function setsStepper(sx,max,label){
