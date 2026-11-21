@@ -3174,7 +3174,7 @@ html.sx-lock,html.sx-lock body{overflow:hidden}
 .wz-a{align-self:flex-end;background:var(--accent);color:var(--accent-ink);border-bottom-right-radius:4px}
 .wz-now{border:1px solid var(--accent)}
 .wz-done{border-color:#2fb35a}
-.wz-q small{display:block;margin-top:4px;color:var(--muted);font-size:13px}
+.wz-q small{display:block;margin-top:4px;color:var(--muted);font-size:13px;white-space:pre-line}
 .wz-row{display:flex;gap:8px}
 .wz-in{flex:1;min-width:0;font-size:18px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);color:var(--ink)}
 .wz-opts{display:flex;flex-direction:column;gap:8px}
@@ -4872,7 +4872,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-21.6';
+const APP_VERSION='2026-11-21.7';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -8181,7 +8181,7 @@ function openEntryWith(w,date,patch){
   S.entryGlowUntil=Date.now()+2900;
   render();
   window.scrollTo(0,0);
-  toast('Résultat du minuteur ajouté. Choisis ton niveau puis valide la séance.');
+  toast(patch&&Number.isInteger(patch.level)?'Résultat et niveau du minuteur ajoutés. Vérifie puis valide la séance.':'Résultat du minuteur ajouté. Choisis ton niveau puis valide la séance.');
 }
 /* ---------- échauffement guidé ----------
    Configuration partagée : un seul document Firestore config/warmup { version, items:[…], updatedAt }.
@@ -8800,7 +8800,7 @@ function openTimer(w,date,m,lvIdx,psLv){
   const keepLater=mi>=0&&mi<parts.length-1;
   const saveLabel=keepLater?'Garder mes résultats pour plus tard':'Enregistrer dans mon résultat';
   const keep=patch=>{close();keptSet(date,patch);S.viewDate=date;S.tab='today';S.entry=null;S.redo=null;S.confirm=null;render();window.scrollTo(0,0);toast('Résultats gardés. Fais les parties qui restent, puis appuie sur « Entrer mes résultats ».');};
-  const finish=patch=>{if(keepLater){keep(patch);return;}close();openEntryWith(w,date,patch);};
+  const finish=patch=>{if(st.wzLv)patch=Object.assign({},patch,st.wzLv);if(keepLater){keep(patch);return;}close();openEntryWith(w,date,patch);};
   const armed=(btn,txt,fn)=>{let t=null;const orig=btn.textContent;return ()=>{if(t){clearTimeout(t);t=null;btn.textContent=orig;fn();return;}btn.textContent=txt;t=setTimeout(()=>{t=null;btn.textContent=orig;},3000);};};
   /* bonus du metcon : durée d'au moins la moitié du temps prévu (Rx), sinon « résultat incohérent » ; AMRAP et EMOM : minuteur affiché au moins 40 % du temps total */
   const vis=tmVisNew();
@@ -9026,7 +9026,7 @@ function openTimer(w,date,m,lvIdx,psLv){
       const hero=h('div',{class:'tm-hero'}),card=h('section',{class:'tm-card'},h('div',{class:'tm-ch'},sxIco('watch'),h('h3',{},'Ton score'))),lapC=h('section',{class:'tm-card tm-lapc'});
       card.append(h('button',{type:'button',class:'btn wz-open',id:'tm-wz',onclick:()=>openScoreWizard(m,{},res=>{
         if(fmt==='FT'){st.res.cap=!!res.capped;if(!res.capped){const v=parseTime(res.score);if(v!==null)st.adj=dur?Math.min(v,dur):v;}}
-        st.wzPre=res;showDone();toast('Score rempli ✓ Vérifie-le, puis enregistre.');})},'🤖 M’aider à entrer mon score'));
+        st.wzLv=res.lv||null;delete res.lv;st.wzPre=res;showDone();toast('Score rempli ✓ Vérifie-le, puis enregistre.');})},'🤖 M’aider à entrer mon score'));
       [...mid.children].forEach(k=>{
         if((k.tagName==='P'&&k.classList.contains('eyebrow'))||k.classList.contains('tm-time'))hero.append(k);
         else if(k.classList.contains('tm-passages'))lapC.append(k);
@@ -11022,7 +11022,7 @@ function scoreFields(m,st,upd,pre,canSkip){
 const wzUnit=rest=>/^m\s/.test(rest)?'mètres de '+rest.slice(2):rest; /* « m Run » -> « mètres de Run » */
 function wzModel(m){
   const lns=capLines(m),sum=a=>a.reduce((s,x)=>s+x.n,0);
-  const mv=x=>({n:x.n,rest:x.rest});
+  const mv=x=>({n:x.n,eq:x.eq,rest:x.rest});
   if(m.format==='FT'){
     const pl=planOf(m);
     if(!pl)return {kind:'total',max:capMaxReps(m)||0};
@@ -11142,6 +11142,19 @@ function wzSteps(W){
     ddT:()=>({q:'Combien de temps as-tu tenu ?',hint:'En minutes:secondes (13:00) ou en minutes (13).',
       input:{ph:'13:00',f:s=>{W.res={score:s};return go('recap',s);}}}),
 
+    /* ----- NIVEAU RÉALISÉ ----- */
+    lv0:()=>{const ps=wzPsMv(m);return {q:'Quel niveau as-tu fait ?',
+      opts:activeLevels(m).map(([lv,i])=>({l:levelName(m,i),f:()=>{A.lv={level:i};go('recap',levelName(m,i));}}))
+        .concat(persoOk(m)?[{l:'Perso · un niveau par mouvement',f:()=>{A.lv={perso:true,pk:{}};A.pi=0;go('lvMv','Perso');}}]:[])
+        .concat([{l:'Je ne sais pas',f:()=>{if(!ps.length)return go('lvHelp','Je ne sais pas');A.lv={unk:true,pk:{}};A.pi=0;go('lvMv','Je ne sais pas');}}])};},
+    lvMv:()=>{const ps=wzPsMv(m),x=ps[A.pi];return {q:(A.lv.perso?'Quel niveau as-tu pris pour ':'Qu’as-tu fait pour ')+x.name+' ?',hint:'Mouvement '+(A.pi+1)+' sur '+ps.length+'.',
+      opts:x.opts.map((o,j)=>({l:wzPsDet(x,o)+' ('+psOptName(m,o)+')',f:()=>{
+        A.lv.pk[x.name]=j;const lab=psOptName(m,o);
+        if(A.pi+1<ps.length){A.pi++;return go('lvMv',lab);}
+        wzPsEnd(m,A);go('recap',lab);}}))};},
+    lvHelp:()=>({q:'Je ne peux pas comparer les mouvements de ce metcon. Regarde la description de chaque niveau (variantes, charges) sur la carte de la séance et choisis celui qui correspond à ce que tu as fait. Dans le doute, prends le plus bas.',
+      opts:activeLevels(m).map(([lv,i])=>({l:levelName(m,i),f:()=>{A.lv={level:i};go('recap',levelName(m,i));}}))}),
+
     /* ----- RÉCAP ----- */
     recap:()=>{
       const tmp=Object.assign({},W.st,W.res),r=readScore(m,tmp);
@@ -11152,9 +11165,13 @@ function wzSteps(W){
       else if(isDead(m))txt='Tu as tenu '+tmp.score+(A.k?' (raté à l’intervalle '+A.k+')':'')+'.';
       else if(W.am&&A.r!==undefined)txt='Tu as fait '+A.r+' tour'+(A.r>1?'s':'')+' complet'+(A.r>1?'s':'')+(A.k>0&&M.movs?' + '+A.k+' '+wzUnit(M.movs[A.mi].rest)+' dans le tour suivant':'')+(tmp.rounds===undefined?' (score : '+tmp.score+' tours)':'')+'.';
       else txt='Score : '+tmp.score+(m.format==='EMOM'?' intervalles réussis.':' tours.');
-      let pts='Choisis ton niveau dans le formulaire pour voir tes points.';
-      if(Number.isInteger(W.st.level)){const p=Math.round(perfPoints(m,r.v,W.st.level,r.cap)*adjF(W.st)*100)/100;pts='Ça te rapporte '+fmtN(p)+' pt'+(p>1?'s':'')+' de metcon.';}
-      return {q:'✅ '+txt,hint:pts,done:true,
+      const L=A.lv||{},li=Number.isInteger(L.level)?L.level:W.st.level;
+      const isPs=L.perso||(L.keep&&W.st.perso),pv=L.perso?L.pv:(isPs?(persoCalc(m,W.st.pk).pv||0):0);
+      const lvTxt=isPs?'Niveau : Perso (coefficient ×'+fmt2(pv/LEVEL_DIV)+')':Number.isInteger(li)?'Niveau : '+levelName(m,li):'';
+      let pts='';
+      if(Number.isInteger(li)){const p=Math.round(perfPoints(m,r.v,li,r.cap)*adjF(W.st)*100)/100;pts=lvTxt+' · ça te rapporte '+fmtN(p)+' pt'+(p>1?'s':'')+' de metcon.';}
+      const hint=[A.eqNote,L.note,pts].filter(Boolean).join('\n');
+      return {q:'✅ '+txt,hint,done:true,
         opts:[{l:'C’est ça, je remplis mon score',f:()=>W.apply()},{l:'↺ Recommencer',f:()=>W.restart()}]};
     }
   };
@@ -11165,12 +11182,44 @@ function wzSet(W){
   const M=W.M,A=W.a;
   const mv=A.movs||M.movs;
   const raw=A.raw!==undefined?A.raw:(mv?mv.slice(0,A.mi).reduce((s,x)=>s+x.n,0)+(A.k||0):0); /* reps réelles faites dans le tour en cours */
+  /* reps équivalentes ({10=1}…) : seules les équivalences COMPLÈTES comptent (58 cordes à sauter {10=1} = 5, pas 5,8) */
+  const exact=W.am?(M.md?mdRawToEq(M.md,raw):raw):rawToEq(M.pl,A.r,raw),eq=Math.floor(exact+1e-6);
+  A.eqNote=null;
+  if(eq<exact-1e-6){
+    const x=mv&&mv[A.mi];
+    if(x&&x.eq>0&&x.eq<x.n&&A.k>0){
+      const per=x.n/x.eq,got=Math.floor(A.k/per+1e-6),kept=Math.round(got*per*100)/100,u=wzUnit(x.rest);
+      A.eqNote='Équivalence '+fmtN(per)+' pour 1 : tes '+A.k+' '+u+' comptent pour '+got+' rep'+(got>1?'s':'')+(got?' ('+fmtN(kept)+' '+u+')':'')+'. Les '+fmtN(Math.round((A.k-kept)*100)/100)+' en plus ne comptent pas : il en fallait '+fmtN(kept+per)+' pour une rep de plus.';
+    }else A.eqNote='Avec les équivalences, seules les reps équivalentes complètes comptent : '+fmtN(exact)+' est arrondi à '+eq+'.';
+  }
   if(W.am){
-    if(M.rr){W.res={rounds:String(A.r),reps:String(M.md?mdRawToEq(M.md,raw):raw)};}
-    else{const f=M.md?mdRawToEq(M.md,raw)/M.md.eq:(M.raw?raw/M.raw:0);W.res={score:String(Math.round((A.r+f)*100)/100).replace('.',',')};}
+    if(M.rr){W.res={rounds:String(A.r),reps:String(eq)};}
+    else{const f=M.md?eq/M.md.eq:(M.raw?raw/M.raw:0);W.res={score:String(Math.round((A.r+f)*100)/100).replace('.',',')};}
     return;
   }
-  W.res={capped:true,rounds:String(A.r),reps:String(rawToEq(M.pl,A.r,raw))};
+  W.res={capped:true,rounds:String(A.r),reps:String(eq)};
+}
+/* ---------- niveau réalisé : demandé par l'assistant avant le récap ---------- */
+/* mouvements dont l'option change d'un niveau à l'autre (les autres sont identiques partout) */
+const wzPsMv=m=>persoMoves(m).filter(x=>x.opts.length>1);
+/* ce que l'athlète a fait concrètement pour une option (variante, reps adaptées, charge selon le sexe) */
+function wzPsDet(x,o){
+  const sx=S.prof&&S.prof.sex,a=[o.v?o.v.to.join(' ou '):x.name];
+  if(o.reps.some(Boolean))a.push('reps adaptées');
+  const ld=o.load.length?(sx==='F'?o.load[0]:sx==='H'?o.load[1]:[o.load[0]?'F '+o.load[0]:'',o.load[1]?'H '+o.load[1]:''].filter(Boolean).join(' · ')):'';
+  if(ld)a.push(ld);
+  return a.join(' · ');
+}
+/* choix par mouvement -> niveau : un seul niveau si tout est au même niveau, sinon Perso (ou le plus bas si Perso n'est pas proposé) */
+function wzPsEnd(m,A){
+  const pk=Object.assign({},A.lv.pk);
+  for(const x of persoMoves(m))if(!Number.isInteger(pk[x.name]))pk[x.name]=0;
+  const c=persoCalc(m,pk);
+  if(c.miss.length){A.lv={level:activeLevels(m)[0][1]};return;}
+  const same=c.rows.every(r=>r.rank===c.rows[0].rank),how=A.lv.perso?'Perso':'unk';
+  if(same){A.lv={level:c.base,note:'Tous tes mouvements sont au même niveau : '+levelName(m,c.base)+'.'};return;}
+  if(persoOk(m)){A.lv={perso:true,pk,level:c.base,pv:c.pv,note:how==='unk'?'Tes mouvements ne sont pas tous au même niveau : je mets le niveau Perso (un niveau par mouvement).':null};return;}
+  A.lv={level:c.base,note:'Tes mouvements ne sont pas tous au même niveau et le niveau Perso n’est pas proposé sur ce metcon : on retient le plus bas, '+levelName(m,c.base)+'.'};
 }
 
 /* ---------- 3. Fenêtre de l'assistant (style conversation) ---------- */
@@ -11179,11 +11228,20 @@ function openScoreWizard(m,st,onApply){ /* onApply(res) : utilisé par l'écran 
   const dd=metDuration(m);W.N=(m.format==='EMOM'&&dd)?Math.floor(dd/(emomIv(m)*60)):0;
   const first=()=>m.format==='FT'?'ft0':isDead(m)?'dd0':m.format==='EMOM'?'em0':(W.M.movs?'am0':'amTot');
   W.at=first();
-  W.go=(step,ans)=>{W.hist.push({at:W.at,a:JSON.stringify(W.a),res:W.res,n:W.log.length});W.log.push({q:W.cur.q,a:ans});W.at=step;draw();};
+  /* niveau déjà choisi dans le formulaire : on le garde ; un seul niveau actif : pris d'office ; sinon l'assistant le demande avant le récap */
+  const lvKnown=()=>(st.perso&&!persoCalc(m,st.pk).miss.length)||(!st.perso&&Number.isInteger(st.level));
+  W.go=(step,ans)=>{W.hist.push({at:W.at,a:JSON.stringify(W.a),res:W.res,n:W.log.length});W.log.push({q:W.cur.q,a:ans});
+    if(step==='recap'&&!W.a.lv){const act=activeLevels(m);if(lvKnown())W.a.lv={keep:true};else if(act.length<2)W.a.lv={level:act.length?act[0][1]:0};else step='lv0';}
+    W.at=step;draw();};
+  /* champs de niveau à reporter dans la saisie (formulaire ou minuteur) */
+  const lvPatch=()=>{const L=W.a.lv||{};if(L.keep||!Number.isInteger(L.level))return null;
+    return L.perso?{perso:true,pk:Object.assign({},L.pk),level:L.level,kg:0,custom:false}:{perso:false,level:L.level,kg:0,custom:false};};
   W.back=()=>{const p=W.hist.pop();if(!p)return;W.at=p.at;W.a=JSON.parse(p.a);W.res=p.res;W.log.length=p.n;draw();};
   W.restart=()=>{W.a={};W.res=null;W.log=[];W.hist=[];W.at=first();draw();};
-  W.apply=()=>{if(onApply){close();onApply(Object.assign({},W.res));return;}delete st.score;delete st.rounds;delete st.reps;delete st.creps;Object.assign(st,W.res);st.skip=false;close();render();
-    try{toast('Score rempli ✓ Vérifie ton niveau, puis valide la séance.');}catch(x){}};
+  W.apply=()=>{const lp=lvPatch();if(onApply){close();onApply(Object.assign({},W.res,lp?{lv:lp}:{}));return;}delete st.score;delete st.rounds;delete st.reps;delete st.creps;Object.assign(st,W.res);
+    if(lp){Object.assign(st,lp);if(st.perso)persoSync(m,st);}
+    st.skip=false;close();render();
+    try{toast(lp?'Score et niveau remplis ✓ Vérifie, puis valide la séance.':'Score rempli ✓ Vérifie, puis valide la séance.');}catch(x){}};
   const ov=h('div',{class:'ov wz-ov',role:'dialog','aria-modal':'true','aria-label':'Assistant de saisie du score'});
   const close=()=>{ov.remove();document.removeEventListener('keydown',esc,true);};
   const esc=e=>{if(e.key==='Escape'){e.stopPropagation();close();}};
@@ -11454,7 +11512,7 @@ function openEntry(w,date,uid,coach){
     for(const [k,x] of Object.entries(mine.sets||{}))S.entry.sets[k]={s:String(x.s),r:String(x.r)};
   }
   /* résultats du minuteur gardés pour plus tard : on les reprend (seulement tant que la séance n'est pas validée) */
-  if(!coach&&uid===S.uid&&!mine){const kp=keptGet(date);if(kp){Object.assign(S.entry,kp);setTimeout(()=>toast('Ton résultat du minuteur est repris. Choisis ton niveau puis valide la séance.'),50);}}
+  if(!coach&&uid===S.uid&&!mine){const kp=keptGet(date);if(kp){Object.assign(S.entry,kp);setTimeout(()=>toast(Number.isInteger(kp.level)?'Ton résultat du minuteur (score et niveau) est repris. Vérifie puis valide la séance.':'Ton résultat du minuteur est repris. Choisis ton niveau puis valide la séance.'),50);}}
   /* séries et reps prévues par la séance, modifiables */
   for(const p of (w.parts||[])){
     if(p.kind!=='force'||S.entry.sets[p.label])continue;
