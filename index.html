@@ -3299,6 +3299,37 @@ html.sx-lock,html.sx-lock body{overflow:hidden}
 .lvc-dk .ent-act .btn.primary{border:0!important;color:#fff!important;background:linear-gradient(90deg,var(--accent),color-mix(in srgb,var(--accent) 75%,#fff))!important;box-shadow:0 6px 22px color-mix(in srgb,var(--accent) 40%,transparent)}
 .lvc-dk .ent-act .btn.primary .sx-i{display:inline-grid;width:28px;height:28px;flex:none}.lvc-dk .ent-act .btn .sx-i svg{width:100%;height:100%}
 .lvc-dk .ent-act .ent-cancel{min-height:52px;border:2px solid rgba(255,255,255,.85)!important;background:transparent!important;color:#fff!important}
+/* écran de fin du minuteur : look sombre de « Entrer mes résultats » (2026-11-21.6) */
+.ov.wz-ov{z-index:70}
+.tm.tm-dk{--e-card:#15161A;--e-in:#0D0E11;--e-bd:rgba(255,255,255,.09);--e-bd2:rgba(255,255,255,.24);--e-ink:#F4F5F7;--e-mut:#A4A7AE;
+  --e-c:'Barlow Condensed','Avenir Next Condensed','Roboto Condensed','Arial Narrow',sans-serif;color:var(--e-ink);
+  background:radial-gradient(130% 55% at 100% 0,color-mix(in srgb,var(--accent) 16%,transparent),transparent 62%),linear-gradient(#0E0F13,#0A0B0D)}
+.tm.tm-dk .tm-mid{gap:14px}
+.tm.tm-dk .tm-hero{display:grid;justify-items:center;gap:2px;width:100%}
+.tm.tm-dk .tm-hero .eyebrow{margin:0;font-family:var(--e-c);font-style:italic;font-weight:800;font-size:clamp(22px,6.4vw,30px);letter-spacing:.02em;text-transform:uppercase;color:var(--e-ink)}
+.tm.tm-dk .tm-time{color:var(--e-ink);text-shadow:0 0 28px color-mix(in srgb,var(--accent) 45%,transparent)}
+.tm.tm-dk .tm-card{position:relative;display:grid;justify-items:center;gap:14px;width:100%;max-width:560px;padding:16px 14px 18px 20px;border:1px solid var(--e-bd);border-radius:20px;background:var(--e-card);overflow:hidden;text-align:center}
+.tm.tm-dk .tm-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:linear-gradient(var(--accent),color-mix(in srgb,var(--accent) 35%,transparent) 45%,transparent 80%)}
+.tm.tm-dk .tm-ch{display:flex;align-items:center;gap:12px;width:100%}
+.tm.tm-dk .tm-ch .sx-i{display:inline-grid;width:30px;height:30px;flex:none;color:var(--accent)}.tm.tm-dk .sx-i svg{width:100%;height:100%}
+.tm.tm-dk .tm-ch h3{margin:0;font-family:var(--e-c);font-style:italic;font-weight:800;font-size:clamp(26px,7.6vw,32px);line-height:1;text-transform:uppercase;color:var(--e-ink)}
+.tm.tm-dk .tm-card .wz-open{width:100%;min-height:56px;border:2px dashed var(--accent);border-radius:14px;background:color-mix(in srgb,var(--accent) 8%,transparent);color:var(--e-ink);font-size:clamp(15px,4.4vw,18px);font-weight:600}
+.tm.tm-dk .tm-sub{margin:0;font-size:15px;font-style:italic;line-height:1.42;color:var(--e-mut)}
+.tm.tm-dk .tm-eb,.tm.tm-dk .flabel.tm-eb{font-family:var(--e-c);font-style:italic;font-weight:700;font-size:clamp(14px,4vw,17px);letter-spacing:.015em;text-transform:uppercase;color:var(--e-ink)}
+.tm.tm-dk .tm-fld{width:100%;gap:8px}
+.tm.tm-dk .tm-in{min-height:56px;max-width:220px;border:1.5px solid var(--e-bd2);border-radius:12px;background:var(--e-in);color:var(--e-ink);font-size:30px}
+.tm.tm-dk .tm-in:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 30%,transparent)}
+.tm.tm-dk .tm-two .tm-in{max-width:none}
+.tm.tm-dk .tm-step .btn{border:1.5px solid var(--e-bd2);border-radius:12px;background:#1C1E23;color:var(--accent)}
+.tm.tm-dk .tm-card .row .btn.sm{border:1.5px solid var(--e-bd2);border-radius:999px;background:transparent;color:var(--e-ink)}
+.tm.tm-dk .capbox .btn{border-radius:12px}
+.tm.tm-dk .tm-lapc{justify-items:stretch}.tm.tm-dk .tm-passages{max-width:none}
+.tm.tm-dk .tm-top .chip,.tm.tm-dk .tm-top .btn{border-color:var(--e-bd2);border-radius:999px;color:var(--e-ink)}
+.tm.tm-dk .tm-bot{gap:12px}
+.tm.tm-dk .tm-bot .tm-save{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:58px;padding:8px 22px;line-height:1.1;border:0;border-radius:999px;color:#fff;background:linear-gradient(90deg,var(--accent),color-mix(in srgb,var(--accent) 75%,#fff));box-shadow:0 6px 22px color-mix(in srgb,var(--accent) 40%,transparent);font-family:var(--e-c);font-style:italic;font-weight:800;font-size:clamp(17px,4.8vw,22px);letter-spacing:.02em;text-transform:uppercase}
+.tm.tm-dk .tm-bot .tm-save .sx-i{display:inline-grid;width:28px;height:28px;flex:none}
+.tm.tm-dk .tm-bot .row{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:10px}
+.tm.tm-dk .tm-bot .row .btn{min-height:48px;border:2px solid rgba(255,255,255,.85);border-radius:999px;background:transparent;color:#fff;font-family:var(--e-c);font-style:italic;font-weight:800;font-size:16px;text-transform:uppercase;letter-spacing:.02em}
 </style>
 </head>
 <body>
@@ -4841,7 +4872,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-21.5';
+const APP_VERSION='2026-11-21.6';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -8907,7 +8938,8 @@ function openTimer(w,date,m,lvIdx,psLv){
     h('ul',{},st.laps.map((x,i)=>h('li',{},h('span',{},'Tour '+(i+1)),h('b',{},mmss(x)),h('span',{class:'sub'},i?'+'+mmss(x-st.laps[i-1]):''))))):null;
   const lapsOut=()=>st.laps.map(x=>Math.round(x));
   function showDone(){
-    ov.className='tm done';
+    ov.className='tm done tm-dk';
+    const P=st.wzPre||null;st.wzPre=null; /* score rempli par l'assistant */
     const mid=h('div',{class:'tm-mid'}),bot=h('div',{class:'tm-bot'});
     if(fmt==='FT'&&!st.res.cap){
       const big=h('div',{class:'tm-time'},mmss(st.adj));
@@ -8924,8 +8956,9 @@ function openTimer(w,date,m,lvIdx,psLv){
         h('div',{class:'row'},resumeBtn(),discard()));
     }else if(fmt==='FT'){
       const pl=planOf(m);
-      const nL=st.laps.length,ri=pl?bigIn(nL>0?String(pl.sizes?Math.min(nL,pl.sizes.length-1):nL):'',{inputmode:'numeric',placeholder:'5','aria-label':'Tours complets'}):null;
-      const pi=pl?bigIn('',{inputmode:'numeric',placeholder:'4','aria-label':'Reps en plus'}):bigIn('',{inputmode:'numeric',placeholder:'81','aria-label':'Reps réalisées'});
+      const nL=st.laps.length,ri=pl?bigIn(P&&P.capped?String(P.rounds||'0'):nL>0?String(pl.sizes?Math.min(nL,pl.sizes.length-1):nL):'',{inputmode:'numeric',placeholder:'5','aria-label':'Tours complets'}):null;
+      const pv=P&&P.capped?String((pl?P.reps:P.creps)||''):'';
+      const pi=pl?bigIn(pv,{inputmode:'numeric',placeholder:'4','aria-label':'Reps en plus'}):bigIn(pv,{inputmode:'numeric',placeholder:'81','aria-label':'Reps réalisées'});
       mid.append(h('p',{class:'eyebrow tm-eb'},'Time cap atteint'),h('div',{class:'tm-time'},mmss(dur||st.adj)),
         h('p',{class:'tm-sub'},pl?capGuide(pl):'Indique le nombre total de reps faites quand le time cap a sonné, tous mouvements confondus. Exemple : 81.'),
         pl?h('div',{class:'tm-two'},h('div',{class:'tm-fld'},h('span',{class:'flabel tm-eb'},'Tours complets'),ri),h('div',{class:'tm-fld'},h('span',{class:'flabel tm-eb'},'Reps en plus'),pi))
@@ -8939,8 +8972,10 @@ function openTimer(w,date,m,lvIdx,psLv){
         finish(pl?{capped:true,score:'',rounds:String(r.rounds),reps:(String(pi.value||'').trim()===''?'0':String(parseNum(pi.value))),creps:'',laps:lapsOut()}:{capped:true,score:'',rounds:'',reps:'',creps:String(r.v),laps:lapsOut()});
       }},saveLabel),h('div',{class:'row'},discard()));
     }else if(fmt==='AMRAP'){
-      const rIn=bigIn(String(st.laps.length),{inputmode:'numeric','aria-label':'Tours complets'});
-      const pIn=size>0?bigIn('0',{inputmode:'numeric','aria-label':'Reps en plus'}):null;
+      let r0=st.laps.length,p0=0;
+      if(P){if(P.rounds!==undefined&&P.rounds!==''){r0=parseInt(P.rounds,10)||0;p0=parseInt(P.reps,10)||0;}else{const v=parseNum(P.score)||0;r0=Math.floor(v);p0=size>0?Math.min(size-1,Math.round((v-r0)*size)):0;}}
+      const rIn=bigIn(String(r0),{inputmode:'numeric','aria-label':'Tours complets'});
+      const pIn=size>0?bigIn(String(p0),{inputmode:'numeric','aria-label':'Reps en plus'}):null;
       mid.append(h('p',{class:'eyebrow tm-eb'},st.res.auto?'Temps écoulé':'Arrêté à '+mmss(st.res.sec)),
         h('p',{class:'tm-sub'},'Vérifie ton nombre de tours (tu peux le corriger) et ajoute les reps du tour en cours.'),
         h('div',{class:'tm-fld'},h('span',{class:'flabel tm-eb'},'Tours complets'),stepper(rIn,0)),
@@ -8961,7 +8996,8 @@ function openTimer(w,date,m,lvIdx,psLv){
     }else{
       if(dead){
         /* Dead by : le score est le temps tenu = intervalles réussis x durée de l'intervalle (plafonné au time cap) */
-        const n0=st.res.auto?Math.ceil((dur||0)/ivS):Math.max(0,Math.floor((st.res.sec||0)/ivS)-1); /* appui après la fin d'un intervalle = série de l'intervalle précédent non terminée : il ne compte pas (14:00 à 14:59 en EMOM = 13 min tenues ; en E2MOM, 14:00 = 12 min) */
+        const n00=st.res.auto?Math.ceil((dur||0)/ivS):Math.max(0,Math.floor((st.res.sec||0)/ivS)-1); /* appui après la fin d'un intervalle = série de l'intervalle précédent non terminée : il ne compte pas (14:00 à 14:59 en EMOM = 13 min tenues ; en E2MOM, 14:00 = 12 min) */
+        const pT=P?parseTime(P.score):null,n0=pT!==null?Math.round(pT/ivS):n00;
         const sIn=bigIn(String(n0),{inputmode:'numeric','aria-label':'Intervalles réussis'});
         const held=()=>Math.min(Math.max(0,parseInt(sIn.value,10)||0)*ivS,dur||Infinity);
         const big=h('div',{class:'tm-time'},mmss(held()));
@@ -8975,7 +9011,7 @@ function openTimer(w,date,m,lvIdx,psLv){
           finish({score:fmtTime(held()),capped:false,rounds:'',reps:'',creps:''});
         }},saveLabel),h('div',{class:'row'},resumeBtn(),discard()));
       }else{
-        const sIn=bigIn(String(Math.floor((st.res.sec||0)/ivS)),{inputmode:'numeric','aria-label':'Tours réussis'});
+        const sIn=bigIn(P?String(parseInt(P.score,10)||0):String(Math.floor((st.res.sec||0)/ivS)),{inputmode:'numeric','aria-label':'Tours réussis'});
         mid.append(h('p',{class:'eyebrow tm-eb'},st.res.auto?'Temps écoulé':'Arrêté à '+mmss(st.res.sec)),
           h('p',{class:'tm-sub'},'Combien de tours as-tu réussis'+(ivS===60?'':' (un tour = un intervalle de '+mmss(ivS)+' min)')+' ? Tu peux corriger.'),
           h('div',{class:'tm-fld'},h('span',{class:'flabel tm-eb'},'Tours réussis'),stepper(sIn,0)));
@@ -8985,7 +9021,20 @@ function openTimer(w,date,m,lvIdx,psLv){
         }},saveLabel),h('div',{class:'row'},resumeBtn(),discard()));
       }
     }
-    if(st.coinEl)mid.append(st.coinEl);
+    /* look sombre de « Entrer mes résultats » : en-tête (état + temps), carte « Ton score » (avec l'assistant), carte des temps au tour */
+    {
+      const hero=h('div',{class:'tm-hero'}),card=h('section',{class:'tm-card'},h('div',{class:'tm-ch'},sxIco('watch'),h('h3',{},'Ton score'))),lapC=h('section',{class:'tm-card tm-lapc'});
+      card.append(h('button',{type:'button',class:'btn wz-open',id:'tm-wz',onclick:()=>openScoreWizard(m,{},res=>{
+        if(fmt==='FT'){st.res.cap=!!res.capped;if(!res.capped){const v=parseTime(res.score);if(v!==null)st.adj=dur?Math.min(v,dur):v;}}
+        st.wzPre=res;showDone();toast('Score rempli ✓ Vérifie-le, puis enregistre.');})},'🤖 M’aider à entrer mon score'));
+      [...mid.children].forEach(k=>{
+        if((k.tagName==='P'&&k.classList.contains('eyebrow'))||k.classList.contains('tm-time'))hero.append(k);
+        else if(k.classList.contains('tm-passages'))lapC.append(k);
+        else card.append(k);
+      });
+      mid.replaceChildren(hero,card,lapC.children.length?lapC:null,st.coinEl||null);
+      const sv=bot.querySelector('.tm-save');if(sv)sv.prepend(sxIco('check'));
+    }
     ov.replaceChildren(topBar(false),mid,bot);
   }
   document.body.append(ov);
@@ -11125,7 +11174,7 @@ function wzSet(W){
 }
 
 /* ---------- 3. Fenêtre de l'assistant (style conversation) ---------- */
-function openScoreWizard(m,st){
+function openScoreWizard(m,st,onApply){ /* onApply(res) : utilisé par l'écran de fin du minuteur (remplit ses cases au lieu du formulaire) */
   const W={m,st,M:wzModel(m),a:{},log:[],hist:[],am:m.format!=='FT'&&!(m.format==='EMOM')};
   const dd=metDuration(m);W.N=(m.format==='EMOM'&&dd)?Math.floor(dd/(emomIv(m)*60)):0;
   const first=()=>m.format==='FT'?'ft0':isDead(m)?'dd0':m.format==='EMOM'?'em0':(W.M.movs?'am0':'amTot');
@@ -11133,7 +11182,7 @@ function openScoreWizard(m,st){
   W.go=(step,ans)=>{W.hist.push({at:W.at,a:JSON.stringify(W.a),res:W.res,n:W.log.length});W.log.push({q:W.cur.q,a:ans});W.at=step;draw();};
   W.back=()=>{const p=W.hist.pop();if(!p)return;W.at=p.at;W.a=JSON.parse(p.a);W.res=p.res;W.log.length=p.n;draw();};
   W.restart=()=>{W.a={};W.res=null;W.log=[];W.hist=[];W.at=first();draw();};
-  W.apply=()=>{delete st.score;delete st.rounds;delete st.reps;delete st.creps;Object.assign(st,W.res);st.skip=false;close();render();
+  W.apply=()=>{if(onApply){close();onApply(Object.assign({},W.res));return;}delete st.score;delete st.rounds;delete st.reps;delete st.creps;Object.assign(st,W.res);st.skip=false;close();render();
     try{toast('Score rempli ✓ Vérifie ton niveau, puis valide la séance.');}catch(x){}};
   const ov=h('div',{class:'ov wz-ov',role:'dialog','aria-modal':'true','aria-label':'Assistant de saisie du score'});
   const close=()=>{ov.remove();document.removeEventListener('keydown',esc,true);};
