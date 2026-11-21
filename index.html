@@ -3152,7 +3152,11 @@ html.sx-lock,html.sx-lock body{overflow:hidden}
 .sx-xx{width:42px;height:42px;border-radius:50%;border:0;background:#2B2B30;color:#F5F5F7;font-size:17px;cursor:pointer;display:grid;place-items:center;padding:0}
 .sx-xb{overflow:auto;-webkit-overflow-scrolling:touch;display:grid;gap:12px;align-content:start;font-size:17px;line-height:1.5;padding-right:2px}
 .sx-xb p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
-.mexp-hl{font-weight:800;color:var(--accent)}
+.mexp-hl{font-weight:800;color:#FF3B30}
+.ex-ed{min-height:160px;padding:10px 12px;border:1px solid rgba(127,127,127,.45);border-radius:8px;background:var(--tint,rgba(127,127,127,.08));line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;outline:none;cursor:text}
+.ex-ed:focus{border-color:var(--accent)}
+.ex-ed:empty::before{content:attr(data-ph);opacity:.55}
+.ex-ed b,.ex-ed strong{font-weight:800;color:#FF3B30}
 .sx-xai{margin:0;font-size:13px;color:#A3A3AB}
 .sx-xs .sx-cta{display:flex;align-items:center;justify-content:center;width:100%;min-height:58px;border:0;border-radius:13px;background:var(--accent,#FF7A1A);background-image:none;color:#fff;font-family:var(--sx-c);font-style:normal;font-weight:700;font-size:21px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
 @keyframes sxFade{from{opacity:0}to{opacity:1}}
@@ -4701,7 +4705,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-21.1';
+const APP_VERSION='2026-11-21.2';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -15727,15 +15731,19 @@ function explainPrompt(p){
     return '- '+nm+' : '+(b.length?b.join(' ; '):'rien de précisé');
   }).filter(Boolean).reverse();
   /* découpage en tours calculé par l'appli : l'IA s'en sert pour son exemple de saisie au lieu de recompter */
-  let tours='',ftPl=null;
+  let tours='',ftPl=null,eqTxt='';
   try{
     const cm={format:p.format,content:p.content,detail:p.detail,repsRound:parseNum(String(p.repsRound||''))||0,lineRounds:!!p.lineRounds};
     if(p.format==='FT'){const pl=planOf(cm);ftPl=pl;
-      if(pl&&pl.lines)tours='Au time cap, chaque ligne d’exercice compte pour 1 tour ('+pl.sizes.length+' lignes).';
+      if(pl&&pl.lines)tours='Au time cap, chaque ligne d’exercice compte pour 1 tour ('+pl.sizes.length+' lignes). « Reps en plus » = reps ÉQUIVALENTES faites sur la ligne en cours.';
       else if(pl&&pl.sizes)tours='Au time cap, chaque nombre du schéma '+pl.nums.join('-')+' est un tour (ce nombre de reps pour chaque mouvement).';
+      else if(pl&&pl.rm)tours='Un tour = '+fmtN(pl.rm.eq)+' reps ÉQUIVALENTES à saisir (et non '+fmtN(pl.rm.raw)+' reps réelles)'+(pl.nr?', '+pl.nr+' tours en tout':'')+'. « Reps en plus » se compte en reps équivalentes.';
       else if(pl&&pl.size)tours='Un tour = '+fmtN(pl.size)+' reps'+(pl.nr?', '+pl.nr+' tours en tout':'')+'.';
       else tours='Au time cap, on écrit simplement le nombre total de reps faites, tous mouvements confondus.';}
-    else if(p.format==='AMRAP'){const t=eqTotal(cm);if(t>0)tours='Un tour = '+fmtN(t)+' reps.';}
+    else if(p.format==='AMRAP'){const t=eqTotal(cm);if(t>0)tours='Un tour = '+fmtN(t)+' reps à saisir'+(roundModel(cm)?' (équivalences comprises, « Reps en plus » en reps équivalentes)':'')+'.';}
+    /* équivalences {10=1} : l'athlète saisit en reps équivalentes, l'IA doit faire pareil dans son exemple */
+    const eqs=capLines(cm).filter(it=>Math.abs(it.eq-it.n)>1e-9);
+    if(eqs.length)eqTxt='Équivalences pour la saisie (l’athlète compte comme ça) : '+eqs.map(it=>fmtN(it.n)+' '+it.rest+' comptent pour '+fmtN(it.eq)+' rep'+(it.eq>1?'s':'')).join(' ; ')+'.';
   }catch(e){}
   const score=p.format==='FT'
     ?'Saisie du score : si l’athlète finit avant le time cap, il choisit « Terminé dans le temps » et écrit son temps en minutes:secondes (ex. 8:45). Si le time cap sonne avant la fin, il choisit « Time cap atteint » et '+(ftPl?'remplit « Tours complets » (tours entièrement terminés) et « Reps en plus » (reps faites dans le tour en cours, tous mouvements confondus, dans l’ordre). '+tours:'écrit dans « Reps réalisées » son nombre TOTAL de reps faites, tous mouvements confondus (pas de tours à saisir pour ce metcon ; une distance compte comme les autres lignes du contenu, ne fais pas de calcul de mètres).')+' Son temps ne peut pas dépasser le time cap.'
@@ -15767,7 +15775,8 @@ function explainPrompt(p){
     'Contenu :',String(p.content||'').trim(),
     lv.length?'Niveaux :\n'+lv.join('\n'):'',
     String(p.word||'').trim()?'Mot du coach : '+String(p.word).trim():'',
-    score,'Les « {10=1} » en fin de ligne sont une règle de calcul interne de l’appli : ne les mentionne pas.'].filter(x=>x!=='').join('\n');
+    score,eqTxt,
+    eqTxt?'IMPORTANT : dans « 📋 Ton score », ton exemple doit utiliser ces équivalences, exactement comme l’athlète le fera (ex. 100 cordes à sauter qui comptent pour 10 : un tour de 100 cordes + 30 autres reps s’écrit 40, pas 130). Dis-le en une phrase simple (« les 100 cordes à sauter comptent pour 10 reps »). N’écris jamais la notation entre accolades.':'Les « {10=1} » en fin de ligne sont une notation interne : ne les écris pas.'].filter(x=>x!=='').join('\n');
 }
 async function genExplain(p){
   if(!String(p.content||'').trim()){toast('Écris d’abord le contenu du metcon.',true);return;}
@@ -15777,17 +15786,44 @@ async function genExplain(p){
   catch(e){toast(aiErrMsg(e),true);window.__dbg&&window.__dbg('IA explication',e);}
   finally{EX_BUSY.delete(p);render();}
 }
+/* éditeur de l'explication : le texte est stocké avec **…**, mais le coach voit directement le gras rouge (pas d'étoiles) */
+function exFill(el,txt){
+  el.replaceChildren();
+  String(txt||'').split('\n').forEach((ln,k)=>{if(k)el.append(h('br'));exInline(ln).forEach(x=>el.append(x));});
+}
+function exRead(el){
+  let out='';
+  const walk=(n,inB)=>{
+    if(n.nodeType===3){out+=n.nodeValue.replace(/ /g,' ');return;}
+    if(n.nodeType!==1)return;
+    const t=n.nodeName;
+    if(t==='BR'){out+='\n';return;}
+    const block=(t==='DIV'||t==='P')&&out&&!out.endsWith('\n');
+    if(block)out+='\n';
+    const bold=!inB&&(t==='B'||t==='STRONG'||/bold|[6-9]00/.test(n.style&&n.style.fontWeight||''));
+    if(bold){const txt=n.textContent;if(txt.trim())out+='**'+txt.trim()+'**'+(/\s$/.test(txt)?' ':'');return;}
+    n.childNodes.forEach(c=>walk(c,inB));
+  };
+  el.childNodes.forEach(c=>walk(c,false));
+  return out.replace(/\*\*\s*\*\*/g,'').replace(/\n{3,}/g,'\n\n').trim().slice(0,2500);
+}
 function explainBox(p,i){
   const busy=EX_BUSY.has(p),stale=!!(String(p.explain||'').trim()&&p.exSig&&p.exSig!==exSig(p));
-  const ta=h('textarea',{id:'p'+i+'-explain',rows:'8',maxlength:'2500',disabled:busy,placeholder:'Touche « Générer avec l’IA » : une explication simple du metcon pour les débutants s’affiche ici. Tu peux la relire et la corriger.',value:p.explain||'',oninput:e=>{p.explain=e.target.value;}});
+  const ed=h('div',{class:'ex-ed',id:'p'+i+'-explain',role:'textbox','aria-multiline':'true','aria-label':'Explication pour les débutants','data-ph':'Touche « Générer avec l’IA » : une explication simple du metcon s’affiche ici. Tu peux la relire et la corriger.'});
+  ed.setAttribute('contenteditable',busy?'false':'true');
+  exFill(ed,p.explain||'');
+  ed.addEventListener('input',()=>{p.explain=exRead(ed);});
+  ed.addEventListener('paste',e=>{e.preventDefault();const t=(e.clipboardData||window.clipboardData).getData('text');document.execCommand('insertText',false,t);});
+  const boldBtn=h('button',{type:'button',class:'btn sm',title:'Sélectionne un mot puis touche ce bouton',onmousedown:e=>e.preventDefault(),onclick:()=>{ed.focus();document.execCommand('bold');p.explain=exRead(ed);}},h('b',{class:'mexp-hl'},'Rouge gras'));
   return h('div',{class:'field ex-box'},
     h('span',{class:'flabel'},'Explication pour les débutants (bouton « Voir l’explication » sur la carte)'),
     h('div',{class:'row'},
       h('button',{type:'button',class:'btn',id:'p'+i+'-exgen',disabled:busy,onclick:()=>genExplain(p)},busy?'Génération en cours…':(String(p.explain||'').trim()?'Régénérer avec l’IA':'✨ Générer avec l’IA')),
+      (String(p.explain||'').trim()&&!busy)?boldBtn:null,
       (String(p.explain||'').trim()&&!busy)?h('button',{type:'button',class:'btn sm danger',onclick:()=>{p.explain='';p.exSig='';render();}},'Effacer'):null),
     stale?h('p',{class:'hint ex-stale'},'⚠ Le metcon a changé depuis la génération : relis l’explication ou régénère-la.'):null,
-    ta,
-    h('span',{class:'hint'},'Remplis d’abord le contenu, le format, le time cap, l’intensité et les niveaux : l’IA s’en sert. Relis le texte (tu peux le corriger) avant d’enregistrer. Les mots entre **deux astérisques** s’affichent en gras et en couleur. Vide = pas de bouton pour les athlètes.'));
+    ed,
+    h('span',{class:'hint'},'Remplis d’abord le contenu, le format, le time cap, l’intensité et les niveaux : l’IA s’en sert. Relis le texte (tu peux le corriger) avant d’enregistrer. Ce qui est en rouge gras ici l’est aussi pour les athlètes : sélectionne un mot puis « Rouge gras » pour l’ajouter ou l’enlever. Vide = pas de bouton pour les athlètes.'));
 }
 function wodToDraft(w){
   return {date:w.date,title:w.title||'',base:(w.base!==undefined&&w.base!==null)?String(w.base):'',deload:!!w.deload,bonus:!!w.bonus,
