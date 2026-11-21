@@ -3152,6 +3152,7 @@ html.sx-lock,html.sx-lock body{overflow:hidden}
 .sx-xx{width:42px;height:42px;border-radius:50%;border:0;background:#2B2B30;color:#F5F5F7;font-size:17px;cursor:pointer;display:grid;place-items:center;padding:0}
 .sx-xb{overflow:auto;-webkit-overflow-scrolling:touch;display:grid;gap:12px;align-content:start;font-size:17px;line-height:1.5;padding-right:2px}
 .sx-xb p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.mexp-hl{font-weight:800;color:var(--accent)}
 .sx-xai{margin:0;font-size:13px;color:#A3A3AB}
 .sx-xs .sx-cta{display:flex;align-items:center;justify-content:center;width:100%;min-height:58px;border:0;border-radius:13px;background:var(--accent,#FF7A1A);background-image:none;color:#fff;font-family:var(--sx-c);font-style:normal;font-weight:700;font-size:21px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
 @keyframes sxFade{from{opacity:0}to{opacity:1}}
@@ -4648,7 +4649,18 @@ function aiErrMsg(e){
   return 'L’IA n’a pas pu générer l’explication : '+m.slice(0,160);
 }
 /* nettoie le texte de l'IA : pas de markdown */
-const aiClean=t=>String(t||'').replace(/\r/g,'').replace(/\*\*(.+?)\*\*/g,'$1').replace(/^#+\s*/gm,'').replace(/^\s*[*•]\s+/gm,'- ').replace(/\n{3,}/g,'\n\n').trim().slice(0,2500);
+const aiClean=t=>{
+  let x=String(t||'').replace(/\r/g,'').replace(/^#+\s*/gm,'').replace(/^\s*[*•]\s+/gm,'- ').replace(/\*\*\s*\*\*/g,'').replace(/\n{3,}/g,'\n\n').trim();
+  const i=x.search(/⏱|\bFormat\s*:/);if(i>0)x=x.slice(i); /* l'IA ne salue pas : tout ce qui précède « Format » est retiré */
+  return x.slice(0,2500);
+};
+/* texte d'explication -> éléments : **…** en gras et en couleur (durées, reps, tours, charges) */
+function exInline(t){
+  const out=[],re=/\*\*(.+?)\*\*/g;let last=0,m;
+  while((m=re.exec(t))){if(m.index>last)out.push(t.slice(last,m.index));out.push(h('strong',{class:'mexp-hl'},m[1]));last=re.lastIndex;}
+  if(last<t.length)out.push(t.slice(last));
+  return out;
+}
 
 let auth=null;
 /* Petite couche qui expose Firestore sous la forme utilisée par l'appli */
@@ -4689,7 +4701,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-20.1';
+const APP_VERSION='2026-11-21.1';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -9473,7 +9485,7 @@ function openExplain(p,from){
       h('div',{class:'sx-xh'},h('span',{class:'sx-bulb on'},sxIco('bulb')),
         h('div',{class:'sx-xht'},h('span',{class:'sx-xk'},'Explication'+(p.label?' · '+p.label:'')),h('h2',{id:'sx-xt'},p.name||'Metcon')),
         h('button',{type:'button',class:'sx-xx','aria-label':'Fermer l’explication',onclick:close},'✕')),
-      h('div',{class:'sx-xb'},paras.map(t=>h('p',{},t))),
+      h('div',{class:'sx-xb'},paras.map(t=>h('p',{},exInline(t)))),
       h('p',{class:'sx-xai'},'Explication rédigée avec l’IA et relue par le coach.'),
       h('button',{type:'button',class:'btn primary sx-cta',id:'sx-xok',onclick:close},'J’ai compris')));
   /* même couleur que la séance ouverte */
@@ -15714,18 +15726,37 @@ function explainPrompt(p){
     const b=[l.loadF?'charge femmes '+l.loadF:'',l.loadH?'charge hommes '+l.loadH:'',l.note?'variante : '+l.note:''].filter(Boolean);
     return '- '+nm+' : '+(b.length?b.join(' ; '):'rien de précisé');
   }).filter(Boolean).reverse();
-  const score=p.format==='FT'?'Score = temps pour tout terminer. Si le time cap sonne avant la fin, le score est le nombre de tours + reps réalisés.'
-    :p.format==='AMRAP'?'Score = nombre de tours complets + reps du tour en cours dans le temps imparti.'
-    :p.deadBy?'Score = temps tenu : on continue tant qu’on réussit le travail dans chaque intervalle, jusqu’au time cap.'
-    :'Score = nombre d’intervalles réussis.';
+  /* découpage en tours calculé par l'appli : l'IA s'en sert pour son exemple de saisie au lieu de recompter */
+  let tours='',ftPl=null;
+  try{
+    const cm={format:p.format,content:p.content,detail:p.detail,repsRound:parseNum(String(p.repsRound||''))||0,lineRounds:!!p.lineRounds};
+    if(p.format==='FT'){const pl=planOf(cm);ftPl=pl;
+      if(pl&&pl.lines)tours='Au time cap, chaque ligne d’exercice compte pour 1 tour ('+pl.sizes.length+' lignes).';
+      else if(pl&&pl.sizes)tours='Au time cap, chaque nombre du schéma '+pl.nums.join('-')+' est un tour (ce nombre de reps pour chaque mouvement).';
+      else if(pl&&pl.size)tours='Un tour = '+fmtN(pl.size)+' reps'+(pl.nr?', '+pl.nr+' tours en tout':'')+'.';
+      else tours='Au time cap, on écrit simplement le nombre total de reps faites, tous mouvements confondus.';}
+    else if(p.format==='AMRAP'){const t=eqTotal(cm);if(t>0)tours='Un tour = '+fmtN(t)+' reps.';}
+  }catch(e){}
+  const score=p.format==='FT'
+    ?'Saisie du score : si l’athlète finit avant le time cap, il choisit « Terminé dans le temps » et écrit son temps en minutes:secondes (ex. 8:45). Si le time cap sonne avant la fin, il choisit « Time cap atteint » et '+(ftPl?'remplit « Tours complets » (tours entièrement terminés) et « Reps en plus » (reps faites dans le tour en cours, tous mouvements confondus, dans l’ordre). '+tours:'écrit dans « Reps réalisées » son nombre TOTAL de reps faites, tous mouvements confondus (pas de tours à saisir pour ce metcon ; une distance compte comme les autres lignes du contenu, ne fais pas de calcul de mètres).')+' Son temps ne peut pas dépasser le time cap.'
+    :p.format==='AMRAP'
+    ?'Saisie du score : « Tours complets » (tours entièrement terminés) + « Reps en plus » (reps faites dans le tour pas terminé, tous mouvements confondus, dans l’ordre). '+tours
+    :p.deadBy
+    ?'Saisie du score : le temps tenu en minutes:secondes = nombre d’intervalles réussis en entier × durée de l’intervalle. Un intervalle raté ne compte pas.'
+    :'Saisie du score : le nombre d’intervalles réussis.';
   const it=INTENS[p.intensity];
-  return ['Tu es coach de CrossFit dans une petite salle. Explique le metcon ci-dessous en français à un grand débutant qui n’a jamais fait de CrossFit.',
-    'Règles : texte brut sans markdown (pas d’astérisques, pas de #), tutoiement, phrases courtes et simples, 100 à 200 mots.',
+  return ['Tu es coach de CrossFit dans une petite salle. Explique le metcon ci-dessous en français à un grand débutant.',
+    'INTERDIT : saluer, souhaiter la bienvenue, parler de l’appli en général, dire « c’est ta première séance » ou écrire une phrase d’introduction. Le texte commence directement par « ⏱️ Format : ».',
+    'Règles : tutoiement, phrases courtes et simples, 120 à 220 mots. Pas de #, pas de titres en majuscules. Le seul formatage autorisé est le gras avec deux astérisques, **comme ceci** : mets en gras TOUTES les durées (time cap, durée, intervalle, temps), TOUS les nombres de reps, de tours, de rounds, de calories et de mètres, et les charges. Rien d’autre en gras.',
     'Écris dans un français naturel et correct, comme un coach qui parle à un athlète. Relis chaque phrase : aucune tournure maladroite ou traduite mot à mot (par exemple, n’écris jamais « adapter selon ton niveau de débutant »).',
-    'Fais 4 petits paragraphes séparés par une ligne vide, chacun commençant par son titre suivi de deux-points :',
-    '« Le principe : » (le format en mots simples), « Le déroulé : » (ce que l’athlète fait concrètement, dans l’ordre, avec les tours et la durée, en citant les mouvements par leur nom sans les décrire), « Les mouvements : » (uniquement cette phrase, recopiée telle quelle : « Clique sur un exercice pour voir sa fiche et la vidéo associée. »), « Score et conseils : » (comment le score est compté et 1 ou 2 conseils de gestion).',
+    'Écris exactement 5 petits paragraphes séparés par une ligne vide, dans cet ordre, chacun commençant par son emoji et son titre :',
+    '« ⏱️ Format : » le nom du format expliqué en mots simples et la durée ou le time cap.',
+    '« 🔁 Enchaînement : » comment enchaîner les exercices concrètement, dans l’ordre, avec le nombre de tours et quand on passe au tour suivant, en citant les mouvements par leur nom sans les décrire.',
+    '« 🏋️ Les mouvements : » uniquement cette phrase, recopiée telle quelle : « Clique sur un exercice pour voir sa fiche et la vidéo associée. »',
+    '« 📋 Ton score : » explique précisément quoi saisir et où, avec les noms des boutons et des champs donnés dans « Saisie du score » plus bas, puis UN exemple chiffré sur CE metcon, qui respecte le découpage en tours indiqué (par ex. « tu as terminé **3** tours et fait **12** reps du 4e : Tours complets = **3**, Reps en plus = **12** »). Termine par : plus ton score est bon, plus tu gagnes de points, selon les paliers fixés par le coach.',
+    '« 💡 Conseils : » 1 ou 2 conseils de gestion adaptés à l’intensité demandée.',
     'Ne décris pas comment se fait un mouvement : la fiche de l’exercice s’en charge. Explique seulement les abréviations entre parenthèses, en quelques mots (ex. « KB (kettlebell) », « DU (double unders, la corde passe 2 fois par saut) »). N’invente aucune donnée absente (charge, reps, durée). Pas de conseil médical.',
-    lv.length>1?'Des niveaux plus faciles existent (voir la liste « Niveaux »). Dans « Score et conseils », ajoute une phrase de ce genre : « Si c’est trop dur pour toi, choisis un niveau plus facile ('+(n=>n.length>1?n.slice(0,-1).join(', ')+' ou '+n[n.length-1]:n[0])(lv.slice(1).map(x=>x.replace(/^- /,'').split(' : ')[0]))+') : les mouvements, les charges ou les reps sont adaptés. » Adapte-la à ce que les niveaux changent vraiment, sans inventer.':'',
+    lv.length>1?'Des niveaux plus faciles existent (voir la liste « Niveaux »). Dans « 💡 Conseils », ajoute une phrase de ce genre : « Si c’est trop dur pour toi, choisis un niveau plus facile ('+(n=>n.length>1?n.slice(0,-1).join(', ')+' ou '+n[n.length-1]:n[0])(lv.slice(1).map(x=>x.replace(/^- /,'').split(' : ')[0]))+') : les mouvements, les charges ou les reps sont adaptés. » Adapte-la à ce que les niveaux changent vraiment, sans inventer.':'',
     '',
     'Format : '+fmt+(p.format==='EMOM'?' (intervalle de '+fmtN(ivN)+' min)':''),
     dur?((p.format==='FT'?'Time cap : ':'Durée : ')+mmss(dur)):'',
@@ -15756,7 +15787,7 @@ function explainBox(p,i){
       (String(p.explain||'').trim()&&!busy)?h('button',{type:'button',class:'btn sm danger',onclick:()=>{p.explain='';p.exSig='';render();}},'Effacer'):null),
     stale?h('p',{class:'hint ex-stale'},'⚠ Le metcon a changé depuis la génération : relis l’explication ou régénère-la.'):null,
     ta,
-    h('span',{class:'hint'},'Remplis d’abord le contenu, le format, le time cap, l’intensité et les niveaux : l’IA s’en sert. Relis le texte (tu peux le corriger) avant d’enregistrer. Vide = pas de bouton pour les athlètes.'));
+    h('span',{class:'hint'},'Remplis d’abord le contenu, le format, le time cap, l’intensité et les niveaux : l’IA s’en sert. Relis le texte (tu peux le corriger) avant d’enregistrer. Les mots entre **deux astérisques** s’affichent en gras et en couleur. Vide = pas de bouton pour les athlètes.'));
 }
 function wodToDraft(w){
   return {date:w.date,title:w.title||'',base:(w.base!==undefined&&w.base!==null)?String(w.base):'',deload:!!w.deload,bonus:!!w.bonus,
