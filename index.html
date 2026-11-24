@@ -1110,6 +1110,11 @@ body section.feed-card.th-cm:has(>.bn.has-frame){border:0;background:none;box-sh
 .sh-old{margin-left:2px;font:500 13px var(--f-body);color:var(--muted);text-decoration:line-through;text-decoration-thickness:1.5px}
 .shop-sale{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
 .shop-sale input[type=number]{width:64px}
+.shop-sale.shop-date input[type=date]{width:140px;min-height:34px}
+.shop-dst{flex-basis:100%;font-size:12px}
+.sh-last{margin:2px 0;padding:3px 8px;border-radius:999px;background:linear-gradient(90deg,#ff2d6f,#ff9a1f);color:#fff;font:800 11px/1.25 var(--f-body);text-align:center;letter-spacing:.01em;box-shadow:0 0 10px rgba(255,45,111,.45)}
+@media (prefers-reduced-motion:no-preference){.sh-last{animation:shLast 1.6s ease-in-out infinite}}
+@keyframes shLast{50%{box-shadow:0 0 18px rgba(255,45,111,.8)}}
 .shop-fin{font:700 13px var(--f-mono);color:var(--ok)}
 .sh-own{font:700 13px var(--f-body);color:#5CCB92}
 .sh-btn{min-height:40px;padding:0 10px;border:0;border-radius:999px;background:var(--g);color:#fff;font:700 14px var(--f-body);cursor:pointer}
@@ -4872,7 +4877,7 @@ function makeDb(fdb){
 
 (function(){
 'use strict';
-const APP_VERSION='2026-11-21.7';
+const APP_VERSION='2026-11-24.1';
 
 /* ---------- utilitaires ---------- */
 const $=(s)=>document.querySelector(s);
@@ -7042,7 +7047,19 @@ async function pushForget(manual){
 }
 /* au démarrage : remet à jour l'abonnement de cet appareil dans Firestore (il peut avoir changé) ; si le système l'a supprimé alors que la permission
    est toujours accordée, on le recrée (sans rien demander) tant que l'utilisateur ne l'a pas désactivé à la main sur cet appareil */
+/* pastille de l'icône (nombre de notifications non vues) : remise à 0 à chaque ouverture de l'appli.
+   L'appli native efface elle-même la pastille du système (SceneDelegate iOS, MainActivity Android) ; ici : pastille web (appli installée depuis le navigateur)
+   et réenregistrement de l'appareil dans pushSubs (sa date « at » change), ce qui remet à 0 le compteur gardé par le serveur de notifications (pushCount). */
+let _badgeAt=0;
+function badgeReset(){
+  try{if(navigator.clearAppBadge)navigator.clearAppBadge().catch(()=>{});}catch(e){}
+  if(!S.uid||Date.now()-_badgeAt<60000)return;
+  _badgeAt=Date.now();
+  pushSync();
+}
 async function pushSync(){
+  _badgeAt=Date.now();
+  try{if(navigator.clearAppBadge)navigator.clearAppBadge().catch(()=>{});}catch(e){}
   if(!pushSupported()||!pushConfigured()||!S.uid)return;
   if(pushNative()){
     await pushPermRefresh();
@@ -7067,8 +7084,8 @@ const notifStatus=()=>!pushSupported()||!pushConfigured()?'Non disponible':pushP
 function notifSection(){
   const sec=h('section',{class:'card'},h('h2',{class:'h2'},'Notifications'),
     h('p',{class:'muted'},(S.owner
-      ?'Reçois une notification quand un athlète valide sa séance, quand quelqu’un réagit à l’une de tes séances, quand une nouvelle personne s’inscrit, et chaque lundi à 5 h quand le résumé de la semaine est prêt.'
-      :'Reçois une notification quand le coach publie une nouvelle séance ou un message, quand un autre athlète valide sa séance, quand quelqu’un réagit à l’une de tes séances, et chaque lundi à 5 h quand ton résumé de la semaine est prêt.')+' Elle peut arriver avec quelques minutes de décalage.'));
+      ?'Reçois une notification quand un athlète valide sa séance, quand quelqu’un réagit à l’une de tes séances, quand une nouvelle personne s’inscrit, chaque lundi à 5 h quand le résumé de la semaine est prêt, et le matin si tu n’as pas encore récupéré ton bonus quotidien. Le nombre de notifications non vues s’affiche sur l’icône de l’appli.'
+      :'Reçois une notification quand le coach publie une nouvelle séance ou un message, quand un autre athlète valide sa séance, quand quelqu’un réagit à l’une de tes séances, chaque lundi à 5 h quand ton résumé de la semaine est prêt, et le matin si tu n’as pas encore récupéré ton bonus quotidien. Le nombre de notifications non vues s’affiche sur l’icône de l’appli.')+' Elle peut arriver avec quelques minutes de décalage.'));
   const box=h('div',{class:'stack'});sec.append(box);
   const act=(fn,okMsg)=>async()=>{try{await fn();if(okMsg)toast(okMsg);}catch(e){toast(e&&e.message==='perm'?'Notifications refusées : autorise-les dans les réglages de ton téléphone.':'Action impossible, réessaie.',true);}draw();};
   async function draw(){
@@ -8085,10 +8102,23 @@ function metDuration(m){
     x=s.match(/^\s*(\d+)\s*$/);if(x)return +x[1]*60;
     return null;
   };
+  const ivS=Math.max(1,Math.round(emomIv(m)*60));
+  /* EMOM : nombre de tours réglé par le coach (renfo) = durée exacte, le minuteur s'arrête à la fin du dernier tour */
+  if(fmt==='EMOM'&&Number(m.nSets)>0)return Math.round(Number(m.nSets))*ivS;
   if(Number(m.dur)>0)return Math.round(Number(m.dur)*60);
   const d=parse(m.detail);if(d)return d;
   if(fmt==='FT')return null;
-  return parse(String(m.content||'').split('\n').slice(0,3).join(' '));
+  const c=parse(String(m.content||'').split('\n').slice(0,3).join(' '));if(c)return c;
+  if(fmt==='EMOM'){const r=emomRoundsIn(m);if(r)return r*ivS;}
+  return null;
+}
+/* EMOM : nombre de tours lu dans le détail ou le contenu (« 10 tours », « 8 rounds », « 10x2 EMOM », « EMOM x 8 ») */
+function emomRoundsIn(m){
+  const txt=[m.detail||''].concat(String(m.content||'').split('\n').slice(0,4)).join('\n');
+  let x=txt.match(/(\d+)\s*(?:tours?|rounds?)\b/i);if(x&&+x[1]>0&&+x[1]<=100)return +x[1];
+  x=txt.match(/(?:e\d*(?:[.,]\d+)?mom)\s*[x×]\s*(\d+)/i);if(x&&+x[1]>0&&+x[1]<=100)return +x[1];
+  x=txt.match(/(?:^|\n)\s*(\d+)\s*[x×]\s*\d+/i);if(x&&+x[1]>0&&+x[1]<=100)return +x[1];
+  return 0;
 }
 /* nombre de reps d'un tour : « Reps par tour » du coach, sinon somme des nombres en début de ligne du contenu */
 function roundSizeFor(m){
@@ -9218,7 +9248,7 @@ function swBtn(k,emom,setP,date){
    puis repart tout seul autant de fois qu'il y a de tours prévus (durée de la partie ÷ durée de l'intervalle). Sans durée détectée, il tourne jusqu'à « Terminer ». */
 function openEmomTimer(p,date){
   if(document.getElementById('tm-ov'))return;
-  const ivS=Math.max(1,Math.round(emomIv(p)*60)),dur=metDuration(p),n=dur?Math.max(1,Math.ceil(dur/ivS)):0;
+  const ivS=Math.max(1,Math.round(emomIv(p)*60)),dur=metDuration(p),n=dur?Math.max(1,Math.round(dur/ivS)):0;
   const st={phase:'prep',t0:Date.now(),t1:0,last:-1,k:-1,rem:null,iv:null,ac:null,muted:tmMuted(),wake:null,vid:null,auto:false};
   try{st.ac=new (window.AudioContext||window.webkitAudioContext)();if(st.ac.resume)st.ac.resume();}catch(e){}
   const beep=(f,ms)=>{
@@ -10199,6 +10229,8 @@ function equipOf(w){
     let t=eqNorm(raw);
     /* ce qui n'est PAS du matériel */
     t=t.replace(/barre fixe|barre de traction|a la barre/g,' pull up ').replace(/pendlay\s*rows?/g,' pendlay ').replace(/\b(rowing trx|trx rowing|trx rows?|trx)\b/g,' ').replace(/sans corde/g,' ').replace(/(bent[ -]?over|barbell|pendlay|upright|inverted|renegade|ring|db|dumbbell|kb|kettlebell|seal|t[ -]?bar|yates|gorilla)\s*(over\s*)?rows?/g,' ');
+    /* abdos au sol (sit-up, AbMat, crunch, v-up, GHD) : une « box » citée sert seulement à caler les pieds, ce n'est pas du matériel à prévoir */
+    if(/\b(sit ?ups?|abmat|crunch(es)?|v ?ups?|ghd|releves? de buste|abdos?)\b/.test(t))t=t.replace(/\b(sous|contre|sur|avec)?\s*(une|la|le)?\s*box\b(?!\s*jumps?)/g,' ');
     const db=/\b(dbs?|dumbbells?|halteres?)\b/.test(t),kb=/\b(kettlebells?|kbs?)\b/.test(t),bb=/\b(barbell|barre)\b/.test(t);
     for(const [k,,,re] of EQUIP){
       if(k==='barbell'&&(db||kb)&&!bb)continue;   /* « DB thruster », « KB clean » : pas de barre */
@@ -16365,6 +16397,8 @@ function draftToWod(d){
       const iv=parseNum(String(p.interval||'1').trim()||'1');
       if(iv===null||iv<=0)throw new Error('Intervalle illisible ('+o.label+') : écris 1 pour un EMOM, 2 pour un E2MOM, 3 pour un E3MOM…');
       o.format='EMOM';o.interval=iv;
+      const nt=String(p.nSets||'').trim();
+      if(nt!==''){const n=parseNum(nt);if(n===null||n<1||n>100||n%1)throw new Error('Nombre de tours illisible ('+o.label+') : écris un nombre entier entre 1 et 100, ou laisse vide.');o.nSets=n;}
     }
     /* temps de récup entre les séries (force, renforcement hors EMOM) : lance le minuteur de séries plein écran chez l'athlète */
     if(p.kind==='force'||(p.kind==='renfo'&&p.format!=='EMOM')){
@@ -17473,7 +17507,8 @@ function wodEditor(modal){
     if(metcon)box.append(explainBox(p,i));
     if(p.kind==='renfo')box.append(h('div',{class:'grid2'},
       field('Format',sel([['','Aucun'],['EMOM','EMOM / E2MOM / E3MOM…']],p.format==='EMOM'?'EMOM':'',v=>{p.format=v||'FT';render();},{id:'p'+i+'-rfmt'}),'Le renforcement ne rapporte jamais de points, même en EMOM.'),
-      p.format==='EMOM'?field('Intervalle (min)',tin(p,'interval',{id:'p'+i+'-riv',inputmode:'decimal',placeholder:'1'}),'1 = EMOM (toutes les minutes), 2 = E2MOM (toutes les 2 minutes), 3 = E3MOM…'):null));
+      p.format==='EMOM'?field('Intervalle (min)',tin(p,'interval',{id:'p'+i+'-riv',inputmode:'decimal',placeholder:'1'}),'1 = EMOM (toutes les minutes), 2 = E2MOM (toutes les 2 minutes), 3 = E3MOM…'):null,
+      p.format==='EMOM'?field('Nombre de tours',tin(p,'nSets',{id:'p'+i+'-rnt',inputmode:'numeric',placeholder:(()=>{const r=emomRoundsIn(p);return r?'détecté : '+r:'ex. 10';})()}),'Le minuteur de l’athlète s’arrête tout seul à la fin du dernier tour. Vide = lu dans le contenu (« 10x2 », « 8 tours », « EMOM 12 min »).'):null));
     if(p.kind==='force'||(p.kind==='renfo'&&p.format!=='EMOM'))box.append(h('div',{class:'grid2'},
       field('Temps de récup entre les séries',tin(p,'restSec',{id:'p'+i+'-rest',inputmode:'text',placeholder:'1:30 ou 90'}),'En secondes (90) ou en minutes:secondes (1:30). Rempli, le chronomètre de la partie devient un minuteur plein écran : l’athlète appuie à chaque fin de série, ta récup se lance, puis il appuie quand il repart. À la fin, ses récups réelles sont comparées aux tiennes (écart toléré : 30 s). Vide = ancien chronomètre simple.'),
       field('Nombre de séries (facultatif)',tin(p,'nSets',{id:'p'+i+'-nsets',inputmode:'numeric',placeholder:'détecté dans le contenu'}),'Laisse vide : le nombre est lu dans le contenu (« 5 x 5 Back Squat » = 5 séries). À remplir seulement si rien n’est détecté ou pour forcer une valeur. Sans nombre, l’athlète termine lui-même.')));
@@ -19159,11 +19194,20 @@ function shopIcon(it){
 }
 const shopCfg=()=>{const s=S.feat&&S.feat.shop;return (s&&typeof s==='object')?s:{};};
 const coinPerSession=()=>{const c=shopCfg();if(c.coin===undefined||c.coin===null||c.coin==='')return COIN_DEFAULT;const v=Math.floor(Number(c.coin));return (Number.isFinite(v)&&v>=0)?v:COIN_DEFAULT;};
+/* fin de commercialisation : « Derniers jours pour en profiter » s'affiche sur l'objet pendant ses SHOP_LAST_DAYS derniers jours de vente */
+const SHOP_LAST_DAYS=7;
+const shopDay=v=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v);
+const shopLastTxt=e=>e.left<=0?'Dernier jour pour en profiter !':'Derniers jours pour en profiter · jusqu’au '+fmtShortD(e.to);
+const fmtShortD=d=>{const [y,m,j]=String(d).split('-');return j+'/'+m;};
 /* réduction du coach : pourcentage (1 à 99) ; price = prix réellement payé, base = prix normal */
 const salePrice=(base,pct)=>{pct=Math.floor(Number(pct));return (pct>=1&&pct<=99)?Math.max(1,Math.round(base*(100-pct)/100)):base;};
 const shopEntry=id=>{const x=(shopCfg().items||{})[id],cmi=CM_BY[id];let p=x?Math.floor(Number(x.price)):0;if(cmi){if(cmi.free||cmi.avail===false)return null;if(x&&x.on&&!(p>=1))p=cmPrice(cmi);} /* objet modulaire : prix vide = prix de la rareté */
   else if(x&&x.on&&!(p>=1)){const rk=rarOf(shopItem(id)||{id});if(rk)p=rarPrice(rk);} /* autre objet : prix vide = prix de sa qualité */
-  if(!(x&&x.on&&p>=1&&shopItem(id)))return null;const pct=Math.floor(Number(x.sale))||0,pr=salePrice(p,pct);return {price:pr,base:p,pct:pr<p?pct:0,fav:!!x.fav};};
+  if(!(x&&x.on&&p>=1&&shopItem(id)))return null;
+  /* dates de vente réglées par le coach (AAAA-MM-JJ, comprises) : avant « from » l'objet n'est pas encore dans le shop, après « to » il n'y est plus */
+  const td=todayStr();if(shopDay(x.from)&&td<x.from)return null;if(shopDay(x.to)&&td>x.to)return null;
+  const left=shopDay(x.to)?Math.round((Date.parse(x.to+'T12:00:00')-Date.parse(td+'T12:00:00'))/864e5):null; /* jours restants après aujourd'hui */
+  const pct=Math.floor(Number(x.sale))||0,pr=salePrice(p,pct);return {price:pr,base:p,pct:pr<p?pct:0,fav:!!x.fav,to:shopDay(x.to)?x.to:'',last:left!==null&&left<=SHOP_LAST_DAYS,left};};
 const coinPerBonus=()=>{const c=shopCfg();if(c.coinBonus===undefined||c.coinBonus===null||c.coinBonus==='')return BONUS_COIN_DEFAULT;const v=Math.floor(Number(c.coinBonus));return (Number.isFinite(v)&&v>=0)?v:BONUS_COIN_DEFAULT;};
 const coinForDate=d=>isBonusDate(d)?coinPerBonus():coinPerSession();
 const coinSum=o=>Object.values(o||{}).reduce((a,v)=>a+(Number(v)||0),0);
@@ -19422,6 +19466,7 @@ function shopCard(it,own,bal){
     h('div',{class:'sh-nm'},it.name),it.cm?h('div',{class:'sh-sub'},'Objet pour ta bannière · '+cmLayer(it.layer).name):null,rk?h('div',{class:'sh-rar r-'+rk},(CM_RARITY[rk]||{}).name):null,
     sk?h('div',{class:'sh-sub'},'Avatar '+sk):null,
     has?h('div',{class:'sh-own'},'Possédé'):h('div',{class:'sh-pr'},coinIco(20),h('b',{},String(e.price)),e.pct?h('s',{class:'sh-old','aria-label':'Ancien prix '+e.base+' coins'},String(e.base)):null),
+    (!has&&e.last)?h('div',{class:'sh-last'},'⏳ '+shopLastTxt(e)):null,
     (!has&&miss>0)?h('div',{class:'sh-sub'},'Il te manque '+miss+' coin'+(miss>1?'s':'')+'.'):null,
     act);
 }
@@ -19583,7 +19628,7 @@ function shopDraft(){
   const c=S.coach;
   if(!c.shopDraft){
     const cfg=shopCfg(),it={};
-    for(const x of AV_ITEMS.concat(shopAll())){const e=(cfg.items||{})[x.id];it[x.id]={on:!!(e&&e.on),fav:!!(e&&e.fav),price:(e&&Number(e.price)>0)?String(e.price):'',sale:(e&&Number(e.sale)>0)?String(e.sale):'',rar:(e&&CM_RARITY[e.rar])?e.rar:''};}
+    for(const x of AV_ITEMS.concat(shopAll())){const e=(cfg.items||{})[x.id];it[x.id]={on:!!(e&&e.on),fav:!!(e&&e.fav),price:(e&&Number(e.price)>0)?String(e.price):'',sale:(e&&Number(e.sale)>0)?String(e.sale):'',rar:(e&&CM_RARITY[e.rar])?e.rar:'',from:(e&&shopDay(e.from))?e.from:'',to:(e&&shopDay(e.to))?e.to:''};}
     const hid={};for(const k of Object.keys(cfg.hidden||{}))if(cfg.hidden[k])hid[k]=true; /* éléments masqués de la liste du coach (rangement) */
     const rp={};for(const k of Object.keys(CM_RARITY))rp[k]=String(rarPrice(k));
     c.shopDraft={coin:String(coinPerSession()),coinBonus:String(coinPerBonus()),items:it,hidden:hid,rarPrice:rp};
@@ -19616,7 +19661,9 @@ function saveShop(){
     const sl=x.sale===''||x.sale==null?0:Math.floor(Number(String(x.sale).replace(',','.')));
     if(x.on&&!(Number.isFinite(sl)&&sl>=0&&sl<=99)){toast('« '+it.name+' » : la réduction doit être entre 1 et 99 %, ou vide.',true);return;}
     const rr=CM_RARITY[x.rar]?x.rar:'';
-    if(x.on||p>=1||rr){items[it.id]={on:!!x.on,price:p>=1?p:0,fav:!!(x.on&&x.fav),sale:(x.on&&sl>=1)?sl:0};if(rr)items[it.id].rar=rr;}
+    const fr=shopDay(x.from)?x.from:'',to=shopDay(x.to)?x.to:'';
+    if(fr&&to&&to<fr){toast('« '+it.name+' » : la fin de vente est avant le début.',true);return;}
+    if(x.on||p>=1||rr||fr||to){items[it.id]={on:!!x.on,price:p>=1?p:0,fav:!!(x.on&&x.fav),sale:(x.on&&sl>=1)?sl:0};if(rr)items[it.id].rar=rr;if(fr)items[it.id].from=fr;if(to)items[it.id].to=to;}
   }
   const rpOut={};
   for(const k of Object.keys(CM_RARITY)){const v=Math.floor(Number(String((d.rarPrice||{})[k]).replace(',','.')));if(!(v>=1)){toast('Prix « '+CM_RARITY[k].name+' » : entre un nombre entier d’au moins 1 coin.',true);return;}rpOut[k]=v;}
@@ -19699,13 +19746,13 @@ function coachShop(){
     h('div',{class:'row',style:'margin-top:12px'},h('button',{class:'btn primary',type:'button',id:'shop-apply-rar',onclick:applyRarPrices},'Appliquer ces prix à tous les objets')),
     h('p',{class:'hint'},'Efface les prix spéciaux écrits sur les objets : chaque objet prend alors le prix de sa qualité (Standard, Rare, Épique, Légendaire), puis le shop est enregistré. Les objets sans qualité sont signalés : choisis-leur une qualité dans la liste ci-dessous.')));
   const sec=h('section',{class:'card'},h('h2',{class:'h2'},'Articles du shop'),
-    h('p',{class:'hint'},'Coche « En vente », choisis une qualité (elle fixe le prix toute seule, voir « Prix par qualité » plus haut) ou écris un prix spécial en coins, et une rareté (Standard, Rare, Épique, Légendaire : elle donne l’éclat de l’objet dans le shop et la personnalisation) ; « Coup de cœur » met l’objet en avant en haut du shop ; « % de réduc. » (1 à 99) affiche une réduction sur l’objet dans le shop, avec l’ancien prix barré. Puis enregistre. Un objet déjà acheté reste à l’athlète même si tu le retires. Pour ajouter un skin : dépose son image dans assets/embedded et ajoute une ligne dans AV_ITEMS ; il apparaît ici.'));
+    h('p',{class:'hint'},'Coche « En vente », choisis une qualité (elle fixe le prix toute seule, voir « Prix par qualité » plus haut) ou écris un prix spécial en coins, et une rareté (Standard, Rare, Épique, Légendaire : elle donne l’éclat de l’objet dans le shop et la personnalisation) ; « Coup de cœur » met l’objet en avant en haut du shop ; « % de réduc. » (1 à 99) affiche une réduction sur l’objet dans le shop, avec l’ancien prix barré. « En vente le » : l’objet n’apparaît dans le shop qu’à partir de cette date (vide = tout de suite). « Fin de vente » : il disparaît du shop après cette date et affiche « Derniers jours pour en profiter » pendant ses '+SHOP_LAST_DAYS+' derniers jours (vide = pas de fin). Puis enregistre. Un objet déjà acheté reste à l’athlète même si tu le retires. Pour ajouter un skin : dépose son image dans assets/embedded et ajoute une ligne dans AV_ITEMS ; il apparaît ici.'));
   AV_SLOTS.map(([sl,label])=>[label,AV_ITEMS.filter(x=>x.slot===sl)]).concat([['Fonds de bannière',shopBanners().filter(b=>b.kind==='bg')],['Cadres d’avatar (fil)',shopBanners().filter(b=>b.kind==='avframe')]].concat(CM_LAYERS.filter(L=>L.shop).map(L=>['Bannière modulaire · '+L.name,CM_LIST.filter(x=>x.layer===L.id&&!x.free)]))).forEach(([label,its])=>{
     const vis=its.filter(x=>!(d.hidden&&d.hidden[x.id]));
     if(!vis.length)return;
     sec.append(h('div',{class:'flabel',style:'margin-top:14px'},label+' · '+vis.filter(x=>d.items[x.id]&&d.items[x.id].on).length+' en vente'),
       h('ul',{class:'list shop-list'},vis.map(it=>{
-        const x=d.items[it.id]||(d.items[it.id]={on:false,fav:false,price:'',sale:'',rar:''}),ic=h('span',{class:'shop-ic'+((it.kind==='bg'||it.cm)?' shop-ic-bn':'')});
+        const x=d.items[it.id]||(d.items[it.id]={on:false,fav:false,price:'',sale:'',rar:'',from:'',to:''}),ic=h('span',{class:'shop-ic'+((it.kind==='bg'||it.cm)?' shop-ic-bn':'')});
         ic.append(shopIcon(it));
         const fin=h('span',{class:'shop-fin',id:'shopc-fin-'+it.id});
         const pin=h('input',{type:'number',min:'1',step:'1',inputmode:'numeric','aria-label':'Prix en coins : '+it.name,value:x.price,oninput:e=>{x.price=e.target.value;upd();}});
@@ -19713,6 +19760,9 @@ function coachShop(){
         const qk=()=>CM_RARITY[x.rar||it.rarity]?(x.rar||it.rarity):(it.cm?'standard':'');
         const setPh=()=>{const k=qk();pin.placeholder=k?String(rpD(k)):'Prix';};setPh();
         const upd=()=>{const t=Math.floor(Number(String(x.price).replace(',','.'))),k=qk(),b=t>=1?t:(k?rpD(k):0),pc=Math.floor(Number(String(x.sale).replace(',','.')));fin.textContent=(b>=1&&pc>=1&&pc<=99)?'→ '+salePrice(b,pc)+' coins':((!(t>=1)&&b>=1)?'= '+b+' coins (qualité)':'');};upd();
+        /* état des dates de vente, sous les réglages : à venir, en vente jusqu'au…, terminée */
+        const dEl=h('span',{class:'shop-fin shop-dst',id:'shopc-dst-'+it.id});
+        const dst=()=>{const t=todayStr(),f=x.from||'',e=x.to||'';dEl.textContent=(f&&e&&e<f)?'⚠ fin avant le début':(e&&t>e)?'Vente terminée':(f&&t<f)?'Arrive le '+fmtShortD(f)+(e?' · jusqu’au '+fmtShortD(e):''):e?'Jusqu’au '+fmtShortD(e)+' (« Derniers jours » à partir du '+fmtShortD(addDays(e,-SHOP_LAST_DAYS))+')':'';};dst();
         const who=[(it.sex==='f'?'filles':it.sex==='h'?'garçons':''),(it.skin&&AV_BY[it.skin])?'avatar '+AV_BY[it.skin].name:''].filter(Boolean).join(' · ');
         return h('li',{id:'shopc-'+it.id},ic,
           h('div',{class:'l',style:'flex:1;min-width:120px'},h('div',{class:'nm'},it.name),who?h('div',{class:'sub'},who):null),
@@ -19727,6 +19777,11 @@ function coachShop(){
               h('input',{type:'number',min:'0',max:'99',step:'1',inputmode:'numeric',placeholder:'0','aria-label':'Réduction en pourcentage : '+it.name,id:'shopc-sale-'+it.id,value:x.sale||'',oninput:e=>{x.sale=e.target.value;upd();}}),
               h('span',{},'% de réduc.')),
             fin,
+            h('label',{class:'shop-sale shop-date'},h('span',{},'En vente le'),
+              h('input',{type:'date',id:'shopc-from-'+it.id,'aria-label':'Date de mise en vente : '+it.name,value:x.from||'',onchange:e=>{x.from=e.target.value||'';dst();}})),
+            h('label',{class:'shop-sale shop-date'},h('span',{},'Fin de vente'),
+              h('input',{type:'date',id:'shopc-to-'+it.id,'aria-label':'Fin de commercialisation : '+it.name,value:x.to||'',onchange:e=>{x.to=e.target.value||'';dst();}})),
+            dEl,
             h('button',{class:'btn sm',type:'button',id:'shopc-hide-'+it.id,'aria-label':'Masquer : '+it.name,onclick:()=>shopHide(it.id,true)},'Masquer')));
       })));
   });
@@ -20251,6 +20306,8 @@ function init(){
   let hiddenAt=0;
   document.addEventListener('visibilitychange',()=>{
     if(document.hidden){hiddenAt=Date.now();return;}
+    badgeReset(); /* retour dans l'appli : la pastille de l'icône repart à 0 */
+    if(S.uid&&S._dcDone!==todayStr())setTimeout(maybeDailyBonus,1300); /* nouveau jour depuis la dernière ouverture : bonus quotidien */
     if(hiddenAt&&Date.now()-hiddenAt>30*60*1000&&!document.getElementById('tm-ov')){S._annDone=false;annTries=0;setTimeout(maybeAnnouncement,800);armLaunchRecap();}
     hiddenAt=0;
   });

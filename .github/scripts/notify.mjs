@@ -1,6 +1,8 @@
-/* Envoie les notifications push de Box Score (nouvelle séance, message du coach, réaction reçue, et, pour le coach, nouvelle inscription).
+/* Envoie les notifications push de Box Score, aux navigateurs (Web Push) et aux applis iPhone / Android (Firebase Cloud Messaging) (nouvelle séance, message du coach, réaction reçue, séance validée par un autre athlète,
+   rappel du bonus quotidien le matin, résumé de la semaine — à tous les abonnés, coach compris — et, pour le coach seulement, nouvelle inscription et nouvel abonnement payant/essai).
    Lancé toutes les 15 minutes par .github/workflows/notify.yml. L'état (dernier passage, notifications déjà envoyées)
-   est gardé dans Firestore : config/pushState. */
+   est gardé dans Firestore : config/pushState. Il est enregistré AVANT l'envoi : en cas de plantage pendant l'envoi, mieux vaut une notification
+   manquée que des doublons à chaque passage suivant. (Ce fichier remplace notify-weekly-recap.mjs : ne pas l'importer en plus.) */
 import admin from 'firebase-admin';
 import webpush from 'web-push';
 
@@ -21,15 +23,16 @@ if (!st.exists) {
   console.log('Première exécution : état initialisé, aucune notification envoyée.');
   process.exit(0);
 }
-const { lastRun, sent = [] } = st.data();
+const { lastRun, sent = [], seenSubs } = st.data();
 const since = new Date(new Date(lastRun).getTime() - OVERLAP_MS).toISOString();
 const done = new Set(sent);
 
-const [wSnap, rSnap, aSnap, lSnap] = await Promise.all([
+const [wSnap, rSnap, aSnap, lSnap, subSnap] = await Promise.all([
   db.collection('wods').where('publishedAt', '>', since).get(),
   db.collection('reactions').where('at', '>', since).get(),
   db.doc('config/announcement').get(),
-  db.collection('logs').get()
+  db.collection('logs').get(),
+  db.collection('subs').get()
 ]);
 const newWods = wSnap.docs.map(d => ({ ...d.data(), id: d.id, key: 'w:' + d.id + ':' + d.data().publishedAt })).filter(x => !done.has(x.key));
 const newRx = rSnap.docs.map(d => ({ ...d.data(), id: d.id, key: 'r:' + d.id + ':' + d.data().at })).filter(x => !done.has(x.key) && x.to && x.from !== x.to);
@@ -70,10 +73,61 @@ try {
 } catch (e) {
   console.error('Liste des comptes impossible (droits du compte de service ?) : ' + (e.message || e));
 }
-console.log(`Nouvelles séances : ${newWods.length} · nouveau message du coach : ${newAnn.length} · nouvelles réactions : ${newRx.length} · nouvelles séances validées : ${newSess.length} · nouveaux comptes : ${newUsers.length}`);
+/* nouveaux abonnements : documents subs/{uid} (écrits par la synchro Stripe) dont l'abonnement est en essai ou actif et dont le uid n'a jamais été notifié.
+   La liste des uid déjà vus est gardée à part (seenSubs), sans la limite KEEP. Au tout premier passage avec cette fonction (seenSubs absent),
+   les abonnements déjà présents sont marqués comme vus sans notification. */
+const subOk = d => d.active === true || d.status === 'trialing' || d.status === 'active';
+const currentSubs = subSnap.docs.filter(d => subOk(d.data())).map(d => ({ uid: d.id, plan: d.data().plan, status: d.data().status }));
+const firstSubRun = !Array.isArray(seenSubs);
+const seenSet = new Set(firstSubRun ? [] : seenSubs);
+const newSubs = firstSubRun ? [] : currentSubs.filter(x => !seenSet.has(x.uid));
+const seenSubsNext = [...new Set([...(firstSubRun ? [] : seenSubs), ...currentSubs.map(x => x.uid)])].slice(-5000);
+/* résumé de la semaine : le lundi de 5 h à 12 h (heure de Paris), une seule fois par lundi (clé « m:AAAA-MM-JJ » = ce lundi),
+   seulement si la semaine écoulée (lundi → dimanche) avait au moins une séance. Passé 12 h, on ne l'envoie plus (la bannière du Fil prend le relais dans l'appli). */
+const RECAP_FROM_H = 5, RECAP_UNTIL_H = 12;
+const addDays = (ymd, n) => { const [y, m, d] = ymd.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10); };
+const newRecap = [];
+try {
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hourCycle: 'h23', weekday: 'short' })
+    .formatToParts(now).map(x => [x.type, x.value]));
+  const hour = Number(p.hour), monday = `${p.year}-${p.month}-${p.day}`, key = 'm:' + monday;
+  if (p.weekday === 'Mon' && hour >= RECAP_FROM_H && hour < RECAP_UNTIL_H && !done.has(key)) {
+    const FP = admin.firestore.FieldPath;
+    const prev = await db.collection('wods').where(FP.documentId(), '>=', addDays(monday, -7)).where(FP.documentId(), '<=', addDays(monday, -1)).limit(1).get();
+    if (!prev.empty) newRecap.push({ key, monday });
+    else console.log('Résumé de la semaine : aucune séance la semaine passée, pas de notification.');
+  }
+} catch (e) {
+  console.error('Résumé de la semaine impossible : ' + (e.message || e));
+}
+/* rappel du bonus quotidien : le matin, de 8 h à 12 h (heure de Paris), une seule fois par jour (clé « b:AAAA-MM-JJ »),
+   à chaque compte (coach compris) qui n'a pas encore récupéré son bonus du jour (clé « dc:AAAA-MM-JJ » absente de logs/{uid}.coinGot).
+   Le montant suit la même règle que l'appli : 5 coins, 20 coins le 7e jour d'affilée. */
+const BONUS_FROM_H = 8, BONUS_UNTIL_H = 12;
+const newBonus = [];
+try {
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Paris', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', hourCycle: 'h23' })
+    .formatToParts(now).map(x => [x.type, x.value]));
+  const hour = Number(p.hour), today = `${p.year}-${p.month}-${p.day}`, key = 'b:' + today;
+  if (hour >= BONUS_FROM_H && hour < BONUS_UNTIL_H && !done.has(key)) {
+    const users = [];
+    for (const d of lSnap.docs) {
+      const lg = d.data(), cg = lg.coinGot || {};
+      if (!lg.pseudo || cg['dc:' + today] !== undefined) continue;
+      let n = 0, day = addDays(today, -1);
+      while (cg['dc:' + day] !== undefined && n < 4000) { n++; day = addDays(day, -1); }
+      const cycle = (n % 7) + 1; /* case du cycle de 7 jours que l'athlète récupérerait aujourd'hui */
+      users.push({ uid: d.id, coins: cycle === 7 ? 20 : 5, cycle });
+    }
+    newBonus.push({ key, users });
+  }
+} catch (e) {
+  console.error('Rappel du bonus quotidien impossible : ' + (e.message || e));
+}
+console.log(`Nouvelles séances : ${newWods.length} · nouveau message du coach : ${newAnn.length} · nouvelles réactions : ${newRx.length} · nouvelles séances validées : ${newSess.length} · nouveaux comptes : ${newUsers.length} · résumé de la semaine : ${newRecap.length} · nouveaux abonnements : ${newSubs.length} · rappel bonus : ${newBonus.length ? newBonus[0].users.length + ' compte(s)' : 'non'}`);
 
-const saveState = () => stRef.set({ lastRun: now.toISOString(), sent: [...sent, ...newWods.map(x => x.key), ...newAnn.map(x => x.key), ...newRx.map(x => x.key), ...newSess.map(x => x.key), ...newUsers.map(x => x.key)].slice(-KEEP) });
-if (!newWods.length && !newAnn.length && !newRx.length && !newSess.length && !newUsers.length) { await saveState(); process.exit(0); }
+const saveState = () => stRef.set({ lastRun: now.toISOString(), sent: [...sent, ...newWods.map(x => x.key), ...newAnn.map(x => x.key), ...newRx.map(x => x.key), ...newSess.map(x => x.key), ...newUsers.map(x => x.key), ...newRecap.map(x => x.key), ...newBonus.map(x => x.key)].slice(-KEEP), seenSubs: seenSubsNext });
+if (!newWods.length && !newAnn.length && !newRx.length && !newSess.length && !newUsers.length && !newRecap.length && !newSubs.length && !newBonus.length) { await saveState(); process.exit(0); }
 
 const subs = (await db.collection('pushSubs').get()).docs.map(d => ({ ...d.data(), id: d.id }));
 const coach = await db.doc('config/coach').get();
@@ -91,6 +145,14 @@ if (newWods.length) {
 if (newAnn.length) {
   const a = newAnn[0];
   for (const uid of new Set(subs.map(s => s.uid))) if (uid !== coachUid) add(uid, { tag: 'ann', title: cut(a.title, 60) || 'Message du coach', body: cut(a.text, 140), go: 'feed' });
+}
+/* résumé de la semaine : à tous les appareils abonnés, coach compris (texte à part pour lui) ; s'ouvre sur l'écran du résumé (?go=recap) */
+if (newRecap.length) {
+  for (const uid of new Set(subs.map(s => s.uid))) {
+    add(uid, uid === coachUid
+      ? { tag: 'recap', title: 'Résumé de la semaine', body: 'Le résumé de la semaine est prêt : découvre comment le classement a bougé.', go: 'recap' }
+      : { tag: 'recap', title: 'Ta semaine', body: 'Ton résumé de la semaine est prêt : découvre comment le classement a bougé.', go: 'recap' });
+  }
 }
 if (newRx.length) {
   const wods = Object.fromEntries((await db.collection('wods').get()).docs.map(d => [d.id, d.data()]));
@@ -128,18 +190,84 @@ if (joined.length && coachUid) {
   add(coachUid, { tag: 'signup', title: joined.length === 1 ? 'Nouvel inscrit' : 'Nouveaux inscrits', body, go: 'feed' });
 }
 
+/* nouvel abonnement : notification pour le coach uniquement (pas pour son propre compte) */
+const subscribed = newSubs.filter(x => x.uid !== coachUid);
+if (subscribed.length && coachUid) {
+  const planName = p => p === 'season' ? 'forfait saison' : p === '4w' ? 'forfait 4 semaines' : '';
+  const nm = x => cut(pseudoOf[x.uid] || 'Un athlète', 24);
+  const body = subscribed.length === 1
+    ? `${nm(subscribed[0])} s'est abonné${planName(subscribed[0].plan) ? ' (' + planName(subscribed[0].plan) + ')' : ''}${subscribed[0].status === 'trialing' ? ', essai gratuit en cours' : ''}.`
+    : `${subscribed.length} nouveaux abonnements : ${[...new Set(subscribed.map(nm))].slice(0, 3).join(', ')}${subscribed.length > 3 ? '…' : ''}.`;
+  add(coachUid, { tag: 'subscription', title: subscribed.length === 1 ? 'Nouvel abonnement' : 'Nouveaux abonnements', body, go: 'feed' });
+}
+
+/* rappel du bonus quotidien (seulement aux comptes qui ont un appareil abonné) */
+if (newBonus.length) {
+  const withDevice = new Set(subs.map(s => s.uid));
+  for (const u of newBonus[0].users) {
+    if (!withDevice.has(u.uid)) continue;
+    add(u.uid, { tag: 'bonus', title: '🎁 Ton bonus quotidien t\'attend', body: u.cycle === 7
+      ? `Jour 7 de ta série : récupère tes ${u.coins} coins aujourd'hui !`
+      : `Ouvre Box Score pour récupérer tes ${u.coins} coins du jour${u.cycle > 1 ? ' et garder ta série (jour ' + u.cycle + ')' : ''}.`, go: 'today' });
+  }
+}
+
+/* pastille (nombre sur l'icône de l'appli) : un compteur par appareil, pushCount/{id de pushSubs} = { n, at }.
+   Il repart de 0 quand l'appli est ouverte : l'appli réenregistre alors son appareil (pushSubs/{id}.at change). */
+const cntRef = id => db.doc('pushCount/' + id);
+const counts = {};
+{
+  const ids = subs.filter(s => (msgs[s.uid] || []).length).map(s => s.id);
+  for (let i = 0; i < ids.length; i += 300) {
+    const snaps = ids.slice(i, i + 300).length ? await db.getAll(...ids.slice(i, i + 300).map(cntRef)) : [];
+    for (const sn of snaps) counts[sn.id] = sn.exists ? sn.data() : null;
+  }
+}
+const badgeNext = s => { const c = counts[s.id]; const n = (c && c.at === s.at ? Number(c.n) || 0 : 0) + 1; counts[s.id] = { n, at: s.at }; return n; };
+
+/* état enregistré avant l'envoi (voir l'entête) */
+await saveState();
+
 let ok = 0, gone = 0, fail = 0;
+const FCM_DEAD = new Set(['messaging/registration-token-not-registered', 'messaging/invalid-registration-token']);
 for (const s of subs) {
   for (const m of msgs[s.uid] || []) {
+    const badge = badgeNext(s);
+    if (s.fcm) {
+      /* appli iPhone : notification Firebase Cloud Messaging (APNs). « go » part dans les données et ouvre le bon onglet au toucher. */
+      try {
+        await admin.messaging().send({
+          token: s.fcm,
+          notification: { title: m.title || 'Box Score', body: m.body || '' },
+          data: { go: String(m.go || 'feed'), tag: String(m.tag || ''), badge: String(badge) },
+          apns: { headers: { 'apns-collapse-id': String(m.tag || 'bs').slice(0, 60), 'apns-expiration': String(Math.floor(Date.now() / 1000) + 86400) }, payload: { aps: { sound: 'default', badge } } },
+          android: { ttl: 86400000, notification: { notificationCount: badge, tag: String(m.tag || 'bs').slice(0, 60) } }
+        });
+        ok++;
+      } catch (e) {
+        if (FCM_DEAD.has(e.code)) { try { await db.doc('pushSubs/' + s.id).delete(); } catch (_) {} gone++; break; } /* jeton expiré ou appli désinstallée */
+        fail++; console.error('Échec d’envoi iPhone (' + (e.code || '?') + ') : ' + (e.message || e));
+      }
+      continue;
+    }
+    if (!s.endpoint) continue;
     try {
       await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-        JSON.stringify({ title: 'Box Score', ...m }), { TTL: 86400, urgency: 'normal' });
+        JSON.stringify({ title: 'Box Score', ...m, badge }), { TTL: 86400, urgency: 'normal' });
       ok++;
     } catch (e) {
-      if (e.statusCode === 404 || e.statusCode === 410) { await db.doc('pushSubs/' + s.id).delete(); gone++; break; } /* appareil désinscrit */
+      if (e.statusCode === 404 || e.statusCode === 410) { try { await db.doc('pushSubs/' + s.id).delete(); } catch (_) {} gone++; break; } /* abonnement expiré ou désinscrit (seuls ces deux codes) */
       fail++; console.error('Échec d’envoi (' + (e.statusCode || '?') + ') : ' + (e.body || e.message));
     }
   }
 }
 console.log(`Envoyées : ${ok} · appareils retirés : ${gone} · échecs : ${fail}`);
-await saveState();
+/* compteurs des pastilles enregistrés après l'envoi */
+try {
+  const ids = subs.filter(s => (msgs[s.uid] || []).length && counts[s.id]).map(s => s.id);
+  for (let i = 0; i < ids.length; i += 400) {
+    const b = db.batch();
+    ids.slice(i, i + 400).forEach(id => b.set(cntRef(id), counts[id]));
+    await b.commit();
+  }
+} catch (e) { console.error('Compteurs des pastilles non enregistrés : ' + (e.message || e)); }

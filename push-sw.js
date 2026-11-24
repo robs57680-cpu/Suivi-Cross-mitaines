@@ -1,4 +1,4 @@
-/* Service worker de Box Score : notifications push + mode hors ligne.
+/* Service worker de Box Score : notifications push (avec pastille sur l'icône) + mode hors ligne.
 
    Mode hors ligne :
    - index.html : le réseau passe en premier (la dernière version est toujours servie et le bandeau « Mettre à jour »
@@ -135,11 +135,14 @@ self.addEventListener('push',e=>{
   let d={};
   try{d=e.data?e.data.json():{};}catch(_){}
   const icon=new URL('assets/icons/icon-192.png',self.registration.scope).href;
-  e.waitUntil(self.registration.showNotification(d.title||'Box Score',{
+  /* pastille de l'icône : nombre de notifications non vues (compté par le serveur, remis à 0 à l'ouverture de l'appli) */
+  const n=Number(d.badge)||0;
+  const setBadge=(n>0&&self.navigator&&self.navigator.setAppBadge)?self.navigator.setAppBadge(n).catch(()=>{}):Promise.resolve();
+  e.waitUntil(Promise.all([setBadge,self.registration.showNotification(d.title||'Box Score',{
     body:d.body||'',icon,badge:icon,
     tag:d.tag||undefined,renotify:!!d.tag,
     data:{go:d.go||'feed'}
-  }));
+  })]));
 });
 
 self.addEventListener('notificationclick',e=>{
